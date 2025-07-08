@@ -81,7 +81,7 @@ export function BottomNavigation() {
   }
 
   return (
-    <div className="md:hidden  font-poppins fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200">
+    <div className="md:hidden  font-publicSans fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200">
       <div className="grid h-full max-w-lg grid-cols-5 mx-auto">
    
    {user ? 
@@ -114,7 +114,7 @@ export function BottomNavigation() {
         ))
       }
         <Sheet  open={open} onOpenChange={setOpen}>
-          <SheetTrigger className="font-poppins" asChild>
+          <SheetTrigger className="font-publicSans" asChild>
             <Button
               variant="ghost"
               className="inline-flex flex-col items-center justify-center w-full h-full px-5 hover:bg-gray-50 group"
@@ -128,7 +128,7 @@ export function BottomNavigation() {
               <SheetTitle className="text-left text-gray-900 font-bricolage">Menu</SheetTitle>
             </SheetHeader>
             <ScrollArea className="h-[calc(100vh-8rem)] pb-10">
-              <div className="flex font-poppins flex-col space-y-3 mt-4">
+              <div className="flex font-publicSans flex-col space-y-3 mt-4">
               
               {user ? (
   <>

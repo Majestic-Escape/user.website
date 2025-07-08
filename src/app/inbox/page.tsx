@@ -200,7 +200,7 @@ export default function Component() {
 
   return (
     
-    <div className="h-screen w-screen  bg-white font-poppins">
+    <div className="h-screen w-screen  bg-white font-publicSans">
       {/* Main Content */}
       <div className="grid container  max-w-[1400px] mx-auto md:grid-cols-[350px_1fr] grid-cols-1">
         {/* Sidebar */}

@@ -53,7 +53,7 @@ const NewsletterSection = React.memo(function NewsletterSection() {
   return (
 <div className=" px-4 sm:px-6 lg:px-[72px]  w-full flex justify-center py-20 bg-white">
   <div className="w-full max-w-[1760px] mx-auto">
-  <section className="font-poppins flex overflow-hidden flex-col justify-center  bg-white">
+  <section className="font-publicSans flex overflow-hidden flex-col justify-center  bg-white">
       <div className="flex flex-wrap gap-5 justify-between w-full mx-auto">
         <div className="flex flex-col w-[500px]">
          
@@ -65,7 +65,7 @@ const NewsletterSection = React.memo(function NewsletterSection() {
             <FeatureItem key="2" id="2" text="Discounts and offer updates" />
           
             <form
-                className="flex flex-wrap gap-2 mt-8 text-base"
+                className="flex flex-wrap gap-2 p-2 mt-8 text-base"
                 onSubmit={handleSubscription}
               >
                 <Input

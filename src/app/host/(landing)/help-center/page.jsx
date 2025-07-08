@@ -21,7 +21,7 @@ export default function HostHelpCenter() {
 
   return (
     
-    <div className="font-poppins min-h-screen py-32 bg-white">
+    <div className="font-publicSans min-h-screen py-32 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
         <header className=" mb-6">
           <h1 className="text-4xl font-bricolage font-bold text-absoluteDark mb-2">Host Support Center</h1>

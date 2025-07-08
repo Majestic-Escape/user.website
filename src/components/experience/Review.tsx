@@ -6,13 +6,9 @@ import { Star, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Poppins } from "next/font/google";
 import { reviewsData } from "../../lib/experience/data";
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
+
 
 export default function Review() {
   const [thought, setThought] = useState("");
@@ -33,11 +29,10 @@ export default function Review() {
     <div className="sm:pt-[340px] pb-4">
       <div
         className={cn(
-          "mx-auto p-6  white-border rounded-lg",
-          poppins.className
+          "mx-auto p-6  white-border rounded-lg"
         )}
       >
-        <h2 className={cn("text-2xl mb-4", poppins.className, "font-semibold")}>
+        <h2 className={cn("text-2xl mb-4 font-semibold")}>
           Reviews ({reviewsData.totalReviews} reviews)
         </h2>
         <hr className="sm:w-[300px] w-[200px] mb-6 border-gray-200" />

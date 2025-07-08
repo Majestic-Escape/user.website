@@ -5,7 +5,7 @@ import Heading from '@/components/ui/heading'
 
 export default function Component() {
   return (
-    <div className="min-h-screen font-poppins bg-white">
+    <div className="min-h-screen font-publicSans bg-white">
       <main className="container mx-auto py-12 sm:py-24 ">
         <div className="mx-auto max-w-7xl">
             <Heading text="Sitemap"/>

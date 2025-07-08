@@ -75,7 +75,7 @@ export default function Blogs() {
   return (
     <div className="flex justify-center w-full px-4 sm:px-6 lg:px-[72px] bg-white">
       <div className="w-full max-w-[1760px] mx-auto">
-        <section className=" py-16  bg-white font-poppins text-absolute-dark">
+        <section className=" py-16  bg-white font-publicSans text-absolute-dark">
           <div className="mx-auto">
             <div className="mb-12">
               <Heading text="Stories & Insights"/>

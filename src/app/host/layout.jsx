@@ -11,7 +11,7 @@ const Layout = ({ children }) => {
     <>
           <QueryClientProvider client={queryClient}>
 
-      <main className="font-poppins">{children}</main>
+      <main className="font-publicSans">{children}</main>
       {/* <ReactQueryDevtools initialIsOpen={false} /> */}
       </QueryClientProvider>
        </>

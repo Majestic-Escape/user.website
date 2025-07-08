@@ -95,7 +95,7 @@ export default function Component() {
   }
 
   return (
-    <div className="max-w-7xl font-poppins py-12 sm:py-32 mx-auto px-4 ">
+    <div className="max-w-7xl font-publicSans py-12 sm:py-32 mx-auto px-4 ">
       <div className="space-y-8">
         <div>
           <Heading text="Special Offers & Discounts"/>

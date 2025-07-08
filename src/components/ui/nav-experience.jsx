@@ -62,7 +62,7 @@ export default function Navbar() {
               </header>
 
               {totalWishlistItems > 0 ? (
-                <div className="flex-1 font-poppins overflow-auto px-6 py-4">
+                <div className="flex-1 font-publicSans overflow-auto px-6 py-4">
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
                     {/* Stays Folder */}
                     {staysWishlist.length > 0 && (
@@ -91,7 +91,7 @@ export default function Navbar() {
                     {/* Experiences Folder */}
                     {experiencesWishlist.length > 0 && (
                       <div
-                        className="group relative font-poppins aspect-square rounded-xl overflow-hidden cursor-pointer"
+                        className="group relative font-publicSans aspect-square rounded-xl overflow-hidden cursor-pointer"
                         onClick={() => setSelectedFolder({
                           name: 'Experiences',
                           items: experiencesWishlist
@@ -217,7 +217,7 @@ export default function Navbar() {
   );
 
   return (
-    <header className={`fixed left-0 right-0 w-screen bg-white z-50 font-poppins border-b px-4 md:px-6 transition-all duration-300 ${isScrolled ? 'py-2  h-20' : 'py-4'}`}>      <div className="container max-w-[1400px] flex h-12 md:h-16 w-full items-center mx-auto">
+    <header className={`fixed left-0 right-0 w-screen bg-white z-50 font-publicSans border-b px-4 md:px-6 transition-all duration-300 ${isScrolled ? 'py-2  h-20' : 'py-4'}`}>      <div className="container max-w-[1400px] flex h-12 md:h-16 w-full items-center mx-auto">
      <div>
       
       </div>   <Link className="flex items-center gap-2 text-[#3B5D2D]" href="/">
@@ -277,7 +277,7 @@ export default function Navbar() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="font-poppins text-stone bg-white"
+              className="font-publicSans text-stone bg-white"
             >
                <DropdownMenuItem asChild>
                 <Link
@@ -339,7 +339,7 @@ export default function Navbar() {
               side="right"
               className="bg-white w-[300px] sm:w-[400px]"
             >
-              <nav className="font-poppins bg-white  flex flex-col gap-4">
+              <nav className="font-publicSans bg-white  flex flex-col gap-4">
                 <NavItems isMobile={true} />
               </nav>
             </SheetContent>

@@ -321,7 +321,7 @@ function FilterSheet() {
         </button>
       {/* </Dialog.Trigger> */}
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed font-poppins inset-0 bg-black/50 z-50" />
+        <Dialog.Overlay className="fixed font-publicSans inset-0 bg-black/50 z-50" />
         <Dialog.Content className="fixed inset-0 m-auto bottom-0 z-50 bg-white rounded-t-[10px] h-[90vh] w-full max-w-md justify-center overflow-hidden flex flex-col">
           <div className="flex items-center justify-between p-4 border-b">
             <Dialog.Close className="p-2">
@@ -619,7 +619,7 @@ function ShareDialog({ isOpen, onClose, property }) {
   if (!isOpen) return null;
 
   const dialog = (
-    <div className="fixed inset-0 bg-black text-absoluteDark font-poppins bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black text-absoluteDark font-publicSans bg-opacity-50 flex items-center justify-center z-50">
       <div ref={dialogRef} className="bg-white text-absoluteDark rounded-lg shadow-xl max-w-md w-full relative">
       <button 
           onClick={onClose}
@@ -724,7 +724,7 @@ function InfoDialog({ isOpen, onClose, property }) {
   };
 
   const dialog = (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 font-poppins">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 font-publicSans">
       <div ref={dialogRef} className="bg-white text-absoluteDark rounded-lg shadow-xl w-full max-w-2xl relative">
         <button 
           onClick={onClose}
@@ -848,7 +848,7 @@ function PropertyCard({ property, includeTaxes }) {
   return (
     <div 
       id={`property-${property.id}`}
-      className={`w-full font-poppins mt-8 transition-all duration-300 ease-in-out
+      className={`w-full font-publicSans mt-8 transition-all duration-300 ease-in-out
         ${isHighlighted ? 'scale-[1.02] shadow-lg shadow-brightGreen ring-2 ring-brightGreen-500 ring-opacity-50' : ''}
       `}
     >
@@ -1068,9 +1068,9 @@ export default function Properties() {
 
   return (
     
-    <div className='font-poppins flex justify-center w-full bg-white'>
+    <div className='font-publicSans flex justify-center w-full bg-white'>
       <div className='w-full max-w-[1760px]'>
-      <div className="mx-auto px-4 sm:px-6 lg:px-[72px] py-8 sm:py-16 lg:py-[128px] font-poppins bg-white text-absoluteDark">
+      <div className="mx-auto px-4 sm:px-6 lg:px-[72px] py-8 sm:py-16 lg:py-[128px] font-publicSans bg-white text-absoluteDark">
       <h2 className="text-2xl sm:text-3xl lg:text-[36px] text-absoluteDark font-bricolage font-semibold mb-2">
         Discover Our Finest Stays
       </h2>
@@ -1127,7 +1127,7 @@ export default function Properties() {
           )}
         </div>
 
-        <div className="flex flex-row font-poppins items-center gap-4">
+        <div className="flex flex-row font-publicSans items-center gap-4">
           <FilterSheet>
           <button className="h-11 px-8 border-2 border-[#4E7B39] text-[#4E7B39] rounded-full hover:bg-[#4E7B39] hover:text-white transition-colors duration-300 text-sm font-medium flex items-center justify-center gap-2">
             <SlidersHorizontal className="w-4 h-4" />

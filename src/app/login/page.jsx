@@ -12,7 +12,7 @@ export default function LoginPage() {
 
 
   return (
-    <div className="min-h-screen  grid grid-cols-1 lg:grid-cols-2 font-poppins">
+    <div className="min-h-screen  grid grid-cols-1 lg:grid-cols-2 font-publicSans">
      <LoginForm/>
       
       <div className="bg-gradient-to-tr from-primaryGreen to-brightGreen p-6 lg:p-10  flex-col hidden lg:flex">

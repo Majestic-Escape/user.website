@@ -57,9 +57,9 @@ export default function StaysProperties() {
   const displayedProperties = showMore ? properties : properties.slice(0, 8);
 
   return (
-    <div className='font-poppins flex justify-center w-full bg-white'>
+    <div className='font-publicSans flex justify-center w-full bg-white'>
       <div className='w-full max-w-[1760px]'>
-        <div className="mx-auto px-4 sm:px-6 lg:px-[72px] py-8 sm:py-16 lg:py-[128px] font-poppins bg-white text-absoluteDark">
+        <div className="mx-auto px-4 sm:px-6 lg:px-[72px] py-8 sm:py-16 lg:py-[128px] font-publicSans bg-white text-absoluteDark">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl text-absoluteDark font-bricolage font-semibold mb-2">
             Discover Our Finest Stays
           </h2>

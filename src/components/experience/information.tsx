@@ -2,19 +2,19 @@ import Image from "next/image";
 import { BadgeCheck, Calendar, MessageSquare, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { hostData } from "../../lib/experience/data";
-import { Poppins } from "next/font/google";
+import { PublicSans } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-const font = Poppins({
+const font = PublicSans({
   subsets: ["latin"],
   weight: ["400"],
 });
 
-const fonts = Poppins({
+const fonts = PublicSans({
   subsets: ["latin"],
   weight: ["500"],
 });
-const fon = Poppins({
+const fon = PublicSans({
   subsets: ["latin"],
   weight: ["600"],
 });

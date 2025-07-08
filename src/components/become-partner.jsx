@@ -41,7 +41,7 @@ const BecomePartner = () => {
   return (
     <div className="flex justify-center w-full bg-white px-4 sm:px-6 lg:px-[72px]  py-10 ">
       <div className="w-full max-w-[1760px] mx-auto">
-        <main className="flex overflow-hidden flex-col justify-center items-start  bg-white font-poppins">
+        <main className="flex overflow-hidden flex-col justify-center items-start  bg-white font-publicSans">
           <section className="w-full  mx-auto">
             <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
               <article className="flex flex-col w-full lg:w-[60%]">

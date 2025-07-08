@@ -10,7 +10,7 @@ interface LayoutProps {
 
 export default function AccountLayout({ children }: LayoutProps) {
   return (
-    <div className="font-poppins min-h-screen pt-24 bg-offWhite">
+    <div className="font-publicSans min-h-screen pt-24 bg-offWhite">
       <div className="container max-w-[1400px] mx-auto">
         <AccountHeader />
         <div className="flex">

@@ -51,7 +51,7 @@ export default function HostOnboarding() {
       country: "India - IN",
       latitude: null,
       longitude: null,
-      registrationNumber: "HOT", // default registration number
+      registrationNumber: "", // default registration number
     },
     validRegistrationNo: false, // new field for registration number validity
     bathroomTypes: {

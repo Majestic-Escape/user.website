@@ -98,7 +98,7 @@ export default function StayCard({ property, includeTaxes }) {
   return (
     <div
       id={`property-${property?._id}`}
-      className={`w-full font-poppins mt-8 transition-all duration-300 ease-in-out
+      className={`w-full font-publicSans mt-8 transition-all duration-300 ease-in-out
         ${
           isHighlighted
             ? "scale-[1.02] shadow-lg shadow-brightGreen ring-2 ring-brightGreen-500 ring-opacity-50"

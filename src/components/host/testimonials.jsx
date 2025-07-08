@@ -64,7 +64,7 @@ const testimonials = [
 ];
 
 const TestimonialCard = ({ testimonial }) => (
-  <div className="bg-white rounded-lg p-5 pb-[20px] py-4 shadow-md max-w-[90vw]  w-[374px] h-[300px] mx-4 my-2 relative font-poppins text-absolute-dark">
+  <div className="bg-white rounded-lg p-5 pb-[20px] py-4 shadow-md max-w-[90vw]  w-[374px] h-[300px] mx-4 my-2 relative font-publicSans text-absolute-dark">
     <span className="absolute top-4 right-2 bg-brightGreen text-white text-xs font-medium py-1 px-3 rounded-md">
       Stay
     </span>
@@ -92,7 +92,7 @@ const TestimonialCard = ({ testimonial }) => (
 
 export default function Testimonials() {
   return (
-    <section className="bg-white font-poppins px-6 py-[128px]">
+    <section className="bg-white font-publicSans px-6 py-[128px]">
       <div className="max-w-7xl  mx-auto">
         
         <div className="mb-6">

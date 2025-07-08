@@ -12,7 +12,7 @@ export default function Layout({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
 
-    <div className="font-poppins">
+    <div className="font-publicSans">
       
       <div>
         <Navbar />

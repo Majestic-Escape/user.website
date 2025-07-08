@@ -22,7 +22,7 @@ export default function HelpCenter() {
   return (
 
 
-    <div className="font-poppins min-h-screen py-32 bg-white">
+    <div className="font-publicSans min-h-screen py-32 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
         <header className=" mb-6">
         <Heading text="How can we help you?" />

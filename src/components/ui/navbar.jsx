@@ -38,7 +38,7 @@ export default function Navbar() {
   
  
   return (
-    <header className="fixed left-0 right-0 w-screen bg-white  z-50  font-poppins border-b px-4 md:px-6 ">
+    <header className="fixed left-0 right-0 w-screen bg-white  z-50  font-publicSans border-b px-4 md:px-6 ">
       <div className="container max-w-[1400px] flex h-12 md:h-[76px] w-full items-center mx-auto">
      <div>
       

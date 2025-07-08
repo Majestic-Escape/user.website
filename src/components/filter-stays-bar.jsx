@@ -115,7 +115,7 @@ const [canScrollLeft, setCanScrollLeft] = useState(false);
           )}
         </div>
 
-        <div className="hidden md:flex flex-row font-poppins items-center gap-4">
+        <div className="hidden md:flex flex-row font-publicSans items-center gap-4">
          
           <button className=" py-2.5 px-8 ring-1 ring-lightGray text-absoluteDark rounded-full hover:ring-absoluteDark transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2">
             <SlidersHorizontal className="w-4 h-4" />

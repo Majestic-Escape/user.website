@@ -30,7 +30,7 @@ export default function WishlistPopup({ isOpen, onClose }) {
         </header>
 
         {totalWishlistItems > 0 ? (
-          <div className="flex-1 font-poppins overflow-auto px-6 py-4">
+          <div className="flex-1 font-publicSans overflow-auto px-6 py-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
               {/* Stays Folder */}
               {staysWishlist.length > 0 && (
@@ -59,7 +59,7 @@ export default function WishlistPopup({ isOpen, onClose }) {
               {/* Experiences Folder */}
               {experiencesWishlist.length > 0 && (
                 <div
-                  className="group relative font-poppins aspect-square rounded-xl overflow-hidden cursor-pointer"
+                  className="group relative font-publicSans aspect-square rounded-xl overflow-hidden cursor-pointer"
                   onClick={() => setSelectedFolder({
                     name: 'Experiences',
                     items: experiencesWishlist

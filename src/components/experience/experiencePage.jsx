@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { experienceData, priceData } from "../../lib/experience/data";
-import { Poppins } from "next/font/google";
+import { PublicSans } from "next/font/google";
 import { cn } from "@/lib/utils";
 import Rating from "./Rating";
 import Description from "./description";
@@ -12,12 +12,12 @@ import Include from "./include";
 import HostInformation from "./information";
 import Review from "./Review";
 
-const font = Poppins({
+const font = PublicSans({
   subsets: ["latin"],
   weight: ["400"],
 });
 
-const fonts = Poppins({
+const fonts = PublicSans({
   subsets: ["latin"],
   weight: ["600"],
 });

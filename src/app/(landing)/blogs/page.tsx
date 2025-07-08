@@ -41,7 +41,7 @@ export default function BlogPage() {
     
     
          
-    <div className="min-h-screen py-32 bg-white font-poppins px-4 sm:px-6 lg:px-8 mx-auto">
+    <div className="min-h-screen py-32 bg-white font-publicSans px-4 sm:px-6 lg:px-8 mx-auto">
     <div className="container max-w-7xl mx-auto px-4">
     <div className="mb-8">
        <Heading text={"Blogs"}/>

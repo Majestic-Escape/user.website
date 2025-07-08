@@ -72,7 +72,7 @@ export const WishlistDialog = ({ isOpen, onClose, property }) => {
   }));
 
   return createPortal(
-    <div className="fixed inset-0 font-poppins bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 font-publicSans bg-black/50 flex items-center justify-center z-50">
       <div ref={dialogRef} className="bg-white rounded-lg w-full max-w-md mx-4">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">

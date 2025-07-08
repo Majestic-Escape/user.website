@@ -131,7 +131,7 @@ const LocationWisestays = () => {
   };
 
   return (
-    <section className="font-poppins bg-white px-4 sm:px-6 lg:px-[72px] py-8 sm:py-16 text-absolute-dark">
+    <section className="font-publicSans bg-white px-4 sm:px-6 lg:px-[72px] py-8 sm:py-16 text-absolute-dark">
       <div className=" w-full max-w-[1760px] mx-auto ">
         
         <Heading text="Stay Near Your Favorite Spots"/>

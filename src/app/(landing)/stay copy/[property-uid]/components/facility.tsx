@@ -15,7 +15,7 @@ import {
   CloudFogIcon,
   // Import more icons as needed
 } from "lucide-react";
-import { Poppins } from "next/font/google";
+import { PublicSans } from "next/font/google";
 import { cn } from "@/lib/utils";
 
 const iconMap = {
@@ -36,7 +36,7 @@ const iconMap = {
   BBQ: CloudFogIcon,
 };
 
-const font = Poppins({
+const font = PublicSans({
   subsets: ["latin"],
   weight: ["400"],
 });

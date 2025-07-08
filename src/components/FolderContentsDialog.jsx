@@ -10,7 +10,7 @@ export const FolderContentsDialog = ({ isOpen, onClose, folderName, items }) => 
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 font-poppins bg-white z-[60]">
+    <div className="fixed inset-0 font-publicSans bg-white z-[60]">
       <div className="h-screen flex flex-col">
         <header className="px-6 h-20 flex items-center border-b border-gray-200">
           <button

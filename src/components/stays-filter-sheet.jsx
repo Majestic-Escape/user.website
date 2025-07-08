@@ -22,7 +22,7 @@ export default function StaysFilterSheet() {
                   </button>
                 {/* </Dialog.Trigger> */}
                 <Dialog.Portal>
-                  <Dialog.Overlay className="fixed font-poppins inset-0 bg-black/50 z-50" />
+                  <Dialog.Overlay className="fixed font-publicSans inset-0 bg-black/50 z-50" />
                   <Dialog.Content className="fixed inset-0 m-auto bottom-0 z-50 bg-white rounded-t-[10px] h-[90vh] w-full max-w-md justify-center overflow-hidden flex flex-col">
                     <div className="flex items-center justify-between p-4 border-b">
                       <Dialog.Close className="p-2">

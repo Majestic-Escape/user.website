@@ -14,7 +14,7 @@ export function MainTab() {
   const pathname = usePathname()
 
   return (
-    <div className="fixed z-50 md:hidden  font-poppins top-12 right-0 left-0 px-4">
+    <div className="fixed z-50 md:hidden  font-publicSans top-12 right-0 left-0 px-4">
 
   <div className="mx-auto">
     

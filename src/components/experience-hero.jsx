@@ -410,7 +410,7 @@ function ShareDialog({ isOpen, onClose, property }) {
   if (!isOpen || !mounted) return null;
 
   const dialog = (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center font-poppins justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center font-publicSans justify-center z-50">
       <div ref={dialogRef} className="bg-white text-absolute-dark rounded-lg shadow-xl max-w-md w-full relative">
         <button 
           onClick={onClose}
@@ -670,7 +670,7 @@ const ExperienceCard = ({ experience, includeTaxes }) => {
     <div 
     ref={cardRef}
       id={`experience-${experience.id}`}
-      className={`overflow-hidden w-full font-poppins mt-8 group
+      className={`overflow-hidden w-full font-publicSans mt-8 group
         transition-all duration-300 ease-in-out
         ${isHighlighted ? 'scale-[1.02] shadow-lg shadow-blue-200 ring-2 ring-blue-500 ring-opacity-50' : ''}
       `}
@@ -1112,7 +1112,7 @@ export default function Component() {
   }
 
   return (
-    <div className="w-full font-poppins bg-white text-absolute-dark md:pt-16 ">
+    <div className="w-full font-publicSans bg-white text-absolute-dark md:pt-16 ">
       
       {/* <ExperiencePartnerSection/> */}
 

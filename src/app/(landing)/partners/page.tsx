@@ -56,7 +56,7 @@ export default function PartnerPage() {
   }
 
   return (
-    <div className="font-poppins min-h-screen bg-white">
+    <div className="font-publicSans min-h-screen bg-white">
       {/* Hero Section */}
       <section className="px-4 py-20 md:py-32 bg-lightGreen">
         <div className="container mx-auto max-w-5xl text-center">

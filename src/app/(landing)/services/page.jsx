@@ -37,7 +37,7 @@ export default function Services() {
 
 <MainTab />
 
-    <div className="container px-4 max-w-[1400px] md:px-12 font-poppins mx-auto py-12">
+    <div className="container px-4 max-w-[1400px] md:px-12 font-publicSans mx-auto py-12">
         <div className="mb-8">
         <Heading text="Our Services"/>
         <SubHeading text="Experience Offerings Tailored to Your Needs"/>

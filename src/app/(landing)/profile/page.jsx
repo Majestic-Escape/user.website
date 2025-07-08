@@ -5,7 +5,7 @@ import SubHeading from '@/components/ui/sub-heading'
 
 export default function BookingsPage() {
   return (
-    <div className="font-poppins flex flex-col items-center justify-center min-h-screen px-4 bg-white">
+    <div className="font-publicSans flex flex-col items-center justify-center min-h-screen px-4 bg-white">
       <div className="text-center">
          <User className="w-16 h-16 mx-auto mb-4 text-gray-400" />
          <Heading text="Login to navigate your profile"/>

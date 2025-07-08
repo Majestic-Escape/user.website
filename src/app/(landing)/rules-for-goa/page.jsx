@@ -5,7 +5,7 @@ import { AlertCircleIcon } from "lucide-react"
 
 export default function GoaRulesAndRegulations() {
   return (
-    <div className="font-poppins min-h-screen py-24 px-6">
+    <div className="font-publicSans min-h-screen py-24 px-6">
       <header className="bg-offWhite shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold text-absoluteDark font-bricolage">Goa - Rules & Regulations</h1>

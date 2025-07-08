@@ -33,7 +33,7 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --font-poppins: 'poppins'
+    --font-publicSans: 'publicSans'
   
   ;
     --sidebar-background: 0 0% 98%;
@@ -57,7 +57,7 @@
   box-sizing: border-box;
 }
 html, body {
-  font-family: 'poppins', system-ui, sans-serif;
+  font-family: "Public Sans", system-ui, sans-serif;
   background:white;
   color:black;
   overflow-x: hidden;

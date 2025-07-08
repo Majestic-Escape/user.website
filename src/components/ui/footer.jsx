@@ -70,7 +70,7 @@ export default function Footer() {
   return (
     <div className="flex justify-center w-full border-t border-t-gray-100 bg-offWhite">
       <div className="w-full max-w-[1400px] mx-auto">
-        <footer className="bg-offWhite px-5 md:px-16 py-12 relative font-poppins text-absolute-dark">
+        <footer className="bg-offWhite px-5 md:px-16 py-12 relative font-publicSans text-absolute-dark">
           <div className="mx-auto relative">
             <div className="xl:grid xl:grid-cols-5 xl:gap-8">
               <div className="xl:col-span-1">

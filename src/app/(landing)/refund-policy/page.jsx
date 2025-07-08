@@ -1,6 +1,6 @@
 export default function RefundPolicy() {
   return (
-    <div className="min-h-screen font-poppins pt-24">
+    <div className="min-h-screen font-publicSans pt-24">
       <header className="bg-offWhite shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-semibold font-bricolage text-absoluteDark">Refund Policy</h1>

@@ -1,5 +1,5 @@
 
-import { Bricolage_Grotesque, Poppins } from 'next/font/google'
+import { Bricolage_Grotesque, Public_Sans } from 'next/font/google'
 
 
 
@@ -9,8 +9,8 @@ export const bricolage = Bricolage_Grotesque({
   variable: '--font-bricolage',
 })
 
-export const poppins = Poppins({
+export const publicSans = Public_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-poppins',
+  weight: ['200', '300', '400', '500', '600', '700'],
+  variable: '--font-publicSans',
 })

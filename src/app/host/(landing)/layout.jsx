@@ -4,7 +4,7 @@ const Layout = ({ children }) => {
   return (
     <>
       <Navbar />
-      <main className="font-poppins">{children}</main>
+      <main className="font-publicSans">{children}</main>
     </>
   )
 }

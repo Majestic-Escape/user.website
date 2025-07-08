@@ -110,7 +110,7 @@ const calculatePriceWithTax = (price) => {
       <div 
       ref={cardRef}
         id={`experience-${experience.id}`}
-        className={`overflow-hidden w-full font-poppins mt-8 group
+        className={`overflow-hidden w-full font-publicSans mt-8 group
           transition-all duration-300 ease-in-out
           ${isHighlighted ? 'scale-[1.02] shadow-lg shadow-blue-200 ring-2 ring-blue-500 ring-opacity-50' : ''}
         `}

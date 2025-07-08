@@ -1,7 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import { useFormState } from "react-dom"
+import { useState, useActionState } from "react";
 import { updateBankInfo } from "./updateBankInfo"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 
 export function BankAccountForm() {
-  const [state, formAction] = useFormState(updateBankInfo, null)
+  const [state, formAction] = useActionState(updateBankInfo, null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [ifscDetails, setIfscDetails] = useState(null)
   const [bankName, setBankName] = useState("")

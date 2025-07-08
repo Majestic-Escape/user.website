@@ -49,7 +49,7 @@ export default function Navbar() {
 
 
   return (
-    <div className={`fixed left-0 right-0 w-screen bg-white z-50 font-poppins border-b  transition-all hidden md:block duration-300 ${isScrolled ? 'pt-2  h-20' : 'pt-3'}`}>
+    <div className={`fixed left-0 right-0 w-screen bg-white z-50 font-publicSans border-b  transition-all hidden md:block duration-300 ${isScrolled ? 'pt-2  h-20' : 'pt-3'}`}>
       <header className="px-4 bg-white  md:px-6" >
         <div className="container max-w-[1400px] flex h-12 md:h-16 w-full items-center mx-auto">
           <div>
@@ -77,7 +77,7 @@ export default function Navbar() {
             <WishlistPopup isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
             <button
             onClick={switchToHosting}
-            className="text-sm bg-transparent shadow:none  border-none outline-none hover:bg-transparent focus:outline-none focus:border-none text-absoluteDark  hover:text-brightGreen hover:transition-colors hover:underline"
+            className="text-base bg-transparent shadow:none font-medium border-none outline-none hover:bg-transparent focus:outline-none focus:border-none text-absoluteDark  hover:text-brightGreen hover:transition-colors hover:underline"
           >
             Switch to Hosting
           </button>

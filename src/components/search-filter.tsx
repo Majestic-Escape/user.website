@@ -70,7 +70,7 @@ export default function SearchFilter({ isScrolled }: SearchFilterProps) {
   }
 
   return (
-    <div className={`transition-all duration-300 ${isScrolled ? 'opacity-100 -translate-y-full' : 'opacity-100 translate-y-0 '} hidden md:flex font-poppins items-center gap-1 relative bg-white rounded-full border-[1px] z-50 border-gray-200 shadow-md max-w-full ${isScrolled? "md:w-[500px]":"md:w-[850px]"}  pl-2 py-1  mx-auto`}>
+    <div className={`transition-all duration-300 ${isScrolled ? 'opacity-100 -translate-y-full' : 'opacity-100 translate-y-0 '} hidden md:flex font-publicSans items-center gap-1 relative bg-white rounded-full border-[1px] z-50 border-gray-200 shadow-md max-w-full ${isScrolled? "md:w-[500px]":"md:w-[850px]"}  pl-2 py-1  mx-auto`}>
       {/* Destination Search */}
       <Popover open={openDestination} onOpenChange={setOpenDestination}>
         <PopoverTrigger asChild>
@@ -88,7 +88,7 @@ export default function SearchFilter({ isScrolled }: SearchFilterProps) {
             </div>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] font-poppins mt-2 transition-all duration-200 ease-in-out" align="start">
+        <PopoverContent className="w-[300px] font-publicSans mt-2 transition-all duration-200 ease-in-out" align="start">
           <Command className="bg-white">
             <CommandInput placeholder="Search Goa destinations..." onValueChange={(value) => setSearchTerm(value)}/>
             <CommandEmpty className="hidden">No destination found.</CommandEmpty>
@@ -147,7 +147,7 @@ export default function SearchFilter({ isScrolled }: SearchFilterProps) {
             </Button>
           </div>
         </PopoverTrigger>
-        <PopoverContent className="bg-white mt-2 font-poppins w-auto p-0 transition-all duration-200 ease-in-out" align="start">
+        <PopoverContent className="bg-white mt-2 font-publicSans w-auto p-0 transition-all duration-200 ease-in-out" align="start">
           <Calendar
             mode="range"
             selected={dateRange}

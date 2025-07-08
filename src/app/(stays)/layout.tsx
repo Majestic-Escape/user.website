@@ -12,7 +12,7 @@ export default function StaysLayout({ children }: { children: ReactNode }) {
   return (
     <SheetProvider>
       
-      <div className="font-poppins">
+      <div className="font-publicSans">
       <Navbar />
 
         <MobileNavbar />

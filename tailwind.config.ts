@@ -10,12 +10,8 @@ export default {
   theme: {
   	extend: {
   		fontFamily: {
-  			bricolage: [
-  				'var(--font-bricolage)'
-  			],
-  			poppins: [
-  				'var(--font-poppins)'
-  			]
+  			bricolage: ['var(--font-bricolage)'],
+  			publicSans: ['var(--font-publicSans)']
   		},
   		colors: {
   			background: 'hsl(var(--background))',

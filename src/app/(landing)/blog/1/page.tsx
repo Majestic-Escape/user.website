@@ -4,7 +4,7 @@ import React from "react";
 
 export default function BlogPost() {
   return (
-    <div className="max-w-[85rem] py-24 font-poppins px-4 sm:px-6 lg:px-8 mx-auto">
+    <div className="max-w-[85rem] py-24 font-publicSans px-4 sm:px-6 lg:px-8 mx-auto">
       <div className="grid lg:grid-cols-3 gap-y-8 lg:gap-y-0 lg:gap-x-6">
         {/* Content */}
         <div className="lg:col-span-2">

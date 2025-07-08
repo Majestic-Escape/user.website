@@ -101,7 +101,7 @@ export default function HostProfile({ hostData, isLoading, error }) {
 
   if (error) {
     // You might want to pass the error object to display a more specific message
-    return <div className="text-center text-red-500 py-10">Error loading host data. Please try again later.</div>
+    return <div className="text-center text-gray-500 py-10">Error loading host data. Please try again later.</div>
   }
 
   // If not loading and no error, but hostData is somehow null/undefined (shouldn't happen with RQ enabled flag, but good practice)

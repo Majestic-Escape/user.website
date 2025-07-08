@@ -3,7 +3,7 @@ import {  User } from 'lucide-react'
 
 export default function LoginOptions() {
   return (
-    <div className="font-poppins flex flex-col items-center justify-center min-h-screen px-4 bg-white">
+    <div className="font-publicSans flex flex-col items-center justify-center min-h-screen px-4 bg-white">
       <div className="text-center">
          <User className="w-8 h-8 mx-auto mb-4 text-gray-400" />
          <h1 className='text-xl mb-4 font-bricolage text-absoluteDark'>Login to navigate our awesome stays and experiences</h1>

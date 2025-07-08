@@ -24,13 +24,13 @@ export function LocationForm({ updateFormData, formData }) {
       country: "India - IN",
       latitude: "",
       longitude: "",
-      registrationNumber: "HOT",
+      registrationNumber: "",
     },
   )
   const [registrationNumberError, setRegistrationNumberError] = useState("")
   const [registrationNumberLoading, setRegistrationNumberLoading] = useState(false)
   // New state for valid registration number (false by default, or from formData)
-  const [validRegistrationNo, setValidRegistrationNo] = useState(formData?.validRegistrationNo || false)
+  // const [validRegistrationNo, setValidRegistrationNo] = useState(formData?.validRegistrationNo || false)
 
   const [locationStatus, setLocationStatus] = useState({
     loading: false,
@@ -135,7 +135,7 @@ export function LocationForm({ updateFormData, formData }) {
       latitude: place.geometry.location.lat(),
       longitude: place.geometry.location.lng(),
       // Preserve the registration number if it was already entered
-      registrationNumber: address.registrationNumber || "HOT",
+      registrationNumber: address.registrationNumber,
     }
 
     place.address_components.forEach((component) => {
@@ -218,24 +218,24 @@ export function LocationForm({ updateFormData, formData }) {
         const data = await response.json()
         console.log(data)
         setRegistrationNumberError(data?.message)
-        setValidRegistrationNo(false)
+        // setValidRegistrationNo(false)
         updateFormData({ validRegistrationNo: false })
       } else {
         const data = await response.json()
         if (!data.exists) {
           setRegistrationNumberError(data?.message)
-          setValidRegistrationNo(false)
+          // setValidRegistrationNo(false)
           updateFormData({ validRegistrationNo: false })
         } else {
           setRegistrationNumberError("")
-          setValidRegistrationNo(true)
+          // setValidRegistrationNo(true)
           updateFormData({ validRegistrationNo: true })
         }
       }
     } catch (error) {
       console.error("Error checking registration number:", error)
       setRegistrationNumberError("Error verifying registration number")
-      setValidRegistrationNo(false)
+      // setValidRegistrationNo(false)
       updateFormData({ validRegistrationNo: false })
     } finally {
       setRegistrationNumberLoading(false)
@@ -243,16 +243,12 @@ export function LocationForm({ updateFormData, formData }) {
   }
 
   // This function manages registration number input:
-  // 1. It automatically ensures that the value always starts with "HOT"
   // 2. It limits the input to 10 characters.
   // 3. When 10 characters are reached, it validates the format using the regex and checks with the backend.
   const handleRegistrationInputChange = (e) => {
     let value = e.target.value.toUpperCase()
 
     // Ensure the fixed prefix "HOT" remains at the start.
-    if (!value.startsWith("HOT")) {
-      value = "HOT" + value.replace(/^HOT/, "")
-    }
 
     // Limit total length to 10 characters.
     if (value.length > 10) {
@@ -262,23 +258,15 @@ export function LocationForm({ updateFormData, formData }) {
     const newAddress = { ...address, registrationNumber: value }
     setAddress(newAddress)
     // Reset validRegistrationNo to false on change until verified again.
-    setValidRegistrationNo(false)
+    // setValidRegistrationNo(false)
     updateFormData({ address: newAddress, validRegistrationNo: false })
 
     // Regex for validation: total 10 characters, starting with HOT and ending with at least one digit.
-    const regEx = /^(?=.{10}$)HOT(?:[A-Z0-9]*)(\d+)$/
-    if (value.length === 10) {
-      if (!regEx.test(value)) {
-        setRegistrationNumberError("Invalid registration number format")
-      } else {
+    
         // Valid format: clear error then check existence on the backend.
         setRegistrationNumberError("")
-        checkRegistrationNumber(value)
-      }
-    } else {
-      // Clear error if the input is incomplete.
-      setRegistrationNumberError("")
-    }
+        // checkRegistrationNumber(value)
+    
   }
 
   // Retain manual input changes for other address fields.
@@ -324,7 +312,7 @@ export function LocationForm({ updateFormData, formData }) {
                 <Input
                   id="address-input"
                   type="text"
-                  placeholder="Enter your address in Goa"
+                  placeholder="Enter your address"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   className="w-full h-12 p-4 border rounded-t-lg"
@@ -359,7 +347,7 @@ export function LocationForm({ updateFormData, formData }) {
           <Label className="text-lg font-semibold">Property Registration Number</Label>
           <div className="relative">
             <Input
-              value={address.registrationNumber || "HOT"}
+              value={address.registrationNumber }
               onChange={handleRegistrationInputChange}
               placeholder="Enter your registration number"
               className="w-full p-4 border rounded-lg"

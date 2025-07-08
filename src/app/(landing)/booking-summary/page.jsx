@@ -13,7 +13,7 @@ import Image from "next/image";
 
 export default function Page() {
   return (
-    <div className="max-w-[1400px] mx-auto px-4 py-24 md:py-32 md:px-6 lg:px-8 font-poppins">
+    <div className="max-w-[1400px] mx-auto px-4 py-24 md:py-32 md:px-6 lg:px-8 font-publicSans">
         <div className="space-y-8">
             <div>
               <h1 className="text-2xl md:text-4xl font-bricolage font-semibold mb-1 text-center">Stay Confirmed</h1>

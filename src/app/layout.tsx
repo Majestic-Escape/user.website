@@ -1,5 +1,5 @@
 import "./globals.css"
-import { bricolage, poppins } from "./fonts"
+import { bricolage, publicSans } from "./fonts"
 import Analytics from "@/components/analytics/google-analytics"
 import { ReactNode } from "react"
 import { WishlistProvider } from "@/components/wishlist-context"
@@ -12,14 +12,23 @@ export const metadata = {
   description: "Discover trusted & verified homestays across India with Majestic Escape. From Himalayan retreats to coastal cottages, explore handpicked stays that celebrate India's local charm and hospitality.",
   keywords: "Majestic Escape, India, homestays, local stays, verified stays, vacation rentals, heritage homes, cottages, Indian travel",
   authors: [{ name: "Majestic Escape" }],
-  openGraph: {
+  
+  metadataBase: new URL('https://majesticescape.in'),
+  alternates: {
+    canonical: '/',
+    languages: {
+      locale: "en_IN",
+    },
+  },
+
+openGraph: {
     title: "Majestic Escape - Handpicked Homestays Across India",
     description: "Trusted & Verified Indian Homestays. Discover authentic, handpicked stays across India—from the mountains to the beaches.",
     url: "https://majesticescape.in/",
     siteName: "Majestic Escape",
     images: [
       {
-        url: "previews/home/og-image.jpg",
+        url: "/previews/home/og-image.jpg",
         width: 1200,
         height: 630,
       },
@@ -58,9 +67,6 @@ export const metadata = {
 }
 
 
-export const viewport = {
-  themeColor: "#ffffff",
-}
 
 interface RootLayoutProps {
   children: ReactNode
@@ -68,7 +74,7 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" className={`${bricolage.variable} ${poppins.variable}`}>
+    <html lang="en" className={`${bricolage.variable} ${publicSans.variable}`}>
        <head>
         <Analytics/>
 

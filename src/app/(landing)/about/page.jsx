@@ -37,7 +37,7 @@ export default function About() {
  
 
   
-    <div className="font-poppins min-h-screen pt-24 bg-white">
+    <div className="font-publicSans min-h-screen pt-24 bg-white">
       <header className="bg-offWhite shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
         <Heading text="About Majestic Escape" />
