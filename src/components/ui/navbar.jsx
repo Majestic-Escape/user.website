@@ -61,7 +61,7 @@ export default function Navbar() {
             <WishlistPopup isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
             <Button
             onClick={switchToHosting}
-            className="text-sm bg-transparent hover:bg-transparent border-none shadow-none  text-stone font-medium hover:text-brightGreen hover:transition-colors hover:underline"
+            className="text-sm bg-transparent hover:bg-transparent border-none shadow-none  text-stone  hover:text-brightGreen hover:transition-colors hover:underline"
           >
             Switch to Hosting
           </Button>

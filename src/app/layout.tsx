@@ -18,7 +18,7 @@ export const metadata = {
     siteName: "Majestic Escape",
     images: [
       {
-        url: "https://majesticescape.in/og-image.jpg",
+        url: "previews/home/og-image.jpg",
         width: 1200,
         height: 630,
       },
@@ -30,7 +30,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Majestic Escape | Your Perfect Goan Gateway",
     description: "Discover your perfect Goan gateway with Majestic Escape. From beachfront villas to heritage homes, find authentic stays that capture the true spirit of Goa.",
-    images: ["https://majesticescape.in/og-image.jpg"],
+    images: ["/previews/home/twitter-card.jpg"],
   },
   icons: {
     icon: [
