@@ -6,14 +6,15 @@ import { WishlistProvider } from "@/components/wishlist-context"
 import { Providers } from "@/components/providers"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { Toaster } from "sonner"
+
 export const metadata = {
-  title: "Majestic Escape | Your Perfect Goan Gateway",
-  description: "Discover your perfect Goan gateway with Majestic Escape. From beachfront villas to heritage homes, find authentic stays that capture the true spirit of Goa, handpicked for the modern traveller.",
-  keywords: "Majestic Escape, Goa, home-stays, luxury accommodation, vacation rentals, beachfront villas, heritage homes",
+  title: "Majestic Escape - Handpicked Homestays Across India",
+  description: "Discover trusted & verified homestays across India with Majestic Escape. From Himalayan retreats to coastal cottages, explore handpicked stays that celebrate India's local charm and hospitality.",
+  keywords: "Majestic Escape, India, homestays, local stays, verified stays, vacation rentals, heritage homes, cottages, Indian travel",
   authors: [{ name: "Majestic Escape" }],
   openGraph: {
-    title: "Majestic Escape | Your Perfect Goan Gateway",
-    description: "Discover your perfect Goan gateway with Majestic Escape. From beachfront villas to heritage homes, find authentic stays that capture the true spirit of Goa.",
+    title: "Majestic Escape - Handpicked Homestays Across India",
+    description: "Trusted & Verified Indian Homestays. Discover authentic, handpicked stays across India—from the mountains to the beaches.",
     url: "https://majesticescape.in/",
     siteName: "Majestic Escape",
     images: [
@@ -28,8 +29,8 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Majestic Escape | Your Perfect Goan Gateway",
-    description: "Discover your perfect Goan gateway with Majestic Escape. From beachfront villas to heritage homes, find authentic stays that capture the true spirit of Goa.",
+    title: "Majestic Escape - Handpicked Homestays Across India",
+    description: "Discover authentic, handpicked homestays across India. Verified, local-first stays made for meaningful travel.",
     images: ["/previews/home/twitter-card.jpg"],
   },
   icons: {
@@ -55,6 +56,7 @@ export const metadata = {
     "msapplication-config": "/browserconfig.xml",
   },
 }
+
 
 export const viewport = {
   themeColor: "#ffffff",
