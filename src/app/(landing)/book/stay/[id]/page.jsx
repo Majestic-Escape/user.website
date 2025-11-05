@@ -407,7 +407,7 @@ function BookPageContent() {
       console.error(err);
     }
   };
-  const updateBookingStatus = async (bookingId, host, manual) => {
+  const updateBookingStatus = async (bookingId, host, manual, payment) => {
     try {
       const userId = JSON.parse(localStorage.getItem("userId"));
       const getLocalData = await localStorage.getItem("token");
@@ -423,6 +423,7 @@ function BookPageContent() {
           hostEmail: host,
           userId: userId,
           manual: manual,
+          payment: payment,
         }),
       });
       const result = await response.json();
@@ -574,7 +575,7 @@ function BookPageContent() {
         totals?.total * 100,
         property?._id
       );
-
+      console.log("ordersssss", order_id.data);
       const options = {
         key: "rzp_test_RRelkKgMDh3dun", //"rzp_test_w0bKE5w5UPOPrY", // Replace with your actual test key
         amount: totals.total * 100,
@@ -626,6 +627,7 @@ function BookPageContent() {
             response.razorpay_signature,
             response.method
           );
+
           const hostEmail = await property.hostEmail;
           if (verify) {
             if (property.bookingType.manual) {
@@ -633,7 +635,8 @@ function BookPageContent() {
               const update = await updateBookingStatus(
                 booking?.data?._id,
                 hostEmail,
-                property.bookingType.manual
+                property.bookingType.manual,
+                verify?.data?._id
               );
 
               await createPayout(
@@ -654,7 +657,8 @@ function BookPageContent() {
               await updateBookingStatus(
                 booking?.data?._id,
                 hostEmail,
-                property.bookingType.manual
+                property.bookingType.manual,
+                verify?.data?._id
               );
               await createPayout(
                 booking?.data?._id,

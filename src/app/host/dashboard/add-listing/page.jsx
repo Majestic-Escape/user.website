@@ -47,10 +47,10 @@ export default function HostOnboarding() {
       city: "",
       state: "",
       pincode: "",
-      country: "India - IN",
+      country: "",
       latitude: null,
       longitude: null,
-      registrationNumber: "HOT", // default registration number
+      registrationNumber: "", // default registration number
     },
     validRegistrationNo: false, // new field for registration number validity
     bathroomTypes: {

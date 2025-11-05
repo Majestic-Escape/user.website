@@ -27,12 +27,13 @@ export function LocationForm({ updateFormData, formData }) {
       city: "",
       state: "",
       pincode: "",
-      country: "India - IN",
+      country: "",
       latitude: "",
       longitude: "",
-      registrationNumber: "HOT",
+      registrationNumber: "",
     }
   );
+
   const [registrationNumberError, setRegistrationNumberError] = useState("");
   const [registrationNumberLoading, setRegistrationNumberLoading] =
     useState(false);
@@ -40,7 +41,12 @@ export function LocationForm({ updateFormData, formData }) {
   const [validRegistrationNo, setValidRegistrationNo] = useState(
     formData?.validRegistrationNo || false
   );
-
+  useEffect(() => {
+    setAddress((prev) => ({
+      ...prev,
+      registrationNumber: "",
+    }));
+  }, [address.state]);
   const [locationStatus, setLocationStatus] = useState({
     loading: false,
     error: null,
@@ -150,7 +156,7 @@ export function LocationForm({ updateFormData, formData }) {
       latitude: place.geometry.location.lat(),
       longitude: place.geometry.location.lng(),
       // Preserve the registration number if it was already entered
-      registrationNumber: address.registrationNumber || "HOT",
+      registrationNumber: address.registrationNumber,
     };
 
     place.address_components.forEach((component) => {
@@ -248,28 +254,35 @@ export function LocationForm({ updateFormData, formData }) {
     setRegistrationNumberLoading(true);
     try {
       // Assuming a GET request with a query parameter
-      const response = await fetch(
-        `${API_BASE_URL}/property-registration-no/${number}`
-      );
-      console.log(response);
+      if (address.state == "Goa") {
+        const response = await fetch(
+          `${API_BASE_URL}/property-registration-no/${number}`
+        );
 
-      if (!response.ok) {
-        const data = await response.json();
-        console.log(data);
-        setRegistrationNumberError(data?.message);
-        setValidRegistrationNo(false);
-        updateFormData({ validRegistrationNo: false });
-      } else {
-        const data = await response.json();
-        if (!data.exists) {
+        console.log(response);
+
+        if (!response.ok) {
+          const data = await response.json();
+          console.log(data);
           setRegistrationNumberError(data?.message);
           setValidRegistrationNo(false);
           updateFormData({ validRegistrationNo: false });
         } else {
-          setRegistrationNumberError("");
-          setValidRegistrationNo(true);
-          updateFormData({ validRegistrationNo: true });
+          const data = await response.json();
+          if (!data.exists) {
+            setRegistrationNumberError(data?.message);
+            setValidRegistrationNo(false);
+            updateFormData({ validRegistrationNo: false });
+          } else {
+            setRegistrationNumberError("");
+            setValidRegistrationNo(true);
+            updateFormData({ validRegistrationNo: true });
+          }
         }
+      } else {
+        setRegistrationNumberError("");
+        setValidRegistrationNo(true);
+        updateFormData({ validRegistrationNo: true });
       }
     } catch (error) {
       console.error("Error checking registration number:", error);
@@ -289,9 +302,6 @@ export function LocationForm({ updateFormData, formData }) {
     let value = e.target.value.toUpperCase();
 
     // Ensure the fixed prefix "HOT" remains at the start.
-    // if (!value.startsWith("HOT")) {
-    //   value = "HOT" + value.replace(/^HOT/, "");
-    // }
 
     // Limit total length to 10 characters.
     if (value.length > 10) {
@@ -327,7 +337,47 @@ export function LocationForm({ updateFormData, formData }) {
     setAddress(newAddress);
     updateFormData({ address: newAddress });
   };
-
+  const INDIA_STATES_AND_UT = [
+    // 28 States
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+    // 8 Union Territories
+    "Andaman and Nicobar Islands",
+    "Chandigarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Jammu and Kashmir",
+    "Ladakh",
+    "Lakshadweep",
+    "Puducherry",
+  ];
+  console.log("sjadjaaa", address, formData);
   return (
     <div className="max-w-4xl mx-auto p-6">
       <TextReveal>
@@ -409,7 +459,7 @@ export function LocationForm({ updateFormData, formData }) {
           </Label>
           <div className="relative">
             <Input
-              value={address.registrationNumber || "HOT"}
+              value={address.registrationNumber}
               onChange={handleRegistrationInputChange}
               placeholder="Enter your registration number"
               className="w-full p-4 border rounded-lg"
@@ -437,11 +487,11 @@ export function LocationForm({ updateFormData, formData }) {
             Confirm or edit your address details
           </h3>
           <Select
-            value={address.country}
+            value={address?.country || undefined}
             onValueChange={(value) => handleManualInputChange("country", value)}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select country" />
+              <SelectValue placeholder="Select Country" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="India - IN">India - IN</SelectItem>
@@ -450,10 +500,10 @@ export function LocationForm({ updateFormData, formData }) {
 
           {[
             { key: "street", placeholder: "Street, area..." },
-            { key: "district", placeholder: "District/locality" },
+            { key: "district", placeholder: "District / locality" },
             { key: "city", placeholder: "City / town" },
-            { key: "state", placeholder: "State/union territory" },
-            { key: "pincode", placeholder: "PIN code" },
+            // { key: "state", placeholder: "State/union territory" },
+            { key: "pincode", placeholder: "PIN code should be 6 digits" },
           ].map(({ key, placeholder }) =>
             key == "pincode" ? (
               <>
@@ -466,9 +516,22 @@ export function LocationForm({ updateFormData, formData }) {
                   maxLength={6}
                   minLength={6}
                 />
-                <div className="text-left text-sm  text-muted-foreground">
-                  ( Pincode should be 6 digits number )
-                </div>
+                <div className="text-left text-sm  text-muted-foreground"></div>
+                <Select
+                  value={address.state || undefined}
+                  onValueChange={(value) =>
+                    handleManualInputChange("state", value)
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select State" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INDIA_STATES_AND_UT.map((name) => (
+                      <SelectItem value={name}>{name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </>
             ) : (
               <Input

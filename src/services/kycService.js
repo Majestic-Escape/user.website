@@ -40,7 +40,7 @@ export const kycService = {
       );
     }
   },
-  g: async (type) => {},
+
   getFormDataByUserId: async (id) => {
     try {
       console.log("we have just got", id);

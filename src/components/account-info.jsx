@@ -8,15 +8,98 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const states = [
+  // 28 States
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  // 8 Union Territories
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
+];
 
+const languages = [
+  "English",
+  "French",
+  "Portuguese",
+  "Russian",
+  "Hindi",
+  "Marathi",
+  "Konkani",
+  "Kannada",
+  "Telugu",
+  "Tamil",
+  "Malyalam",
+  "Punjabi",
+  "Mandarin",
+  "Romania",
+  "German",
+  "Zulu",
+  "Urdu",
+  "Arabic",
+  "Thai",
+  "Vietnamese",
+  "Tagalog",
+  "Swedish",
+  "Slovian",
+  "Sign Language",
+  "Serbian",
+  "Polish",
+  "Persian",
+  "Korean",
+  "Chinese",
+  "Japanese",
+];
 export default function AccountInfo() {
   const auth = useAuth();
   const [profileData, setProfileData] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(null);
+  const [searchLanguage, setSearchLanguage] = useState("");
+  const [language, setLanguage] = useState("");
+  const [searchState, setSearchState] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const fileInputRef = useRef(null);
-
+  const dropdownRef = useRef(null);
   // Fetch profile information when the user's email is available
   useEffect(() => {
     if (!auth?.user?.email) return;
@@ -38,6 +121,19 @@ export default function AccountInfo() {
 
     fetchProfileInfo();
   }, [auth?.user?.email]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   function formatDOB(dobString) {
     const date = new Date(dobString);
@@ -72,6 +168,18 @@ export default function AccountInfo() {
   const handleChangePhone = (e) => {
     setProfileData((prev) => ({ ...prev, phone: e.target.value }));
   };
+  const handleChangeLanguage = (value) => {
+    setProfileData((prev) => ({ ...prev, languages: value }));
+    setLanguage(value);
+  };
+  const handleChangeState = (value) => {
+    setProfileData((prev) => ({ ...prev, language: value }));
+    setLanguage(value);
+  };
+  const handleChangeCountry = (value) => {
+    setProfileData((prev) => ({ ...prev, language: value }));
+    setLanguage(value);
+  };
 
   // Update address fields in state
   const handleChangeAddress = (field, value) => {
@@ -100,6 +208,8 @@ export default function AccountInfo() {
         postalCode: profileData.address?.postalCode || "",
         country: profileData.address?.country || "",
       },
+      languages: profileData?.languages || [],
+      about: profileData?.about || "",
       governmentIdType: profileData.governmentIdType,
     };
 
@@ -127,7 +237,12 @@ export default function AccountInfo() {
       toast.error("Failed to save profile.");
     }
   };
-
+  console.log(
+    "abbbout",
+    profileData?.about,
+    profileData?.email,
+    profileData?.languages
+  );
   // Render a skeleton view until profileData is loaded
   if (!profileData) {
     return (
@@ -188,6 +303,21 @@ export default function AccountInfo() {
     );
   }
 
+  const filteredLanguages = languages?.filter((item) =>
+    item?.toLowerCase().includes(searchLanguage.toLowerCase())
+  );
+  const filteredStates = states?.filter((item) =>
+    item?.toLowerCase().includes(searchState.toLowerCase())
+  );
+  const toggleLanguage = (lang) => {
+    setProfileData((prev) => {
+      const current = prev.languages || [];
+      const updated = current.includes(lang)
+        ? current.filter((l) => l !== lang)
+        : [...current, lang];
+      return { ...prev, languages: updated };
+    });
+  };
   return (
     <div className="max-w-4xl mx-auto p-4">
       <Card>
@@ -293,12 +423,51 @@ export default function AccountInfo() {
                   value={profileData.address?.city || ""}
                   onChange={(e) => handleChangeAddress("city", e.target.value)}
                 />
-                <Input
+                {/* <Input
                   className="h-10"
                   placeholder="State"
                   value={profileData.address?.state || ""}
                   onChange={(e) => handleChangeAddress("state", e.target.value)}
-                />
+                /> */}
+                <Select
+                  value={profileData.address?.state || undefined}
+                  onValueChange={(value) => handleChangeAddress("state", value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select State" />
+                  </SelectTrigger>
+                  <SelectContent
+                    position="popper"
+                    side="bottom"
+                    align="start"
+                    sideOffset={4}
+                    avoidCollisions={false}
+                    className="max-h-40 overflow-y-auto"
+                  >
+                    {/* Search input inside dropdown */}
+                    <div className="py-2 px-1">
+                      <Input
+                        placeholder="Search Language..."
+                        value={searchState}
+                        onChange={(e) => setSearchState(e.target.value)}
+                        className="w-full"
+                        onKeyDown={(e) => e.stopPropagation()}
+                      />
+                    </div>
+
+                    {filteredStates.length > 0 ? (
+                      filteredStates.map((item) => (
+                        <SelectItem key={item} value={item}>
+                          {item}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem key="not found" value="not found">
+                        Not Found
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
               <Input
                 className="h-10"
@@ -308,12 +477,110 @@ export default function AccountInfo() {
                   handleChangeAddress("postalCode", e.target.value)
                 }
               />
-              <Input
+              {/* <Input
                 className="h-10"
                 placeholder="Country"
                 value={profileData.address?.country || ""}
                 onChange={(e) => handleChangeAddress("country", e.target.value)}
-              />
+              /> */}
+              <Select
+                value={profileData.address?.country || undefined}
+                onValueChange={(value) => handleChangeAddress("country", value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Country" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={"India"}>India</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <hr />
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Languages</h2>
+
+            {/* Dropdown Toggle */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                className="w-full border border-gray-300 rounded-md py-2 px-3 flex justify-between items-center bg-white"
+              >
+                {profileData?.languages?.length > 0
+                  ? `${profileData.languages.length} selected`
+                  : "Select Languages You Speak"}
+                <span className="ml-2">▾</span>
+              </button>
+
+              {/* Dropdown Content */}
+              <div ref={dropdownRef} className="relative">
+                {dropdownOpen && (
+                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-md max-h-60 overflow-y-auto">
+                    <div className="p-2">
+                      <Input
+                        placeholder="Search Language..."
+                        value={searchLanguage}
+                        onChange={(e) => setSearchLanguage(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+
+                    {filteredLanguages.length > 0 ? (
+                      filteredLanguages.map((lang) => (
+                        <label
+                          key={lang}
+                          className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={profileData.languages?.includes(lang)}
+                            onChange={() => toggleLanguage(lang)}
+                            className="mr-2"
+                          />
+                          {lang}
+                        </label>
+                      ))
+                    ) : (
+                      <p className="px-3 py-2 text-gray-500">
+                        No results found
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Display Selected Languages */}
+            {profileData.languages?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {profileData.languages.map((lang) => (
+                  <span
+                    key={lang}
+                    className="bg-green-100 text-green-700 text-sm px-2 py-1 rounded-full"
+                  >
+                    {lang}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <hr />
+          <div>
+            <h2 className="text-lg font-semibold mb-2">About Me</h2>
+            <Textarea
+              className="px-4 py-4 border border-gray h-40 w-full "
+              type="text"
+              value={profileData?.about || ""}
+              placeholder="Write something fun....."
+              maxLength={500}
+              onChange={(e) =>
+                setProfileData((prev) => ({ ...prev, about: e.target.value }))
+              }
+            />
+            <div className="text-sm text-muted-foreground text-right">
+              {profileData?.about?.length || 0}/500
             </div>
           </div>
 
