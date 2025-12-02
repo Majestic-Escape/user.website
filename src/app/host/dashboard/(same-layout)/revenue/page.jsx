@@ -178,7 +178,8 @@ const AnalyticsPage = () => {
   const fetchData = async () => {
     const getLocalData = await localStorage.getItem("token");
     const data = JSON.parse(getLocalData);
-    const host = await localStorage.getItem("userId");
+    const hostData = await localStorage.getItem("userId");
+    const hostId = JSON.parse(hostData);
 
     const from = dateRange.from ? dateRange.from.toLocaleDateString() : null;
     const to = dateRange.to ? dateRange.to.toLocaleDateString() : null;
@@ -186,7 +187,7 @@ const AnalyticsPage = () => {
     if (data) {
       try {
         const response = await fetch(
-          `${API_URL}/booking/revenue-filter?search=${searchTerm}&status=${status}&from=${from}&to=${to}&title=${currentProperty}`,
+          `${API_URL}/booking/revenue-filter?search=${searchTerm}&status=${status}&from=${from}&to=${to}&title=${currentProperty}&hostId=${hostId}`,
           {
             method: "GET",
             headers: {
@@ -471,10 +472,14 @@ const AnalyticsPage = () => {
 
   const propertyPieData = useMemo(() => {
     const data = arr.map((propTitle, i) => {
-      const final = bookings?.filter(
-        (item) =>
-          item?.propertyId?.title?.toLowerCase() === propTitle.toLowerCase()
-      );
+      const final = bookings?.filter((item) => {
+        if (item?.propertyId?.title && propTitle) {
+          console.log("who the", item?.propertyId?.title, propTitle);
+          return (
+            item?.propertyId?.title?.toLowerCase() === propTitle.toLowerCase()
+          );
+        }
+      });
       let sum = 0;
       let sumBook = 0;
       final?.forEach((item) => {
@@ -805,7 +810,7 @@ const AnalyticsPage = () => {
                   fill="#8884d8"
                   dataKey={`sum`}
                   label={({ name, percent }) =>
-                    `${name.slice(0, 11)}... ${(percent * 100).toFixed(0)}%`
+                    `${name?.slice(0, 11)}... ${(percent * 100).toFixed(0)}%`
                   }
                 >
                   {propertyPieData.map((entry, index) => (

@@ -1,5 +1,20 @@
 export const properties = [
   {
+    icon: "/images/property-icons/weddings.png",
+    label: "Wedding Stay",
+    route: "wedding",
+  },
+  {
+    icon: "/images/property-icons/tents.png",
+    label: "Tent",
+    route: "tent",
+  },
+  {
+    icon: "/images/property-icons/woman.png",
+    label: "Woman Stay",
+    route: "woman",
+  },
+  {
     icon: "/images/property-icons/h.png",
     label: "House",
     route: "house",

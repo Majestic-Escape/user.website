@@ -35,6 +35,12 @@ interface SearchFilterProps {
   baby: string;
   property: string;
 }
+type Guests = {
+  adults: number;
+  children: number;
+  infants: number;
+};
+
 const safeParseDate = (
   dateString: string | undefined | null
 ): Date | undefined => {
@@ -44,7 +50,7 @@ const safeParseDate = (
   // Check if the date is valid
   return isNaN(date.getTime()) ? undefined : date;
 };
-export default function SearchFilter({
+export default function SearcahFilter({
   isScrolled,
   fromDate,
   toDate,
@@ -71,23 +77,23 @@ export default function SearchFilter({
   const [selectProperty, setSelectProperty] = React.useState(
     property ? property : ""
   );
-  const [guests, setGuests] = React.useState({
-    adults: active ? grownup : 0,
-    children: active ? child : 0,
-    infants: active ? baby : 0,
+  const [guests, setGuests] = React.useState<Guests>({
+    adults: Number(active ? grownup : 0),
+    children: Number(active ? child : 0),
+    infants: Number(active ? baby : 0),
   });
 
   const router = useRouter();
   const handleGuestChange = (
-    type: "adults" | "children" | "infants",
+    type: keyof Guests,
     operation: "increment" | "decrement"
   ) => {
     setGuests((prev) => ({
       ...prev,
       [type]:
         operation === "increment"
-          ? Number(prev[type]) + 1
-          : Number(Math.max(0, prev[type] - 1)),
+          ? prev[type] + 1
+          : Math.max(0, prev[type] - 1),
     }));
   };
   // Track hydration
@@ -495,6 +501,13 @@ export default function SearchFilter({
         <FilterStaysBar
           selectProperty={selectProperty}
           setSelectProperty={setSelectProperty}
+          location={location}
+          from={null}
+          to={null}
+          adults={null}
+          senior={null}
+          childrens={null}
+          infants={null}
         />
       </div>
     </>

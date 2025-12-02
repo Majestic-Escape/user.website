@@ -5,7 +5,7 @@ import { Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSheet } from "@/components/providers/sheet-provider";
 import { SearchSheet } from "@/components/search-sheet";
-import FilterStaysBar from "./filter-stays-bar";
+
 import Image from "next/image";
 import { FilterSheet } from "./filter-sheet";
 import Link from "next/link";

@@ -11,6 +11,7 @@ import {
   eachDayOfInterval,
   addDays,
 } from "date-fns";
+
 import axios from "axios";
 import { ChevronLeft, ChevronRight, Upload, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,7 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams } from "next/navigation";
 import ConfirmCancelDialog from "@/components/dialog-modal";
-
+import moment from "moment-timezone";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const FullCalendarPage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -76,6 +77,14 @@ const FullCalendarPage = () => {
   const searchParams = useSearchParams();
   const propertyId = searchParams.get("propertyId");
   console.log("nik", unavailableDates, hostBlock);
+
+  const toIST = (date) => {
+    return moment(date).tz("Asia/Kolkata").startOf("day");
+  };
+
+  const todayIST = () => {
+    return moment().tz("Asia/Kolkata").startOf("day");
+  };
   async function fetchDates() {
     try {
       const response = await axios.get(
@@ -144,7 +153,7 @@ const FullCalendarPage = () => {
         ? addDays(new Date(checkout), 2)
         : addDays(new Date(checkin), 2);
 
-      const response = await fetch(`${API_URL}/booking`, {
+      const response = await fetch(`${API_URL}/booking/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -162,7 +171,7 @@ const FullCalendarPage = () => {
           status: "confirmed",
           paymentStatus: "paid",
           checkIn: newCheckin,
-
+          subTotal: 0,
           checkOut: newCheckout,
           price: 0,
           currency: "INR",
@@ -175,6 +184,7 @@ const FullCalendarPage = () => {
       if (!response.ok) {
         const result = await response.json();
         toast.error(result.message);
+        return;
       }
       const result = await response.json();
       await fetchDates();
@@ -198,36 +208,48 @@ const FullCalendarPage = () => {
             Authorization: `Bearer ${data}`,
           },
           body: JSON.stringify({
-            selectedDate: selectedDate,
+            selectedDate: moment(selectedDate)
+              .tz("Asia/Kolkata")
+              .format("YYYY-MM-DD"),
+            userId: userId,
           }),
         }
       );
       if (!response.ok) {
-        throw new error("Failed to save the data");
+        return;
       }
       toast.success("You have successfully unblocked date");
       await fetchDates();
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
     }
   };
 
   const handleDateClick = (date) => {
-    const getDate = new Date(date);
-    getDate.setDate(getDate.getDate() + 1);
+    const clickedIST = toIST(date);
 
-    if (unavailableDates.includes(getDate.toISOString().split("T")[0])) {
+    // FORMAT as YYYY-MM-DD using IST
+    const clickedDateString = clickedIST.format("YYYY-MM-DD");
+
+    if (unavailableDates.includes(clickedDateString)) {
       toast.error("Date already reserved.");
-    } else if (arr.includes(getDate.toISOString().split("T")[0])) {
+      return;
+    }
+
+    if (arr.includes(clickedDateString)) {
       toast.error("Past date cannot be reserved.");
-    } else if (hostBlock.includes(getDate.toISOString().split("T")[0])) {
+      return;
+    }
+
+    if (hostBlock.includes(clickedDateString)) {
       setSelectedDate(date);
       setConfirmDialogOpen(true);
-    } else {
-      setSelectedDate(date);
-      setDateRange({ from: date, to: null });
-      setIsDialogOpen(true);
+      return;
     }
+
+    setSelectedDate(date);
+    setDateRange({ from: date, to: null });
+    setIsDialogOpen(true);
   };
 
   const handleBlockDates = () => {
@@ -260,6 +282,7 @@ const FullCalendarPage = () => {
     }
     setIsDialogOpen(false);
   };
+
   const syncWithUrl = async (kind) => {
     const url = iCalUrl;
 
@@ -276,10 +299,11 @@ const FullCalendarPage = () => {
   };
 
   const handleSyncCalendar = (kind) => {
-    if (syncPlatform === "google") {
-      console.log("Syncing with Google Calendar");
-      // Implement Google Calendar sync logic here
-    } else if (syncPlatform === "ical") {
+    // if (syncPlatform === "google") {
+    // console.log("Syncing with Google Calendar");
+    // // Implement Google Calendar sync logic here
+    // } else
+    if (syncPlatform === "ical") {
       syncWithUrl(kind);
       console.log("Syncing with iCal URL:", iCalUrl);
       // Implement iCal sync logic here
@@ -306,7 +330,8 @@ const FullCalendarPage = () => {
           );
           const isBlocked = hostBlock.some((date) => isSameDay(date, day));
           const dayPrice = pricing[format(day, "yyyy-MM-dd")] || "";
-          const isUnable = day < addDays(new Date(), -1);
+          const today = todayIST();
+          const isUnable = toIST(day).isBefore(today);
 
           if (new Date().getMonth() == new Date(day).getMonth()) {
             if (day > monthStart && day < currentDate) {
@@ -369,12 +394,12 @@ const FullCalendarPage = () => {
     const selectedTab = tab;
 
     if (selectedTab === "block") {
-      const dateDays = eachDayOfInterval({
-        start: dateRange.from,
-        end: dateRange.to,
-      });
-      console.log("k", dateDays);
-      let hasOverlap = false; // use local variable
+      // const dateDays = eachDayOfInterval({
+      //   start: dateRange.from,
+      //   end: dateRange.to,
+      // });
+      // console.log("k", dateDays);
+      // let hasOverlap = false; // use local variable
 
       // for (let i = 1; i < dateDays.length; i++) {
       //   const dateStr = dateDays[i].toISOString().split("T")[0];
@@ -387,6 +412,35 @@ const FullCalendarPage = () => {
       // }
 
       // if (!hasOverlap) {
+
+      const dateDays = eachDayOfInterval({
+        start: dateRange.from,
+        end: dateRange.to,
+      });
+      const formatRevDate = (date) => {
+        return date ? format(date, "yyyy-MM-dd") : "";
+      };
+      // Convert selected range to "yyyy-mm-dd"
+      const selectedRange = dateDays.map((d) => formatRevDate(d));
+
+      // Check overlap with existing reserved or host-blocked dates
+      const hasOverlap = selectedRange.some((d) =>
+        unavailableDates.includes(d)
+      );
+
+      console.log(
+        "what is this",
+        selectedRange,
+        unavailableDates,
+        dateRange.from,
+        dateRange.to
+      );
+      if (hasOverlap) {
+        toast.error(
+          "Selected dates overlap with existing reserved/blocked dates."
+        );
+        return; // ❌ Stop processing
+      }
       handleBlockDates();
       // }
     } else if (selectedTab === "reserve") {
@@ -419,7 +473,9 @@ const FullCalendarPage = () => {
         choice={"Unblock"}
         open={confirmDialogOpen}
         onConfirm={() => {
-          unblockDates(addDays(selectedDate, 1));
+          unblockDates(
+            moment(selectedDate).tz("Asia/Kolkata").format("YYYY-MM-DD")
+          );
           setConfirmDialogOpen(false);
         }}
         onClose={() => {
@@ -477,7 +533,7 @@ const FullCalendarPage = () => {
                     <SelectValue placeholder="Select platform to sync from" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="google">Google Calendar</SelectItem>
+                    {/* <SelectItem value="google">Google Calendar</SelectItem> */}
                     <SelectItem value="ical">iCal URL</SelectItem>
                   </SelectContent>
                 </Select>
@@ -607,7 +663,7 @@ const FullCalendarPage = () => {
               <TabsContent value="reserve">
                 <p>Click submit to reserve the selected date range.</p>
               </TabsContent>
-              <TabsContent value="offer">
+              {/* <TabsContent value="offer">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="offerName" className="text-right">
                     Offer Name
@@ -630,7 +686,7 @@ const FullCalendarPage = () => {
                   </Label>
                   <Input id="price" type="number" className="col-span-3" />
                 </div>
-              </TabsContent>
+              </TabsContent> */}
             </Tabs>
           </div>
           <DialogFooter>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,7 @@ export function DocumentUpload({ updateFormData, formData }) {
       isVerified: false,
     }
   );
+  const fileInputRef = useRef(null);
   const [showDialog, setShowDialog] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [image, setImage] = useState(null);
@@ -63,11 +64,27 @@ export function DocumentUpload({ updateFormData, formData }) {
     }
   }, [documentInfo, updateFormData, formData]);
 
+  // const handleDocumentTypeChange = (value) => {
+  //   setDocumentInfo((prev) => ({ ...prev, documentType: value }));
+  // };
   const handleDocumentTypeChange = (value) => {
-    setDocumentInfo((prev) => ({ ...prev, documentType: value }));
-  };
+    setDocumentInfo({
+      documentType: value,
+      documentNumber: null,
+      documentFile: null,
+      isVerified: false,
+    });
 
+    setImage(null);
+    fileInputRef.current?.clear();
+  };
   const handleFileChange = async (file) => {
+    if (!file) {
+      return;
+    }
+
+    const MAX_SIZE = 4 * 1024 * 1024;
+
     const allowedTypes = [
       "image/jpeg",
       "image/jpg",
@@ -82,12 +99,16 @@ export function DocumentUpload({ updateFormData, formData }) {
     }
 
     // Check file size
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 4 * 1024 * 1024) {
       toast.error("File size must be less than 5MB");
       return;
     }
+    const timestamp = Date.now();
+    const ext = file.name.split(".").pop();
+    const newName = `${documentInfo.documentType}_${timestamp}.${ext}`;
 
-    setDocumentInfo((prev) => ({ ...prev, documentFile: file }));
+    const renamedFile = new File([file], newName, { type: file.type });
+    setDocumentInfo((prev) => ({ ...prev, documentFile: renamedFile }));
 
     const reader = new FileReader();
 
@@ -115,33 +136,64 @@ export function DocumentUpload({ updateFormData, formData }) {
       const doc = formData?.documentInfo?.documentType;
       try {
         //verify pan, voter and passport on same route
-        const response = await axios.post(`${API_BASE_URL}/pan-kyc/verify`, {
-          // Single API call that handles both OCR and Status Check
-          email: email,
-          imageUrl: base64Image,
-          userId: data,
-          doc: doc,
+        // const response = await axios.post(
+        //   `${API_BASE_URL}/pan-kyc/verify`,
+        //   {
+        //     // Single API call that handles both OCR and Status Check
+        //     email: email,
+        //     imageUrl: base64Image,
+        //     userId: data,
+        //     doc: doc,
+        //   },
+        //   {
+        //     withCredentials: true,
+        //     headers: { "Content-Type": "application/json" },
+        //   }
+        // );
+        const response = await fetch(`${API_BASE_URL}/pan-kyc/verify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            // Authorization: `Bearer ${data}`,
+          },
+          body: JSON.stringify({
+            email: email,
+            imageUrl: base64Image,
+            userId: data,
+            doc: doc,
+          }),
         });
-
-        if (response.status == 200) {
-          updateHostFormDocVerificationStatus(doc);
-          setTimeout(() => {
-            setDocumentInfo((prev) => ({ ...prev, isVerified: true }));
-
-            setIsUploading(false);
-            setShowDialog(true);
-          }, 2000);
+        if (response.status === 413) {
+          toast.error("Upload file size is more than 4MB");
+          return;
         }
-      } catch (error) {
-        const errorMessage =
-          error?.response?.data?.error || "Something went wrong";
-        toast.error(errorMessage);
+        const resData = await response.json();
+        if (!response.ok) {
+          const msg =
+            resData?.message ||
+            resData?.error ||
+            "Server error. Please try again.";
 
-        console.error("Error during upload:", error);
+          toast.error(msg);
+          throw new Error(msg);
+        }
+
+        // if (response.status == 200) {
+        updateHostFormDocVerificationStatus(doc);
+        setTimeout(() => {
+          setDocumentInfo((prev) => ({ ...prev, isVerified: true }));
+
+          setIsUploading(false);
+          setShowDialog(true);
+        }, 2000);
+        // }
+      } catch (error) {
+        console.error("Upload failed:", error);
+        // toast.error("Network error. Please try again.");
       }
     } catch (error) {
       // alert("Error", error);
-      // console.error("Upload failed:", error);
+      console.error("Upload failed:", error);
       // toast.error("Server error during document verification");
     } finally {
       setIsUploading(false); // Always called
@@ -214,7 +266,7 @@ export function DocumentUpload({ updateFormData, formData }) {
           >
             Upload Document
           </Label>
-          <FileInput
+          {/* <FileInput
             id="document"
             accept=".jpg, .jpeg, .png"
             onFileSelect={handleFileChange}
@@ -231,7 +283,31 @@ export function DocumentUpload({ updateFormData, formData }) {
             <p className="mt-2 text-sm text-gray-500">
               Selected file: {documentInfo.documentFile.name}
             </p>
-          )}
+          )} */}
+          <div className="flex flex-col gap-2">
+            <FileInput
+              ref={fileInputRef}
+              id="document"
+              accept=".jpg, .jpeg, .png, .pdf"
+              onFileSelect={handleFileChange}
+              className="w-full h-32 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors relative"
+            >
+              {!image && (
+                <div className="text-center pointer-events-none">
+                  <Icons.Upload className="mx-auto h-8 w-8 text-gray-400" />
+                  <span className="mt-2 block text-sm font-medium text-gray-700">
+                    Drop your file here, or click to browse
+                  </span>
+                </div>
+              )}
+            </FileInput>
+
+            {documentInfo.documentFile && (
+              <div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-md border border-gray-200">
+                📄 Selected: {documentInfo.documentFile.name}
+              </div>
+            )}
+          </div>
         </div>
       </CardContent>
       <CardFooter>

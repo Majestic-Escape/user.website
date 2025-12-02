@@ -199,15 +199,15 @@ export function ReservationSettings({ updateFormData, formData }) {
                   </CardContent>
                 </Card>
 
-                <Card
+                {/* <Card
                   className={`cursor-pointer transition-colors ${
                     bookingType.flashBook
                       ? "border-primary ring-2 ring-primary ring-offset-2"
                       : "hover:border-primary"
                   }`}
                   onClick={() => handleBookingTypeChange("flashBook")}
-                >
-                  {/* <CardContent className="flex items-start gap-4 p-6">
+                > */}
+                {/* <CardContent className="flex items-start gap-4 p-6">
                     <Checkbox
                       checked={bookingType.flashBook}
                       onCheckedChange={() =>
@@ -225,7 +225,7 @@ export function ReservationSettings({ updateFormData, formData }) {
                       </p>
                     </div>
                   </CardContent> */}
-                </Card>
+                {/* </Card> */}
               </div>
             </div>
           </RadioGroup>

@@ -6,7 +6,7 @@ import {
   validateBathroomSelector,
   validateOccupancySelector,
   validateAmenitiesSelector,
-  // validateAddPhotos,
+  validateAddPhotos,
   validateListingDetails,
   validateReservationSettings,
   validateSetPricing,
@@ -25,7 +25,7 @@ import { OccupancySelector } from "./(part-one)/step-six";
 
 import { StepTwoIntro } from "./(part-two)/intro";
 import { AmenitiesSelector } from "./(part-two)/step-one";
-// import { AddPhotos } from "./(part-two)/step-two";
+import { AddPhotos } from "./(part-two)/step-two";
 import { ListingDetails } from "./(part-two)/step-three";
 import { CancellationSettings } from "./(part-two)/step-four";
 import Onboarding from "./Onboarding";
@@ -96,12 +96,12 @@ export const steps = [
     requiresValidation: true,
     validate: validateAmenitiesSelector,
   },
-  // {
-  //   title: "Step 2",
-  //   component: AddPhotos,
-  //   requiresValidation: true,
-  //   validate: validateAddPhotos,
-  // },
+  {
+    title: "Step 2",
+    component: AddPhotos,
+    requiresValidation: true,
+    validate: validateAddPhotos,
+  },
   {
     title: "Step 2",
     component: ListingDetails,
@@ -132,12 +132,12 @@ export const steps = [
     requiresValidation: true,
     validate: validateSetPricing,
   },
-  {
-    title: "Step 3",
-    component: DiscountSettings,
-    requiresValidation: true,
-    validate: validateDiscountSettings,
-  },
+  // {
+  //   title: "Step 3",
+  //   component: DiscountSettings,
+  //   requiresValidation: true,
+  //   validate: validateDiscountSettings,
+  // },
   {
     title: "Step 4",
     component: SafetyDetails,
@@ -209,20 +209,20 @@ export const editSteps = [
     requiresValidation: true,
     validate: validateAmenitiesSelector,
   },
-  // {
-  //   title: "Step 2",
-  //   component: AddPhotos,
-  //   requiresValidation: true,
-  //   validate: validateAddPhotos,
-  // },
   {
     title: "Step 2",
+    component: AddPhotos,
+    requiresValidation: true,
+    validate: validateAddPhotos,
+  },
+  {
+    title: "Step 3",
     component: ListingDetails,
     requiresValidation: true,
     validate: validateListingDetails,
   },
   {
-    title: "Step 3",
+    title: "Step 4",
     component: CancellationSettings,
     requiresValidation: true,
     validate: validateCancellationSettings,
@@ -244,12 +244,12 @@ export const editSteps = [
     requiresValidation: true,
     validate: validateSetPricing,
   },
-  {
-    title: "Step 3",
-    component: DiscountSettings,
-    requiresValidation: true,
-    validate: validateDiscountSettings,
-  },
+  // {
+  //   title: "Step 3",
+  //   component: DiscountSettings,
+  //   requiresValidation: true,
+  //   validate: validateDiscountSettings,
+  // },
   {
     title: "Step 4",
     component: SafetyDetails,

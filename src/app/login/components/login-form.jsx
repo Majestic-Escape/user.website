@@ -99,6 +99,9 @@ export default function LoginForm() {
           case "USER_NOT_FOUND":
             toast.error("You are not registered, please register first");
             break;
+          case "USER_NOT_ACTIVE":
+            toast.error("You are banned. Check your email.");
+            break;
           default:
             toast.error("Couldn't send OTP, please try again");
         }
@@ -142,6 +145,7 @@ export default function LoginForm() {
         body: JSON.stringify({
           email: email,
           otp: otp,
+          admin: false,
         }),
       });
 
@@ -158,6 +162,7 @@ export default function LoginForm() {
       console.log(data);
       // Store token and show success message
       localStorage.setItem("token", JSON.stringify(token));
+      console.log("why this is going", data);
       localStorage.setItem("userId", JSON.stringify(data.userId));
       login({ email });
       toast.success("Welcome. You are now signed in.");

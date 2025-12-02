@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import SearchFilter from "./search-filter";
 import { MobileNavbar } from "@/components/stays-mobile-navbar";
 import { SheetProvider } from "@/components/providers/sheet-provider";
-import FilterStaysBar from "./filter-stays-bar";
+
 export default function FilterProperties({
   properties,
   from,
@@ -17,7 +17,7 @@ export default function FilterProperties({
   guests,
   location,
   senior,
-  children,
+  child,
   infants,
   property,
 }) {
@@ -73,7 +73,7 @@ export default function FilterProperties({
             location={location}
             active={true}
             grownup={senior}
-            child={children}
+            child={child}
             baby={infants}
             property={property}
           />

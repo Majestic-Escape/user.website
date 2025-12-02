@@ -170,15 +170,16 @@ const AnalyticsPage = () => {
   const fetchData = async () => {
     const getLocalData = await localStorage.getItem("token");
     const data = JSON.parse(getLocalData);
-    const host = await localStorage.getItem("userId");
-
+    const hostData = await localStorage.getItem("userId");
+    const hostId = JSON.parse(hostData);
+    console.log("why is", dateRange.from);
     const from = dateRange.from ? dateRange.from.toLocaleDateString() : null;
     const to = dateRange.to ? dateRange.to.toLocaleDateString() : null;
     console.log(from, to);
     if (data) {
       try {
         const response = await fetch(
-          `${API_URL}/booking/analytics-filter?search=${searchTerm}&status=${status}&from=${from}&to=${to}&title=${currentProperty}`,
+          `${API_URL}/booking/analytics-filter?search=${searchTerm}&status=${status}&from=${from}&to=${to}&title=${currentProperty}&hostId=${hostId}`,
           {
             method: "GET",
             headers: {
@@ -237,7 +238,7 @@ const AnalyticsPage = () => {
     const today = new Date();
     switch (range) {
       case "1d":
-        setDateRange({ from: today.setHours(0, 0, 0, 0), to: today });
+        setDateRange({ from: new Date(today.setHours(0, 0, 0, 0)), to: today });
         break;
       case "1w":
         setDateRange({ from: subDays(today, 7), to: today });

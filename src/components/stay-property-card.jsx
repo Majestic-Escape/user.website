@@ -18,6 +18,7 @@ import { Heart, MapPin, Share } from "lucide-react";
 import { BookingPopup } from "@/components/booking-popup";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function StayCard({ property, includeTaxes }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -27,7 +28,7 @@ export default function StayCard({ property, includeTaxes }) {
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-
+  const router = useRouter();
   const { user } = useAuth();
   const calculatePrice = (basePrice) => {
     const serviceFee = Math.round((basePrice * 14) / 100);
@@ -65,7 +66,6 @@ export default function StayCard({ property, includeTaxes }) {
     );
 
   const handleWishlist = (e) => {
-    e.stopPropagation();
     setIsWishlistDialogOpen(true);
   };
 
@@ -98,6 +98,7 @@ export default function StayCard({ property, includeTaxes }) {
             : ""
         }
       `}
+      onClick={() => router.push(`/stay/${property?._id}`)}
     >
       <div
         className="relative cursor-pointer"
@@ -107,15 +108,13 @@ export default function StayCard({ property, includeTaxes }) {
           <CarouselContent>
             {property?.photos.map((image, idx) => (
               <CarouselItem key={idx}>
-                <Link href={`/stay/${property?._id}`}>
-                  <Image
-                    src={image}
-                    width={400}
-                    height={400}
-                    alt={`${property?.title} - Image ${idx + 1}`}
-                    className="aspect-square w-full h-auto object-cover object-center rounded-lg"
-                  />
-                </Link>
+                <Image
+                  src={image}
+                  width={400}
+                  height={400}
+                  alt={`${property?.title} - Image ${idx + 1}`}
+                  className="aspect-square w-full h-auto object-cover object-center rounded-lg"
+                />
               </CarouselItem>
             ))}
           </CarouselContent>
@@ -142,7 +141,6 @@ export default function StayCard({ property, includeTaxes }) {
           ))}
         </div>
       </div>
-
       <div className="mt-1 sm:mt-2">
         <div className="flex items-center justify-between mb-1">
           <div>
@@ -159,13 +157,18 @@ export default function StayCard({ property, includeTaxes }) {
               <span className="text-absoluteDark text-base font-semibold">
                 ₹{property?.basePrice}&nbsp;
               </span>
-              <Link href={`/stay/${property?._id}`}>per night</Link>
+              {/* <Link href={`/stay/${property?._id}`}> */}
+              per night
+              {/* </Link> */}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <button
-              onClick={handleWishlist}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleWishlist();
+              }}
               className={`${
                 isLiked ? "text-red-500" : "text-solidGray"
               } hover:text-absoluteDark`}
@@ -175,7 +178,10 @@ export default function StayCard({ property, includeTaxes }) {
 
             <button
               className="text-solidGray inline-flex h-8 w-8 items-center justify-center rounded-md hover:text-gray-600"
-              onClick={() => setIsShareDialogOpen(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsShareDialogOpen(true);
+              }}
             >
               <Share
                 width={6}
@@ -190,15 +196,17 @@ export default function StayCard({ property, includeTaxes }) {
 
       <ShareDialog
         isOpen={isShareDialogOpen}
-        onClose={() => setIsShareDialogOpen(false)}
-        property={property}
-      />
-      <WishlistDialog
-        isOpen={isWishlistDialogOpen}
-        onClose={() => setIsWishlistDialogOpen(false)}
+        onClose={(e) => {
+          setIsShareDialogOpen(false);
+        }}
         property={property}
       />
 
+      <WishlistDialog
+        isOpen={isWishlistDialogOpen}
+        onClose={(e) => setIsWishlistDialogOpen(false)}
+        property={property}
+      />
       <PropertyBookingDialog
         isOpen={isBookingDialogOpen}
         onClose={() => setIsBookingDialogOpen(false)}

@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { TextReveal } from "@/components/text-reveal";
 import axios from "axios";
+import { toast } from "sonner";
 
-const API_URL = "http://localhost:5005";
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface Photo {
   id: string;
@@ -31,42 +32,89 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
   const draggedNodeRef = useRef<HTMLDivElement | null>(null);
   const [uploading, setUploading] = useState(false); // Optional: Show loading state
 
-  // const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const files = e.target.files;
-  //   if (!files || files.length === 0) return;
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-  //   setUploading(true);
-  //   const formData = new FormData();
-  //   Array.from(files).forEach((file) => {
-  //     formData.append("images", file); // Match backend field name
-  //   });
+    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+    const ALLOWED_TYPES = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+    ];
+    if (files.length > 0 && Array.from(files).some((f) => f.size > MAX_SIZE)) {
+      toast.error("One or more selected files exceed 5MB");
+      return;
+    }
+    const validFiles: File[] = [];
 
-  //   try {
-  //     const res = await axios.post(`${API_URL}/uploads/`, formData, {
-  //       headers: { "Content-Type": "multipart/form-data" },
-  //     });
+    for (const file of Array.from(files)) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        toast.error(
+          `Invalid file type: ${file.name}. Only JPG, PNG, WEBP, GIF allowed.`
+        );
+        continue;
+      }
 
-  //     const newPhotos = res.data.urls.map((url: string) => ({
-  //       id: crypto.randomUUID(),
-  //       url,
-  //     }));
-  //     const updatedPhotos = [...photos, ...newPhotos];
-  //     setPhotos(updatedPhotos);
-  //     updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
-  //   } catch (error) {
-  //     console.error("Upload failed:", error);
-  //     alert("Failed to upload photos");
-  //   } finally {
-  //     setUploading(false);
-  //   }
+      if (file.size > MAX_SIZE) {
+        toast.error(`File too large: ${file.name}. Max size is 5MB.`);
+        continue;
+      }
+
+      validFiles.push(file);
+    }
+
+    if (validFiles.length === 0) return;
+
+    setUploading(true);
+    const formData = new FormData();
+
+    validFiles.forEach((file) => {
+      formData.append("images", file);
+    });
+
+    // setUploading(true);
+    // const formData = new FormData();
+    // Array.from(files).forEach((file) => {
+    //   formData.append("images", file); // Match backend field name
+    // });
+
+    try {
+      const res = await axios.post(`${API_URL}/uploads/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const newPhotos = res.data.urls.map((url: string) => ({
+        id: crypto.randomUUID(),
+        url,
+      }));
+      const updatedPhotos = [...photos, ...newPhotos];
+      console.log("we are reaching", updatedPhotos);
+      setPhotos(updatedPhotos);
+      updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Failed to upload photos");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // const removePhoto = (id: string) => {
+  //   const updatedPhotos = photos.filter((photo) => photo.id !== id);
+  //   setPhotos(updatedPhotos);
+  //   updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
   // };
+  const removePhoto = async (id: string, url: string) => {
+    await axios.delete(`${API_URL}/uploads/delete`, {
+      data: { url },
+    });
 
-  const removePhoto = (id: string) => {
     const updatedPhotos = photos.filter((photo) => photo.id !== id);
     setPhotos(updatedPhotos);
     updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
   };
-
   const handleDragStart = (
     e: React.DragEvent<HTMLDivElement>,
     photo: Photo
@@ -127,24 +175,37 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
       <TextReveal>
         <div>
           <div className="space-y-4">
-            <Input
+            {/* <Input
               id="photos"
               type="file"
               accept="image/*"
               multiple
-              // onChange={handlePhotoUpload}
+              onChange={handlePhotoUpload}
               className="hidden"
               disabled={uploading} // Disable during upload
-            />
+            > */}
+
             <Label
               htmlFor="photos"
               className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primaryGreen"
             >
-              <div className="text-center">
-                <span className="text-2xl">📷</span>
-                <p className="mt-2">
-                  {uploading ? "Uploading..." : "Click to upload photos"}
-                </p>
+              <div className="relative flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg hover:border-primaryGreen">
+                <input
+                  id="photos"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePhotoUpload}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  style={{ zIndex: 10 }}
+                />
+
+                <span className="pointer-events-none text-center">
+                  <span className="text-2xl">📷</span>
+                  <p className="mt-2">
+                    {uploading ? "Uploading..." : "Click to upload photos"}
+                  </p>
+                </span>
               </div>
             </Label>
             {photos.length < 5 && (
@@ -180,7 +241,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
                     variant="ghost"
                     size="icon"
                     className="absolute top-2 right-2 bg-white bg-opacity-50 hover:bg-opacity-100 transition-opacity duration-300 ease-in-out"
-                    onClick={() => removePhoto(photo.id)}
+                    onClick={() => removePhoto(photo.id, photo.url)}
                   >
                     <Trash2 className="h-4 w-4" />
                     <span className="sr-only">Remove photo</span>

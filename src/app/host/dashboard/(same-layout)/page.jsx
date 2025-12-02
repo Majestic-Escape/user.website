@@ -39,10 +39,20 @@ import Link from "next/link";
 import ListingStageCard from "./ListingStageCard";
 import { kycService } from "../../../../services/kycService";
 import { useEffect } from "react";
-
+// import { useCheckToken } from "@/services/useCheckToken";
 export default function Dashboard() {
   const [exist, setExist] = useState(false);
   const [form, setForm] = useState();
+  const [loading, setLoading] = useState(true);
+
+  // const { checkToken } = useCheckToken();
+
+  // useEffect(() => {
+  //   const verify = async () => {
+  //     await checkToken();
+  //   };
+  //   verify();
+  // }, []);
   useEffect(() => {
     const checkIfKycProcessStarted = async () => {
       try {
@@ -58,11 +68,20 @@ export default function Dashboard() {
         }
       } catch (error) {
         console.error("Could not get data");
+      } finally {
+        setLoading(false);
       }
     };
     checkIfKycProcessStarted();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-4 grid grid-cols-1">
       <div
@@ -76,7 +95,7 @@ export default function Dashboard() {
 
         {exist && form?.status == "processing" ? (
           <>
-            <Card className=" bg-white border-green-300">
+            {/* <Card className=" bg-white border-green-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg font-medium text-absoluteDark font-bricolage">
                   Adjust Availability
@@ -94,9 +113,9 @@ export default function Dashboard() {
                   Go to Calendar
                 </Link>
               </CardContent>
-            </Card>
+            </Card> */}
 
-            {/* <Card className=" bg-white border-green-300">
+            <Card className=" bg-white border-green-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg font-medium text-absoluteDark font-bricolage">
                   Add Bank details
@@ -114,7 +133,7 @@ export default function Dashboard() {
                   Setup payments
                 </Link>
               </CardContent>
-            </Card> */}
+            </Card>
             <Card className=" bg-white border-red-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg font-medium text-absoluteDark font-bricolage">

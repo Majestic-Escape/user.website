@@ -74,7 +74,7 @@ export function FilterSheet() {
 
   return (
     <div>
-      <FilterModal isOpen={isOpen} onClose={setIsOpen(false)} />
+      <FilterModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </div>
     // <Sheet open={isOpen} onOpenChange={setIsOpen}>
     //   <SheetContent side="bottom" className="h-[90vh] overflow-y-auto z-50">

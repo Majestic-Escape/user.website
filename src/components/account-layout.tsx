@@ -14,7 +14,7 @@ export default function AccountLayout({ children }: LayoutProps) {
   const [loading, setLoading] = useState(true);
   const authenticate = async () => {
     const getLocalData = await localStorage.getItem("token");
-    const data = JSON.parse(getLocalData);
+    const data = getLocalData ? JSON.parse(getLocalData) : null;
     if (data) {
       setIsAuth(true);
       setLoading(false);

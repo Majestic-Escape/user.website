@@ -15,6 +15,7 @@ import {
 import { TextReveal } from "@/components/text-reveal";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -41,11 +42,22 @@ export function LocationForm({ updateFormData, formData }) {
   const [validRegistrationNo, setValidRegistrationNo] = useState(
     formData?.validRegistrationNo || false
   );
+  // useEffect(() => {
+  //   setAddress((prev) => ({
+  //     ...prev,
+  //     registrationNumber: "",
+  //   }));
+  // }, [address.state]);
+  const previousStateRef = useRef(address.state);
+
   useEffect(() => {
-    setAddress((prev) => ({
-      ...prev,
-      registrationNumber: "",
-    }));
+    if (previousStateRef.current !== address.state) {
+      setAddress((prev) => ({
+        ...prev,
+        registrationNumber: "",
+      }));
+    }
+    previousStateRef.current = address.state;
   }, [address.state]);
   const [locationStatus, setLocationStatus] = useState({
     loading: false,
@@ -53,7 +65,10 @@ export function LocationForm({ updateFormData, formData }) {
     showApproxLocation: false,
     permissionState: null,
   });
-  const [mapCenter, setMapCenter] = useState({ lat: 15.2993, lng: 74.124 }); // Centered on Goa
+  const [mapCenter, setMapCenter] = useState({
+    lat: address.latitude ? address.latitude : 15.2993,
+    lng: address.longitude ? address.longitude : 74.124,
+  }); // Centered on Goa
   const [searchValue, setSearchValue] = useState("");
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -298,39 +313,85 @@ export function LocationForm({ updateFormData, formData }) {
   // 1. It automatically ensures that the value always starts with "HOT"
   // 2. It limits the input to 10 characters.
   // 3. When 10 characters are reached, it validates the format using the regex and checks with the backend.
+  // const handleRegistrationInputChange = (e) => {
+  //   let value = e.target.value.toUpperCase();
+
+  //   // Ensure the fixed prefix "HOT" remains at the start.
+  //   if (address.state != "Goa") {
+  //     // Limit total length to 10 characters.
+  //     if (value.length > 10) {
+  //       value = value.slice(0, 10);
+  //     }
+
+  //     const newAddress = { ...address, registrationNumber: value };
+  //     setAddress(newAddress);
+  //     // Reset validRegistrationNo to false on change until verified again.
+  //     setValidRegistrationNo(false);
+  //     updateFormData({ address: newAddress, validRegistrationNo: false });
+
+  //     // Regex for validation: total 10 characters, starting with HOT and ending with at least one digit.
+  //     const regEx = /^(?=.{10}$)(?:[A-Z0-9]*)(\d+)$/;
+  //     //  const regEx = /^(?=.{10}$)HOT(?:[A-Z0-9]*)(\d+)$/;
+  //     if (value.length === 10) {
+  //       if (!regEx.test(value)) {
+  //         setRegistrationNumberError("Invalid registration number format");
+  //       } else {
+  //         // Valid format: clear error then check existence on the backend.
+  //         setRegistrationNumberError("");
+  //         checkRegistrationNumber(value);
+  //       }
+  //     } else {
+  //       if (value.length > 3 && value.length < 30) {
+  //         const regEx = /^[A-Z0-9\/-]{3,30}$/;
+  //         if (regEx.test(value)) {
+  //           checkRegistrationNumber(value);
+  //         }
+  //       }
+  //     }
+  //   } else {
+  //     // Clear error if the input is incomplete.
+  //     setRegistrationNumberError("");
+  //   }
+  // };
+
   const handleRegistrationInputChange = (e) => {
     let value = e.target.value.toUpperCase();
 
-    // Ensure the fixed prefix "HOT" remains at the start.
+    // Hard limit (allows backspace)
+    value = value.slice(0, 10);
 
-    // Limit total length to 10 characters.
-    if (value.length > 10) {
-      value = value.slice(0, 10);
-    }
-
+    // Always update state first
     const newAddress = { ...address, registrationNumber: value };
     setAddress(newAddress);
-    // Reset validRegistrationNo to false on change until verified again.
-    setValidRegistrationNo(false);
-    updateFormData({ address: newAddress, validRegistrationNo: false });
 
-    // Regex for validation: total 10 characters, starting with HOT and ending with at least one digit.
-    const regEx = /^(?=.{10}$)(?:[A-Z0-9]*)(\d+)$/;
-    //  const regEx = /^(?=.{10}$)HOT(?:[A-Z0-9]*)(\d+)$/;
+    updateFormData({ address: newAddress, validRegistrationNo: false });
+    setValidRegistrationNo(false);
+
+    // Clear error when deleting
+    if (value.length < 3) {
+      setRegistrationNumberError("");
+      return;
+    }
+
+    // Validation only if enough characters
     if (value.length === 10) {
+      const regEx = /^(?=.{10}$)(?:[A-Z0-9]*)(\d+)$/;
       if (!regEx.test(value)) {
         setRegistrationNumberError("Invalid registration number format");
       } else {
-        // Valid format: clear error then check existence on the backend.
         setRegistrationNumberError("");
         checkRegistrationNumber(value);
       }
     } else {
-      // Clear error if the input is incomplete.
-      setRegistrationNumberError("");
+      // Mid-length validation
+      const regEx = /^[A-Z0-9\/-]{3,30}$/;
+      if (regEx.test(value)) {
+        checkRegistrationNumber(value);
+      }
     }
   };
 
+  console.log("we have reached", formData, address);
   // Retain manual input changes for other address fields.
   const handleManualInputChange = (key, value) => {
     const newAddress = { ...address, [key]: value };
@@ -417,8 +478,13 @@ export function LocationForm({ updateFormData, formData }) {
                 <Input
                   id="address-input"
                   type="text"
-                  placeholder="Enter your address in Goa"
-                  value={searchValue}
+                  placeholder="Enter your address"
+                  value={
+                    // address.city
+                    //   ? `${address.city}, ${address.state}`
+                    //   :
+                    searchValue
+                  }
                   onChange={(e) => setSearchValue(e.target.value)}
                   className="w-full h-12 p-4 border rounded-t-lg"
                 />
@@ -459,7 +525,7 @@ export function LocationForm({ updateFormData, formData }) {
           </Label>
           <div className="relative">
             <Input
-              value={address.registrationNumber}
+              value={address?.registrationNumber || ""}
               onChange={handleRegistrationInputChange}
               placeholder="Enter your registration number"
               className="w-full p-4 border rounded-lg"
@@ -471,7 +537,7 @@ export function LocationForm({ updateFormData, formData }) {
           {registrationNumberError && (
             <p className="text-red-500 text-sm">{registrationNumberError}</p>
           )}
-          <p className="text-sm text-gray-600">
+          {/* <p className="text-sm text-gray-600">
             Don't have a registration no.?{" "}
             <Link
               className="text-primaryGreen underline text-base"
@@ -480,7 +546,7 @@ export function LocationForm({ updateFormData, formData }) {
             >
               Register here
             </Link>
-          </p>
+          </p> */}
 
           <hr />
           <h3 className="text-lg font-semibold">
@@ -528,7 +594,9 @@ export function LocationForm({ updateFormData, formData }) {
                   </SelectTrigger>
                   <SelectContent>
                     {INDIA_STATES_AND_UT.map((name) => (
-                      <SelectItem value={name}>{name}</SelectItem>
+                      <SelectItem key={name} value={name}>
+                        {name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

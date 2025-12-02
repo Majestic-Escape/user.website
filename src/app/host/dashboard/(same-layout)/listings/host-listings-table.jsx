@@ -125,8 +125,10 @@ export function HostListingsTable({ userEmail }) {
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [listingToDelete, setListingToDelete] = useState(null);
+  const [delistDialogOpen, setDelistDialogOpen] = useState(false);
+  const [listingToDelist, setListingToDelist] = useState(null);
+  const [relistDialogOpen, setRelistDialogOpen] = useState(false);
+  const [listingToRelist, setListingToRelist] = useState(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [imagePopupOpen, setImagePopupOpen] = useState(false);
@@ -135,12 +137,12 @@ export function HostListingsTable({ userEmail }) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
-
+  console.log("gogog", userEmail);
   const fetchListings = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getUserPropertyListings(userEmail, page);
-      setData(response.listings);
+      setData(response?.listings);
     } catch (error) {
       console.error("Failed to fetch listings:", error);
       // You might want to show an error message to the user here
@@ -158,48 +160,90 @@ export function HostListingsTable({ userEmail }) {
     setSelectedPropertyName(propertyName);
     setImagePopupOpen(true);
   }, []);
-
-  const handleDeleteClick = useCallback((listing) => {
-    setListingToDelete(listing);
-    setDeleteDialogOpen(true);
+  const handleRelistClick = useCallback((listing) => {
+    setListingToRelist(listing);
+    setRelistDialogOpen(true);
+    fetchListings();
+  }, []);
+  const handleDelistClick = useCallback((listing) => {
+    setListingToDelist(listing);
+    setDelistDialogOpen(true);
     fetchListings();
   }, []);
 
-  const handleConfirmDelete = useCallback(async () => {
-    if (listingToDelete) {
+  const handleConfirmDelist = useCallback(async () => {
+    if (listingToDelist) {
       try {
         const getLocalData = await localStorage.getItem("token");
         const data = JSON.parse(getLocalData);
 
         const response = await fetch(
-          `${API_BASE_URL}/properties/host/user-property/${listingToDelete._id}`,
+          `${API_BASE_URL}/properties/host/delist/${
+            listingToDelist._id
+          }?hostSide=${true}`,
           {
             headers: {
               Authorization: `Bearer ${data}`,
               "Content-Type": "application/json",
             },
-            method: "DELETE",
+            method: "PATCH",
           }
         );
 
         if (!response.ok) {
-          throw new Error("Failed to delete the listing");
+          throw new Error("Failed to delist the listing");
         }
 
-        setData((prevData) =>
-          prevData.filter((item) => item._id !== listingToDelete._id)
-        );
-        setDeleteDialogOpen(false);
-        setListingToDelete(null);
-        toast.success("Listing deleted successfully");
+        // setData((prevData) =>
+        //   prevData.filter((item) => item._id !== listingToDelete._id)
+        // );
+        setDelistDialogOpen(false);
+        setListingToDelist(null);
+        fetchListings();
+        toast.success("Listing delisted successfully");
       } catch (error) {
-        console.error("Failed to delete listing:", error);
-        toast.error("Failed to delete listing");
+        console.error("Failed to delist listing:", error);
+        toast.error("Failed to delist listing");
         // You might want to show an error message to the user here
       }
     }
-  }, [listingToDelete]);
+  }, [listingToDelist]);
 
+  const handleConfirmRelist = useCallback(async () => {
+    if (listingToRelist) {
+      try {
+        const getLocalData = await localStorage.getItem("token");
+        const data = JSON.parse(getLocalData);
+
+        const response = await fetch(
+          `${API_BASE_URL}/properties/host/reactivate/${listingToRelist._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${data}`,
+              "Content-Type": "application/json",
+            },
+            method: "PATCH",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to delist the listing");
+        }
+
+        // setData((prevData) =>
+        //   prevData.filter((item) => item._id !== listingToDelete._id)
+        // );
+        setRelistDialogOpen(false);
+        setListingToRelist(null);
+        fetchListings();
+        toast.success("Listing delisted successfully");
+      } catch (error) {
+        console.error("Failed to delist listing:", error);
+        toast.error("Failed to delist listing");
+        // You might want to show an error message to the user here
+      }
+    }
+  }, [listingToRelist]);
   console.log("all the ", selectedListing);
   const columns = React.useMemo(
     () => [
@@ -344,9 +388,7 @@ export function HostListingsTable({ userEmail }) {
                 >
                   Edit listing
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleDeleteClick(listing)}>
-                  Delete listing
-                </DropdownMenuItem>
+
                 <DropdownMenuItem
                   onClick={() => {
                     setSelectedListing(listing);
@@ -355,24 +397,35 @@ export function HostListingsTable({ userEmail }) {
                 >
                   Add Time
                 </DropdownMenuItem>
-                {listing.status == "active" && (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      router.push(
-                        `/host/dashboard/calendar?propertyId=${listing._id}`
-                      );
-                    }}
-                  >
-                    Block Dates
+                {listing.status == "active" ? (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        router.push(
+                          `/host/dashboard/calendar?propertyId=${listing._id}`
+                        );
+                      }}
+                    >
+                      Calendar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDelistClick(listing)}
+                    >
+                      Delist listing
+                    </DropdownMenuItem>
+                  </>
+                ) : listing.status == "inactive" ? (
+                  <DropdownMenuItem onClick={() => handleRelistClick(listing)}>
+                    Reactivate
                   </DropdownMenuItem>
-                )}
+                ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
           );
         },
       },
     ],
-    [handleImageClick, handleDeleteClick]
+    [handleImageClick, handleDelistClick]
   );
 
   const table = useReactTable({
@@ -401,24 +454,50 @@ export function HostListingsTable({ userEmail }) {
   return (
     <div className="space-y-4 grid grid-cols-1">
       <div className="w-full ">
-        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <Dialog open={relistDialogOpen} onOpenChange={setRelistDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Confirm Deletion</DialogTitle>
+              <DialogTitle>Confirm Reactivation</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete the listing "
-                {listingToDelete?.title}"? This action cannot be undone.
+                Are you sure you want to reactivate the listing &quot;
+                {listingToRelist?.title}&quot;? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => setDeleteDialogOpen(false)}
+                onClick={() => setRelistDialogOpen(false)}
               >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={handleConfirmDelete}>
-                Delete
+              <Button
+                className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+                onClick={handleConfirmRelist}
+              >
+                Confirm
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={delistDialogOpen} onOpenChange={setDelistDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Delisting</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delist the listing "
+                {listingToDelist?.title}"? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDelistDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleConfirmDelist}>
+                Confirm
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -488,9 +567,10 @@ export function HostListingsTable({ userEmail }) {
               isOpen={modalOpen}
               onClose={() => setModalOpen(false)}
               propertyId={selectedListing?._id}
+              listing={selectedListing}
               setOpen={setModalOpen}
             />
-            <Table className="table-auto">
+            <Table className="w-full table-auto">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>

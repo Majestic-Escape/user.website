@@ -27,42 +27,155 @@ export const validatePlaceType = (formData) => {
 //   };
 // };
 
+// export const validateLocationForm = (formData) => {
+//   const { address, validRegistrationNo } = formData;
+//   const re = /^[0-9\b]+$/;
+//   // Validate essential address fields
+//   const isAddressValid =
+//     address.latitude &&
+//     address.longitude &&
+//     address.street?.trim() !== "" &&
+//     address.district?.trim() !== "" &&
+//     address.city?.trim() !== "" &&
+//     address.state?.trim() !== "" &&
+//     address.pincode?.trim() !== "" &&
+//     address.pincode?.trim().length == 6 &&
+//     re.test(address.pincode?.trim()) &&
+//     address.country?.trim() !== "";
+
+//   // Check that a registration number is provided in the address
+//   const isRegistrationNumberProvided =
+//     address.registrationNumber?.trim() !== "";
+
+//   // The form is valid only if all address fields are filled,
+//   // a registration number is provided, and it has been verified.
+//   const isValid =
+//     isAddressValid && isRegistrationNumberProvided && validRegistrationNo;
+
+//   let errorMessage = "";
+//   if (!isRegistrationNumberProvided) {
+//     errorMessage = "Please provide your property registration number.";
+//   } else if (!validRegistrationNo) {
+//     errorMessage = "Please enter and verify your property registration number.";
+//   } else if (!isAddressValid) {
+//     errorMessage = "Please fill in all address fields.";
+//   }
+
+//   return { isValid, errorMessage };
+// };
+
 export const validateLocationForm = (formData) => {
   const { address, validRegistrationNo } = formData;
   const re = /^[0-9\b]+$/;
-  // Validate essential address fields
-  const isAddressValid =
-    address.latitude &&
-    address.longitude &&
-    address.street?.trim() !== "" &&
-    address.district?.trim() !== "" &&
-    address.city?.trim() !== "" &&
-    address.state?.trim() !== "" &&
-    address.pincode?.trim() !== "" &&
-    address.pincode?.trim().length == 6 &&
-    re.test(address.pincode?.trim()) &&
-    address.country?.trim() !== "";
+  const isAllAddressEmpty =
+    !address.street?.trim() &&
+    !address.district?.trim() &&
+    !address.city?.trim() &&
+    !address.state?.trim() &&
+    !address.country?.trim() &&
+    !address.pincode?.trim() &&
+    !address.latitude &&
+    !address.longitude;
 
-  // Check that a registration number is provided in the address
-  const isRegistrationNumberProvided =
-    address.registrationNumber?.trim() !== "";
-
-  // The form is valid only if all address fields are filled,
-  // a registration number is provided, and it has been verified.
-  const isValid =
-    isAddressValid && isRegistrationNumberProvided && validRegistrationNo;
-
-  let errorMessage = "";
-  if (!isRegistrationNumberProvided) {
-    errorMessage = "Please provide your property registration number.";
-  } else if (!validRegistrationNo) {
-    errorMessage = "Please enter and verify your property registration number.";
-  } else if (!isAddressValid) {
-    errorMessage = "Please fill in all address fields.";
+  if (isAllAddressEmpty) {
+    return {
+      isValid: false,
+      errors: ["Please fill in all address fields before proceeding."],
+    };
   }
 
-  return { isValid, errorMessage };
+  const errors = [];
+  if (!address.latitude || !address.longitude) {
+    return {
+      isValid: false,
+      errors: ["Please enter the location in map"],
+    };
+  }
+  if (!address.street?.trim()) {
+    return {
+      isValid: false,
+      errors: ["Please enter the street"],
+    };
+  }
+  if (!address.district?.trim()) {
+    return {
+      isValid: false,
+      errors: ["Please enter the district"],
+    };
+  }
+  if (!address.city?.trim()) {
+    return {
+      isValid: false,
+      errors: ["Please enter the city"],
+    };
+  }
+  if (!address.state?.trim()) {
+    return {
+      isValid: false,
+      errors: ["Please enter the state"],
+    };
+  }
+
+  if (!address.pincode?.trim()) {
+    return {
+      isValid: false,
+      errors: ["Please enter the pincode"],
+    };
+  }
+
+  if (address.pincode.trim().length !== 6) {
+    return {
+      isValid: false,
+      errors: ["Please enter 6 digit pincode"],
+    };
+  }
+  if (!re.test(address.pincode.trim())) {
+    return {
+      isValid: false,
+      errors: ["Please enter only numbers in pincode"],
+    };
+  }
+
+  if (!address.registrationNumber?.trim()) {
+    return {
+      isValid: false,
+      errors: ["Please enter the Registration number"],
+    };
+  }
+
+  if (!validRegistrationNo) {
+    return {
+      isValid: false,
+      errors: ["Registration number is incorrect"],
+    };
+  }
+  return {
+    isValid: true,
+  };
+  // if (!address.street?.trim()) errors.push("Street is required.");
+
+  //  if (!re.test(address.pincode.trim())) {
+  //     errors.push("Pincode must contain only numbers.");
+  //   }
+
+  // if (!address.latitude || !address.longitude) {
+  //   errors.push("Select property location on the map.");
+  // }
+
+  // if () {
+  //   errors.push("Property registration number is required.");
+  // }
+
+  // if () {
+  //   errors.push("Property registration number must be verified.");
+  // }
+
+  // return {
+  //   isValid: errors.length === 0,
+  //   errors,
+  // };
 };
+
 export const validateTime = (formData) => {
   const { checkinTime, checkoutTime } = formData;
   const re = /^[0-9\b]+$/;
@@ -125,7 +238,7 @@ export const validateAmenitiesSelector = (formData) => {
 export const validateAddPhotos = (formData) => {
   return {
     isValid: Array.isArray(formData.photos) && formData.photos.length >= 5,
-    errorMessage: "Please upload at least 5 photos.",
+    errorMessage: "Please upload at least 5 photos, one at a time.",
   };
 };
 

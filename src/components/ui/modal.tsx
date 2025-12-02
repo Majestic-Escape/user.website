@@ -60,10 +60,42 @@ import { useDeviceType } from "./device";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { properties } from "../../lib/property-type";
-export default function FilterModal({ isOpen, onClose }) {
+import { DateRange } from "react-day-picker";
+export default function FilterModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
   // Get all states and functions from context
 
   // const deviceType = useDeviceType();
+
+  interface UseAuthReturn {
+    priceRange: [number, number];
+    setPriceRange: React.Dispatch<React.SetStateAction<[number, number]>>;
+    rooms: number;
+    showAllAmenities: boolean;
+    setShowAllAmenities: React.Dispatch<React.SetStateAction<boolean>>;
+    showAllProperties: boolean;
+    setShowAllProperties: React.Dispatch<React.SetStateAction<boolean>>;
+    addAmenities: string[];
+    addPlaceType: string[];
+    setAddPlaceType: React.Dispatch<React.SetStateAction<string[]>>;
+    addPropertyType: string[];
+    setAddPropertyType: React.Dispatch<React.SetStateAction<string[]>>;
+    bookingType: string;
+    setBookingType: React.Dispatch<React.SetStateAction<string>>;
+    petAllowed: boolean;
+    setPetAllowed: React.Dispatch<React.SetStateAction<boolean>>;
+    checkinType: string;
+    setCheckinType: React.Dispatch<React.SetStateAction<string>>;
+    clearAllFilters: () => void;
+    addAmenitiesList: string[];
+    addPropertiesList: string[];
+    handleRoomChange: (type: "increment" | "decrement") => void;
+  }
   const {
     priceRange,
     setPriceRange,
@@ -93,7 +125,11 @@ export default function FilterModal({ isOpen, onClose }) {
   const [hydrated, setHydrated] = useState(false);
 
   const [isMobile, setIsMobile] = useState(false);
-
+  type FilterRooms = {
+    bedrooms: number;
+    beds: number;
+    bathrooms: number;
+  };
   useEffect(() => {
     const updateSize = () => {
       setIsMobile(window.innerWidth < 1025); // <md breakpoint
@@ -103,15 +139,31 @@ export default function FilterModal({ isOpen, onClose }) {
     return () => window.removeEventListener("resize", updateSize);
   }, []);
   const [activeTab, setActiveTab] = useState("filters");
+  // interface DateRange {
+  //   from?: Date;
+  //   to?: Date;
+  // }
+  type Guests = {
+    adults: number;
+    children: number;
+    infants: number;
+  };
+
+  type FilterGuest = {
+    adults: number;
+    children: number;
+    infants: number;
+  };
 
   // Search state
   const [destination, setDestination] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState({
-    from: undefined,
-    to: undefined,
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [guests, setGuests] = useState<Guests>({
+    adults: 0,
+    children: 0,
+    infants: 0,
   });
-  const [guests, setGuests] = useState({ adults: 0, children: 0, infants: 0 });
   const [openDestination, setOpenDestination] = useState(false);
   const [openDatePicker, setOpenDatePicker] = useState(false);
 
@@ -147,8 +199,8 @@ export default function FilterModal({ isOpen, onClose }) {
       "mobileFilters",
       JSON.stringify({
         dateRange: {
-          from: dateRange.from ? dateRange.from.toISOString() : null,
-          to: dateRange.to ? dateRange.to.toISOString() : null,
+          from: dateRange?.from ? dateRange.from.toISOString() : null,
+          to: dateRange?.to ? dateRange.to.toISOString() : null,
         },
         searchTerm,
         guests,
@@ -156,7 +208,10 @@ export default function FilterModal({ isOpen, onClose }) {
     );
   }, [dateRange, searchTerm, guests, hydrated]);
   //Guest change
-  const handleGuestChange = (type, operation) => {
+  const handleGuestChange = (
+    type: keyof Guests,
+    operation: "increment" | "decrement"
+  ) => {
     setGuests((prev) => ({
       ...prev,
       [type]:
@@ -168,7 +223,7 @@ export default function FilterModal({ isOpen, onClose }) {
 
   const totalGuests = guests.adults + guests.children;
 
-  const formatDate = (date) => {
+  const formatDate = (date: Date) => {
     if (!date) return "";
     return format(date, "MMM d");
   };
@@ -201,7 +256,7 @@ export default function FilterModal({ isOpen, onClose }) {
     {
       value: "baga",
       label: "Baga",
-      label: "Baga",
+
       description: "Known for its nightlife and shacks",
     },
     {
@@ -540,30 +595,32 @@ export default function FilterModal({ isOpen, onClose }) {
             {/* Rooms & Beds */}
             <div>
               <h3 className="text-md font-medium mb-3">Rooms and beds</h3>
-              {["bedrooms", "beds", "bathrooms"].map((field) => (
-                <div
-                  key={field}
-                  className="flex justify-between items-center py-2 border-b last:border-none"
-                >
-                  <span className="capitalize">{field}</span>
-                  <div className="flex items-center gap-3">
-                    <button
-                      className="p-2 border rounded-full disabled:opacity-50"
-                      onClick={() => handleRoomChange(field, -1)}
-                      disabled={rooms[field] === 0}
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span>{rooms[field] || "Any"}</span>
-                    <button
-                      className="p-2 border rounded-full"
-                      onClick={() => handleRoomChange(field, 1)}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
+              {(["bedrooms", "beds", "bathrooms"] as (keyof FilterRooms)[]).map(
+                (field) => (
+                  <div
+                    key={field}
+                    className="flex justify-between items-center py-2 border-b last:border-none"
+                  >
+                    <span className="capitalize">{field}</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        className="p-2 border rounded-full disabled:opacity-50"
+                        onClick={() => handleRoomChange(field, -1)}
+                        disabled={rooms[field] === 0}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span>{rooms[field] || "Any"}</span>
+                      <button
+                        className="p-2 border rounded-full"
+                        onClick={() => handleRoomChange(field, 1)}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
 
             {/* Amenities */}
@@ -907,7 +964,13 @@ export default function FilterModal({ isOpen, onClose }) {
                       align="start"
                     >
                       <div className="space-y-4">
-                        {["adults", "children", "infants"].map((type) => (
+                        {(
+                          [
+                            "adults",
+                            "children",
+                            "infants",
+                          ] as (keyof FilterGuest)[]
+                        ).map((type) => (
                           <div
                             key={type}
                             className="flex items-center justify-between"
@@ -1076,7 +1139,9 @@ export default function FilterModal({ isOpen, onClose }) {
                 {/* Rooms & Beds */}
                 <div>
                   <h3 className="text-md font-medium mb-3">Rooms and beds</h3>
-                  {["bedrooms", "beds", "bathrooms"].map((field) => (
+                  {(
+                    ["bedrooms", "beds", "bathrooms"] as (keyof FilterRooms)[]
+                  ).map((field) => (
                     <div
                       key={field}
                       className="flex justify-between items-center py-3 border-b last:border-none"
@@ -1244,8 +1309,8 @@ export default function FilterModal({ isOpen, onClose }) {
                   "mobileFilters",
                   JSON.stringify({
                     dateRange: {
-                      from: dateRange.from,
-                      to: dateRange.from,
+                      from: dateRange?.from,
+                      to: dateRange?.to,
                     },
                     searchTerm,
                     guests,

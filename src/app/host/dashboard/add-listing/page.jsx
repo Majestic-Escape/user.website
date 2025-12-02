@@ -19,7 +19,7 @@ import { Loader2 } from "lucide-react";
 
 // Import useQueryClient from TanStack Query
 import { useQueryClient } from "@tanstack/react-query";
-
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function HostOnboarding() {
   const auth = useAuth();
   const router = useRouter();
@@ -30,6 +30,36 @@ export default function HostOnboarding() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [showMembershipPopup, setShowMembershipPopup] = useState(false);
+  // const [show, setShow] = useState(false);
+
+  // const checkKycVerification = async () => {
+  //   try {
+  //     const userId = JSON.parse(localStorage.getItem("userId"));
+  //     const getLocalData = await localStorage.getItem("token");
+  //     const data = JSON.parse(getLocalData);
+
+  //     if (data) {
+  //       const response = await fetch(`${API_URL}/hosts/single/${userId}`, {
+  //         method: "GET",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${data}`,
+  //         },
+  //       });
+
+  //       if (!response.ok) {
+  //         return;
+  //       }
+
+  //       const result = await response.json();
+  //       console.log("numb", result);
+  //       setShow(result.kyc);
+  //       return result;
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
 
   const [formData, setFormData] = useState({
     _id: id,
@@ -79,6 +109,11 @@ export default function HostOnboarding() {
     checkinTime: "11",
     checkoutTime: "14",
   });
+
+  // useEffect(() => {
+  //   checkKycVerification();
+  // }, []);
+
   // Update the validation logic to include the registration number check for the Location step.
   useEffect(() => {
     const checkValidation = async () => {
@@ -110,25 +145,46 @@ export default function HostOnboarding() {
 
   const CurrentStepComponent = steps[currentStep].component;
 
+  // const validateCurrentStep = async () => {
+  //   try {
+  //     const currentStepData = steps[currentStep];
+  //     if (
+  //       currentStepData.requiresValidation &&
+  //       typeof currentStepData.validate === "function"
+  //     ) {
+  //       const { isValid, errorMessage } = currentStepData.validate(formData);
+  //       if (!isValid) {
+  //         toast.error(
+  //           errorMessage || "Validation failed. Please check the fields."
+  //         );
+  //         return false;
+  //       }
+  //     }
+  //     return true;
+  //   } catch (error) {
+  //     toast.error("Unexpected error during validation. Please try again.");
+  //     return false;
+  //   }
+  // };
+
   const validateCurrentStep = async () => {
     try {
       const currentStepData = steps[currentStep];
+
       if (
         currentStepData.requiresValidation &&
         typeof currentStepData.validate === "function"
       ) {
-        const { isValid, errorMessage } = currentStepData.validate(formData);
-        if (!isValid) {
-          toast.error(
-            errorMessage || "Validation failed. Please check the fields."
-          );
-          return false;
-        }
+        const result = currentStepData.validate(formData);
+        return result;
       }
-      return true;
+
+      return { isValid: true, errors: [] };
     } catch (error) {
-      toast.error("Unexpected error during validation. Please try again.");
-      return false;
+      return {
+        isValid: false,
+        errors: ["Validation failed due to system error."],
+      };
     }
   };
 
@@ -171,12 +227,31 @@ export default function HostOnboarding() {
     }
   };
 
+  // const handleNext = async () => {
+  //   if (steps[currentStep].requiresValidation) {
+  //     const isValid = await validateCurrentStep();
+  //     if (!isValid) return;
+  //   }
+  //   await saveData();
+  //   if (currentStep < steps.length - 1) {
+  //     setCurrentStep(currentStep + 1);
+  //   }
+  // };
+
   const handleNext = async () => {
     if (steps[currentStep].requiresValidation) {
-      const isValid = await validateCurrentStep();
-      if (!isValid) return;
+      const { isValid, errors } = await validateCurrentStep();
+
+      if (!isValid) {
+        errors.forEach((msg) => toast.error(msg));
+        return;
+      }
     }
+
+    setIsLoading(true);
     await saveData();
+    setIsLoading(false);
+
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
@@ -238,6 +313,22 @@ export default function HostOnboarding() {
     console.log("User not found");
   }, [auth]);
 
+  // if (!show) {
+  //   return (
+  //     <>
+  //       <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
+  //         Verify your kyc now to access this page. &nbsp;{" "}
+  //         <Link href="/host/dashboard/kyc">
+  //           <u>
+  //             <b>Click Here</b>
+  //           </u>
+  //         </Link>
+  //         &nbsp; to verify kyc.
+  //       </div>
+  //     </>
+  //   );
+  // }
+
   return (
     <div className="flex flex-col relative h-full">
       <header className="bg-white w-screen z-50 top-0 fixed right-0 left-0 border-b border-b-gray-200 p-4">
@@ -288,7 +379,7 @@ export default function HostOnboarding() {
             <Button
               onClick={handleNext}
               className="bg-primaryGreen rounded-3xl transition-all hover:bg-brightGreen w-48 h-12 px-6 text-white"
-              disabled={isLoading || isNextDisabled}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <>

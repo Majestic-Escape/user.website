@@ -29,6 +29,9 @@ const propertyTypes = [
   { id: "barn", label: "Barn", icon: "🏚️" },
   { id: "boat", label: "Boat", icon: "🚤" },
   { id: "tiny_house", label: "Tiny house", icon: "🏠" },
+  { id: "wedding", label: "Wedding Stay", icon: "💒" },
+  { id: "tent", label: "Tent", icon: "⛺" },
+  { id: "woman", label: "Woman Stay", icon: "👩🏻" },
 ];
 
 export function PropertyType({ updateFormData, formData }) {
@@ -45,41 +48,39 @@ export function PropertyType({ updateFormData, formData }) {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <TextReveal>
-
-      
-      <h3 className="text-xl md:text-2xl font-bricolage text-absoluteDark font-semibold">
-        What kind of place will you host?
-      </h3>
+        <h3 className="text-xl md:text-2xl font-bricolage text-absoluteDark font-semibold">
+          What kind of place will you host?
+        </h3>
       </TextReveal>
       <TextReveal>
-      <ScrollArea className="w-full rounded-md border p-4">
-        <RadioGroup
-          value={propertyType}
-          onValueChange={handleChange}
-          className="grid md:grid-cols-3 m-2 grid-cols-2 gap-4"
-        >
-          {propertyTypes.map((type) => (
-            <div key={type.id} className="relative">
-              <RadioGroupItem
-                value={type.id}
-                id={type.id}
-                className="peer sr-only"
-              />
-              <Label
-                htmlFor={type.id}
-                className={`${
-                  type.id === propertyType ? "ring-primaryGreen ring-2" : ""
-                } flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:border-brightGreen peer-checked:border-brightGreen peer-checked:bg-brightGreen/10`}
-              >
-                <span className="text-4xl mb-2">{type.icon}</span>
-                <span className="font-medium font-bricolage text-absoluteDark text-center">
-                  {type.label}
-                </span>
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
-      </ScrollArea>
+        <ScrollArea className="w-full rounded-md border p-4">
+          <RadioGroup
+            value={propertyType}
+            onValueChange={handleChange}
+            className="grid md:grid-cols-3 m-2 grid-cols-2 gap-4"
+          >
+            {propertyTypes.map((type) => (
+              <div key={type.id} className="relative">
+                <RadioGroupItem
+                  value={type.id}
+                  id={type.id}
+                  className="peer sr-only"
+                />
+                <Label
+                  htmlFor={type.id}
+                  className={`${
+                    type.id === propertyType ? "ring-primaryGreen ring-2" : ""
+                  } flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:border-brightGreen peer-checked:border-brightGreen peer-checked:bg-brightGreen/10`}
+                >
+                  <span className="text-4xl mb-2">{type.icon}</span>
+                  <span className="font-medium font-bricolage text-absoluteDark text-center">
+                    {type.label}
+                  </span>
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        </ScrollArea>
       </TextReveal>
     </div>
   );

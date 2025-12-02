@@ -4,10 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 // import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-
+// import { useCheckToken } from "@/services/useCheckToken";
 const queryClient = new QueryClient();
 
 const Layout = ({ children }) => {
+  // const { checkToken } = useCheckToken();
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
   const auth = async () => {
@@ -17,8 +18,41 @@ const Layout = ({ children }) => {
       setIsAuth(true);
       setLoading(false);
     }
+    // await checkToken();
   };
 
+  // const auth = async () => {
+  //   const saved = localStorage.getItem("token");
+  //   if (!saved) {
+  //     setIsAuth(false);
+  //     setLoading(false);
+  //     return;
+  //   }
+
+  //   const token = JSON.parse(saved);
+
+  //   try {
+  //     const res = await axios.get(
+  //       `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/validate-token`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+
+  //     // Token is valid
+  //     setIsAuth(true);
+  //   } catch (err) {
+  //     console.log("Token invalid:", err?.response?.data);
+
+  //     // Token invalid → remove and logout
+  //     localStorage.removeItem("token");
+  //     setIsAuth(false);
+  //   }
+
+  //   setLoading(false);
+  // };
   useEffect(() => {
     auth();
   }, []);

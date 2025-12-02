@@ -28,6 +28,7 @@ export default function KycEdit({ params }) {
   const queryClient = useQueryClient();
 
   const [isNextDisabled, setIsNextDisabled] = useState(true);
+  const [isPublished, setIsPublished] = useState(false);
 
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -91,6 +92,7 @@ export default function KycEdit({ params }) {
 
       toast.success("KYC submitted successfully.");
 
+      setIsPublished(true);
       setTimeout(() => {
         setShowCongratulationsDialog(true);
       }, 2000);
@@ -108,21 +110,34 @@ export default function KycEdit({ params }) {
       setIsLoading(false);
     }
   };
-
   const saveData = async (isExiting = false) => {
     setIsLoading(true);
+
     try {
-      console.log("curent st", currentStep);
-      console.log("len st", steps.length);
+      // const dataToSave = {
+      //   ...formData,
+      //   status:
+      //     isExiting || currentStep < steps.length ? "processing" : "pending",
+      // };
+
       const dataToSave = {
         ...formData,
-        status:
-          isExiting || currentStep < steps.length ? "processing" : "pending",
+        status: isExiting
+          ? "processing"
+          : currentStep === steps.length - 1
+          ? "pending"
+          : "processing",
       };
+      console.log("dataToSave", id);
 
+      if (id) {
+        console.log("ID present", id);
+      } else {
+        console.log("ID missing");
+      }
       const response = id
         ? await kycService.updateProperty(id, dataToSave)
-        : await kycService.createProperty(dataToSave);
+        : await kycService.createKycHostData(dataToSave);
 
       if (!id) setId(response._id);
       setFormData(response);
@@ -136,6 +151,33 @@ export default function KycEdit({ params }) {
       setIsLoading(false);
     }
   };
+  // const saveData = async (isExiting = false) => {
+  //   setIsLoading(true);
+  //   try {
+  //     console.log("curent st", currentStep);
+  //     console.log("len st", steps.length);
+  //     const dataToSave = {
+  //       ...formData,
+  //       status:
+  //         isExiting || currentStep < steps.length ? "processing" : "pending",
+  //     };
+
+  //     const response = id
+  //       ? await kycService.updateProperty(id, dataToSave)
+  //       : await kycService.createProperty(dataToSave);
+
+  //     if (!id) setId(response._id);
+  //     setFormData(response);
+
+  //     queryClient.invalidateQueries({
+  //       queryKey: ["KYCStatus", auth.user.email],
+  //     });
+  //   } catch (error) {
+  //     toast.success("Updated your KYC profile");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
   const CurrentStepComponent = steps[currentStep].component;
 
   const validateCurrentStep = async () => {
@@ -181,12 +223,22 @@ export default function KycEdit({ params }) {
     }
   };
 
-  const handleSaveAndExit = () => {
-    setIsLoading(true);
-    console.log("Saving data:", formData);
-    router.push("/host/dashboard");
+  // const handleSaveAndExit = () => {
+  //   setIsLoading(true);
+  //   console.log("Saving data:", formData);
+  //   router.push("/host/dashboard");
+  // };
+  const handleSaveAndExit = async () => {
+    try {
+      setIsLoading(true);
+      const isValid = await validateCurrentStep();
+      if (!isValid) return;
+      await saveData(true);
+    } finally {
+      setIsLoading(false);
+      router.push("/host/dashboard");
+    }
   };
-
   const updateFormData = (stepData) => {
     setFormData((prevData) => ({
       ...prevData,
@@ -249,7 +301,7 @@ export default function KycEdit({ params }) {
           <Button
             className="py-5 px-6 bg-gray-100 border-absoluteDark border text-absoluteDark font-normal rounded-3xl"
             onClick={handlePrevious}
-            disabled={currentStep === 0}
+            disabled={currentStep === 0 || isPublished}
             variant="ghost"
           >
             Back
@@ -258,8 +310,9 @@ export default function KycEdit({ params }) {
             <Button
               onClick={handleSubmit}
               className="bg-primaryGreen rounded-3xl hover:bg-brightGreen py-5 px-6 h-12 text-white"
+              disabled={isPublished || isLoading}
             >
-              Update
+              Publish
             </Button>
           ) : (
             <Button

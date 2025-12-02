@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import PropertyCard from "./stay-property-card";
 import StayCardSkeleton from "./stay-card-skeleton";
+import { useAuth } from "@/contexts/AuthContext";
 import { propertyService } from "../services/propertyService";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-
+import { useRouter } from "next/navigation";
+// import { useCheckToken } from "@/services/useCheckToken";
 export default function StaysProperties() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,6 +17,14 @@ export default function StaysProperties() {
   const [showMore, setShowMore] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [isChecked, setIsChecked] = useState(false);
+  // const { checkToken } = useCheckToken();
+
+  // useEffect(() => {
+  //   const verify = async () => {
+  //     await checkToken();
+  //   };
+  //   verify();
+  // }, []);
 
   useEffect(() => {
     const fetchProperties = async () => {

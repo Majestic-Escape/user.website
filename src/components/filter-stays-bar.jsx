@@ -120,7 +120,7 @@ export default function FilterStaysBar({
   to,
   adults,
   senior,
-  children,
+  childrens,
   infants,
 }) {
   const scrollContainerRef = useRef(null);
@@ -191,7 +191,7 @@ export default function FilterStaysBar({
                   from ? from : ""
                 }&to=${to ? to : ""}&adults=${adults ? adults : ""}&senior=${
                   senior ? senior : ""
-                }&children=${children ? children : ""}&infants=${
+                }&children=${childrens ? childrens : ""}&infants=${
                   infants ? infants : ""
                 }`}
               >

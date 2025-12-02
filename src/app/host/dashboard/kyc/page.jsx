@@ -29,6 +29,8 @@ export default function KYC() {
   const [id, setId] = useState(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
+
   const [showKYCDialog, setShowKYCDialog] = useState(false);
   const [showCongratulationsDialog, setShowCongratulationsDialog] =
     useState(false);
@@ -64,6 +66,7 @@ export default function KYC() {
     status: "pending",
     hostEmail: auth.user && auth.user.email,
   });
+  const [fetchLoading, setFetchLoading] = useState(true);
 
   useEffect(() => {
     const fetchFormData = async () => {
@@ -78,10 +81,13 @@ export default function KYC() {
         }
       } catch (error) {
         console.error("Failed to fetch form data. Please try again.");
+      } finally {
+        setFetchLoading(false);
       }
     };
     fetchFormData();
   }, [id, auth.user?.email]);
+
   useEffect(() => {
     const checkValidation = async () => {
       const currentStepData = steps[currentStep];
@@ -138,10 +144,19 @@ export default function KYC() {
     setIsLoading(true);
 
     try {
+      // const dataToSave = {
+      //   ...formData,
+      //   status:
+      //     isExiting || currentStep < steps.length ? "processing" : "pending",
+      // };
+
       const dataToSave = {
         ...formData,
-        status:
-          isExiting || currentStep < steps.length ? "processing" : "pending",
+        status: isExiting
+          ? "processing"
+          : currentStep === steps.length - 1
+          ? "pending"
+          : "processing",
       };
       console.log("dataToSave", id);
 
@@ -198,7 +213,7 @@ export default function KYC() {
       });
 
       toast.success("KYC submitted successfully.");
-
+      setIsPublished(true);
       setTimeout(() => {
         setShowCongratulationsDialog(true);
       }, 2000);
@@ -229,16 +244,35 @@ export default function KYC() {
     if (!auth) redirect("/login");
   }, [auth]);
 
-  const handleSaveAndExit = () => {
-    setIsLoading(true);
+  // const handleSaveAndExit = () => {
+  //   setIsLoading(true);
 
-    router.push("/host/dashboard");
+  //   router.push("/host/dashboard");
+  // };
+
+  const handleSaveAndExit = async () => {
+    try {
+      setIsLoading(true);
+      const isValid = await validateCurrentStep();
+      if (!isValid) return;
+      await saveData(true);
+    } finally {
+      setIsLoading(false);
+      router.push("/host/dashboard");
+    }
   };
 
   const handleGoToDashboard = () => {
     setShowKYCDialog(false);
     router.push("/host/dashboard");
   };
+  if (fetchLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
+      </div>
+    );
+  }
   if (formCompleted) {
     return (
       <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
@@ -282,7 +316,7 @@ export default function KYC() {
           <Button
             className="py-5 px-6 bg-gray-100 border-absoluteDark border text-absoluteDark font-normal rounded-3xl"
             onClick={handlePrevious}
-            disabled={currentStep === 0}
+            disabled={currentStep === 0 || isPublished}
             variant="ghost"
           >
             Back
@@ -291,6 +325,7 @@ export default function KYC() {
             <Button
               onClick={handleSubmit}
               className="bg-primaryGreen rounded-3xl hover:bg-brightGreen py-5 px-6 h-12 text-white"
+              disabled={isPublished || isLoading}
             >
               Publish
             </Button>
@@ -330,7 +365,13 @@ export default function KYC() {
 
       <Dialog
         open={showCongratulationsDialog}
-        onOpenChange={setShowCongratulationsDialog}
+        // onOpenChange={setShowCongratulationsDialog}
+        onOpenChange={(open) => {
+          setShowCongratulationsDialog(open);
+          if (!open) {
+            router.push("/host/dashboard");
+          }
+        }}
       >
         <DialogContent>
           <DialogHeader>

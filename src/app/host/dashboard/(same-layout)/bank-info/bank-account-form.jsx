@@ -87,7 +87,7 @@ export function BankAccountForm() {
       }
       console.log("stage2", API_URL);
       const response = await fetch(`${API_URL}/hostData/bank/${parsedhost}`, {
-        method: "POST",
+        method: "PUT",
         headers: {
           Authorization: `Bearer ${parsedToken}`,
           "Content-Type": "application/json",

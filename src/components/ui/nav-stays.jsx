@@ -124,7 +124,7 @@ export default function Navbar() {
               />
               <Link
                 className="text-base text-absoluteDark font-medium hover:text-brightGreen hover:transition-colors hover:underline"
-                href="/host"
+                href="/login"
               >
                 Become a Host
               </Link>

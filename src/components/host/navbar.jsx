@@ -28,10 +28,16 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6">
-          <Link href="/host/#features" className="text-gray-600 hover:text-gray-900">
+          <Link
+            href="/host/#features"
+            className="text-gray-600 hover:text-gray-900"
+          >
             Features
           </Link>
-          <Link href="/host/#faqs" className="text-gray-600 hover:text-gray-900">
+          <Link
+            href="/host/#faqs"
+            className="text-gray-600 hover:text-gray-900"
+          >
             FAQs
           </Link>
           <Link
@@ -40,7 +46,10 @@ export default function Navbar() {
           >
             Resources
           </Link>
-          <Link href="/host/help-center" className="text-gray-600 hover:text-gray-900">
+          <Link
+            href="/host/help-center"
+            className="text-gray-600 hover:text-gray-900"
+          >
             Help
           </Link>
         </nav>

@@ -126,14 +126,15 @@ export default function ReservationsPage() {
   const fetchData = async () => {
     const getLocalData = await localStorage.getItem("token");
     const data = JSON.parse(getLocalData);
-
+    const hostData = await localStorage.getItem("userId");
+    const hostId = JSON.parse(hostData);
     const from = date.from ? date.from.toLocaleDateString() : null;
     const to = date.to ? date.to.toLocaleDateString() : null;
     console.log(from, to);
     if (data) {
       try {
         const response = await fetch(
-          `${API_URL}/booking/analytics-filter?search=${searchValue}&status=${status}&from=${from}&to=${to}`,
+          `${API_URL}/booking/analytics-filter?search=${searchValue}&status=${status}&from=${from}&to=${to}&hostId=${hostId}`,
           {
             method: "GET",
             headers: {

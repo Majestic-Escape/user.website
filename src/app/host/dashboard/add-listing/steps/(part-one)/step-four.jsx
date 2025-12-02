@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -40,15 +40,18 @@ export function DescribeYourPlace({ updateFormData, formData }) {
     return true;
   };
 
-  const handleChange = () => {
+  // const handleChange = () => {
+  //   updateFormData({ title, description, guests, bedrooms, beds, bathrooms });
+  // };
+  useEffect(() => {
     updateFormData({ title, description, guests, bedrooms, beds, bathrooms });
-  };
+  }, [title, description, guests, bedrooms, beds, bathrooms]);
 
-  const handleIncrement = (setter) => {
+  const handleIncrement = (setter, key) => {
     setter((prev) => {
       // If previous value is null, start at 1; otherwise, increment.
       const newValue = prev === null ? 1 : prev + 1;
-      handleChange();
+      // handleChange();
       return newValue;
     });
   };
@@ -57,7 +60,7 @@ export function DescribeYourPlace({ updateFormData, formData }) {
     setter((prev) => {
       // If previous value is null, set to 1, or ensure it doesn't drop below 1.
       const newValue = prev === null ? 1 : Math.max(1, prev - 1);
-      handleChange();
+      // handleChange();
       return newValue;
     });
   };
@@ -74,176 +77,172 @@ export function DescribeYourPlace({ updateFormData, formData }) {
         setter(num);
       }
     }
-    handleChange();
+    // handleChange();
   };
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      <TextReveal>  
-
-     
-      <h3 className="text-xl md:text-2xl font-bricolage text-absoluteDark font-semibold">
-        Let's begin with the fundamentals
-      </h3>
+      <TextReveal>
+        <h3 className="text-xl md:text-2xl font-bricolage text-absoluteDark font-semibold">
+          Let's begin with the fundamentals
+        </h3>
       </TextReveal>
 
       <TextReveal>
+        <div className="grid grid-cols-1 gap-4">
+          {/* Guests Input */}
+          <div className="flex justify-between items-center">
+            <Label htmlFor="guests" className="text-lg text-absoluteDark">
+              Max guests
+            </Label>
+            <div className="flex items-center mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => handleDecrement(setGuests)}
+                disabled={guests === null || guests <= 1}
+                className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
+              >
+                <Minus className="h-5 w-5" />
+              </Button>
 
-      <div className="grid grid-cols-1 gap-4">
-        {/* Guests Input */}
-        <div className="flex justify-between items-center">
-          <Label htmlFor="guests" className="text-lg text-absoluteDark">
-            Max guests
-          </Label>
-          <div className="flex items-center mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => handleDecrement(setGuests)}
-              disabled={guests === null || guests <= 1}
-              className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
-            >
-              <Minus className="h-5 w-5" />
-            </Button>
+              <Input
+                id="guests"
+                type="number"
+                // If the state is null, show an empty string
+                value={guests === null ? "" : guests}
+                onChange={(e) => handleNumericChange(e, setGuests)}
+                className="w-16 mx-2 no-spinner border-absoluteDark text-center"
+              />
 
-            <Input
-              id="guests"
-              type="number"
-              // If the state is null, show an empty string
-              value={guests === null ? "" : guests}
-              onChange={(e) => handleNumericChange(e, setGuests)}
-              className="w-16 mx-2 no-spinner border-absoluteDark text-center"
-            />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => handleIncrement(setGuests)}
+                className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+          <hr className="my-1 md:my-2" />
 
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => handleIncrement(setGuests)}
-              className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
+          {/* Bedrooms Input */}
+          <div className="flex justify-between items-center">
+            <Label htmlFor="bedrooms" className="text-lg text-absoluteDark">
+              Bedrooms
+            </Label>
+            <div className="flex items-center mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => handleDecrement(setBedrooms)}
+                disabled={bedrooms === null || bedrooms <= 1}
+                className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
+              >
+                <Minus className="h-5 w-5" />
+              </Button>
+
+              <Input
+                id="bedrooms"
+                type="number"
+                value={bedrooms === null ? "" : bedrooms}
+                onChange={(e) => handleNumericChange(e, setBedrooms)}
+                className="w-16 mx-2 no-spinner border-absoluteDark text-center"
+              />
+
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => handleIncrement(setBedrooms)}
+                className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+          <hr className="my-1 md:my-2" />
+
+          {/* Beds Input */}
+          <div className="flex justify-between items-center">
+            <Label htmlFor="beds" className="text-lg text-absoluteDark">
+              Beds
+            </Label>
+            <div className="flex items-center mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => handleDecrement(setBeds)}
+                disabled={beds === null || beds <= 1}
+                className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
+              >
+                <Minus className="h-5 w-5" />
+              </Button>
+
+              <Input
+                id="beds"
+                type="number"
+                value={beds === null ? "" : beds}
+                onChange={(e) => handleNumericChange(e, setBeds)}
+                className="w-16 mx-2 no-spinner border-absoluteDark text-center"
+              />
+
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => handleIncrement(setBeds)}
+                className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+          <hr className="my-1 md:my-2" />
+
+          {/* Bathrooms Input */}
+          <div className="flex justify-between items-center">
+            <Label htmlFor="bathrooms" className="text-lg text-absoluteDark">
+              Bathroom
+            </Label>
+            <div className="flex items-center mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => handleDecrement(setBathrooms)}
+                disabled={bathrooms === null || bathrooms <= 1}
+                className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
+              >
+                <Minus className="h-5 w-5" />
+              </Button>
+
+              <Input
+                id="bathrooms"
+                type="number"
+                value={bathrooms === null ? "" : bathrooms}
+                onChange={(e) => handleNumericChange(e, setBathrooms)}
+                className="w-16 mx-2 no-spinner border-absoluteDark text-center"
+              />
+
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => handleIncrement(setBathrooms)}
+                className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
-        <hr className="my-1 md:my-2" />
-
-        {/* Bedrooms Input */}
-        <div className="flex justify-between items-center">
-          <Label htmlFor="bedrooms" className="text-lg text-absoluteDark">
-            Bedrooms
-          </Label>
-          <div className="flex items-center mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => handleDecrement(setBedrooms)}
-              disabled={bedrooms === null || bedrooms <= 1}
-              className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
-            >
-              <Minus className="h-5 w-5" />
-            </Button>
-
-            <Input
-              id="bedrooms"
-              type="number"
-              value={bedrooms === null ? "" : bedrooms}
-              onChange={(e) => handleNumericChange(e, setBedrooms)}
-              className="w-16 mx-2 no-spinner border-absoluteDark text-center"
-            />
-
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => handleIncrement(setBedrooms)}
-              className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-        <hr className="my-1 md:my-2" />
-
-        {/* Beds Input */}
-        <div className="flex justify-between items-center">
-          <Label htmlFor="beds" className="text-lg text-absoluteDark">
-            Beds
-          </Label>
-          <div className="flex items-center mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => handleDecrement(setBeds)}
-              disabled={beds === null || beds <= 1}
-              className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
-            >
-              <Minus className="h-5 w-5" />
-            </Button>
-
-            <Input
-              id="beds"
-              type="number"
-              value={beds === null ? "" : beds}
-              onChange={(e) => handleNumericChange(e, setBeds)}
-              className="w-16 mx-2 no-spinner border-absoluteDark text-center"
-            />
-
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => handleIncrement(setBeds)}
-              className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-        <hr className="my-1 md:my-2" />
-
-        {/* Bathrooms Input */}
-        <div className="flex justify-between items-center">
-          <Label htmlFor="bathrooms" className="text-lg text-absoluteDark">
-            Bathroom
-          </Label>
-          <div className="flex items-center mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => handleDecrement(setBathrooms)}
-              disabled={bathrooms === null || bathrooms <= 1}
-              className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
-            >
-              <Minus className="h-5 w-5" />
-            </Button>
-
-            <Input
-              id="bathrooms"
-              type="number"
-              value={bathrooms === null ? "" : bathrooms}
-              onChange={(e) => handleNumericChange(e, setBathrooms)}
-              className="w-16 mx-2 no-spinner border-absoluteDark text-center"
-            />
-
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => handleIncrement(setBathrooms)}
-              className="transition-all h-9 w-9 bg-gray-50 border border-absoluteDark rounded-full duration-200 ease-in-out"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </div>
       </TextReveal>
-
     </div>
   );
 }

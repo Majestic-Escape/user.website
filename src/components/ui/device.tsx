@@ -20,3 +20,4 @@
 
 //   return deviceType;
 // }
+export function useDeviceType() {}

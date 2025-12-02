@@ -319,7 +319,7 @@ export default function ReviewsPage() {
 
                     {properties
                       ? properties.map((item) => (
-                          <SelectItem value={item?.title}>
+                          <SelectItem key={item?.title} value={item?.title}>
                             {item?.title}
                           </SelectItem>
                         ))

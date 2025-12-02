@@ -43,7 +43,16 @@ const fetchHostData = async (hostIdStr) => {
   if (!hostIdStr) {
     throw new Error("Host ID is missing");
   }
-  const response = await fetch(`${API_URL}/hostData/${hostIdStr}`);
+  const getLocalData = await localStorage.getItem("token");
+  const data = JSON.parse(getLocalData);
+  // const response = await fetch(`${API_URL}/hostData/${hostIdStr}`);
+  const response = await fetch(`${API_URL}/hostData/${hostIdStr}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${data}`,
+    },
+  });
   if (!response.ok) {
     console.error(
       "Failed to fetch host:",

@@ -110,18 +110,18 @@ const Invoice = ({ payment, invoiceData }) => {
         <div className="mb-6 border-t border-b py-4">
           <p className="text-sm text-gray-800">
             <span className="font-semibold">Traveler:</span>
-            <div>
+            <div key={invoiceData.guestData?.adults[0]?.age}>
               {changeUpperCase(invoiceData.guestData?.adults[0]?.name)},{" "}
               {invoiceData.guestData?.adults[0]?.age} (booked by)
             </div>
-            {invoiceData.guestData?.adults.slice(1).map((item) => (
-              <div>
+            {invoiceData.guestData?.adults.slice(1).map((item, index) => (
+              <div key={item.age || index}>
                 {changeUpperCase(item?.name).trim()}, {item?.age}
               </div>
             ))}
             {invoiceData.guestData?.children
-              ? invoiceData.guestData?.children.map((item) => (
-                  <div>
+              ? invoiceData.guestData?.children.map((item, index) => (
+                  <div key={item.name || index}>
                     {changeUpperCase(item.name)}, {item.age}
                   </div>
                 ))

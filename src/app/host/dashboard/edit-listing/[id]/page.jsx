@@ -10,6 +10,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { MembershipPopup } from "../../add-listing/membership-popup";
 // import {
 //   Dialog,
 //   DialogContent,
@@ -22,17 +23,52 @@ import { StepIndicator } from "../../add-listing/components/step-indicator";
 import { toast } from "sonner";
 import { propertyService } from "@/services/propertyService";
 import { useAuth } from "@/contexts/AuthContext";
-
+import Link from "next/link";
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function EditListing({ params }) {
   const { id } = use(params);
   const router = useRouter();
   const auth = useAuth();
-
+  const [showMembershipPopup, setShowMembershipPopup] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [originalData, setOriginalData] = useState(null);
   const [formData, setFormData] = useState();
   const [isLoading, setIsLoading] = useState(true);
   const [initialStatus, setInitialStatus] = useState(null);
+  // const [show, setShow] = useState(false);
+
+  // const checkKycVerification = async () => {
+  //   try {
+  //     const userId = JSON.parse(localStorage.getItem("userId"));
+  //     const getLocalData = await localStorage.getItem("token");
+  //     const data = JSON.parse(getLocalData);
+
+  //     if (data) {
+  //       const response = await fetch(`${API_URL}/hosts/single/${userId}`, {
+  //         method: "GET",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${data}`,
+  //         },
+  //       });
+
+  //       if (!response.ok) {
+  //         return;
+  //       }
+
+  //       const result = await response.json();
+  //       console.log("numb", result);
+  //       setShow(result.kyc);
+  //       return result;
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   checkKycVerification();
+  // }, []);
 
   useEffect(() => {
     const fetchListingData = async () => {
@@ -43,8 +79,11 @@ export default function EditListing({ params }) {
           auth.user?.email,
           id
         );
-        setOriginalData(listing);
-        setFormData(listing);
+        const clone = JSON.parse(JSON.stringify(listing));
+        setOriginalData(clone);
+        setFormData(clone);
+        // setOriginalData(listing);
+        // setFormData(listing);
         setInitialStatus(listing.status); // Store the initial status
       } catch (error) {
         toast.error("Failed to fetch listing data. Please try again.");
@@ -55,8 +94,11 @@ export default function EditListing({ params }) {
 
     fetchListingData();
   }, [id, auth.user?.email]);
-
+  console.log("we got the original", originalData);
+  console.log("we got the original2", originalData?.host?.kyc);
+  console.log("which is this", formData);
   const checkForSignificantChanges = () => {
+    if (!originalData || !formData) return false;
     const significantFields = ["images", "title", "description", "customRules"];
     return significantFields.some(
       (field) =>
@@ -94,10 +136,12 @@ export default function EditListing({ params }) {
       toast.error("Failed to save progress. Please try again.");
     }
   };
-
+  const handleRedirectToDashboard = () => {
+    router.push("/host/dashboard");
+  };
   const handleSubmit = async () => {
+    const toastId = toast.loading("Updating your listing...");
     try {
-      toast.loading("Updating your listing...");
       const hasSignificantChanges = checkForSignificantChanges();
       const newStatus = determineNewStatus(false, hasSignificantChanges);
 
@@ -105,6 +149,8 @@ export default function EditListing({ params }) {
         ...formData,
         status: newStatus,
       });
+
+      toast.dismiss(toastId);
 
       let successMessage;
       if (newStatus === "processing") {
@@ -116,8 +162,19 @@ export default function EditListing({ params }) {
       }
 
       toast.success(successMessage);
-      router.push("/host/dashboard");
+      setTimeout(() => {
+        setShowMembershipPopup(true);
+      }, 2000);
+      setTimeout(() => {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+        });
+      }, 2100);
+      // router.push("/host/dashboard");
     } catch (error) {
+      toast.dismiss(toastId);
       toast.error("Something went wrong. Please try again.");
     }
   };
@@ -165,7 +222,7 @@ export default function EditListing({ params }) {
 
   const handleSaveAndExit = async () => {
     await saveData(true);
-    router.push("/host/dashboard");
+    router.push("/host/dashboard/listings");
   };
 
   const updateFormData = (stepData) => {
@@ -178,8 +235,27 @@ export default function EditListing({ params }) {
     if (window && !auth.user) redirect("/login");
   }, [auth.user]);
 
+  // if (!show) {
+  //   return (
+  //     <>
+  //       <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
+  //         Verify your kyc now to access this page. &nbsp;{" "}
+  //         <Link href="/host/dashboard/kyc">
+  //           <u>
+  //             <b>Click Here</b>
+  //           </u>
+  //         </Link>
+  //         &nbsp; to verify kyc.
+  //       </div>
+  //     </>
+  //   );
+  // }
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
+      </div>
+    );
   }
 
   if (!formData && !isLoading) {
@@ -188,7 +264,6 @@ export default function EditListing({ params }) {
 
   return (
     <div className="flex flex-col relative h-full">
-     
       <header className="bg-white w-screen z-50 top-0 fixed right-0 left-0 border-b border-b-gray-200 p-4">
         <div className="container max-w-7xl mx-auto px-4 flex justify-between items-center">
           <img className="h-7 w-auto" src="/images/logo.png" alt="Logo" />
@@ -268,6 +343,11 @@ export default function EditListing({ params }) {
           )}
         </div>
       </footer>
+      <MembershipPopup
+        open={showMembershipPopup}
+        onOpenChange={setShowMembershipPopup}
+        onClose={handleRedirectToDashboard}
+      />
     </div>
   );
 }

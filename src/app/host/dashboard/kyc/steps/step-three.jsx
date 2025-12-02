@@ -82,6 +82,25 @@ export function GSTVerification({ updateFormData, formData }) {
             panNumber: gstInfo.rePanNumber,
             gstNumber: gstInfo.gstNumber,
           });
+          console.log("gst reached");
+          // const resData = response.data;
+          // if (
+          //   resData?.success === false ||
+          //   resData?.http_response_code !== 200
+          // ) {
+          //   toast.error(resData?.message || "Invalid PAN/GST Number");
+          //   return;
+          // }
+          // if (resData.http_response_code !== 200) {
+          //   const msg =
+          //     resData?.message ||
+          //     resData?.error ||
+          //     "Server error. Please try again.";
+
+          //   toast.error(msg);
+          //   throw new Error(msg);
+          // }
+          console.log("gst reached2");
           if (response.status == 200) {
             setTimeout(() => {
               setGstInfo((prev) => ({
@@ -95,12 +114,18 @@ export function GSTVerification({ updateFormData, formData }) {
               setShowDialog(true);
             }, 2000);
           }
+          console.log("gst reached3");
+          console.log("gst reached3");
         }
       } else {
         toast.error("Cross check pan number in both input fields.");
       }
     } catch (error) {
-      console.error("Error in gst");
+      const backendMsg = error?.response?.data?.message;
+
+      toast.error(backendMsg || "Server error. Please try again.");
+    } finally {
+      setIsVerifying(false);
     }
   };
   const handleCopyPaste = (e) => {

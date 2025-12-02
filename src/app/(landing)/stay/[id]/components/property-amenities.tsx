@@ -42,7 +42,7 @@ interface PropertyAmenitiesProps {
   setShowAmenitiesDialog: (show: boolean) => void;
   rules: Array<string>;
   custom: Array<string>;
-  safety: Object;
+  safety: object;
 }
 
 export default function PropertyAmenities({
@@ -256,7 +256,7 @@ export default function PropertyAmenities({
     return acc;
   }, {} as Record<string, typeof matchedAmenities>);
 
-  function removeHypen(str) {
+  function removeHypen(str: string) {
     const first = str
       .replace(/[-_]+/g, " ") // Replace hyphens and underscores with spaces
       .replace(/(^| )([a-z])/g, (match) => match.toUpperCase()); // Capitalize first letter after space or start
@@ -333,9 +333,11 @@ export default function PropertyAmenities({
           {Object.entries(safety).map(([key, value]) =>
             value?.checked == true ? (
               value?.description ? (
-                <div className="">• {removeHypen(value.description)}</div>
+                <div key={key} className="">
+                  • {removeHypen(value.description)}
+                </div>
               ) : (
-                <div>• {removeHypen(key)}</div>
+                <div key={key}>• {removeHypen(key)}</div>
               )
             ) : null
           )}
@@ -347,25 +349,33 @@ export default function PropertyAmenities({
           <h2 className="text-xl font-medium mb-6">Stay Rules</h2>
           {rules.map((item) =>
             item.includes("_") ? (
-              <div className="pb-4">• {removeHypen(item)}</div>
+              <div key={item} className="pb-4">
+                • {removeHypen(item)}
+              </div>
             ) : null
           )}
           {custom.map((item) => (
-            <div className="pb-4">• {removeHypen(item)}</div>
+            <div key={item} className="pb-4">
+              • {removeHypen(item)}
+            </div>
           ))}
         </div>
       ) : rules.length != 0 ? (
         <div className="border-b pb-6 mb-6">
           <h2 className="text-xl font-medium mb-6">Stay Rules</h2>
           {rules.map((item) => (
-            <div className="pb-4">• {removeHypen(item)}</div>
+            <div key={item} className="pb-4">
+              • {removeHypen(item)}
+            </div>
           ))}
         </div>
       ) : custom.length != 0 ? (
         <div className="border-b pb-6 mb-6">
           <h2 className="text-xl font-medium mb-6">Stay Rules</h2>
           {custom.map((item) => (
-            <div className="pb-4">• {removeHypen(item)}</div>
+            <div key={item} className="pb-4">
+              • {removeHypen(item)}
+            </div>
           ))}
         </div>
       ) : null}

@@ -111,7 +111,7 @@ export default function PropertyDescription({ description, property }) {
           <p className="text-gray-800 mb-4">
             {Object.entries(property?.cancellationType).map(([key, value]) =>
               value == true ? (
-                <div className="">
+                <div key={key} className="">
                   {" "}
                   This property has {key} level cancellation policy.
                 </div>

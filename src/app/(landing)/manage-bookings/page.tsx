@@ -24,15 +24,46 @@ import DialogModal from "@/components/dialog-modal";
 import AccountInfo from "@/components/account-info";
 import ConfirmCancelDialog from "@/components/dialog-modal";
 import Link from "next/link";
-
+import moment from "moment-timezone";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-const moderate = process.env.NEXT_PUBLIC_MODERATE_POLICY_DAYS;
-const flexible = process.env.NEXT_PUBLIC_FLEXIBLE_POLICY_DAYS;
+const moderate = Number(process.env.NEXT_PUBLIC_MODERATE_POLICY_DAYS ?? 0);
+const flexible = Number(process.env.NEXT_PUBLIC_FLEXIBLE_POLICY_DAYS ?? 0);
 
 interface FilterState {
   location: string;
   minPrice: string;
   maxPrice: string;
+}
+interface Booking {
+  _id: string;
+  propertyId: {
+    _id: string;
+    title: string;
+    address: {
+      city: string;
+      state: string;
+      country: string;
+      street: string;
+    };
+    photos?: string[];
+    checkinTime?: number;
+    checkoutTime?: number;
+    propertyType?: string; // ✅ added
+    placeType?: string; // ✅ added
+  };
+  status: string;
+  price: number;
+  checkIn: string;
+  checkOut: string;
+  cancellationPolicy?: string;
+  reviewed?: boolean;
+  hostId?: { firstName: string; lastName: string; email: string };
+  userId?: { firstName: string; lastName: string; email: string };
+  guests?: number; // ✅ added
+  adults?: number; // ✅ added
+  children?: number; // ✅ added
+  infants?: number; // ✅ added
+  nights?: number; // ✅ added
 }
 
 const FilterDialog = ({
@@ -116,42 +147,49 @@ const FilterDialog = ({
   );
 };
 
-const ManageBookings = () => {
-  const [bookings, setBookings] = useState([]);
-  const [activeTab, setActiveTab] = useState("all");
-  const [showFilters, setShowFilters] = useState(false);
-  const [differenceDays, setDifferenceDays] = useState();
+const ManageBookings: React.FC = () => {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+
   const router = useRouter();
-  const [showDialog, setShowDialog] = useState(false);
+  const [showDialog, setShowDialog] = useState<boolean>(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null
   );
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [bookingToCancel, setBookingToCancel] = useState(null);
-  const [tempFilters, setTempFilters] = useState({
+  const [cancelDialogOpen, setCancelDialogOpen] = useState<boolean>(false);
+  const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
+  const [tempFilters, setTempFilters] = useState<FilterState>({
     location: "",
     minPrice: "",
     maxPrice: "",
   });
-  const [appliedFilters, setAppliedFilters] = useState({
+  const [appliedFilters, setAppliedFilters] = useState<FilterState>({
     location: "",
     minPrice: "",
     maxPrice: "",
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const fetchData = async () => {
+  const fetchData = async (): Promise<void> => {
+    if (typeof window === "undefined") return;
+
     const getLocalData = await localStorage.getItem("token");
-    const data = JSON.parse(getLocalData);
+    const data = getLocalData ? JSON.parse(getLocalData) : null;
+    const userData = await localStorage.getItem("userId");
+    const userId = userData ? JSON.parse(userData) : null;
     if (data) {
       try {
-        const response = await fetch(`${API_URL}/booking/data`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${data}`,
-            "Content-Type": "application/json",
-          },
-        });
+        const response = await fetch(
+          `${API_URL}/booking/data?userId=${userId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${data}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
         const result = await response.json();
         setBookings(result.data);
       } catch (err) {
@@ -166,7 +204,7 @@ const ManageBookings = () => {
 
   console.log("booking", bookings);
   const filteredBookings = useMemo(() => {
-    return bookings.filter((booking) => {
+    return (bookings ?? [])?.filter((booking) => {
       console.log(booking.propertyId?.address?.city);
       const checkIn = new Date(booking.checkIn);
       const checkOut = new Date(booking.checkOut);
@@ -175,7 +213,7 @@ const ManageBookings = () => {
         checkIn.toLocaleDateString() > new Date().toLocaleDateString();
 
       const isPast =
-        checkIn.toLocaleDateString() < new Date().toLocaleDateString();
+        checkIn.toLocaleDateString() <= new Date().toLocaleDateString();
       const isConfirmed = booking?.status === "confirmed";
       const isCancelled = booking?.status === "cancelled";
       const isRejected = booking?.status === "rejected";
@@ -241,15 +279,16 @@ const ManageBookings = () => {
   // const hour = new Date().getHours();
 
   const cancelBooking = async (
-    bookingId,
-    userEmail,
-    hostEmail,
-    userName,
-    hostName
-  ) => {
+    bookingId: string,
+    userEmail: string,
+    hostEmail: string,
+    userName: string,
+    hostName: string
+  ): Promise<void> => {
     try {
+      if (typeof window === "undefined") return;
       const getLocalData = await localStorage.getItem("token");
-      const data = JSON.parse(getLocalData);
+      const data = JSON.parse(localStorage.getItem("token") || "null");
 
       if (data) {
         const response = await fetch(`${API_URL}/booking/user/terminate`, {
@@ -272,82 +311,211 @@ const ManageBookings = () => {
         }
         toast.success("Successfully send the cancellation email");
         fetchData();
-        return response;
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  function diff(date) {
-    const futureDate = new Date(date).setHours(12, 0, 0, 0);
+  // function diff(date: string | number | Date): number {
+  //   const futureDate = new Date(date).setHours(12, 0, 0, 0);
 
-    // const date2 = new Date().toLocaleDateString();
-    const date1 = new Date();
-    const differenceInDays = (futureDate - date1) / 86400000;
-    console.log("opti", date, futureDate, date1, differenceInDays);
-    return differenceInDays;
+  //   // const date2 = new Date().toLocaleDateString();
+  //   const date1 = new Date();
+  //   const future=moment.tz(,'Asia/kolkata')
+  //   const futureDateObj = new Date(futureDate);
+  //   const differenceInDays =
+  //     (futureDateObj.getTime() - date1.getTime()) / 86400000;
+  //   console.log(
+  //     "Moderate Policy",
+  //     date,
+  //     "future",
+  //     futureDate,
+  //     "today",
+  //     date1,
+  //     "diff in days",
+  //     differenceInDays
+  //   );
+  //   return differenceInDays;
+  // }
+
+  function differenceInDays(
+    checkinDate: string | number | Date,
+    booking: Booking
+  ): number {
+    if (!checkinDate) return 0;
+
+    const checkinTime = Number(booking?.propertyId?.checkinTime || 11);
+
+    // Convert check-in date to IST with checkin time applied
+    const checkinIST = moment
+      .tz(checkinDate, "Asia/Kolkata")
+      .hour(checkinTime)
+      .minute(0)
+      .second(0);
+
+    // Current time in IST
+    const nowIST = moment().tz("Asia/Kolkata");
+
+    // Find difference in hours
+    const diffHours = checkinIST.diff(nowIST, "hours");
+
+    console.log("🔎 DEBUG MODERATE CHECK");
+    console.log("Original CheckIn:", checkinDate);
+    console.log("CheckIn IST:", checkinIST.format());
+    console.log("Now IST:", nowIST.format());
+    console.log("Checkin Time (24hr):", checkinTime);
+    console.log("Diff in Hours:", diffHours);
+
+    // If exactly 24 hours → return 1 day
+    if (diffHours === 24) {
+      console.log("Final days:", 1);
+      return 1;
+    }
+
+    // If more than 24 hours → convert hours to full days
+    if (diffHours > 24) {
+      console.log("Final days:", Math.floor(diffHours / 24));
+      return Math.floor(diffHours / 24);
+    }
+
+    // Otherwise → less than 24 hours → return 0
+    return 0;
   }
 
-  console.log("blackpa", new Date());
-  function canShowReview(booking) {
+  // console.log("blackpa", new Date());
+  // function canShowReview(booking: Booking): boolean {
+  //   if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
+
+  //   const checkoutDate = new Date(booking?.checkOut);
+  //   const today = new Date();
+
+  //   const differenceInDays =
+  //     (today.getTime() - checkoutDate.getTime()) / (1000 * 60 * 60 * 24);
+
+  //   if (today > checkoutDate && differenceInDays <= 14) {
+  //     const isSameDay = today.toDateString() === checkoutDate.toDateString();
+  //     if (!isSameDay) {
+  //       return true;
+  //     } else {
+  //       const checkoutWithTime = new Date(checkoutDate);
+  //       checkoutWithTime.setHours(booking?.propertyId?.checkoutTime, 0, 0, 0);
+
+  //       const fiveHoursLater = new Date(
+  //         checkoutWithTime.getTime() + 5 * 60 * 60 * 1000
+  //       );
+
+  //       if (today >= fiveHoursLater) {
+  //         return true;
+  //       }
+  //     }
+  //   }
+  //   // console.log("dta", today.toDateString(), checkoutDate.toDateString());
+
+  //   // const isSameDay = today.toDateString() === checkoutDate.toDateString();
+
+  //   // if (isSameDay) {
+  //   //   const checkoutWithTime = new Date(checkoutDate);
+  //   //   checkoutWithTime.setHours(booking?.propertyId?.checkoutTime, 0, 0, 0);
+
+  //   //   const fiveHoursLater = new Date(
+  //   //     checkoutWithTime.getTime() + 5 * 60 * 60 * 1000
+  //   //   );
+
+  //   //   if (today >= fiveHoursLater) {
+  //   //     return true;
+  //   //   }
+  //   // }
+
+  //   return false;
+  // }
+
+  function canShowReview(booking: Booking): boolean {
     if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
 
-    const checkoutDate = new Date(booking?.checkOut);
-    const today = new Date();
+    // Convert both to India timezone
+    const checkoutIST = moment.tz(booking.checkOut, "Asia/Kolkata");
+    const todayIST = moment().tz("Asia/Kolkata");
 
-    const differenceInDays = (today - checkoutDate) / (1000 * 60 * 60 * 24);
+    // Difference in full days (today - checkout)
+    const differenceInDays = todayIST.diff(checkoutIST, "days");
 
-    if (today > checkoutDate && differenceInDays <= 14) {
-      const isSameDay = today.toDateString() === checkoutDate.toDateString();
+    // Example: If checkout happened already
+    if (todayIST.isAfter(checkoutIST) && differenceInDays <= 14) {
+      // Check if it is the same date (regardless of time)
+      const isSameDay =
+        todayIST.format("YYYY-MM-DD") === checkoutIST.format("YYYY-MM-DD");
+
       if (!isSameDay) {
         return true;
       } else {
-        const checkoutWithTime = new Date(checkoutDate);
-        checkoutWithTime.setHours(booking?.propertyId?.checkoutTime, 0, 0, 0);
+        // Same day → apply checkout time + 5 hour rule
 
-        const fiveHoursLater = new Date(
-          checkoutWithTime.getTime() + 5 * 60 * 60 * 1000
-        );
+        // Create checkout date with checkout time
+        const checkoutWithTimeIST = moment
+          .tz(checkoutIST.format("YYYY-MM-DD"), "Asia/Kolkata")
+          .hour(booking.propertyId.checkoutTime)
+          .minute(0)
+          .second(0)
+          .millisecond(0);
 
-        if (today >= fiveHoursLater) {
+        // Add 5 hours waiting buffer
+        const thresholdTimeIST = checkoutWithTimeIST.clone().add(5, "hours");
+
+        if (todayIST.isSameOrAfter(thresholdTimeIST)) {
           return true;
         }
       }
     }
-    // console.log("dta", today.toDateString(), checkoutDate.toDateString());
-
-    // const isSameDay = today.toDateString() === checkoutDate.toDateString();
-
-    // if (isSameDay) {
-    //   const checkoutWithTime = new Date(checkoutDate);
-    //   checkoutWithTime.setHours(booking?.propertyId?.checkoutTime, 0, 0, 0);
-
-    //   const fiveHoursLater = new Date(
-    //     checkoutWithTime.getTime() + 5 * 60 * 60 * 1000
-    //   );
-
-    //   if (today >= fiveHoursLater) {
-    //     return true;
-    //   }
-    // }
 
     return false;
   }
 
-  function diffHours(date, time) {
-    const futureDate = new Date(date);
-    const futureHours = new Date(futureDate).setHours(time, 0);
+  // function diffHours(date: string | number | Date, time: number): number {
+  //   const futureDate = new Date(date);
+  //   const futureHours = new Date(futureDate).setHours(time, 0);
 
-    // const date2 = new Date();
-    const date1 = new Date();
-    const differenceInHours = (futureHours - date1) / 3600000;
-    console.log("dyb", futureDate, time, date1, differenceInHours);
-    return differenceInHours;
+  //   // const date2 = new Date();
+  //   const date1 = new Date();
+  //   const differenceInHours = (futureHours - date1.getTime()) / 3600000;
+  //   // console.log("Flexible policy", futureDate, time, date1, differenceInHours);
+  //   return differenceInHours;
+  // }
+  function differenceInHours(
+    checkinDate: string | number | Date,
+    booking: Booking
+  ): number {
+    if (!checkinDate) return 0;
+
+    const checkinTime = Number(booking?.propertyId?.checkinTime || 11);
+
+    // Convert check-in date to IST with checkin time applied
+    const checkinIST = moment
+      .tz(checkinDate, "Asia/Kolkata")
+      .hour(checkinTime)
+      .minute(0)
+      .second(0);
+
+    // Current time in IST
+    const nowIST = moment().tz("Asia/Kolkata");
+
+    // Find difference in hours
+    const diffHours = checkinIST.diff(nowIST, "hours");
+
+    console.log("🔎 DEBUG FLEXIBLE CHECK");
+    console.log("Original CheckIn:", checkinDate);
+    console.log("CheckIn IST:", checkinIST.format());
+    console.log("Now IST:", nowIST.format());
+    console.log("Checkin Time (24hr):", checkinTime);
+    console.log("Diff in Hours:", diffHours);
+
+    // If exactly 24 hours → return 1 day
+    console.log(diffHours);
+    return diffHours;
   }
 
-  const StatusPill = ({ status }) => {
-    const getStatusColor = (status) => {
+  const StatusPill: React.FC<{ status: string }> = ({ status }) => {
+    const getStatusColor = (status: string): string => {
       switch (status) {
         case "confirmed":
           return "bg-green-100 text-green-800";
@@ -378,6 +546,7 @@ const ManageBookings = () => {
     day: "numeric",
     year: "numeric",
   });
+
   return (
     <main className="py-16 md:py-24">
       <div className="container max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -477,28 +646,29 @@ const ManageBookings = () => {
 
           {filteredBookings.map((booking) => {
             const summaryParams = new URLSearchParams({
-              hostFirstName: booking?.hostId?.firstName,
-              hostLastName: booking?.hostId?.lastName,
-              bookingId: booking?._id,
-              propertyId: booking?.propertyId?._id,
-              propertyType: booking?.propertyId?.propertyType,
-              placeType: booking?.propertyId?.placeType,
+              hostFirstName: booking?.hostId?.firstName ?? "",
+              hostLastName: booking?.hostId?.lastName ?? "",
+              bookingId: booking?._id ?? "",
+              propertyId: booking?.propertyId?._id ?? "",
+              propertyType: booking?.propertyId?.propertyType ?? "",
+              placeType: booking?.propertyId?.placeType ?? "",
               propertyName: booking?.propertyId?.title || "Property",
-              street: booking?.propertyId?.address?.street,
-              city: booking?.propertyId?.address?.city,
-              state: booking?.propertyId?.address?.state,
-              country: booking?.propertyId?.address?.country,
-              propertyImage: booking?.propertyId?.photos[0],
-              checkin: new Date(booking?.checkIn).getTime(),
-              checkout: new Date(booking?.checkOut).getTime(),
-              numberOfGuests: booking?.guests,
-              adults: booking?.adults,
-              children: booking?.children,
-              infants: booking?.infants,
-              totalAmount: booking?.price?.toString(),
-              nights: booking?.nights?.toString(),
-              checkinTime: booking?.propertyId?.checkinTime,
-              checkoutTime: booking?.propertyId?.checkoutTime,
+              street: booking?.propertyId?.address?.street ?? "",
+              city: booking?.propertyId?.address?.city ?? "",
+              state: booking?.propertyId?.address?.state ?? "",
+              country: booking?.propertyId?.address?.country ?? "",
+              propertyImage: booking?.propertyId?.photos?.[0] ?? "",
+              checkin: String(new Date(booking?.checkIn).getTime()),
+              checkout: String(new Date(booking?.checkOut).getTime()),
+              numberOfGuests: String(booking?.guests ?? ""),
+              adults: String(booking?.adults ?? ""),
+              children: String(booking?.children ?? ""),
+              infants: String(booking?.infants ?? ""),
+              totalAmount: String(booking?.price ?? ""),
+              nights: String(booking?.nights ?? ""),
+              checkinTime: String(booking?.propertyId?.checkinTime ?? ""),
+              checkoutTime: String(booking?.propertyId?.checkoutTime ?? ""),
+              bookingHistory: "true",
             });
             return (
               <Card key={booking?._id} className="p-4">
@@ -513,7 +683,9 @@ const ManageBookings = () => {
                     />
                     {}
                     <div className="space-y-2">
-                      <h3 className="font-medium">{booking?.property}</h3>
+                      <h3 className="font-medium">
+                        {booking?.propertyId?.title}
+                      </h3>
                       <p className="text-sm text-muted-foreground">
                         Located at {booking?.propertyId?.address?.city},{" "}
                         {booking?.propertyId?.address?.state}
@@ -625,7 +797,8 @@ const ManageBookings = () => {
                     {booking?.status != "cancelled" &&
                     booking?.status != "rejected" ? (
                       booking?.cancellationPolicy != "strict" ? (
-                        diff(new Date(booking?.checkIn).getTime()) > moderate &&
+                        differenceInDays(booking?.checkIn, booking) >
+                          moderate &&
                         booking?.cancellationPolicy == "moderate" ? (
                           <>
                             <Button
@@ -659,12 +832,17 @@ const ManageBookings = () => {
                                   setBookingToCancel(null);
                                 }}
                                 onConfirm={async () => {
+                                  if (!bookingToCancel) return null;
                                   await cancelBooking(
                                     bookingToCancel._id,
-                                    bookingToCancel.userId.email,
-                                    bookingToCancel.hostId.email,
-                                    `${bookingToCancel.userId.firstName} ${bookingToCancel.userId.lastName}`,
-                                    `${bookingToCancel.hostId.firstName} ${bookingToCancel.hostId.lastName}`
+                                    bookingToCancel.userId!.email,
+                                    bookingToCancel.hostId!.email,
+                                    `${bookingToCancel.userId!.firstName} ${
+                                      bookingToCancel.userId!.lastName
+                                    }`,
+                                    `${bookingToCancel.hostId!.firstName} ${
+                                      bookingToCancel.hostId!.lastName
+                                    }`
                                   );
                                   setCancelDialogOpen(false);
                                   setBookingToCancel(null);
@@ -672,10 +850,8 @@ const ManageBookings = () => {
                               />
                             )}
                           </>
-                        ) : diffHours(
-                            booking?.checkIn,
-                            booking?.propertyId?.checkinTime
-                          ) > flexible &&
+                        ) : differenceInHours(booking?.checkIn, booking) >
+                            flexible &&
                           booking?.cancellationPolicy == "flexible" ? (
                           <>
                             <Button
@@ -698,12 +874,17 @@ const ManageBookings = () => {
                                   setBookingToCancel(null);
                                 }}
                                 onConfirm={async () => {
+                                  if (!bookingToCancel) return null;
                                   await cancelBooking(
                                     bookingToCancel._id,
-                                    bookingToCancel.userId.email,
-                                    bookingToCancel.hostId.email,
-                                    `${bookingToCancel.userId.firstName} ${bookingToCancel.userId.lastName}`,
-                                    `${bookingToCancel.hostId.firstName} ${bookingToCancel.hostId.lastName}`
+                                    bookingToCancel.userId!.email,
+                                    bookingToCancel.hostId!.email,
+                                    `${bookingToCancel.userId!.firstName} ${
+                                      bookingToCancel.userId!.lastName
+                                    }`,
+                                    `${bookingToCancel.hostId!.firstName} ${
+                                      bookingToCancel.hostId!.lastName
+                                    }`
                                   );
                                   setCancelDialogOpen(false);
                                   setBookingToCancel(null);

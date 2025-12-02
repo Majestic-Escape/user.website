@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { eachDayOfInterval, format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,7 +39,7 @@ interface BookingWidgetProps {
   toggleCalendar: () => void;
   toggleGuestsDropdown: () => void;
   activation: boolean;
-  allowedGuests: string;
+  allowedGuests: number;
 }
 
 export default function BookingWidget({
@@ -60,11 +60,12 @@ export default function BookingWidget({
   activation,
   allowedGuests,
 }: BookingWidgetProps) {
-  const [totalPrice, setTotalPrice] = useState(pricePerNight);
-  const [nightsCount, setNightsCount] = useState(1);
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const [isAuth, setIsAuth] = useState(false);
-  const [isValid, setIsValid] = useState(false);
+  const [totalPrice, setTotalPrice] = useState<number>(pricePerNight);
+  const [nightsCount, setNightsCount] = useState<number>(1);
+  const [calendarOpen, setCalendarOpen] = useState<boolean>(false);
+  const [isAuth, setIsAuth] = useState<boolean>(false);
+  const [isValid, setIsValid] = useState<boolean>(false);
+
   useEffect(() => {
     if (date?.from && date?.to) {
       const nights = Math.ceil(
@@ -77,7 +78,7 @@ export default function BookingWidget({
 
   const auth = async () => {
     const getLocalData = await localStorage.getItem("token");
-    const data = JSON.parse(getLocalData);
+    const data = getLocalData ? JSON.parse(getLocalData) : null;
     if (data) {
       setIsAuth(true);
     }
@@ -86,6 +87,7 @@ export default function BookingWidget({
   useEffect(() => {
     auth();
   }, []);
+  console.log("logite", propertyImages[0]);
   const calculatePriceWithTax = (basePrice: number) => {
     const serviceFee = Math.round((basePrice * 14) / 100);
     const priceWithServiceFee = basePrice + serviceFee;
@@ -123,7 +125,10 @@ export default function BookingWidget({
   const formatDate = (date: Date | undefined) => {
     return date ? format(date, "dd/MM/yyyy") : "";
   };
-
+  const formatRevDate = (date: Date | undefined) => {
+    return date ? format(date, "yyyy-MM-dd") : "";
+  };
+  console.log("not what", formatRevDate(new Date()));
   const getTotalGuests = () => {
     return guests.adults + guests.children;
   };
@@ -132,12 +137,13 @@ export default function BookingWidget({
     const totalGuests = getTotalGuests();
     return `${totalGuests} guest${totalGuests !== 1 ? "s" : ""}`;
   };
-  const createReserveRecord = async () => {
+  const createReserveRecord = async (): Promise<void> => {
     try {
       const getLocalData = await localStorage.getItem("token");
-      const data = JSON.parse(getLocalData);
+
+      const data = getLocalData ? JSON.parse(getLocalData) : null;
       const getUserId = await localStorage.getItem("userId");
-      const userId = JSON.parse(getUserId);
+      const userId = getUserId ? JSON.parse(getUserId) : null;
       console.log("this is user log", userId);
       if (!data) {
         toast.error("You need to signup or login to reserve.");
@@ -162,12 +168,37 @@ export default function BookingWidget({
         return;
       }
       setIsValid(true);
-      return response;
     } catch (err) {
       console.error(err);
     }
   };
-  console.log("formu", unavailableDates);
+  function getDateRange(start: Date, end: Date) {
+    const dates = [];
+    const current = new Date(start);
+    const final = new Date(end);
+
+    while (current < final) {
+      dates.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+
+    // Remove checkout date
+
+    return dates;
+  }
+
+  // Check for overlap
+  function hasDateOverlap() {
+    if (!date?.from || !date?.to) return false;
+
+    const range = getDateRange(date.from, date.to).map((d) => formatRevDate(d)); // You already have formatRevDate()
+
+    return range.some((d) => unavailableDates.includes(d));
+  }
+  const filename = propertyImages[0].split("/").pop();
+  console.log("bailan", filename);
+  console.log("get tyep", Object.prototype.toString.call(date?.from));
+  console.log("we have got this date", date?.from);
   return (
     <Card className="border rounded-xl sticky shadow-lg">
       <CardContent className="p-0">
@@ -201,7 +232,7 @@ export default function BookingWidget({
                 <PopoverTrigger asChild>
                   <div className="p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-tr-lg">
                     <div className="text-xs font-semibold uppercase">
-                      CHECKOUT
+                      CHECK-OUT
                     </div>
                     <div className="mt-1 text-base">
                       {activation
@@ -249,6 +280,12 @@ export default function BookingWidget({
                   disabled={[
                     { before: new Date() }, // disable past dates
                     ...unavailableDates.map((d) => new Date(d)), // disable specific unavailable dates
+                    // ...(date?.from
+                    //   ? [
+                    //       (d: Date) =>
+                    //         d.toDateString() === date.from!.toDateString(),
+                    //     ]
+                    //   : []),
                   ]}
                   classNames={{
                     day_selected:
@@ -402,8 +439,8 @@ export default function BookingWidget({
                 </div> */}
 
                 <div className="text-sm text-gray-600 pt-2 border-t">
-                  This place has a maximum of 2 guests, not including infants.
-                  Pets aren't allowed.
+                  {/* This place has a maximum of 2 guests, not including infants.
+                  Pets aren't allowed. */}
                 </div>
 
                 <div className="flex justify-end">
@@ -422,29 +459,53 @@ export default function BookingWidget({
             {isAuth || isValid ? (
               activation ? (
                 date?.from && date?.to ? (
-                  <Link
-                    href={{
-                      pathname: `/book/stay/${propertyId}`,
-                      query: {
-                        checkin: date?.from
-                          ? format(date.from, "yyyy-MM-dd")
-                          : undefined,
-                        checkout: date?.to
-                          ? format(date.to, "yyyy-MM-dd")
-                          : undefined,
-                        guests: getTotalGuests(),
-                        nights: nightsCount,
-                        adults: guests.adults,
-                        children: guests.children,
-                        infants: guests.infants,
-                        checkinTime: checkinTime,
-                        checkoutTime: checkoutTime,
-                      },
-                    }}
-                    className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
-                  >
-                    Reserve
-                  </Link>
+                  hasDateOverlap() ? (
+                    <Button
+                      className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+                      onClick={() =>
+                        toast.error(
+                          "Selected date overlaps with other bookings"
+                        )
+                      }
+                    >
+                      Reserve
+                    </Button>
+                  ) : formatRevDate(new Date(date?.from)) ==
+                    formatRevDate(new Date(date?.to)) ? (
+                    <Button
+                      className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+                      onClick={() =>
+                        toast.error("Checkin and Checkout date cannot be same")
+                      }
+                    >
+                      Reserve
+                    </Button>
+                  ) : (
+                    <Link
+                      href={{
+                        pathname: `/book/stay/${propertyId}`,
+                        query: {
+                          checkin: date?.from
+                            ? format(date.from, "yyyy-MM-dd")
+                            : undefined,
+                          checkout: date?.to
+                            ? format(date.to, "yyyy-MM-dd")
+                            : undefined,
+                          guests: getTotalGuests(),
+                          nights: nightsCount,
+                          adults: guests.adults,
+                          children: guests.children,
+                          infants: guests.infants,
+                          checkinTime: checkinTime,
+                          checkoutTime: checkoutTime,
+                          propertyImage: filename,
+                        },
+                      }}
+                      className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+                    >
+                      Reserve
+                    </Link>
+                  )
                 ) : (
                   <Button
                     className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"

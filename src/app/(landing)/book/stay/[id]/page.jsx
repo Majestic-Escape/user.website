@@ -18,17 +18,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+
 import { Star, ChevronLeft, Check } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
+
 import { toast } from "sonner";
+
 // Add Razorpay to Window interface
 // declare global {
 //   interface Window {
 //     Razorpay: any
 //   }
 // }
-
+import { useAuth } from "@/contexts/AuthContext";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Function to fetch property data
@@ -68,19 +71,22 @@ const fetchProperty = async (id) => {
 function BookPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { logout } = useAuth();
   const params = useParams();
   const propertyId = params.id;
   const [isAuth, setIsAuth] = useState(false);
   const checkinDate = searchParams.get("checkin");
+  const [ban, setBan] = useState(false);
   const [date, setDate] = useState({
     from: searchParams.get("checkin")
       ? new Date(searchParams.get("checkin"))
-      : new Date("2025-03-24"),
+      : null,
     to: searchParams.get("checkout")
       ? new Date(searchParams.get("checkout"))
-      : new Date("2025-03-28"),
+      : null,
   });
-
+  const [guestInfo, setGuestInfo] = useState([]);
+  const [summaryRoute, setSummaryRoute] = useState(false);
   const [unavailableDates, setUnavailableDates] = useState([]);
   const auth = async () => {
     const getLocalData = await localStorage.getItem("token");
@@ -96,8 +102,55 @@ function BookPageContent() {
     hours = hours % 12 || 12; // 0 becomes 12, otherwise use remainder
     return `${hours}:00 ${period}`;
   }
+
+  const userData = async () => {
+    const getLocalData = await localStorage.getItem("token");
+    const data = JSON.parse(getLocalData);
+    const userData = await localStorage.getItem("userId");
+    const userId = JSON.parse(userData);
+    if (data) {
+      try {
+        const response = await fetch(
+          `${API_URL}/guests/guest-by-id?userId=${userId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${data}`,
+            },
+          }
+        );
+        // console.log("djfjdf", await response.json());
+        if (!response.ok) {
+          const data = await response.json();
+          if (data.code == "USER_BANNED") {
+            setBan(true);
+            logout();
+
+            localStorage.clear();
+            router.push("/");
+
+            return;
+          }
+          console.error(
+            "Failed to fetch property:",
+            response.status,
+            await response.text()
+          );
+          throw new Error(
+            `Failed to fetch property data (status: ${response.status})`
+          );
+        }
+        const result = await response.json();
+        setGuestInfo(result);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
   useEffect(() => {
     auth();
+    userData();
   }, []);
 
   // useEffect(() => {
@@ -117,7 +170,8 @@ function BookPageContent() {
   const adults = searchParams.get("adults");
   const children = searchParams.get("children");
   const infants = searchParams.get("infants");
-
+  const propertyImg = searchParams.get("propertyImage");
+  console.log("bumd", propertyImg);
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [guestData, setGuestData] = useState({
     adults: [],
@@ -175,18 +229,35 @@ function BookPageContent() {
   };
 
   const totals = calculateTotal();
+
+  function calculateAge(dobString) {
+    const dob = new Date(dobString);
+    const today = new Date();
+
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+
+    // Adjust age if the birthday hasn't occurred yet this year
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    return age;
+  }
+  console.log("nice no", guestInfo?.dob);
   const fetchForm = async () => {
     // Get user data from localStorage
 
-    const firstName = property?.host?.firstName || "";
-    const lastName = property?.host?.lastName || "";
+    const firstName = guestInfo?.firstName || "";
+    const lastName = guestInfo?.lastName || "";
+    const dob = calculateAge(guestInfo?.dob) || 18;
 
     // Initialize guest data arrays based on the number of adults and children
     const initialAdults = Array.from(
       { length: parseInt(adults) },
       (_, index) => ({
-        name: index === 0 ? `${firstName} ${lastName}`.trim() : "",
-        age: index === 0 ? 18 : 18,
+        name: index === 0 ? `${firstName} ${lastName}`.trim() : "User",
+        age: index === 0 ? dob : 18,
       })
     );
 
@@ -342,12 +413,14 @@ function BookPageContent() {
           guestData: guestData,
         }),
       });
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Booking failed: ${errorText}`);
       }
       console.log("trhis is how", response.json);
       const result = await response.json();
+
       return result;
     } catch (err) {
       console.error(err);
@@ -433,7 +506,7 @@ function BookPageContent() {
       console.error(err);
     }
   };
-  const updateConfirmStatus = async (bookingId) => {
+  const updateConfirmStatus = async (bookingId, propertyTitle) => {
     try {
       const userId = JSON.parse(localStorage.getItem("userId"));
       const getLocalData = await localStorage.getItem("token");
@@ -445,6 +518,7 @@ function BookPageContent() {
           Authorization: `Bearer ${data}`,
         },
         body: JSON.stringify({
+          propertyTitle: propertyTitle,
           bookingId: bookingId,
           userId: userId,
         }),
@@ -483,6 +557,7 @@ function BookPageContent() {
 
   const createPayout = async (bookingId, propertyId, amount) => {
     try {
+      const userId = JSON.parse(localStorage.getItem("userId"));
       const getLocalData = await localStorage.getItem("token");
       const data = JSON.parse(getLocalData);
       const response = await fetch(`${API_URL}/payment/create-payout`, {
@@ -495,6 +570,7 @@ function BookPageContent() {
           bookingId: bookingId,
           propertyId: propertyId,
           amount: amount,
+          hostId: userId,
         }),
       });
       const result = await response.json();
@@ -566,6 +642,7 @@ function BookPageContent() {
         totals.subtotal
       );
       console.log("green lan", booking);
+
       if (!booking || !booking.data?._id) {
         toast.error("Booking could not be created. Please try again.");
         return; // stop here
@@ -607,7 +684,7 @@ function BookPageContent() {
             city: property?.address?.city,
             state: property?.address?.state,
             country: property?.address?.country,
-            propertyImage: property?.photos[0],
+            propertyImage: propertyImg, //property?.photos[0],
             checkin: date.from.getTime(),
             checkout: date.to.getTime(),
             numberOfGuests: guests,
@@ -619,6 +696,7 @@ function BookPageContent() {
             checkinTime: property?.checkinTime,
             checkoutTime: property?.checkoutTime,
             instant: property?.bookingType?.manual ? false : true,
+            bookingHistory: "false",
           });
 
           const verify = await verifyPayment(
@@ -630,6 +708,8 @@ function BookPageContent() {
 
           const hostEmail = await property.hostEmail;
           if (verify) {
+            setSummaryRoute(true);
+            window.scrollTo(0, 0);
             if (property.bookingType.manual) {
               console.log("not selected");
               const update = await updateBookingStatus(
@@ -653,7 +733,10 @@ function BookPageContent() {
               // );
             } else {
               console.log("This got selected");
-              const confirm = await updateConfirmStatus(booking?.data?._id);
+              const confirm = await updateConfirmStatus(
+                booking?.data?._id,
+                property?.title
+              );
               await updateBookingStatus(
                 booking?.data?._id,
                 hostEmail,
@@ -728,6 +811,18 @@ function BookPageContent() {
   }
   if (isLoading) {
     return <BookingPageSkeleton />;
+  }
+  if (summaryRoute) {
+    return (
+      <>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
+          <div className="pl-16">
+            <h1>Taking you to summary page...</h1>
+          </div>
+        </div>
+      </>
+    );
   }
 
   if (error) {
@@ -974,6 +1069,7 @@ function BookPageContent() {
                                     ? "border-red-500"
                                     : "border-gray-300"
                                 }`}
+                                readOnly={index === 0}
                               />
                               {formErrors[`adult-age-${index}`] && (
                                 <p className="text-red-500 text-xs mt-1">
@@ -1085,9 +1181,12 @@ function BookPageContent() {
                 onClick={async () => {
                   await fetchForm();
                 }}
+                disabled={summaryRoute || ban}
                 className="w-full h-12 text-base bg-primaryGreen hover:bg-brightGreen"
               >
-                Pay ₹{totals.total.toLocaleString()}
+                {ban
+                  ? "You are banned from platform. Check your email"
+                  : `Pay ₹${totals.total.toLocaleString()}`}
               </Button>
               {property.bookingType.manual ? (
                 <p className="text-sm text-center mt-4 text-gray-500">

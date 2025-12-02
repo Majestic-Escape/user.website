@@ -15,7 +15,7 @@ import {
   Receipt,
   StarIcon,
 } from "lucide-react";
-
+import { usePathname } from "next/navigation";
 import { NavMain } from "@/components/host/nav-main";
 import { TeamSwitcher } from "@/components/host/team-switcher";
 import {
@@ -132,13 +132,15 @@ const data = {
 };
 
 export function AppSidebar({ ...props }) {
+  const pathname = usePathname();
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain} pathname={pathname} />
       </SidebarContent>
 
       <SidebarRail />
