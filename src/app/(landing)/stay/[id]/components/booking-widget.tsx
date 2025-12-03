@@ -319,7 +319,7 @@ export default function BookingWidget({
                 <div className="flex justify-between items-center">
                   <div>
                     <div className="font-medium">Adults</div>
-                    <div className="text-sm text-gray-600">Age 13+</div>
+                    <div className="text-sm text-gray-600">Age 18+</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button

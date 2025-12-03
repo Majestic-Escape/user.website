@@ -323,9 +323,9 @@ export default function BookingSummaryPage() {
                   <p className="text-gray-500">₹{queryData?.totalAmount}.00</p>
                 </div>
 
-                <button className="w-full border border-gray-300 py-2 rounded-lg">
+                {/* <button className="w-full border border-gray-300 py-2 rounded-lg">
                   Change reservation
-                </button>
+                </button> */}
                 <div>
                   <h4 className="font-medium text-gray-700">
                     Property Address

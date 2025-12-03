@@ -383,7 +383,8 @@ function BookPageContent() {
     host,
     cancel,
     guestData,
-    subTotal
+    subTotal,
+    policy
   ) => {
     try {
       const userId = JSON.parse(localStorage.getItem("userId"));
@@ -411,6 +412,7 @@ function BookPageContent() {
           subTotal: subTotal,
           currency: currency,
           guestData: guestData,
+          cancellationPolicy: policy,
         }),
       });
 
@@ -623,7 +625,7 @@ function BookPageContent() {
       const propertyId = await property._id;
       const propertyHostId = await property.host;
       const propertyTitle = await property.title;
-      console.log(propertyId, date.from, date.to, propertyHostId);
+
       const found = Object.entries(property?.cancellationType).find(
         ([key, value]) => value === true
       );
@@ -639,7 +641,8 @@ function BookPageContent() {
         propertyHostId,
         cancel,
         guestData,
-        totals.subtotal
+        totals.subtotal,
+        found[0]
       );
       console.log("green lan", booking);
 

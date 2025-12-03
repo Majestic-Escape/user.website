@@ -27,7 +27,7 @@ export default function PropertyListing({
   });
 
   const [guests, setGuests] = useState({
-    adults: 1,
+    adults: 2,
     children: 0,
     infants: 0,
     pets: 0,

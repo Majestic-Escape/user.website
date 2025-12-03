@@ -141,7 +141,7 @@ export default function StayCard({ property, includeTaxes }) {
           ))}
         </div>
       </div>
-      <div className="mt-1 sm:mt-2">
+      <div className="mt-1 sm:mt-2 cursor-pointer">
         <div className="flex items-center justify-between mb-1">
           <div>
             <h3 className=" mt-1 font-medium  text-graphite">

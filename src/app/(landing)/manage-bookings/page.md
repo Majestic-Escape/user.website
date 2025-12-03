@@ -9,12 +9,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Filter, Star, X } from "lucide-react";
 import Image from "next/image";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -31,97 +31,97 @@ const moderate = Number(process.env.NEXT_PUBLIC_MODERATE_POLICY_DAYS ?? 7);
 const flexible = Number(process.env.NEXT_PUBLIC_FLEXIBLE_POLICY_DAYS ?? 24);
 
 interface FilterState {
-  location: string;
-  minPrice: string;
-  maxPrice: string;
+location: string;
+minPrice: string;
+maxPrice: string;
 }
 interface Booking {
-  _id: string;
-  propertyId: {
-    _id: string;
-    title: string;
-    address: {
-      city: string;
-      state: string;
-      country: string;
-      street: string;
-    };
-    photos?: string[];
-    checkinTime?: number;
-    checkoutTime?: number;
-    propertyType?: string; // ✅ added
-    placeType?: string; // ✅ added
-  };
-  status: string;
-  price: number;
-  checkIn: string;
-  checkOut: string;
-  cancellationPolicy?: string;
-  reviewed?: boolean;
-  hostId?: { firstName: string; lastName: string; email: string };
-  userId?: { firstName: string; lastName: string; email: string };
-  guests?: number; // ✅ added
-  adults?: number; // ✅ added
-  children?: number; // ✅ added
-  infants?: number; // ✅ added
-  nights?: number; // ✅ added
+\_id: string;
+propertyId: {
+\_id: string;
+title: string;
+address: {
+city: string;
+state: string;
+country: string;
+street: string;
+};
+photos?: string[];
+checkinTime?: number;
+checkoutTime?: number;
+propertyType?: string; // ✅ added
+placeType?: string; // ✅ added
+};
+status: string;
+price: number;
+checkIn: string;
+checkOut: string;
+cancellationPolicy?: string;
+reviewed?: boolean;
+hostId?: { firstName: string; lastName: string; email: string };
+userId?: { firstName: string; lastName: string; email: string };
+guests?: number; // ✅ added
+adults?: number; // ✅ added
+children?: number; // ✅ added
+infants?: number; // ✅ added
+nights?: number; // ✅ added
 }
 
 interface InvoiceData {
-  _id: string;
-  propertyId: {
-    _id: string;
-    title: string;
-    address: {
-      city: string;
-      state: string;
-      country: string;
-      street: string;
-    };
-    photos?: string[];
-    checkinTime?: number;
-    checkoutTime?: number;
-    propertyType?: string; // ✅ added
-    placeType?: string; // ✅ added
-  };
-  status: string;
-  price: number;
-  checkIn: string;
-  checkOut: string;
-  cancellationPolicy?: string;
-  reviewed?: boolean;
-  hostId?: { firstName: string; lastName: string; email: string };
-  userId?: { firstName: string; lastName: string; email: string };
-  guests?: number; // ✅ added
-  adults?: number; // ✅ added
-  children?: number; // ✅ added
-  infants?: number; // ✅ added
-  nights?: number; // ✅ added
+\_id: string;
+propertyId: {
+\_id: string;
+title: string;
+address: {
+city: string;
+state: string;
+country: string;
+street: string;
+};
+photos?: string[];
+checkinTime?: number;
+checkoutTime?: number;
+propertyType?: string; // ✅ added
+placeType?: string; // ✅ added
+};
+status: string;
+price: number;
+checkIn: string;
+checkOut: string;
+cancellationPolicy?: string;
+reviewed?: boolean;
+hostId?: { firstName: string; lastName: string; email: string };
+userId?: { firstName: string; lastName: string; email: string };
+guests?: number; // ✅ added
+adults?: number; // ✅ added
+children?: number; // ✅ added
+infants?: number; // ✅ added
+nights?: number; // ✅ added
 }
 const FilterDialog = ({
-  open,
-  onOpenChange,
-  filters,
-  onFilterChange,
-  onApply,
-  onClear,
+open,
+onOpenChange,
+filters,
+onFilterChange,
+onApply,
+onClear,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  filters: { location: string; minPrice: string; maxPrice: string };
-  onFilterChange: (field: keyof FilterState, value: string) => void;
-  onApply: () => void;
-  onClear: () => void;
+open: boolean;
+onOpenChange: (open: boolean) => void;
+filters: { location: string; minPrice: string; maxPrice: string };
+onFilterChange: (field: keyof FilterState, value: string) => void;
+onApply: () => void;
+onClear: () => void;
 }) => {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Filter Bookings</DialogTitle>
-          <DialogDescription>
-            Apply filters to find specific bookings
-          </DialogDescription>
-        </DialogHeader>
+return (
+<Dialog open={open} onOpenChange={onOpenChange}>
+<DialogContent>
+<DialogHeader>
+<DialogTitle>Filter Bookings</DialogTitle>
+<DialogDescription>
+Apply filters to find specific bookings
+</DialogDescription>
+</DialogHeader>
 
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
@@ -176,38 +176,39 @@ const FilterDialog = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
+
+);
 };
 
 const ManageBookings: React.FC = () => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("all");
-  const [showFilters, setShowFilters] = useState<boolean>(false);
-  const [showInvoice, setShowInvoice] = useState<boolean>(false);
-  const [invoiceData, setInvoiceData] = useState<Booking | null>(null);
-  const [payment, setPayment] = useState();
-  const printRef = useRef(null);
-  const router = useRouter();
-  const [showDialog, setShowDialog] = useState<boolean>(false);
-  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
-    null
-  );
-  const [cancelDialogOpen, setCancelDialogOpen] = useState<boolean>(false);
-  const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
-  const [tempFilters, setTempFilters] = useState<FilterState>({
-    location: "",
-    minPrice: "",
-    maxPrice: "",
-  });
-  const [appliedFilters, setAppliedFilters] = useState<FilterState>({
-    location: "",
-    minPrice: "",
-    maxPrice: "",
-  });
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+const [bookings, setBookings] = useState<Booking[]>([]);
+const [activeTab, setActiveTab] = useState<string>("all");
+const [showFilters, setShowFilters] = useState<boolean>(false);
+const [showInvoice, setShowInvoice] = useState<boolean>(false);
+const [invoiceData, setInvoiceData] = useState<Booking | null>(null);
+const [payment, setPayment] = useState();
+const printRef = useRef(null);
+const router = useRouter();
+const [showDialog, setShowDialog] = useState<boolean>(false);
+const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
+null
+);
+const [cancelDialogOpen, setCancelDialogOpen] = useState<boolean>(false);
+const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
+const [tempFilters, setTempFilters] = useState<FilterState>({
+location: "",
+minPrice: "",
+maxPrice: "",
+});
+const [appliedFilters, setAppliedFilters] = useState<FilterState>({
+location: "",
+minPrice: "",
+maxPrice: "",
+});
+const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const fetchData = async (): Promise<void> => {
-    if (typeof window === "undefined") return;
+const fetchData = async (): Promise<void> => {
+if (typeof window === "undefined") return;
 
     const getLocalData = await localStorage.getItem("token");
     const data = getLocalData ? JSON.parse(getLocalData) : null;
@@ -231,43 +232,44 @@ const ManageBookings: React.FC = () => {
         console.error(err);
       }
     }
-  };
-  useEffect(() => {
-    fetchData();
-    setIsLoading(false);
-  }, []);
-  const getPayment = async (bookingId: string): Promise<void> => {
-    console.log("booking now", bookingId);
-    const data = JSON.parse(localStorage.getItem("token") || "null");
-    if (data) {
-      try {
-        const response = await fetch(
-          `${API_URL}/payment/booking?id=${bookingId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${data}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        if (response.status != 200) {
-          return;
-        }
-        const result = await response.json();
-        console.log("enll", result);
-        setPayment(result.data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-  };
-  console.log("booking", payment);
-  const filteredBookings = useMemo(() => {
-    return (bookings ?? [])?.filter((booking) => {
-      console.log(booking.propertyId?.address?.city);
-      const checkIn = new Date(booking.checkIn);
-      const checkOut = new Date(booking.checkOut);
+
+};
+useEffect(() => {
+fetchData();
+setIsLoading(false);
+}, []);
+const getPayment = async (bookingId: string): Promise<void> => {
+console.log("booking now", bookingId);
+const data = JSON.parse(localStorage.getItem("token") || "null");
+if (data) {
+try {
+const response = await fetch(
+`${API_URL}/payment/booking?id=${bookingId}`,
+{
+method: "GET",
+headers: {
+Authorization: `Bearer ${data}`,
+"Content-Type": "application/json",
+},
+}
+);
+if (response.status != 200) {
+return;
+}
+const result = await response.json();
+console.log("enll", result);
+setPayment(result.data);
+} catch (err) {
+console.error(err);
+}
+}
+};
+console.log("booking", payment);
+const filteredBookings = useMemo(() => {
+return (bookings ?? [])?.filter((booking) => {
+console.log(booking.propertyId?.address?.city);
+const checkIn = new Date(booking.checkIn);
+const checkOut = new Date(booking.checkOut);
 
       const isUpcoming =
         checkIn.toLocaleDateString() > new Date().toLocaleDateString();
@@ -304,76 +306,77 @@ const ManageBookings: React.FC = () => {
         matchesTab && matchesLocation && matchesMinPrice && matchesMaxPrice
       );
     });
-  }, [bookings, activeTab, appliedFilters]);
-  const downloadPdf = async () => {
-    const res = await fetch(`${API_URL}/booking/generate-pdf`);
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "test.pdf";
-    a.click();
-    window.URL.revokeObjectURL(url);
-    // const element = printRef.current;
-    // if (!element) {
-    //   return;
-    // }
-    // const canvas = await html2canvas(element);
-    // const data = canvas.toDataURL("image/png");
-    // const pdf = new jsPDF({
-    //   orientation: "portrait",
-    //   unit: "px",
-    //   format: "a4",
-    // });
-    // const imgProperties = pdf.getImageProperties(data);
-    // const pdfWidth = pdf.internal.pageSize.getWidth();
-    // const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width;
-    // pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
-    // pdf.save("examplepdf.pdf");
-  };
-  console.log(filteredBookings);
-  const handleClearFilters = () => {
-    const emptyFilters = { location: "", minPrice: "", maxPrice: "" };
-    setTempFilters(emptyFilters);
-    setAppliedFilters(emptyFilters);
-    setShowFilters(false);
-  };
 
-  const handleApplyFilters = () => {
-    setAppliedFilters(tempFilters);
-    setShowFilters(false);
-  };
+}, [bookings, activeTab, appliedFilters]);
+const downloadPdf = async () => {
+const res = await fetch(`${API_URL}/booking/generate-pdf`);
+const blob = await res.blob();
+const url = window.URL.createObjectURL(blob);
+const a = document.createElement("a");
+a.href = url;
+a.download = "test.pdf";
+a.click();
+window.URL.revokeObjectURL(url);
+// const element = printRef.current;
+// if (!element) {
+// return;
+// }
+// const canvas = await html2canvas(element);
+// const data = canvas.toDataURL("image/png");
+// const pdf = new jsPDF({
+// orientation: "portrait",
+// unit: "px",
+// format: "a4",
+// });
+// const imgProperties = pdf.getImageProperties(data);
+// const pdfWidth = pdf.internal.pageSize.getWidth();
+// const pdfHeight = (imgProperties.height \* pdfWidth) / imgProperties.width;
+// pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
+// pdf.save("examplepdf.pdf");
+};
+console.log(filteredBookings);
+const handleClearFilters = () => {
+const emptyFilters = { location: "", minPrice: "", maxPrice: "" };
+setTempFilters(emptyFilters);
+setAppliedFilters(emptyFilters);
+setShowFilters(false);
+};
 
-  const handleFilterChange = (field: keyof FilterState, value: string) => {
-    setTempFilters((prev) => ({ ...prev, [field]: value }));
-  };
+const handleApplyFilters = () => {
+setAppliedFilters(tempFilters);
+setShowFilters(false);
+};
 
-  const removeFilter = (field: keyof FilterState) => {
-    setAppliedFilters((prev) => ({ ...prev, [field]: "" }));
-    setTempFilters((prev) => ({ ...prev, [field]: "" }));
-  };
+const handleFilterChange = (field: keyof FilterState, value: string) => {
+setTempFilters((prev) => ({ ...prev, [field]: value }));
+};
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
-      </div>
-    );
-  }
-  // const today = new Date().toLocaleDateString();
-  // const hour = new Date().getHours();
+const removeFilter = (field: keyof FilterState) => {
+setAppliedFilters((prev) => ({ ...prev, [field]: "" }));
+setTempFilters((prev) => ({ ...prev, [field]: "" }));
+};
 
-  const cancelBooking = async (
-    bookingId: string,
-    userEmail: string,
-    hostEmail: string,
-    userName: string,
-    hostName: string
-  ): Promise<void> => {
-    try {
-      if (typeof window === "undefined") return;
-      const getLocalData = await localStorage.getItem("token");
-      const data = JSON.parse(localStorage.getItem("token") || "null");
+if (isLoading) {
+return (
+<div className="min-h-screen flex items-center justify-center">
+<div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
+</div>
+);
+}
+// const today = new Date().toLocaleDateString();
+// const hour = new Date().getHours();
+
+const cancelBooking = async (
+bookingId: string,
+userEmail: string,
+hostEmail: string,
+userName: string,
+hostName: string
+): Promise<void> => {
+try {
+if (typeof window === "undefined") return;
+const getLocalData = await localStorage.getItem("token");
+const data = JSON.parse(localStorage.getItem("token") || "null");
 
       if (data) {
         const response = await fetch(`${API_URL}/booking/user/terminate`, {
@@ -400,79 +403,125 @@ const ManageBookings: React.FC = () => {
     } catch (err) {
       console.error(err);
     }
-  };
 
-  // function diff(date: string | number | Date): number {
-  // const futureDate = new Date(date).setHours(12, 0, 0, 0);
+};
 
-  // // const date2 = new Date().toLocaleDateString();
-  // const date1 = new Date();
-  // const future=moment.tz(,'Asia/kolkata')
-  // const futureDateObj = new Date(futureDate);
-  // const differenceInDays =
-  // (futureDateObj.getTime() - date1.getTime()) / 86400000;
-  // console.log(
-  // "Moderate Policy",
-  // date,
-  // "future",
-  // futureDate,
-  // "today",
-  // date1,
-  // "diff in days",
-  // differenceInDays
-  // );
-  // return differenceInDays;
-  // }
+// function diff(date: string | number | Date): number {
+// const futureDate = new Date(date).setHours(12, 0, 0, 0);
 
-  // console.log("blackpa", new Date());
-  // function canShowReview(booking: Booking): boolean {
-  // if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
+// // const date2 = new Date().toLocaleDateString();
+// const date1 = new Date();
+// const future=moment.tz(,'Asia/kolkata')
+// const futureDateObj = new Date(futureDate);
+// const differenceInDays =
+// (futureDateObj.getTime() - date1.getTime()) / 86400000;
+// console.log(
+// "Moderate Policy",
+// date,
+// "future",
+// futureDate,
+// "today",
+// date1,
+// "diff in days",
+// differenceInDays
+// );
+// return differenceInDays;
+// }
 
-  // const checkoutDate = new Date(booking?.checkOut);
-  // const today = new Date();
+function differenceInDays(
+checkinDate: string | number | Date,
+booking: Booking
+): number {
+if (!checkinDate) return 0;
 
-  // const differenceInDays =
-  // (today.getTime() - checkoutDate.getTime()) / (1000 _ 60 _ 60 \* 24);
+    const checkinTime = Number(booking?.propertyId?.checkinTime || 11);
 
-  // if (today > checkoutDate && differenceInDays <= 14) {
-  // const isSameDay = today.toDateString() === checkoutDate.toDateString();
-  // if (!isSameDay) {
-  // return true;
-  // } else {
-  // const checkoutWithTime = new Date(checkoutDate);
-  // checkoutWithTime.setHours(booking?.propertyId?.checkoutTime, 0, 0, 0);
+    // Convert check-in date to IST with checkin time applied
+    const checkinIST = moment
+      .tz(checkinDate, "Asia/Kolkata")
+      .hour(checkinTime)
+      .minute(0)
+      .second(0);
 
-  // const fiveHoursLater = new Date(
-  // checkoutWithTime.getTime() + 5 _ 60 _ 60 \* 1000
-  // );
+    // Current time in IST
+    const nowIST = moment().tz("Asia/Kolkata");
 
-  // if (today >= fiveHoursLater) {
-  // return true;
-  // }
-  // }
-  // }
-  // // console.log("dta", today.toDateString(), checkoutDate.toDateString());
+    // Find difference in hours
+    const diffHours = checkinIST.diff(nowIST, "hours");
 
-  // // const isSameDay = today.toDateString() === checkoutDate.toDateString();
+    console.log("🔎 DEBUG MODERATE CHECK");
+    console.log("Original CheckIn:", checkinDate);
+    console.log("CheckIn IST:", checkinIST.format());
+    console.log("Now IST:", nowIST.format());
+    console.log("Checkin Time (24hr):", checkinTime);
+    console.log("Diff in Hours:", diffHours);
 
-  // // if (isSameDay) {
-  // // const checkoutWithTime = new Date(checkoutDate);
-  // // checkoutWithTime.setHours(booking?.propertyId?.checkoutTime, 0, 0, 0);
+    // If exactly 24 hours → return 1 day
+    if (diffHours === 24) {
+      console.log("Final days:", 1);
+      return 1;
+    }
 
-  // // const fiveHoursLater = new Date(
-  // // checkoutWithTime.getTime() + 5 _ 60 _ 60 \* 1000
-  // // );
+    // If more than 24 hours → convert hours to full days
+    if (diffHours > 24) {
+      console.log("Final days:", Math.floor(diffHours / 24));
+      return Math.floor(diffHours / 24);
+    }
 
-  // // if (today >= fiveHoursLater) {
-  // // return true;
-  // // }
-  // // }
+    // Otherwise → less than 24 hours → return 0
+    return 0;
 
-  // return false;
-  // }
+}
 
-  function canShowReview(booking: Booking): boolean {
-    if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
+// console.log("blackpa", new Date());
+// function canShowReview(booking: Booking): boolean {
+// if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
+
+// const checkoutDate = new Date(booking?.checkOut);
+// const today = new Date();
+
+// const differenceInDays =
+// (today.getTime() - checkoutDate.getTime()) / (1000 _ 60 _ 60 \* 24);
+
+// if (today > checkoutDate && differenceInDays <= 14) {
+// const isSameDay = today.toDateString() === checkoutDate.toDateString();
+// if (!isSameDay) {
+// return true;
+// } else {
+// const checkoutWithTime = new Date(checkoutDate);
+// checkoutWithTime.setHours(booking?.propertyId?.checkoutTime, 0, 0, 0);
+
+// const fiveHoursLater = new Date(
+// checkoutWithTime.getTime() + 5 _ 60 _ 60 \* 1000
+// );
+
+// if (today >= fiveHoursLater) {
+// return true;
+// }
+// }
+// }
+// // console.log("dta", today.toDateString(), checkoutDate.toDateString());
+
+// // const isSameDay = today.toDateString() === checkoutDate.toDateString();
+
+// // if (isSameDay) {
+// // const checkoutWithTime = new Date(checkoutDate);
+// // checkoutWithTime.setHours(booking?.propertyId?.checkoutTime, 0, 0, 0);
+
+// // const fiveHoursLater = new Date(
+// // checkoutWithTime.getTime() + 5 _ 60 _ 60 \* 1000
+// // );
+
+// // if (today >= fiveHoursLater) {
+// // return true;
+// // }
+// // }
+
+// return false;
+// }
+
+function canShowReview(booking: Booking): boolean {
+if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
 
     // Convert both to India timezone
     const checkoutIST = moment.tz(booking.checkOut, "Asia/Kolkata");
@@ -510,146 +559,62 @@ const ManageBookings: React.FC = () => {
     }
 
     return false;
-  }
 
-  // function differenceInDays(
-  //   checkinDate: string | number | Date,
-  //   booking: Booking
-  // ): number {
-  //   if (!checkinDate) return 0;
+}
 
-  //   const checkinTime = Number(booking?.propertyId?.checkinTime || 11);
+// function diffHours(date: string | number | Date, time: number): number {
+// const futureDate = new Date(date);
+// const futureHours = new Date(futureDate).setHours(time, 0);
 
-  //   // Convert check-in date to IST with checkin time applied
-  //   const checkinIST = moment
-  //     .tz(checkinDate, "Asia/Kolkata")
-  //     .hour(checkinTime)
-  //     .minute(0)
-  //     .second(0);
+// // const date2 = new Date();
+// const date1 = new Date();
+// const differenceInHours = (futureHours - date1.getTime()) / 3600000;
+// // console.log("Flexible policy", futureDate, time, date1, differenceInHours);
+// return differenceInHours;
+// }
+function differenceInHours(
+checkinDate: string | number | Date,
+booking: Booking
+): number {
+if (!checkinDate) return 0;
+console.log("has entered the diff");
+const checkinTime = Number(booking?.propertyId?.checkinTime || 11);
 
-  //   // Current time in IST
-  //   const nowIST = moment().tz("Asia/Kolkata");
-
-  //   // Find difference in hours
-  //   const diffHours = checkinIST.diff(nowIST, "hours");
-
-  //   console.log("🔎 DEBUG MODERATE CHECK");
-  //   console.log("Original CheckIn:", checkinDate);
-  //   console.log("CheckIn IST:", checkinIST.format());
-  //   console.log("Now IST:", nowIST.format());
-  //   console.log("Checkin Time (24hr):", checkinTime);
-  //   console.log("Diff in Hours:", diffHours);
-
-  //   // If exactly 24 hours → return 1 day
-  //   if (diffHours === 24) {
-  //     console.log("Final days:", 1);
-  //     return 1;
-  //   }
-
-  //   // If more than 24 hours → convert hours to full days
-  //   if (diffHours > 24) {
-  //     console.log("Final days:", Math.floor(diffHours / 24));
-  //     return Math.floor(diffHours / 24);
-  //   }
-
-  //   // Otherwise → less than 24 hours → return 0
-  //   return 0;
-  // }
-
-  // function diffHours(date: string | number | Date, time: number): number {
-  // const futureDate = new Date(date);
-  // const futureHours = new Date(futureDate).setHours(time, 0);
-
-  // // const date2 = new Date();
-  // const date1 = new Date();
-  // const differenceInHours = (futureHours - date1.getTime()) / 3600000;
-  // // console.log("Flexible policy", futureDate, time, date1, differenceInHours);
-  // return differenceInHours;
-  // }
-  // function differenceInHours(
-  //   checkinDate: string | number | Date,
-  //   booking: Booking
-  // ): number {
-  //   if (!checkinDate) return 0;
-  //   console.log("has entered the diff");
-  //   const checkinTime = Number(booking?.propertyId?.checkinTime || 11);
-
-  //   // Convert check-in date to IST with checkin time applied
-  //   const checkinIST = moment
-  //     .tz(checkinDate, "Asia/Kolkata")
-  //     .hour(checkinTime)
-  //     .minute(0)
-  //     .second(0);
-
-  //   // Current time in IST
-  //   const nowIST = moment().tz("Asia/Kolkata");
-
-  //   // Find difference in hours
-  //   const diffHours = checkinIST.diff(nowIST, "hours");
-
-  //   console.log("🔎 DEBUG FLEXIBLE CHECK");
-  //   console.log("Original CheckIn:", checkinDate);
-  //   console.log("CheckIn IST:", checkinIST.format());
-  //   console.log("Now IST:", nowIST.format());
-  //   console.log("Checkin Time (24hr):", checkinTime);
-  //   console.log("Diff in Hours:", diffHours);
-
-  //   // If exactly 24 hours → return 1 day
-
-  //   return diffHours;
-  // }
-
-  function canCancelModerate(booking: Booking): boolean {
-    // checkin date + time converted to IST
+    // Convert check-in date to IST with checkin time applied
     const checkinIST = moment
-      .tz(booking.checkIn, "Asia/Kolkata")
-      .hour(Number(booking?.propertyId?.checkinTime || 11))
+      .tz(checkinDate, "Asia/Kolkata")
+      .hour(checkinTime)
       .minute(0)
       .second(0);
 
+    // Current time in IST
     const nowIST = moment().tz("Asia/Kolkata");
+
+    // Find difference in hours
     const diffHours = checkinIST.diff(nowIST, "hours");
-    const diffDays = diffHours / 24;
-    console.log("days", diffDays);
-    return diffDays >= 7;
-  }
 
-  function canCancelFlexible(booking: Booking): boolean {
-    const checkinIST = moment
-      .tz(booking.checkIn, "Asia/Kolkata")
-      .hour(Number(booking?.propertyId?.checkinTime || 11))
-      .minute(0)
-      .second(0);
+    console.log("🔎 DEBUG FLEXIBLE CHECK");
+    console.log("Original CheckIn:", checkinDate);
+    console.log("CheckIn IST:", checkinIST.format());
+    console.log("Now IST:", nowIST.format());
+    console.log("Checkin Time (24hr):", checkinTime);
+    console.log("Diff in Hours:", diffHours);
 
-    const nowIST = moment().tz("Asia/Kolkata");
-    const diffHours = checkinIST.diff(nowIST, "hours");
-    console.log("hours", diffHours);
-    return diffHours >= 24;
-  }
-  function canShowCancelButton(booking: Booking): boolean {
-    if (booking?.status !== "confirmed" && booking?.status !== "pending")
-      return false;
+    // If exactly 24 hours → return 1 day
 
-    if (!booking?.checkIn) return false;
+    return diffHours;
 
-    if (booking?.cancellationPolicy?.toLowerCase() === "flexible") {
-      return canCancelFlexible(booking);
-    }
-    if (booking?.cancellationPolicy?.toLowerCase() === "moderate") {
-      return canCancelModerate(booking);
-    }
-    return false; // default → no cancellation
-  }
+}
 
-  const StatusPill: React.FC<{ status: string }> = ({ status }) => {
-    const getStatusColor = (status: string): string => {
-      switch (status) {
-        case "confirmed":
-          return "bg-green-100 text-green-800";
-        case "rejected":
-          return "bg-red-100 text-red-800";
-        case "cancelled":
-          return "bg-orange-100 text-orange-800";
+const StatusPill: React.FC<{ status: string }> = ({ status }) => {
+const getStatusColor = (status: string): string => {
+switch (status) {
+case "confirmed":
+return "bg-green-100 text-green-800";
+case "rejected":
+return "bg-red-100 text-red-800";
+case "cancelled":
+return "bg-orange-100 text-orange-800";
 
         default:
           return "bg-gray-100 text-gray-800";
@@ -667,20 +632,21 @@ const ManageBookings: React.FC = () => {
           : status?.charAt(0).toUpperCase() + status?.slice(1)}
       </span>
     );
-  };
-  const fmt = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 
-  console.log("Invoice Data", invoiceData, payment);
-  return (
-    <main className="py-16 md:py-24">
-      <div className="container max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        <h1 className="text-2xl font-bricolage text-absoluteDark font-bold">
-          My Booking
-        </h1>
+};
+const fmt = new Intl.DateTimeFormat("en-US", {
+month: "short",
+day: "numeric",
+year: "numeric",
+});
+
+console.log("Invoice Data", invoiceData, payment);
+return (
+<main className="py-16 md:py-24">
+<div className="container max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+<h1 className="text-2xl font-bricolage text-absoluteDark font-bold">
+My Booking
+</h1>
 
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <Tabs
@@ -915,6 +881,7 @@ const ManageBookings: React.FC = () => {
                     >
                       Invoice
                     </Button>
+
                     {booking?.status == "confirmed" &&
                     booking?.reviewed == false ? (
                       canShowReview(booking) ? (
@@ -937,46 +904,113 @@ const ManageBookings: React.FC = () => {
                         </>
                       ) : null
                     ) : null}
-                    {canShowCancelButton(booking) && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="bg-primaryGreen text-white py-3 rounded-md w-half"
-                          onClick={() => {
-                            setBookingToCancel(booking); // store selected booking
-                            setCancelDialogOpen(true); // open the dialog
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        {bookingToCancel && (
-                          <ConfirmCancelDialog
-                            choice={"Cancel"}
-                            open={cancelDialogOpen}
-                            onClose={() => {
-                              setCancelDialogOpen(false);
-                              setBookingToCancel(null);
-                            }}
-                            onConfirm={async () => {
-                              if (!bookingToCancel) return null;
-                              await cancelBooking(
-                                bookingToCancel._id,
-                                bookingToCancel.userId!.email,
-                                bookingToCancel.hostId!.email,
-                                `${bookingToCancel.userId!.firstName} ${
-                                  bookingToCancel.userId!.lastName
-                                }`,
-                                `${bookingToCancel.hostId!.firstName} ${
-                                  bookingToCancel.hostId!.lastName
-                                }`
-                              );
-                              setCancelDialogOpen(false);
-                              setBookingToCancel(null);
-                            }}
-                          />
-                        )}
-                      </>
+                    {booking?.status != "cancelled" &&
+                    booking?.status != "rejected" ? (
+                      booking?.cancellationPolicy != "strict" ? (
+                        differenceInDays(booking?.checkIn, booking) >
+                          moderate &&
+                        booking?.cancellationPolicy == "moderate" ? (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-primaryGreen text-white py-3 rounded-md w-half"
+                              onClick={() => {
+                                setBookingToCancel(booking); // store selected booking
+                                setCancelDialogOpen(true); // open the dialog
+                                // cancelBooking(
+                                //   booking?._id,
+                                //   booking?.userId?.email,
+                                //   booking?.hostId?.email,
+                                //   booking?.userId?.firstName +
+                                //     " " +
+                                //     booking?.userId?.lastName,
+                                //   booking?.hostId?.firstName +
+                                //     " " +
+                                //     booking?.hostId?.lastName
+                                // );
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            {bookingToCancel && (
+                              <ConfirmCancelDialog
+                                choice={"Cancel"}
+                                open={cancelDialogOpen}
+                                onClose={() => {
+                                  setCancelDialogOpen(false);
+                                  setBookingToCancel(null);
+                                }}
+                                onConfirm={async () => {
+                                  if (!bookingToCancel) return null;
+                                  await cancelBooking(
+                                    bookingToCancel._id,
+                                    bookingToCancel.userId!.email,
+                                    bookingToCancel.hostId!.email,
+                                    `${bookingToCancel.userId!.firstName} ${
+                                      bookingToCancel.userId!.lastName
+                                    }`,
+                                    `${bookingToCancel.hostId!.firstName} ${
+                                      bookingToCancel.hostId!.lastName
+                                    }`
+                                  );
+                                  setCancelDialogOpen(false);
+                                  setBookingToCancel(null);
+                                }}
+                              />
+                            )}
+                          </>
+                        ) : differenceInHours(booking?.checkIn, booking) >
+                            flexible &&
+                          booking?.cancellationPolicy == "flexible" ? (
+                          <>
+                            {console.log("Cancel Policies")}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-primaryGreen text-white py-3 rounded-md w-half"
+                              onClick={() => {
+                                setBookingToCancel(booking); // store selected booking
+                                setCancelDialogOpen(true); // open the dialog
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            {bookingToCancel && (
+                              <ConfirmCancelDialog
+                                choice={"Cancel"}
+                                open={cancelDialogOpen}
+                                onClose={() => {
+                                  setCancelDialogOpen(false);
+                                  setBookingToCancel(null);
+                                }}
+                                onConfirm={async () => {
+                                  if (!bookingToCancel) return null;
+                                  await cancelBooking(
+                                    bookingToCancel._id,
+                                    bookingToCancel.userId!.email,
+                                    bookingToCancel.hostId!.email,
+                                    `${bookingToCancel.userId!.firstName} ${
+                                      bookingToCancel.userId!.lastName
+                                    }`,
+                                    `${bookingToCancel.hostId!.firstName} ${
+                                      bookingToCancel.hostId!.lastName
+                                    }`
+                                  );
+                                  setCancelDialogOpen(false);
+                                  setBookingToCancel(null);
+                                }}
+                              />
+                            )}
+                          </>
+                        ) : (
+                          ""
+                        )
+                      ) : (
+                        ""
+                      )
+                    ) : (
+                      ""
                     )}
                   </div>
                 </div>
@@ -1033,7 +1067,8 @@ const ManageBookings: React.FC = () => {
         </div>
       </div>
     </main>
-  );
+
+);
 };
 
 export default ManageBookings;

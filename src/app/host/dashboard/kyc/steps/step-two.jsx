@@ -43,14 +43,24 @@ const updateHostFormDocVerificationStatus = async (doc) => {
     console.error(error);
   }
 };
-export function DocumentUpload({ updateFormData, formData }) {
+export function DocumentUpload({ updateFormData, formData, goNext }) {
   const [documentInfo, setDocumentInfo] = useState(
-    formData?.documentInfo || {
-      documentType: null,
-      documentNumber: null,
-      documentFile: null,
-      isVerified: false,
+    () => {
+      const doc = formData?.documentInfo?.documentType;
+      return {
+        documentType: doc && doc !== "" ? doc : "pan",
+        documentNumber: formData?.documentInfo?.documentNumber || null,
+        documentFile: formData?.documentInfo?.documentFile || null,
+        isVerified: formData?.documentInfo?.isVerified || false,
+      };
     }
+
+    // formData?.documentInfo || {
+    //   documentType: "pan",
+    //   documentNumber: null,
+    //   documentFile: null,
+    //   isVerified: false,
+    // }
   );
   const fileInputRef = useRef(null);
   const [showDialog, setShowDialog] = useState(false);
@@ -67,6 +77,14 @@ export function DocumentUpload({ updateFormData, formData }) {
   // const handleDocumentTypeChange = (value) => {
   //   setDocumentInfo((prev) => ({ ...prev, documentType: value }));
   // };
+  const clearUploadedFile = () => {
+    setImage(null);
+    setDocumentInfo((prev) => ({
+      ...prev,
+      documentFile: null,
+    }));
+    fileInputRef.current?.clear();
+  };
   const handleDocumentTypeChange = (value) => {
     setDocumentInfo({
       documentType: value,
@@ -74,9 +92,7 @@ export function DocumentUpload({ updateFormData, formData }) {
       documentFile: null,
       isVerified: false,
     });
-
-    setImage(null);
-    fileInputRef.current?.clear();
+    clearUploadedFile();
   };
   const handleFileChange = async (file) => {
     if (!file) {
@@ -95,12 +111,14 @@ export function DocumentUpload({ updateFormData, formData }) {
     // Check file type
     if (!allowedTypes.includes(file.type)) {
       toast.error("Only JPG, JPEG, PNG, or PDF files are allowed");
+      clearUploadedFile();
       return;
     }
 
     // Check file size
     if (file.size > 4 * 1024 * 1024) {
-      toast.error("File size must be less than 5MB");
+      toast.error("File size must be less than 4MB");
+      clearUploadedFile();
       return;
     }
     const timestamp = Date.now();
@@ -165,6 +183,7 @@ export function DocumentUpload({ updateFormData, formData }) {
         });
         if (response.status === 413) {
           toast.error("Upload file size is more than 4MB");
+          clearUploadedFile();
           return;
         }
         const resData = await response.json();
@@ -205,13 +224,15 @@ export function DocumentUpload({ updateFormData, formData }) {
     <Card className="max-w-3xl mx-auto">
       <CardHeader>
         <CardTitle className="text-2xl font-bricolage">
-          Document Upload
+          {documentInfo.isVerified
+            ? "Document Verification Successful"
+            : "Document Upload"}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <RadioGroup
           onValueChange={handleDocumentTypeChange}
-          value={documentInfo.documentType}
+          value={documentInfo?.documentType}
           className="grid grid-cols-3 gap-4"
         >
           <Label
@@ -229,7 +250,7 @@ export function DocumentUpload({ updateFormData, formData }) {
           <Label
             htmlFor="voterId"
             className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
-              documentInfo.documentType === "voterId"
+              documentInfo?.documentType === "voterId"
                 ? "border-primary bg-primary/10"
                 : "border-gray-200 hover:border-primary/50"
             }`}
@@ -243,7 +264,7 @@ export function DocumentUpload({ updateFormData, formData }) {
           <Label
             htmlFor="passport"
             className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
-              documentInfo.documentType === "passport"
+              documentInfo?.documentType === "passport"
                 ? "border-primary bg-primary/10"
                 : "border-gray-200 hover:border-primary/50"
             }`}
@@ -287,6 +308,7 @@ export function DocumentUpload({ updateFormData, formData }) {
           <div className="flex flex-col gap-2">
             <FileInput
               ref={fileInputRef}
+              disabled={documentInfo.isVerified}
               id="document"
               accept=".jpg, .jpeg, .png, .pdf"
               onFileSelect={handleFileChange}
@@ -331,7 +353,13 @@ export function DocumentUpload({ updateFormData, formData }) {
           )}
         </Button>
       </CardFooter>
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <Dialog
+        open={showDialog}
+        onOpenChange={(open) => {
+          setShowDialog(open);
+          if (!open) goNext();
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Verification Successful</DialogTitle>
@@ -343,7 +371,14 @@ export function DocumentUpload({ updateFormData, formData }) {
             Your document has been successfully verified.
           </p>
           <DialogFooter>
-            <Button onClick={() => setShowDialog(false)}>Close</Button>
+            <Button
+              onClick={() => {
+                setShowDialog(false);
+                goNext();
+              }}
+            >
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

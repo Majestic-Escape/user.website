@@ -152,8 +152,8 @@ export default function PropertyDescription({ description, property }) {
                   : `${property?.checkinTime} a.m.`
                 : "TBD"}{" "}
               and the check out time is{" "}
-              {property?.checkinTime
-                ? property?.checkinTime > 12
+              {property?.checkoutTime
+                ? property?.checkoutTime > 12
                   ? changeTime(property?.checkoutTime)
                   : `${property?.checkoutTime} a.m.`
                 : "TBD"}

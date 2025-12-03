@@ -47,7 +47,7 @@ const updateHostFormDocVerificationStatus = async (gstInfo) => {
   }
 };
 
-export function GSTVerification({ updateFormData, formData }) {
+export function GSTVerification({ updateFormData, formData, goNext }) {
   const [gstInfo, setGstInfo] = useState(
     formData?.gstInfo || {
       isVerified: false,
@@ -214,7 +214,13 @@ export function GSTVerification({ updateFormData, formData }) {
           )}
         </Button>
       </CardFooter>
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <Dialog
+        open={showDialog}
+        onOpenChange={(open) => {
+          setShowDialog(open);
+          if (!open) goNext();
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>GST Verification Successful</DialogTitle>
@@ -226,7 +232,14 @@ export function GSTVerification({ updateFormData, formData }) {
             Your GST details have been successfully verified.
           </p>
           <DialogFooter>
-            <Button onClick={() => setShowDialog(false)}>Close</Button>
+            <Button
+              onClick={() => {
+                setShowDialog(false);
+                goNext();
+              }}
+            >
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

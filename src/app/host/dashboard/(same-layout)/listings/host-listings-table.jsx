@@ -233,6 +233,11 @@ export function HostListingsTable({ userEmail }) {
         // setData((prevData) =>
         //   prevData.filter((item) => item._id !== listingToDelete._id)
         // );
+        const result = await response.json();
+        if (result.data == "adminDelist") {
+          toast.error("Admin has delisted your property");
+          return;
+        }
         setRelistDialogOpen(false);
         setListingToRelist(null);
         fetchListings();

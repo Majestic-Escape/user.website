@@ -61,48 +61,59 @@ const Invoice = ({ payment, invoiceData }) => {
           <Image
             width={200}
             height={100}
-            src="/logo.svg"
+            src={"/logo.svg"}
             className="w-12 h-12"
             alt="Logo"
           />
         </div>
 
         {/* Property Info */}
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-800">
-            {invoiceData.propertyId.title}
-          </h2>
-          <p className="text-sm text-gray-500">
-            {invoiceData.nights} night in {invoiceData.propertyId.address.city}
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            {fmt.format(new Date(invoiceData.checkIn))} &nbsp;–&nbsp;{" "}
-            {fmt.format(new Date(invoiceData.checkOut))}
-          </p>
-          <p className="text-sm text-gray-500">
-            {changeUpperCase(invoiceData.propertyId.placeType)} &nbsp;
-            {changeUpperCase(invoiceData.propertyId.propertyType)} •{" "}
-            {invoiceData.propertyId.beds} bed • {invoiceData.propertyId.guests}{" "}
-            guest
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            Hosted by{" "}
-            <span className="font-medium">
-              {changeUpperCase(invoiceData.hostId.firstName) +
-                " " +
-                changeUpperCase(invoiceData.hostId.lastName)}
-            </span>
-          </p>
-
-          <div className="mt-2">
-            {/* <p className="text-sm text-gray-500">
+        <div className="mb-6 flex justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-800">
+              {invoiceData.propertyId.title}
+            </h2>
+            <p className="text-sm text-gray-500">
+              {invoiceData.nights} night in{" "}
+              {invoiceData.propertyId.address.city}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {fmt.format(new Date(invoiceData.checkIn))} &nbsp;–&nbsp;{" "}
+              {fmt.format(new Date(invoiceData.checkOut))}
+            </p>
+            <p className="text-sm text-gray-500">
+              {changeUpperCase(invoiceData.propertyId.placeType)} &nbsp;
+              {changeUpperCase(invoiceData.propertyId.propertyType)} •{" "}
+              {invoiceData.propertyId.beds} bed •{" "}
+              {invoiceData.propertyId.guests} guest
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              Hosted by{" "}
+              <span className="font-medium">
+                {changeUpperCase(invoiceData.hostId.firstName) +
+                  " " +
+                  changeUpperCase(invoiceData.hostId.lastName)}
+              </span>
+            </p>
+            <div className="mt-2">
+              {/* <p className="text-sm text-gray-500">
               Confirmation code:{" "}
               <span className="font-semibold">HM5ZA5R82N</span>
             </p> */}
-            <div className="mt-2 flex gap-4 text-sm text-blue-600 underline">
-              <a href="#">Go to itinerary</a>
-              <a href="#">Go to listing</a>
+              <div className="mt-2 flex gap-4 text-sm text-blue-600 underline">
+                <a href="#">Go to itinerary</a>
+                <a href="#">Go to listing</a>
+              </div>
             </div>
+          </div>
+          <div>
+            <Image
+              width={200}
+              height={200}
+              src={invoiceData?.propertyId?.photos?.[0]}
+              // className="w-12 h-12"
+              alt="Logo"
+            />
           </div>
         </div>
 

@@ -292,6 +292,7 @@ export default function KycEdit({ params }) {
           <CurrentStepComponent
             updateFormData={updateFormData}
             formData={formData}
+            goNext={handleNext}
           />
         </div>
       </main>

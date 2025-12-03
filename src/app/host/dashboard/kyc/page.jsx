@@ -51,7 +51,7 @@ export default function KYC() {
       },
     },
     documentInfo: {
-      documentType: "",
+      documentType: "pan",
       isVerified: false,
     },
     gstInfo: {
@@ -307,6 +307,7 @@ export default function KYC() {
           <CurrentStepComponent
             updateFormData={updateFormData}
             formData={formData}
+            goNext={handleNext}
           />
         </div>
       </main>

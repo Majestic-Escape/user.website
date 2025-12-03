@@ -1,8 +1,14 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  SlidersHorizontal,
+  SearchX,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+
 import { useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -129,6 +135,7 @@ export default function FilterStaysBar({
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const { modalFilter, setModalFilter } = useAuth();
+
   const router = useRouter();
   const checkScroll = () => {
     if (scrollContainerRef.current) {
@@ -244,7 +251,34 @@ export default function FilterStaysBar({
           <SlidersHorizontal className="w-4 h-4" />
           <span>Filter</span>
         </button>
-
+        <button
+          className=" py-2.5 px-4 ring-1 ring-lightGray text-absoluteDark rounded-full hover:ring-absoluteDark transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2"
+          onClick={() => {
+            sessionStorage.setItem(
+              "searchFilters",
+              JSON.stringify({
+                dateRange: {
+                  from: null,
+                  to: null,
+                },
+                searchTerm: "",
+                guests: {
+                  adults: 0,
+                  children: 0,
+                  infants: 0,
+                },
+              })
+            );
+            // sessionStorage.setItem("reset", "true");
+            localStorage.removeItem("filterState");
+            router.push(
+              `/filter?propertyType=${""}&location=${""}&from=${""}&to=${""}&adults=${""}&senior=${""}&children=${""}&infants=${""}`
+            );
+          }}
+        >
+          <SearchX className="w-4 h-4" />
+          <span>Reset</span>
+        </button>
         {/* <div
           className={`${
             includeTaxes

@@ -6,34 +6,34 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuLabel,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Calendar } from "@/components/ui/calendar";
 import moment from "moment-timezone";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+Popover,
+PopoverContent,
+PopoverTrigger,
 } from "@/components/ui/popover";
 import ConfirmationModal from "@/components/dialog-modal"; // adjust path as needed
 import InvoicePage from "@/components/invoice";
@@ -50,156 +50,156 @@ const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const reservations = [];
 
 export default function ReservationsPage() {
-  const [date, setDate] = useState({
-    from: addMonths(new Date(), -1),
-    to: new Date(),
-  });
-  const printRef = useRef(null);
-  const [invoiceData, setInvoiceData] = useState();
-  const [showInvoice, setShowInvoice] = useState(false);
-  const [payment, setPayment] = useState();
+const [date, setDate] = useState({
+from: addMonths(new Date(), -1),
+to: new Date(),
+});
+const printRef = useRef(null);
+const [invoiceData, setInvoiceData] = useState();
+const [showInvoice, setShowInvoice] = useState(false);
+const [payment, setPayment] = useState();
 
-  console.log("cl", payment);
-  const handleDateRangeChange = (range) => {
-    const today = new Date();
-    switch (range) {
-      case "1d":
-        setDate({ from: today, to: addDays(today, 1) });
-        break;
-      case "1w":
-        setDate({ from: today, to: addDays(today, 7) });
-        break;
-      case "1m":
-        setDate({ from: today, to: addDays(today, 30) });
-        break;
-      case "3m":
-        setDate({ from: subMonths(today, 3), to: today });
-        break;
-      case "6m":
-        setDate({ from: subMonths(today, 6), to: today });
-        break;
-      default:
-        break;
-    }
-  };
-  const downloadPdf = async () => {
-    const res = await fetch(`${API_URL}/booking/generate-pdf`);
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "test.pdf";
-    a.click();
-    window.URL.revokeObjectURL(url);
-    // const element = printRef.current;
-    // if (!element) {
-    //   return;
-    // }
-    // const canvas = await html2canvas(element);
-    // const data = canvas.toDataURL("image/png");
-    // const pdf = new jsPDF({
-    //   orientation: "portrait",
-    //   unit: "px",
-    //   format: "a4",
-    // });
-    // const imgProperties = pdf.getImageProperties(data);
-    // const pdfWidth = pdf.internal.pageSize.getWidth();
-    // const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width;
-    // pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
-    // pdf.save("examplepdf.pdf");
-  };
-  const router = useRouter();
-  const [bookings, setBookings] = useState();
-  const [localState, setLocalState] = useState();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalAction, setModalAction] = useState(null);
-  const [selectedBooking, setSelectedBooking] = useState(null);
-  const [searchValue, setSearchValue] = useState("");
-  const [status, setStatus] = useState("all");
-  const getDate = (item) => {
-    const month = new Date(item).getMonth();
-    const year = new Date(item).getFullYear();
-    const day = new Date(item).getDate();
-    const newDate = new Date(Date.UTC(year, month, day));
-    return newDate.toISOString();
-  };
-  const fetchData = async () => {
-    const getLocalData = await localStorage.getItem("token");
-    const data = JSON.parse(getLocalData);
-    const hostData = await localStorage.getItem("userId");
-    const hostId = JSON.parse(hostData);
-    const from = date.from ? date.from.toLocaleDateString() : null;
-    const to = date.to ? date.to.toLocaleDateString() : null;
-    console.log(from, to);
-    if (data) {
-      try {
-        const response = await fetch(
-          `${API_URL}/booking/analytics-filter?search=${searchValue}&status=${status}&from=${from}&to=${to}&hostId=${hostId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${data}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        if (response.status === 401) {
-          // Token expired or missing
-          localStorage.removeItem("token");
-          localStorage.removeItem("userId");
-          router.push("/"); // redirect to login
-          return;
-        }
-        const result = await response.json();
-        console.log(result);
-        const final = await result.data;
-        setBookings(final);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-  };
-  const getPayment = async (bookingId) => {
-    const getLocalData = await localStorage.getItem("token");
-    const data = JSON.parse(getLocalData);
-    if (data) {
-      try {
-        const response = await fetch(
-          `${API_URL}/payment/booking?id=${bookingId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${data}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        if (response.status != 200) {
-          return;
-        }
-        const result = await response.json();
-        console.log("enll", result);
-        setPayment(result.data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-  };
+console.log("cl", payment);
+const handleDateRangeChange = (range) => {
+const today = new Date();
+switch (range) {
+case "1d":
+setDate({ from: today, to: addDays(today, 1) });
+break;
+case "1w":
+setDate({ from: today, to: addDays(today, 7) });
+break;
+case "1m":
+setDate({ from: today, to: addDays(today, 30) });
+break;
+case "3m":
+setDate({ from: subMonths(today, 3), to: today });
+break;
+case "6m":
+setDate({ from: subMonths(today, 6), to: today });
+break;
+default:
+break;
+}
+};
+const downloadPdf = async () => {
+const res = await fetch(`${API_URL}/booking/generate-pdf`);
+const blob = await res.blob();
+const url = window.URL.createObjectURL(blob);
+const a = document.createElement("a");
+a.href = url;
+a.download = "test.pdf";
+a.click();
+window.URL.revokeObjectURL(url);
+// const element = printRef.current;
+// if (!element) {
+// return;
+// }
+// const canvas = await html2canvas(element);
+// const data = canvas.toDataURL("image/png");
+// const pdf = new jsPDF({
+// orientation: "portrait",
+// unit: "px",
+// format: "a4",
+// });
+// const imgProperties = pdf.getImageProperties(data);
+// const pdfWidth = pdf.internal.pageSize.getWidth();
+// const pdfHeight = (imgProperties.height \* pdfWidth) / imgProperties.width;
+// pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
+// pdf.save("examplepdf.pdf");
+};
+const router = useRouter();
+const [bookings, setBookings] = useState();
+const [localState, setLocalState] = useState();
+const [modalOpen, setModalOpen] = useState(false);
+const [modalAction, setModalAction] = useState(null);
+const [selectedBooking, setSelectedBooking] = useState(null);
+const [searchValue, setSearchValue] = useState("");
+const [status, setStatus] = useState("all");
+const getDate = (item) => {
+const month = new Date(item).getMonth();
+const year = new Date(item).getFullYear();
+const day = new Date(item).getDate();
+const newDate = new Date(Date.UTC(year, month, day));
+return newDate.toISOString();
+};
+const fetchData = async () => {
+const getLocalData = await localStorage.getItem("token");
+const data = JSON.parse(getLocalData);
+const hostData = await localStorage.getItem("userId");
+const hostId = JSON.parse(hostData);
+const from = date.from ? date.from.toLocaleDateString() : null;
+const to = date.to ? date.to.toLocaleDateString() : null;
+console.log(from, to);
+if (data) {
+try {
+const response = await fetch(
+`${API_URL}/booking/analytics-filter?search=${searchValue}&status=${status}&from=${from}&to=${to}&hostId=${hostId}`,
+{
+method: "GET",
+headers: {
+Authorization: `Bearer ${data}`,
+"Content-Type": "application/json",
+},
+}
+);
+if (response.status === 401) {
+// Token expired or missing
+localStorage.removeItem("token");
+localStorage.removeItem("userId");
+router.push("/"); // redirect to login
+return;
+}
+const result = await response.json();
+console.log(result);
+const final = await result.data;
+setBookings(final);
+} catch (err) {
+console.error(err);
+}
+}
+};
+const getPayment = async (bookingId) => {
+const getLocalData = await localStorage.getItem("token");
+const data = JSON.parse(getLocalData);
+if (data) {
+try {
+const response = await fetch(
+`${API_URL}/payment/booking?id=${bookingId}`,
+{
+method: "GET",
+headers: {
+Authorization: `Bearer ${data}`,
+"Content-Type": "application/json",
+},
+}
+);
+if (response.status != 200) {
+return;
+}
+const result = await response.json();
+console.log("enll", result);
+setPayment(result.data);
+} catch (err) {
+console.error(err);
+}
+}
+};
 
-  useEffect(() => {
-    fetchData();
-  }, [searchValue, status, date]);
+useEffect(() => {
+fetchData();
+}, [searchValue, status, date]);
 
-  const sendConfirmationToUser = async (
-    bookingId,
-    userEmail,
-    hostEmail,
-    userName,
-    hostName
-  ) => {
-    try {
-      const getLocalData = await localStorage.getItem("token");
-      const data = JSON.parse(getLocalData);
+const sendConfirmationToUser = async (
+bookingId,
+userEmail,
+hostEmail,
+userName,
+hostName
+) => {
+try {
+const getLocalData = await localStorage.getItem("token");
+const data = JSON.parse(getLocalData);
 
       if (data) {
         const response = await fetch(`${API_URL}/booking/host/confirm`, {
@@ -227,18 +227,19 @@ export default function ReservationsPage() {
     } catch (err) {
       console.error(err);
     }
-  };
 
-  const sendRejectionToUser = async (
-    bookingId,
-    userEmail,
-    hostEmail,
-    userName,
-    hostName
-  ) => {
-    try {
-      const getLocalData = await localStorage.getItem("token");
-      const data = JSON.parse(getLocalData);
+};
+
+const sendRejectionToUser = async (
+bookingId,
+userEmail,
+hostEmail,
+userName,
+hostName
+) => {
+try {
+const getLocalData = await localStorage.getItem("token");
+const data = JSON.parse(getLocalData);
 
       if (data) {
         const response = await fetch(`${API_URL}/booking/host/cancel`, {
@@ -266,55 +267,57 @@ export default function ReservationsPage() {
     } catch (err) {
       console.error(err);
     }
-  };
-  const sendCancelToUser = async (
-    bookingId,
-    userEmail,
-    hostEmail,
-    userName,
-    hostName
-  ) => {
-    try {
-      const getLocalData = await localStorage.getItem("token");
-      const data = JSON.parse(getLocalData);
-      console.log("term", bookingId, userEmail, hostEmail, userName, hostName);
-      if (data) {
-        const response = await fetch(`${API_URL}/booking/host/terminate`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${data}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            bookingId: bookingId,
-            userEmail: userEmail,
-            hostEmail: hostEmail,
-            userName: userName,
-            hostName: hostName,
-          }),
-        });
-        if (!response.ok) {
-          toast.error("Failed to send cancellation email");
-          return;
-        }
-        toast.success("Successfully send the cancellation email");
-        fetchData();
-        return response;
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-  const openModal = (action, booking) => {
-    setModalAction(action);
-    setSelectedBooking(booking);
+
+};
+const sendCancelToUser = async (
+bookingId,
+userEmail,
+hostEmail,
+userName,
+hostName
+) => {
+try {
+const getLocalData = await localStorage.getItem("token");
+const data = JSON.parse(getLocalData);
+console.log("term", bookingId, userEmail, hostEmail, userName, hostName);
+if (data) {
+const response = await fetch(`${API_URL}/booking/host/terminate`, {
+method: "PATCH",
+headers: {
+Authorization: `Bearer ${data}`,
+"Content-Type": "application/json",
+},
+body: JSON.stringify({
+bookingId: bookingId,
+userEmail: userEmail,
+hostEmail: hostEmail,
+userName: userName,
+hostName: hostName,
+}),
+});
+if (!response.ok) {
+toast.error("Failed to send cancellation email");
+return;
+}
+toast.success("Successfully send the cancellation email");
+fetchData();
+return response;
+}
+} catch (err) {
+console.error(err);
+}
+};
+const openModal = (action, booking) => {
+setModalAction(action);
+setSelectedBooking(booking);
 
     setTimeout(() => setModalOpen(true), 50);
-  };
 
-  const handleModalConfirm = () => {
-    const booking = selectedBooking;
-    const { _id, userId, hostId } = booking;
+};
+
+const handleModalConfirm = () => {
+const booking = selectedBooking;
+const { \_id, userId, hostId } = booking;
 
     const params = [
       _id,
@@ -329,66 +332,67 @@ export default function ReservationsPage() {
     if (modalAction === "cancel") sendCancelToUser(...params);
 
     setModalOpen(false);
-  };
-  function checkLength(value) {
-    if (value?.length > 15) {
-      return value.substring(0, 15) + "…";
-    }
-    return value;
-  }
-  const fmt = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 
-  // function canShowReview(booking) {
-  //   if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
+};
+function checkLength(value) {
+if (value?.length > 15) {
+return value.substring(0, 15) + "…";
+}
+return value;
+}
+const fmt = new Intl.DateTimeFormat("en-US", {
+month: "short",
+day: "numeric",
+year: "numeric",
+});
 
-  //   const checkoutDate = new Date(booking?.checkOut);
-  //   const today = new Date();
+// function canShowReview(booking) {
+// if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
 
-  //   const differenceInDays = (today - checkoutDate) / (1000 * 60 * 60 * 24);
+// const checkoutDate = new Date(booking?.checkOut);
+// const today = new Date();
 
-  //   if (today > checkoutDate && differenceInDays <= 14) {
-  //     const isSameDay = today.toDateString() === checkoutDate.toDateString();
-  //     if (!isSameDay) {
-  //       return true;
-  //     } else {
-  //       const checkoutWithTime = new Date(checkoutDate);
-  //       checkoutWithTime.setHours(booking?.propertyId?.checkoutTime, 0, 0, 0);
+// const differenceInDays = (today - checkoutDate) / (1000 _ 60 _ 60 \* 24);
 
-  //       const fiveHoursLater = new Date(
-  //         checkoutWithTime.getTime() + 5 * 60 * 60 * 1000
-  //       );
+// if (today > checkoutDate && differenceInDays <= 14) {
+// const isSameDay = today.toDateString() === checkoutDate.toDateString();
+// if (!isSameDay) {
+// return true;
+// } else {
+// const checkoutWithTime = new Date(checkoutDate);
+// checkoutWithTime.setHours(booking?.propertyId?.checkoutTime, 0, 0, 0);
 
-  //       if (today >= fiveHoursLater) {
-  //         return true;
-  //       }
-  //     }
-  //   }
-  //   // console.log("dta", today.toDateString(), checkoutDate.toDateString());
+// const fiveHoursLater = new Date(
+// checkoutWithTime.getTime() + 5 _ 60 _ 60 \* 1000
+// );
 
-  //   // const isSameDay = today.toDateString() === checkoutDate.toDateString();
+// if (today >= fiveHoursLater) {
+// return true;
+// }
+// }
+// }
+// // console.log("dta", today.toDateString(), checkoutDate.toDateString());
 
-  //   // if (isSameDay) {
-  //   //   const checkoutWithTime = new Date(checkoutDate);
-  //   //   checkoutWithTime.setHours(booking?.propertyId?.checkoutTime, 0, 0, 0);
+// // const isSameDay = today.toDateString() === checkoutDate.toDateString();
 
-  //   //   const fiveHoursLater = new Date(
-  //   //     checkoutWithTime.getTime() + 5 * 60 * 60 * 1000
-  //   //   );
+// // if (isSameDay) {
+// // const checkoutWithTime = new Date(checkoutDate);
+// // checkoutWithTime.setHours(booking?.propertyId?.checkoutTime, 0, 0, 0);
 
-  //   //   if (today >= fiveHoursLater) {
-  //   //     return true;
-  //   //   }
-  //   // }
+// // const fiveHoursLater = new Date(
+// // checkoutWithTime.getTime() + 5 _ 60 _ 60 \* 1000
+// // );
 
-  //   return false;
-  // }
+// // if (today >= fiveHoursLater) {
+// // return true;
+// // }
+// // }
 
-  function canShowReview(booking) {
-    if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
+// return false;
+// }
+
+function canShowReview(booking) {
+if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
 
     // Convert both to India timezone
     const checkoutIST = moment.tz(booking.checkOut, "Asia/Kolkata");
@@ -426,43 +430,43 @@ export default function ReservationsPage() {
     }
 
     return false;
-  }
-  console.log("we want to know date", date.from, date.to);
-  return (
-    <div className="w-full space-y-6">
-      <div className="flex justify-between items-center flex-wrap gap-4">
-        <h1 className="text-2xl font-semibold font-bricolage text-absoluteDark">
-          Bookings
-        </h1>
-        {showInvoice && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            {/* Outer container — center modal */}
-            <div className="bg-white w-full rounded-2xl max-w-2xl max-h-[90vh] flex flex-col relative">
-              {/* Header (fixed top) */}
-              <div className="sticky rounded-t-2xl top-0 bg-white  border-b flex justify-between items-center px-4 py-3 z-10">
-                <h2 className="text-lg font-semibold text-gray-800">Invoice</h2>
-                <button
-                  onClick={() => {
-                    setShowInvoice(false);
-                    setInvoiceData();
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <svg
+
+}
+console.log("we want to know date", date.from, date.to);
+return (
+<div className="w-full space-y-6">
+<div className="flex justify-between items-center flex-wrap gap-4">
+<h1 className="text-2xl font-semibold font-bricolage text-absoluteDark">
+Bookings
+</h1>
+{showInvoice && (
+<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+{/_ Outer container — center modal _/}
+<div className="bg-white w-full rounded-2xl max-w-2xl max-h-[90vh] flex flex-col relative">
+{/_ Header (fixed top) _/}
+<div className="sticky rounded-t-2xl top-0 bg-white  border-b flex justify-between items-center px-4 py-3 z-10">
+<h2 className="text-lg font-semibold text-gray-800">Invoice</h2>
+<button
+onClick={() => {
+setShowInvoice(false);
+setInvoiceData();
+}}
+className="text-gray-500 hover:text-gray-700" >
+<svg
                     className="w-6 h-6"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path
+<path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
                       d="M6 18L18 6M6 6l12 12"
                     />
-                  </svg>
-                </button>
-              </div>
+</svg>
+</button>
+</div>
 
               {/* Scrollable Content */}
               <div ref={printRef} className="flex-1 overflow-y-auto px-6 py-4">
@@ -828,5 +832,6 @@ export default function ReservationsPage() {
         </TableBody>
       </Table>
     </div>
-  );
+
+);
 }

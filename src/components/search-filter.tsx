@@ -101,6 +101,8 @@ export default function SearcahFilter({
 
   // Load from localStorage on mount
   React.useEffect(() => {
+    // const reset = sessionStorage.getItem("reset");
+    // if (reset !== "true") {
     const saved = sessionStorage.getItem("searchFilters");
     if (saved) {
       const parsed = JSON.parse(saved);
@@ -117,11 +119,13 @@ export default function SearcahFilter({
       if (parsed.guests) setGuests(parsed.guests);
     }
     setHydrated(true); // mark as hydrated after first load
+    // }
   }, []);
 
   // Save to localStorage ONLY after hydration
   React.useEffect(() => {
     if (!hydrated) return; // skip first run until state is restored
+    // sessionStorage.setItem("reset", "false");
 
     sessionStorage.setItem(
       "searchFilters",
