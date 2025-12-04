@@ -278,7 +278,7 @@ export default function SearcahFilter({
                 No destination found.
               </CommandEmpty>
               <CommandGroup>
-                {filteredDestinations.map((dest) => (
+                {/* {filteredDestinations.map((dest) => (
                   <button
                     key={dest.value}
                     className="flex items-center w-full p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -300,7 +300,7 @@ export default function SearcahFilter({
                       </div>
                     </div>
                   </button>
-                ))}
+                ))} */}
               </CommandGroup>
             </Command>
           </PopoverContent>

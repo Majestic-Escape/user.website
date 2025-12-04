@@ -1,4 +1,4 @@
-export const registerOtpTemplate = (fullName, otp ) => `
+export const registerOtpTemplate = (fullName, otp) => `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
@@ -51,7 +51,7 @@ export const registerOtpTemplate = (fullName, otp ) => `
                     </tr>
                     <tr>
                         <td style="color: #ffffff; font-size: 12px; line-height: 1.5; font-family: 'Arial', sans-serif;">
-                            <p style="margin: 0 0 10px 0;">© 2024 Majestic Escape | Host your Majestic Stay on your own Goan platform</p>
+                            <p style="margin: 0 0 10px 0;">© 2024 Majestic Escape | Host your Majestic Stay now!</p>
                             <p style="margin: 0;">
                                 <a href="https://majesticescape.in" target="_blank" style="color: #ffffff; text-decoration: none;">All Rights Reserved</a> |
                                 <a href="https://majesticescape.in/privacy-policy" target="_blank" style="color: #ffffff; text-decoration: none;">Privacy Policy</a> |
@@ -66,4 +66,3 @@ export const registerOtpTemplate = (fullName, otp ) => `
 </body>
 </html>
 `;
-

@@ -51,7 +51,7 @@ export const loginOtpTemplate = (otp) => `
                     </tr>
                     <tr>
                         <td style="color: #ffffff; font-size: 12px; line-height: 1.5; font-family: 'Arial', sans-serif;">
-                            <p style="margin: 0 0 10px 0;">© 2024 Majestic Escape | Host your Majestic Stay on your own Goan platform</p>
+                            <p style="margin: 0 0 10px 0;">© 2024 Majestic Escape | Host your Majestic Stay now!</p>
                             <p style="margin: 0;">
                                 <a href="https://majesticescape.in" target="_blank" style="color: #ffffff; text-decoration: none;">All Rights Reserved</a> |
                                 <a href="https://majesticescape.in/privacy-policy" target="_blank" style="color: #ffffff; text-decoration: none;">Privacy Policy</a> |
@@ -66,4 +66,3 @@ export const loginOtpTemplate = (otp) => `
 </body>
 </html>
 `;
-

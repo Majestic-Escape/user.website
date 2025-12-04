@@ -19,10 +19,10 @@ const footerData = {
   host: {
     title: "For Host",
     links: [
-      { label: "Host your property", href: "/host" },
+      { label: "Host your property", href: "/hosting" },
       { label: "Benefits", href: "/host/#benefits" },
       { label: "FAQ", href: "/host-faq" },
-      { label: "Rules for Goa", href: "/rules-for-goa" },
+      // { label: "Rules for Goa", href: "/rules-for-goa" },
     ],
   },
   legal: {

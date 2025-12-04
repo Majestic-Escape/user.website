@@ -7,16 +7,16 @@ import { Providers } from "@/components/providers";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "sonner";
 export const metadata = {
-  title: "Majestic Escape | Your Perfect Goan Gateway",
+  title: "Majestic Escape | Your Perfect Gateway",
   description:
-    "Discover your perfect Goan gateway with Majestic Escape. From beachfront villas to heritage homes, find authentic stays that capture the true spirit of Goa, handpicked for the modern traveller.",
+    "Discover your perfect gateway with Majestic Escape. From beachfront villas to heritage homes, find authentic stays that capture the true spirit of Goa, handpicked for the modern traveller.",
   keywords:
     "Majestic Escape, Goa, home-stays, luxury accommodation, vacation rentals, beachfront villas, heritage homes",
   authors: [{ name: "Majestic Escape" }],
   openGraph: {
-    title: "Majestic Escape | Your Perfect Goan Gateway",
+    title: "Majestic Escape | Your Perfect Gateway",
     description:
-      "Discover your perfect Goan gateway with Majestic Escape. From beachfront villas to heritage homes, find authentic stays that capture the true spirit of Goa.",
+      "Discover your perfect gateway with Majestic Escape. From beachfront villas to heritage homes, find authentic stays that capture the true spirit of Goa.",
     url: "https://majesticescape.in/",
     siteName: "Majestic Escape",
     images: [
@@ -31,9 +31,9 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Majestic Escape | Your Perfect Goan Gateway",
+    title: "Majestic Escape | Your Perfect Gateway",
     description:
-      "Discover your perfect Goan gateway with Majestic Escape. From beachfront villas to heritage homes, find authentic stays that capture the true spirit of Goa.",
+      "Discover your perfect gateway with Majestic Escape. From beachfront villas to heritage homes, find authentic stays that capture the true spirit of Goa.",
     images: ["https://majesticescape.in/og-image.jpg"],
   },
   icons: {

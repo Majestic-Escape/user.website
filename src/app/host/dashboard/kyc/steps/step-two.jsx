@@ -66,6 +66,14 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
   const [showDialog, setShowDialog] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [image, setImage] = useState(null);
+  const [isLocked, setIsLocked] = useState(false);
+
+  useEffect(() => {
+    if (documentInfo.isVerified) {
+      setIsLocked(true); // Lock UI once verified
+    }
+  }, [documentInfo]);
+
   useEffect(() => {
     const hasChanges =
       JSON.stringify(formData?.documentInfo) !== JSON.stringify(documentInfo);
@@ -86,6 +94,7 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
     fileInputRef.current?.clear();
   };
   const handleDocumentTypeChange = (value) => {
+    if (isLocked) return;
     setDocumentInfo({
       documentType: value,
       documentNumber: null,
@@ -201,7 +210,7 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
         updateHostFormDocVerificationStatus(doc);
         setTimeout(() => {
           setDocumentInfo((prev) => ({ ...prev, isVerified: true }));
-
+          setIsLocked(true);
           setIsUploading(false);
           setShowDialog(true);
         }, 2000);
@@ -233,7 +242,9 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
         <RadioGroup
           onValueChange={handleDocumentTypeChange}
           value={documentInfo?.documentType}
-          className="grid grid-cols-3 gap-4"
+          className={`grid grid-cols-3 gap-4 ${
+            isLocked ? "pointer-events-none opacity-50" : ""
+          }`}
         >
           <Label
             htmlFor="pan"
@@ -308,7 +319,7 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
           <div className="flex flex-col gap-2">
             <FileInput
               ref={fileInputRef}
-              disabled={documentInfo.isVerified}
+              disabled={isLocked}
               id="document"
               accept=".jpg, .jpeg, .png, .pdf"
               onFileSelect={handleFileChange}

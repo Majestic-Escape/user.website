@@ -66,7 +66,8 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setGstInfo((prev) => ({ ...prev, [name]: value }));
+    const cleanValue = value.replace(/\s/g, "");
+    setGstInfo((prev) => ({ ...prev, [name]: cleanValue }));
   };
 
   const handleVerify = async () => {
@@ -153,6 +154,7 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
             value={gstInfo.panNumber}
             onChange={handleChange}
             className="font-bricolage text-lg"
+            type="password"
             placeholder="Enter your business pan number"
           />
         </div>

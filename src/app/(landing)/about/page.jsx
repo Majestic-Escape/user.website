@@ -45,8 +45,9 @@ export default function About() {
                   At Majestic Escape, we&apos;re passionate about making your
                   Goan adventure unforgettable. Our platform connects travellers
                   with unique, comfortable, and authentic accommodations across
-                  the beautiful state of Goa. From beachside shacks to luxury
-                  villas, we&apos;ve got something for every type of traveller.
+                  stunning destinations. From cosy stays close to nature to
+                  premium luxury villas, we offer something for every type of
+                  traveller.
                 </p>
               </CardContent>
             </Card>
@@ -119,8 +120,8 @@ export default function About() {
                         </svg>
                       </div>
                       <p className="ml-3 text-stone">
-                        Local Insights: Benefit from our team&apos;s deep
-                        knowledge of Goa, including insider tips and
+                        Local Insights: Benefit from our team’s deep regional
+                        knowledge, including insider tips and personalized
                         recommendations.
                       </p>
                     </div>
@@ -182,18 +183,19 @@ export default function About() {
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <p className="mb-4 text-stone">
-                    Founded in 2024, Majestic Escape was born out of a love for
-                    Goa&apos;s vibrant culture, stunning beaches, and warm
-                    hospitality. Our founders, avid travellers themselves,
-                    recognized the need for a platform that could showcase the
-                    best of Goa&apos;s accommodations while supporting local
-                    businesses.
+                    Founded in 2024, Majestic Escape was created by a team of
+                    Goan founders inspired by their homeland’s vibrant culture,
+                    natural beauty, and warm hospitality. As passionate
+                    travellers, they recognised the need for a platform that
+                    could showcase exceptional stays across diverse destinations
+                    while continuing to support local communities and businesses
+                    wherever we operate.
                   </p>
                   <p className="text-stone">
-                    Today, we&apos;re proud to be the go-to platform for
-                    travellers seeking authentic Goan experiences. Our team
-                    works tirelessly to ensure that every stay booked through
-                    Majestic Escape meets our high standards of quality and
+                    Today, we’re proud to be a trusted platform for travellers
+                    seeking authentic and memorable experiences. Our team works
+                    tirelessly to ensure that every stay booked through Majestic
+                    Escape meets our high standards of quality, comfort, and
                     authenticity.
                   </p>
                 </div>
@@ -211,9 +213,9 @@ export default function About() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-700">
-                    We&apos;re dedicated to promoting sustainable travel
-                    practices that benefit local communities and preserve
-                    Goa&apos;s natural beauty.
+                    We’re committed to encouraging responsible travel that
+                    uplifts local communities and helps preserve the natural
+                    beauty of every destination we serve.
                   </p>
                 </CardContent>
                 <div className="absolute bottom-0 left-0 w-full h-1 bg-lightGreen transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
@@ -230,8 +232,8 @@ export default function About() {
                 <CardContent>
                   <p className="text-gray-700">
                     Majestic Escape actively collaborates with local businesses
-                    and property owners, supporting the local economy and
-                    providing you with genuine Goan experiences.
+                    and property owners, supporting regional economies and
+                    providing travellers with genuine, meaningful experiences.
                   </p>
                 </CardContent>
                 <div className="absolute bottom-0 left-0 w-full h-1 bg-lightGreen transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
@@ -247,8 +249,9 @@ export default function About() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-700">
-                    We encourage our guests to immerse themselves in Goan
-                    culture while respecting local customs and traditions.
+                    We encourage our guests to immerse themselves in the local
+                    culture of each destination while respecting its customs and
+                    traditions.
                   </p>
                 </CardContent>
                 <div className="absolute bottom-0 left-0 w-full h-1 bg-lightGreen transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
@@ -260,19 +263,20 @@ export default function About() {
             <Card className="bg-white ">
               <CardHeader>
                 <h2 className="text-2xl font-bricolage font-semibold text-absoluteDark">
-                  Discover Goa with Us
+                  Discover Your Next Escape
                 </h2>
               </CardHeader>
               <CardContent>
                 <p className="mb-4 text-slate-600">
-                  Whether you&apos;re looking for a peaceful retreat or an
-                  adventure-filled holiday, Majestic Escape is here to make your
-                  Goan dreams a reality. From the moment you book until the end
-                  of your stay, we&apos;re committed to providing you with
-                  exceptional service and unforgettable experiences.
+                  Whether you’re seeking a peaceful retreat or an
+                  adventure-filled holiday, Majestic Escape is here to bring
+                  your travel dreams to life. From the moment you book until the
+                  end of your stay, we’re committed to delivering exceptional
+                  service and unforgettable experiences.
                 </p>
                 <p className="font-medium text-stone">
-                  Join us in exploring the magic of Goa, one stay at a time.
+                  Join us in discovering the magic of extraordinary
+                  destinations, one stay at a time.
                 </p>
               </CardContent>
               <CardFooter>
