@@ -77,17 +77,17 @@ export default function Navbar() {
           </div>
           {user ? (
             <nav className=" ml-auto hidden md:flex items-center gap-4 sm:gap-6">
-              <WishlistPopup
+              {/* <WishlistPopup
                 isOpen={isWishlistOpen}
                 onClose={() => setIsWishlistOpen(false)}
-              />
+              /> */}
               <button
                 onClick={switchToHosting}
                 className="text-base bg-transparent shadow:none  border-none outline-none hover:bg-transparent focus:outline-none focus:border-none text-absoluteDark font-medium hover:text-brightGreen hover:transition-colors hover:underline"
               >
                 Switch to Hosting
               </button>
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="icon"
                 className="relative"
@@ -103,16 +103,16 @@ export default function Navbar() {
                     {totalWishlistItems}
                   </span>
                 )}
-              </Button>
+              </Button> */}
 
-              <Link href="/inbox" className="relative">
+              {/* <Link href="/inbox" className="relative">
                 <MessageSquare className="h-5 w-5 text-muted-foreground" />
                 {totalMessages > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
                     {totalMessages}
                   </span>
                 )}
-              </Link>
+              </Link> */}
 
               <UserDropdownMenu />
             </nav>

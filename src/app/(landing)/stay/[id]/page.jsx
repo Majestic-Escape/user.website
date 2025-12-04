@@ -95,7 +95,7 @@ export default function PropertyPage() {
   // --- Query 1: Fetch Property Data ---
   const [next, setNext] = useState(2);
   const [prev, setPrev] = useState(0);
-
+  const [loading, setLoading] = useState(false);
   const [unavailableDates, setUnavailableDates] = useState([]);
 
   const handleNext = () => {
@@ -122,6 +122,7 @@ export default function PropertyPage() {
   };
   useEffect(() => {
     async function fetchDates() {
+      setLoading(true);
       try {
         const response = await axios.get(
           `${API_URL}/booking/check-dates/${propertyId}`
@@ -136,6 +137,8 @@ export default function PropertyPage() {
         setUnavailableDates(response.data.data);
       } catch (err) {
         console.error(err);
+      } finally {
+        // setLoading(false);
       }
     }
     fetchDates();
@@ -293,6 +296,7 @@ export default function PropertyPage() {
               propertyDetails={propertyData}
               isLoading={isPropertyLoading}
               unavailableDates={unavailableDates}
+              loading={loading}
             />
             {/* Review Section */}
             {/* Pass relevant review data and potentially property ID */}

@@ -86,7 +86,7 @@ export default function Dashboard() {
     <div className="space-y-4 grid grid-cols-1">
       <div
         className={`grid grid-cols-1 gap-4 ${
-          exist ? "md:grid-cols-3" : "md:grid-cols-2"
+          exist ? "md:grid-cols-2" : "md:grid-cols-2"
         }`}
       >
         <div className="space-y-4">
@@ -115,7 +115,7 @@ export default function Dashboard() {
               </CardContent>
             </Card> */}
 
-            <Card className=" bg-white border-green-300">
+            {/* <Card className=" bg-white border-green-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg font-medium text-absoluteDark font-bricolage">
                   Add Bank details
@@ -133,7 +133,7 @@ export default function Dashboard() {
                   Setup payments
                 </Link>
               </CardContent>
-            </Card>
+            </Card> */}
             <Card className=" bg-white border-red-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg font-medium text-absoluteDark font-bricolage">
@@ -143,8 +143,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-stone mb-4">
-                  Complete your KYC to unlock all features and start listing
-                  properties.
+                  Complete your KYC to start listing properties.
                 </p>
                 <Link
                   href={{
@@ -159,7 +158,7 @@ export default function Dashboard() {
           </>
         ) : form?.status == "completed" ? (
           <>
-            <Card className=" bg-white border-green-300">
+            {/* <Card className=" bg-white border-green-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg font-medium text-absoluteDark font-bricolage">
                   Add Bank details
@@ -177,26 +176,26 @@ export default function Dashboard() {
                   Setup payments
                 </Link>
               </CardContent>
-            </Card>
-            <Card className=" bg-white border-green-300">
+            </Card> */}
+            {/* <Card className=" bg-white border-green-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg font-medium text-absoluteDark font-bricolage">
-                  Adjust Availability
+                  Starting Listing Your Properties
                 </CardTitle>
                 <Calendar className="h-6 w-6 text-primaryGreen" />
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-stone mb-4">
-                  Sync in your calendar with us to adjust availability
+                  Create your first property now.
                 </p>
                 <Link
-                  href={"/host/dashboard/calendar"}
+                  href={"/host/dashboard/add-listing"}
                   className="bg-green-50 border text-sm font-medium py-2 px-4 rounded mt-2  border-primaryGreen hover:text-green-500 text-primaryGreen hover:bg-green-100"
                 >
-                  Go to Calendar
+                  Add Property
                 </Link>
               </CardContent>
-            </Card>
+            </Card> */}
           </>
         ) : (
           <Card className=" bg-white border-red-300">
@@ -208,8 +207,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-stone mb-4">
-                Complete your KYC to unlock all features and start listing
-                properties.
+                Complete your KYC to start listing properties.
               </p>
               <Link
                 href={"/host/dashboard/kyc"}

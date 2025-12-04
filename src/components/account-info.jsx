@@ -384,7 +384,7 @@ export default function AccountInfo() {
           <hr />
 
           {/* Government Registered ID */}
-          <div>
+          {/* <div>
             <h2 className="text-lg font-semibold mb-1">
               Government Registered ID
             </h2>
@@ -403,8 +403,8 @@ export default function AccountInfo() {
                 </Link>
               </>
             )}
-          </div>
-          <hr />
+          </div> */}
+          {/* <hr /> */}
 
           {/* Detailed Address (editable) */}
           <div>

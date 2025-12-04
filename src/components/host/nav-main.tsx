@@ -105,6 +105,13 @@ export function NavMain({
                           >
                             <Link href={subItem.url} onClick={handleLinkClick}>
                               <span>{subItem.title}</span>
+                              {/* {subItem.url == "/help-center" ? (
+                                <a target="_blank">
+                                  <span>{subItem.title}</span>
+                                </a>
+                              ) : (
+                                <span>{subItem.title}</span>
+                              )} */}
                             </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>

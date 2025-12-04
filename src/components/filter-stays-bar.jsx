@@ -270,7 +270,20 @@ export default function FilterStaysBar({
               })
             );
             // sessionStorage.setItem("reset", "true");
-            localStorage.removeItem("filterState");
+            localStorage.setItem("modalFilterReset", "true");
+            localStorage.setItem(
+              "filterState",
+              JSON.stringify({
+                addAmenities: [],
+                addPlaceType: "",
+                addPropertyType: "",
+                bookingType: "",
+                checkinType: "",
+                petAllowed: "",
+                priceRange: [501, 83000],
+                rooms: { bedrooms: 0, beds: 0, bathrooms: 0 },
+              })
+            );
             router.push(
               `/filter?propertyType=${""}&location=${""}&from=${""}&to=${""}&adults=${""}&senior=${""}&children=${""}&infants=${""}`
             );

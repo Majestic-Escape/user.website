@@ -40,6 +40,7 @@ interface BookingWidgetProps {
   toggleGuestsDropdown: () => void;
   activation: boolean;
   allowedGuests: number;
+  loading: boolean;
 }
 
 export default function BookingWidget({
@@ -59,6 +60,7 @@ export default function BookingWidget({
   unavailableDates,
   activation,
   allowedGuests,
+  loading,
 }: BookingWidgetProps) {
   const [totalPrice, setTotalPrice] = useState<number>(pricePerNight);
   const [nightsCount, setNightsCount] = useState<number>(1);
@@ -271,33 +273,43 @@ export default function BookingWidget({
                 </div>
               </div>
               <div className="p-4">
-                <Calendar
-                  mode="range"
-                  defaultMonth={date?.from}
-                  selected={activation ? date : undefined}
-                  onSelect={onDateSelect}
-                  numberOfMonths={2}
-                  disabled={[
-                    { before: new Date() }, // disable past dates
-                    ...unavailableDates.map((d) => new Date(d)), // disable specific unavailable dates
-                    // ...(date?.from
-                    //   ? [
-                    //       (d: Date) =>
-                    //         d.toDateString() === date.from!.toDateString(),
-                    //     ]
-                    //   : []),
-                  ]}
-                  classNames={{
-                    day_selected:
-                      "bg-black text-white hover:bg-black hover:text-white",
-                    day_range_middle:
-                      "aria-selected:bg-gray-100 aria-selected:text-black",
-                    day_range_end:
-                      "bg-black text-white hover:bg-black hover:text-white",
-                    day_range_start:
-                      "bg-black text-white hover:bg-black hover:text-white",
-                  }}
-                />
+                {loading ? (
+                  // ---- LOADING SPINNER UI ----
+                  <div className="flex flex-col items-center justify-center h-full w-full">
+                    <div className="h-8 w-8 border-4 border-gray-300 border-t-black rounded-full animate-spin"></div>
+                    <p className="text-sm mt-2 text-gray-600">
+                      Loading dates...
+                    </p>
+                  </div>
+                ) : (
+                  <Calendar
+                    mode="range"
+                    defaultMonth={date?.from}
+                    selected={activation ? date : undefined}
+                    onSelect={onDateSelect}
+                    numberOfMonths={2}
+                    disabled={[
+                      { before: new Date() }, // disable past dates
+                      ...unavailableDates.map((d) => new Date(d)), // disable specific unavailable dates
+                      // ...(date?.from
+                      //   ? [
+                      //       (d: Date) =>
+                      //         d.toDateString() === date.from!.toDateString(),
+                      //     ]
+                      //   : []),
+                    ]}
+                    classNames={{
+                      day_selected:
+                        "bg-black text-white hover:bg-black hover:text-white",
+                      day_range_middle:
+                        "aria-selected:bg-gray-100 aria-selected:text-black",
+                      day_range_end:
+                        "bg-black text-white hover:bg-black hover:text-white",
+                      day_range_start:
+                        "bg-black text-white hover:bg-black hover:text-white",
+                    }}
+                  />
+                )}
               </div>
               <div className="p-4 flex justify-between border-t">
                 <Button variant="ghost" onClick={() => onDateSelect(undefined)}>

@@ -24,7 +24,7 @@ export default function Component() {
               <PrimaryLink
                 text="Become a Host"
                 variant="primary"
-                href="/host/register"
+                href="/register"
               />
               <PrimaryLink
                 text="Explore Features"

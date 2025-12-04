@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const { checkToken } = useCheckToken();
   const pathname = usePathname();
 
-    useEffect(() => {
+  useEffect(() => {
     const verify = async () => {
       await checkToken();
     };

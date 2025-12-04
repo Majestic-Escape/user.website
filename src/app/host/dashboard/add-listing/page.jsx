@@ -20,6 +20,7 @@ import { Loader2 } from "lucide-react";
 // Import useQueryClient from TanStack Query
 import { useQueryClient } from "@tanstack/react-query";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const offer = process.env.HOST_COMMISSION_OFFER;
 export default function HostOnboarding() {
   const auth = useAuth();
   const router = useRouter();
@@ -393,11 +394,13 @@ export default function HostOnboarding() {
           )}
         </div>
       </footer>
-      <MembershipPopup
-        open={showMembershipPopup}
-        onOpenChange={setShowMembershipPopup}
-        onClose={handleRedirectToDashboard}
-      />
+      {offer ? (
+        <MembershipPopup
+          open={showMembershipPopup}
+          onOpenChange={setShowMembershipPopup}
+          onClose={handleRedirectToDashboard}
+        />
+      ) : null}
     </div>
   );
 }

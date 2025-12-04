@@ -49,7 +49,7 @@ export default function AccountLayout({ children }: LayoutProps) {
       <div className="container max-w-[1400px] mx-auto">
         <AccountHeader />
         <div className="flex">
-          <AccountSidebar />
+          {/* <AccountSidebar /> */}
           <main className="flex-1 p-8">{children}</main>
         </div>
       </div>

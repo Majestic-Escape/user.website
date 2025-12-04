@@ -92,7 +92,7 @@ export default function PartnerPage() {
           <Button
             size="lg"
             className="bg-primaryGreen hover:bg-brightGreen transition-colors rounded-3xl"
-            onClick={() => router.push("/host/register")}
+            onClick={() => router.push("/register")}
           >
             Partner with us
             <ArrowRight className="ml-2 h-4 w-4" />
@@ -359,7 +359,7 @@ export default function PartnerPage() {
           <Button
             size="lg"
             className="bg-white text-green-800 hover:bg-green-100"
-            onClick={() => router.push("/host/register")}
+            onClick={() => router.push("/register")}
           >
             Become a Partner
             <ArrowRight className="ml-2 h-4 w-4" />

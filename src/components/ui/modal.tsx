@@ -123,6 +123,7 @@ export default function FilterModal({
   } = useAuth();
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
+  const reset = localStorage.getItem("modalFilterReset");
 
   const [isMobile, setIsMobile] = useState(false);
   type FilterRooms = {
@@ -130,6 +131,13 @@ export default function FilterModal({
     beds: number;
     bathrooms: number;
   };
+  useEffect(() => {
+    const reset = localStorage.getItem("modalFilterReset");
+    if (reset == "true") {
+      clearAllFilters();
+      localStorage.setItem("modalFilterReset", "false");
+    }
+  }, []);
   useEffect(() => {
     const updateSize = () => {
       setIsMobile(window.innerWidth < 1025); // <md breakpoint

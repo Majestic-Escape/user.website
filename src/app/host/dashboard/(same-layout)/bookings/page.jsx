@@ -51,14 +51,14 @@ const reservations = [];
 
 export default function ReservationsPage() {
   const [date, setDate] = useState({
-    from: addMonths(new Date(), -1),
-    to: new Date(),
+    from: new Date(),
+    to: addMonths(new Date(), 1),
   });
   const printRef = useRef(null);
   const [invoiceData, setInvoiceData] = useState();
   const [showInvoice, setShowInvoice] = useState(false);
   const [payment, setPayment] = useState();
-
+  const [mssg, setMssg] = useState(false);
   console.log("cl", payment);
   const handleDateRangeChange = (range) => {
     const today = new Date();
@@ -123,6 +123,7 @@ export default function ReservationsPage() {
     const newDate = new Date(Date.UTC(year, month, day));
     return newDate.toISOString();
   };
+  console.log("boolean mssg", mssg);
   const fetchData = async () => {
     const getLocalData = await localStorage.getItem("token");
     const data = JSON.parse(getLocalData);
@@ -131,6 +132,7 @@ export default function ReservationsPage() {
     const from = date.from ? date.from.toLocaleDateString() : null;
     const to = date.to ? date.to.toLocaleDateString() : null;
     console.log(from, to);
+    setMssg(false);
     if (data) {
       try {
         const response = await fetch(
@@ -143,14 +145,17 @@ export default function ReservationsPage() {
             },
           }
         );
-        if (response.status === 401) {
-          // Token expired or missing
-          localStorage.removeItem("token");
-          localStorage.removeItem("userId");
-          router.push("/"); // redirect to login
+        const result = await response.json();
+        console.log("aaaaaaa", result);
+        const mssg = await result.error;
+        if (mssg == "toDate") {
+          toast.error("Cannot select same date twice");
+          setMssg(true);
+        }
+        if (response.status != 200) {
           return;
         }
-        const result = await response.json();
+
         console.log(result);
         const final = await result.data;
         setBookings(final);
@@ -311,7 +316,7 @@ export default function ReservationsPage() {
 
     setTimeout(() => setModalOpen(true), 50);
   };
-
+  console.log("what the hell is", date.from, date.to);
   const handleModalConfirm = () => {
     const booking = selectedBooking;
     const { _id, userId, hostId } = booking;
@@ -540,7 +545,24 @@ export default function ReservationsPage() {
                 mode="range"
                 defaultMonth={date?.from}
                 selected={date}
-                onSelect={setDate}
+                onSelect={(range) => {
+                  // if (
+                  //   range.to.toLocaleDateString() ==
+                  //   range.from.toLocaleDateString()
+                  // )
+                  //   toast.error("Select two dates for date range");
+                  if (!range?.from) {
+                    // 👇 fallback when user deselects
+                    toast.error("Cannot select date twice");
+                    return;
+                  }
+                  if (!range?.to) {
+                    toast.error("Select two dates for date range");
+                  }
+
+                  // Normal value
+                  setDate(range);
+                }}
                 numberOfMonths={2}
               />
             </PopoverContent>
@@ -827,6 +849,21 @@ export default function ReservationsPage() {
           ))}
         </TableBody>
       </Table>
+      {/* EMPTY STATE CHECK */}
+      {bookings && bookings.length === 0 && (
+        <div className="text-center py-10 text-gray-500 font-medium">
+          {date.from && !date.to && (
+            <>Cannot select single date. Reselect the date range.</>
+          )}
+
+          {date.from && date.to && (
+            <>No bookings found for the selected date range.</>
+          )}
+        </div>
+      )}
+      <div className="text-center py-10 text-gray-500 font-medium">
+        {mssg ? <>Cannot select same date. Reselect the date range.</> : null}
+      </div>
     </div>
   );
 }

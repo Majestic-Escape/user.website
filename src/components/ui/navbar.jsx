@@ -51,17 +51,17 @@ export default function Navbar() {
         </div>
         {user ? (
           <nav className=" ml-auto hidden md:flex items-center gap-4 sm:gap-6">
-            <WishlistPopup
+            {/* <WishlistPopup
               isOpen={isWishlistOpen}
               onClose={() => setIsWishlistOpen(false)}
-            />
+            /> */}
             <Button
               onClick={switchToHosting}
               className="text-sm bg-transparent hover:bg-transparent border-none shadow-none  text-stone font-medium hover:text-brightGreen hover:transition-colors hover:underline"
             >
               Switch to Hosting
             </Button>
-            <Button
+            {/* <Button
               variant="ghost"
               size="icon"
               className="relative"
@@ -77,25 +77,25 @@ export default function Navbar() {
                   {totalWishlistItems}
                 </span>
               )}
-            </Button>
+            </Button> */}
 
-            <Link href="/inbox" className="relative">
+            {/* <Link href="/inbox" className="relative">
               <MessageSquare className="h-5 w-5 text-muted-foreground" />
               {totalMessages > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
                   {totalMessages}
                 </span>
               )}
-            </Link>
+            </Link> */}
 
             <UserDropdownMenu />
           </nav>
         ) : (
           <nav className=" ml-auto hidden md:flex items-center gap-4 sm:gap-6">
-            <WishlistPopup
+            {/* <WishlistPopup
               isOpen={isWishlistOpen}
               onClose={() => setIsWishlistOpen(false)}
-            />
+            /> */}
             <Link
               className="text-base text-absoluteDark font-medium hover:text-brightGreen hover:transition-colors hover:underline"
               href="/login"

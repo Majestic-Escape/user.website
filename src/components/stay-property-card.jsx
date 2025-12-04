@@ -164,7 +164,7 @@ export default function StayCard({ property, includeTaxes }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            {/* <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleWishlist();
@@ -174,9 +174,9 @@ export default function StayCard({ property, includeTaxes }) {
               } hover:text-absoluteDark`}
             >
               <Heart className="w-4 h-4" />
-            </button>
+            </button> */}
 
-            <button
+            {/* <button
               className="text-solidGray inline-flex h-8 w-8 items-center justify-center rounded-md hover:text-gray-600"
               onClick={(e) => {
                 e.stopPropagation();
@@ -189,7 +189,7 @@ export default function StayCard({ property, includeTaxes }) {
                 alt="Share Icon"
                 className="w-4 h-4 text-stone hover:text-absoluteDark font-normal justify-center"
               />
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

@@ -6,8 +6,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const tabs = [
   { name: "Stays", id: "1", href: "/stays" },
-  { name: "Experiences", id: "2", href: "#" },
-  { name: "Services", id: "3", href: "#" },
+  { name: "Experiences", id: "2", href: "/experiences" },
+  { name: "Services", id: "3", href: "/services" },
 ];
 
 export default function NavTabLayout() {

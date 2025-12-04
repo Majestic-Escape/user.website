@@ -58,9 +58,9 @@ export function UserDropdownMenu() {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link className="py-2" href="/notifications">
+            {/* <Link className="py-2" href="/notifications">
               Notifications
-            </Link>
+            </Link> */}
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link className="py-2" href="/manage-bookings">
@@ -70,23 +70,23 @@ export function UserDropdownMenu() {
 
           <hr />
           <DropdownMenuItem asChild>
-            <Link
+            {/* <Link
               className="py-2"
               href="/host/dashboard/add-listing"
               rel="noopener noreferrer"
             >
               Host your Property
-            </Link>
+            </Link> */}
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild>
-            <Link
+            {/* <Link
               className="py-2"
               href="/host/dashboard"
               rel="noopener noreferrer"
             >
               Manage Experiences
-            </Link>
+            </Link> */}
           </DropdownMenuItem>
 
           <hr />

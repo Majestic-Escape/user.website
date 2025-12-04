@@ -17,6 +17,7 @@ export default function PropertyListing({
   propertyDetails,
   isLoading,
   unavailableDates,
+  loading,
 }) {
   console.log("Host data", hostData);
   console.log("propertyDetails data", propertyDetails);
@@ -151,6 +152,7 @@ export default function PropertyListing({
             unavailableDates={unavailableDates}
             activation={activation}
             allowedGuests={propertyDetails?.guests}
+            loading={loading}
           />
         </div>
       </div>
