@@ -1,4 +1,5 @@
 // components/CheckInModal.js
+"use client";
 import { useEffect } from "react";
 import { useState } from "react";
 import { toast } from "sonner";

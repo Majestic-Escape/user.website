@@ -39,21 +39,28 @@ const fetchProperty = async (id) => {
 };
 
 // Function to fetch host data (moved here from HostProfile)
-const fetchHostData = async ({ queryKey }) => {
-  const [, hostIdStr, token] = queryKey;
-
-  if (!hostIdStr) throw new Error("Host ID is missing");
-  if (!token) throw new Error("Missing token");
-
+const fetchHostData = async (hostIdStr) => {
+  if (!hostIdStr) {
+    throw new Error("Host ID is missing");
+  }
+  const getLocalData = await localStorage.getItem("token");
+  const data = JSON.parse(getLocalData);
+  // const response = await fetch(`${API_URL}/hostData/${hostIdStr}`);
   const response = await fetch(`${API_URL}/hostData/${hostIdStr}`, {
+    method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${data}`,
     },
   });
-
-  if (!response.ok) throw new Error("Failed to fetch host data");
-
+  if (!response.ok) {
+    console.error(
+      "Failed to fetch host:",
+      response.status,
+      await response.text()
+    );
+    throw new Error(`Failed to fetch host data (status: ${response.status})`);
+  }
   const result = await response.json();
   return result.data;
 };
@@ -90,16 +97,6 @@ export default function PropertyPage() {
   const [prev, setPrev] = useState(0);
   const [loading, setLoading] = useState(false);
   const [unavailableDates, setUnavailableDates] = useState([]);
-
-
-const [token, setToken] = useState(null);
-
-useEffect(() => {
-  if (typeof window !== "undefined") {
-    const t = localStorage.getItem("token");
-    setToken(JSON.parse(t));
-  }
-}, []);
 
   const handleNext = () => {
     console.log("ggg", propertyData.reviewCount);
@@ -183,9 +180,13 @@ useEffect(() => {
     isFetching: isHostFetching,
     isError: isHostError,
   } = useQuery({
-    queryKey: ["hostProfile", hostIdStr, token],
-    queryFn: fetchHostData,
-    enabled: !!hostIdStr && !!token,  // <— prevents SSR + undefined token
+    queryKey: ["hostProfile", hostIdStr], // Use normalized hostIdStr in key
+    queryFn: () => fetchHostData(hostIdStr),
+    // Enable only when we have a valid, non-empty string hostIdStr
+    enabled:
+      !!hostIdStr && typeof hostIdStr === "string" && hostIdStr.length > 0,
+    // Optional: Configure caching/retries differently for host data if needed
+    // staleTime: 15 * 60 * 1000, // 15 minutes
   });
 
   const {

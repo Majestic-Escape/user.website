@@ -216,21 +216,21 @@ export default function Ratings() {
       </div>
     );
   }
-  if (today < checkoutDate) {
-    return (
-      <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
-        You can review only after checkout. &nbsp;{" "}
-      </div>
-    );
-  }
-  if (today < checkoutDate && differenceInDays >= 14) {
-    return (
-      <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
-        Your review date has expired. The review remains open only for the next
-        14 days from check out date. &nbsp;{" "}
-      </div>
-    );
-  }
+  // if (today < checkoutDate) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
+  //       You can review only after checkout. &nbsp;{" "}
+  //     </div>
+  //   );
+  // }
+  // if (today < checkoutDate && differenceInDays >= 14) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
+  //       Your review date has expired. The review remains open only for the next
+  //       14 days from check out date. &nbsp;{" "}
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen font-poppins pt-24">

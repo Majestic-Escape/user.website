@@ -123,7 +123,6 @@ export default function FilterModal({
   } = useAuth();
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
-  const reset = localStorage.getItem("modalFilterReset");
 
   const [isMobile, setIsMobile] = useState(false);
   type FilterRooms = {
