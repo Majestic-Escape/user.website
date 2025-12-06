@@ -24,7 +24,7 @@ export function StepOneIntro() {
         </div>
         <div>
           <img
-            src="/step-one-illustration.webp"
+            src="/step-one-illustration.png"
             className="rounded-md"
             alt="Step one"
           />

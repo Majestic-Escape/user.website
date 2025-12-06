@@ -39,11 +39,11 @@ export default function Onboarding() {
               <div className="container max-w-7xl mx-auto px-4 py-8 md:py-16">
                 <div className="flex flex-col lg:gap-x-8 lg:flex-row items-center ">
                   <div className="lg:w-1/2 mx-auto">
-                    <h1 className="text-2xl md:text-4xl font-bricolage text-absoluteDark font-semibold mb-4 md:mb-8 ">
+                    <h1 className="text-2xl md:text-4xl font-bricolage text-absoluteDark font-semibold mb-4 md:mb-4 ">
                       Begin your hosting journey with Majestic Escape
                     </h1>
                     <img
-                      className="w-full p-4 md:p-8  h-auto"
+                      className="w-3/4 p-4 md:p-8  h-auto mx-auto"
                       src="/images/home-stay.png"
                       alt="Home stay"
                     />
