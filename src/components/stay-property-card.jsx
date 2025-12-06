@@ -122,9 +122,9 @@ export default function StayCard({ property, includeTaxes }) {
           <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
         </Carousel>
 
-        <div className="absolute top-2 left-2 bg-white rounded-3xl text-absoluteDark text-sm px-3  shadow-lg py-1.5 font-medium">
+        {/* <div className="absolute top-2 left-2 bg-white rounded-3xl text-absoluteDark text-sm px-3  shadow-lg py-1.5 font-medium">
           {"New"}
-        </div>
+        </div> */}
 
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
           {property?.photos.map((_, idx) => (

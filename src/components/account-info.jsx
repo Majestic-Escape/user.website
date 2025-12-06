@@ -16,6 +16,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import axios from "axios";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const states = [
   // 28 States
@@ -113,14 +114,14 @@ export default function AccountInfo() {
         const data = await res.json();
         console.log("Fetched Data:", data);
         setProfileData(data);
-        setAvatarUrl(data.avatarUrl || data.profilePicture);
+        setAvatarUrl(data.profilePicture);
       } catch (error) {
         console.error("Error fetching profile info:", error);
       }
     };
 
     fetchProfileInfo();
-  }, [auth?.user?.email]);
+  }, [avatarUrl]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -150,17 +151,82 @@ export default function AccountInfo() {
     fileInputRef.current?.click();
   };
 
+  console.log("xyzabc", avatarUrl);
   // Handle file upload and convert file to base64 URL
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
+    console.log("reaching0");
     const file = event.target.files?.[0];
-    if (file && (file.type === "image/jpeg" || file.type === "image/png")) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setAvatarUrl(e.target?.result);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      toast.error("Please select a valid JPG or PNG file.");
+    const MAX_SIZE = 5 * 1024 * 1024;
+    console.log("reaching1");
+    if (!file) {
+      toast.error("No file found. Reupload the file");
+      return;
+    }
+    console.log("reaching2");
+    if (file.size > MAX_SIZE) {
+      toast.error(`File too large: ${file.name}. Max size is 5MB.`);
+      return;
+    }
+    if (
+      !["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(
+        file.type
+      )
+    ) {
+      toast.error("Please select a JPG, PNG or WEBP image.");
+      return;
+    }
+
+    try {
+      let update = false;
+      if (avatarUrl.length != 0) {
+        await axios.delete(`${API_URL}/uploads/delete`, {
+          data: { url: avatarUrl },
+        });
+        update = true;
+        console.log("Deleted");
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      const user = await localStorage.getItem("userId");
+      const userId = JSON.parse(user);
+      const res = await axios.post(
+        `${API_URL}/uploads/profile?userId=${userId}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      console.log("reaching4");
+      const newUrl = res.data.url;
+
+      // STEP 3: Set new image
+      setAvatarUrl(newUrl);
+      if (update == true) {
+        toast.success("Profile image uploaded");
+        update = false;
+      } else {
+        toast.success("Profile image updated");
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast.error("Failed to upload photos");
+    }
+  };
+  const handleDelete = async () => {
+    try {
+      let update = false;
+      if (avatarUrl.length != 0) {
+        const response = await axios.delete(`${API_URL}/uploads/delete`, {
+          data: { url: avatarUrl },
+        });
+        if (response.status != 200) {
+          throw new Error(`Failed to delete image`);
+        }
+        toast.error("Deleted the profile image");
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -340,13 +406,16 @@ export default function AccountInfo() {
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileChange}
-                accept="image/jpeg, image/png"
+                // accept="image/jpeg, image/png"
                 className="hidden"
               />
               <p className="text-sm text-muted-foreground">
                 Click on the avatar to upload your own image.
               </p>
             </div>
+            <Button className="mt-6" onClick={handleDelete}>
+              Clear Image
+            </Button>
           </div>
 
           {/* Full Name (non-editable) */}

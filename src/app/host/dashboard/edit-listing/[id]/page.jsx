@@ -343,11 +343,13 @@ export default function EditListing({ params }) {
           )}
         </div>
       </footer>
-      {/* <MembershipPopup
+      <MembershipPopup
         open={showMembershipPopup}
         onOpenChange={setShowMembershipPopup}
         onClose={handleRedirectToDashboard}
-      /> */}
+        offer={false}
+        reedit={true}
+      />
     </div>
   );
 }

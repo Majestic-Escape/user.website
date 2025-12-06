@@ -39,31 +39,31 @@ const fetchProperty = async (id) => {
 };
 
 // Function to fetch host data (moved here from HostProfile)
-const fetchHostData = async (hostIdStr) => {
-  if (!hostIdStr) {
-    throw new Error("Host ID is missing");
-  }
-  const getLocalData = await localStorage.getItem("token");
-  const data = JSON.parse(getLocalData);
-  // const response = await fetch(`${API_URL}/hostData/${hostIdStr}`);
-  const response = await fetch(`${API_URL}/hostData/${hostIdStr}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${data}`,
-    },
-  });
-  if (!response.ok) {
-    console.error(
-      "Failed to fetch host:",
-      response.status,
-      await response.text()
-    );
-    throw new Error(`Failed to fetch host data (status: ${response.status})`);
-  }
-  const result = await response.json();
-  return result.data;
-};
+// const fetchHostData = async (hostIdStr) => {
+//   if (!hostIdStr) {
+//     throw new Error("Host ID is missing");
+//   }
+//   const getLocalData = await localStorage.getItem("token");
+//   const data = JSON.parse(getLocalData);
+//   // const response = await fetch(`${API_URL}/hostData/${hostIdStr}`);
+//   const response = await fetch(`${API_URL}/hostData/${hostIdStr}`, {
+//     method: "GET",
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${data}`,
+//     },
+//   });
+//   if (!response.ok) {
+//     console.error(
+//       "Failed to fetch host:",
+//       response.status,
+//       await response.text()
+//     );
+//     throw new Error(`Failed to fetch host data (status: ${response.status})`);
+//   }
+//   const result = await response.json();
+//   return result.data;
+// };
 
 // --- The Main Page Component --
 const fetchReview = async (propertyId, limit, skip) => {
@@ -138,7 +138,7 @@ export default function PropertyPage() {
       } catch (err) {
         console.error(err);
       } finally {
-        // setLoading(false);
+        setLoading(false);
       }
     }
     fetchDates();
@@ -173,21 +173,21 @@ export default function PropertyPage() {
   }, [hostId]); // Recalculate only if hostId changes
 
   // --- Query 2: Fetch Host Data ---
-  const {
-    data: hostData,
-    isLoading: isHostLoading, // Renamed for clarity
-    error: hostError, // Renamed for clarity
-    isFetching: isHostFetching,
-    isError: isHostError,
-  } = useQuery({
-    queryKey: ["hostProfile", hostIdStr], // Use normalized hostIdStr in key
-    queryFn: () => fetchHostData(hostIdStr),
-    // Enable only when we have a valid, non-empty string hostIdStr
-    enabled:
-      !!hostIdStr && typeof hostIdStr === "string" && hostIdStr.length > 0,
-    // Optional: Configure caching/retries differently for host data if needed
-    // staleTime: 15 * 60 * 1000, // 15 minutes
-  });
+  // const {
+  //   data: hostData,
+  //   isLoading: isHostLoading, // Renamed for clarity
+  //   error: hostError, // Renamed for clarity
+  //   isFetching: isHostFetching,
+  //   isError: isHostError,
+  // } = useQuery({
+  //   queryKey: ["hostProfile", hostIdStr], // Use normalized hostIdStr in key
+  //   queryFn: () => fetchHostData(hostIdStr),
+  //   // Enable only when we have a valid, non-empty string hostIdStr
+  //   enabled:
+  //     !!hostIdStr && typeof hostIdStr === "string" && hostIdStr.length > 0,
+  //   // Optional: Configure caching/retries differently for host data if needed
+  //   // staleTime: 15 * 60 * 1000, // 15 minutes
+  // });
 
   const {
     data: reviewData,
@@ -265,7 +265,7 @@ export default function PropertyPage() {
         ? `${propertyData.address.city}, ${propertyData.address.state}, ${propertyData.address.country}`
         : "Location not fully specified",
   };
-
+  console.log("new prop", propertyData?.host);
   // --- Render the Page Content ---
   return (
     <main className="min-h-screen pt-16 md:pt-32 bg-white">
@@ -292,7 +292,6 @@ export default function PropertyPage() {
             {/* Property Listing Details */}
             {/* Pass isPropertyLoading if PropertyListing needs it */}
             <PropertyListing
-              hostData={hostData}
               propertyDetails={propertyData}
               isLoading={isPropertyLoading}
               unavailableDates={unavailableDates}
@@ -325,9 +324,9 @@ export default function PropertyPage() {
           {/* Host Profile */}
           {/* Pass data/loading/error states from the *host* query */}
           <HostProfile
-            hostData={hostData}
-            isLoading={isHostLoading}
-            error={hostError}
+            propertyData={propertyData}
+            // isLoading={isPropertyLoading}
+            // error={propertyError}
           />
           {/* Things To Know */}
           {/* Pass isPropertyLoading if ThingsToKnow depends on it */}

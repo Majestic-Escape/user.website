@@ -17,6 +17,7 @@ export default function StaysProperties() {
   const [showMore, setShowMore] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [isChecked, setIsChecked] = useState(false);
+  const router = useRouter();
   // const { checkToken } = useCheckToken();
 
   // useEffect(() => {
@@ -30,7 +31,7 @@ export default function StaysProperties() {
     const fetchProperties = async () => {
       try {
         setLoading(true);
-        const data = await propertyService.getAllStays(selectedType);
+        const data = await propertyService.getFrontPageAllStays(selectedType);
         setProperties(data.properties);
         setError(null);
       } catch (err) {
@@ -74,7 +75,7 @@ export default function StaysProperties() {
             Explore through featured properties available on Majestic Escape
           </p>
 
-          <div className="w-full  md:hidden rounded-md border  px-4 flex items-center justify-between  border-gray-400 py-3">
+          {/* <div className="w-full  md:hidden rounded-md border  px-4 flex items-center justify-between  border-gray-400 py-3">
             <div className="space-y-0.5">
               <Label htmlFor="price-toggle" className="text-sm font-medium">
                 Display total price
@@ -89,7 +90,7 @@ export default function StaysProperties() {
               onCheckedChange={setIsChecked}
               className="data-[state=checked]:bg-primaryGreen"
             />
-          </div>
+          </div> */}
 
           {properties.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50 rounded-lg">
@@ -124,6 +125,20 @@ export default function StaysProperties() {
                   </button>
                 </div>
               )}
+              {showMore && properties.length == 16 ? (
+                <div className="flex justify-center mt-12">
+                  <button
+                    className="bg-primaryGreen hover:bg-brightGreen text-white px-16 py-4 rounded-full transition-colors duration-300"
+                    onClick={() =>
+                      router.push(
+                        `/filter?propertyType=${""}&location=${""}&from=${""}&to=${""}&adults=${""}&senior=${""}&children=${""}&infants=${""}`
+                      )
+                    }
+                  >
+                    View More
+                  </button>
+                </div>
+              ) : null}
             </>
           )}
         </div>

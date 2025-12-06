@@ -11,6 +11,7 @@ import {
   HomeIcon,
   Heart,
   Building2Icon,
+  HandHelping,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -34,26 +35,31 @@ const navItems = [
 ];
 
 const navItemsLoggedIn = [
-  { name: "Stay", href: "/stays", icon: HomeIcon },
+  { name: "Home", href: "/", icon: HomeIcon },
+  { name: "Stay", href: "/stays", icon: Building2Icon },
   { name: "Experience", href: "/experiences", icon: Compass },
-  { name: "Trips", href: "/bookings", icon: Calendar },
-  { name: "Wishlist", href: "/wishlist", icon: Heart },
+  { name: "Trips", href: "/manage-bookings", icon: Calendar },
+  // { name: "Wishlist", href: "/wishlist", icon: Heart },
 ];
 
 const menuItems = [
   // Navigation Links
-  { name: "Login", href: "/login" },
+  // { name: "Login", href: "/login" },
   { name: "Register", href: "/register" },
   { name: "About", href: "/about" },
   { name: "Partners", href: "/partners" },
   { name: "Blogs", href: "/blogs" },
-  { name: "Book a Home Stay", href: "/stays" },
+
   // { name: "Book an Experience", href: "/experiences" },
 
   // Host Links
-  { name: "Host your property", href: "/host" },
+  { name: "Host your property", href: "/login" },
   // Support Links
   { name: "FAQ", href: "/faq" },
+  { name: "Privacy Policy", href: "/privacy-policy" },
+  { name: "Cancellation Policy", href: "/cancellation-policy" },
+  { name: "Refund Policy", href: "/cancellation-policy" },
+  { name: "Terms of Service", href: "/terms-of-service" },
   { name: "Help Center", href: "/help-center" },
   // { name: "Complaints", href: "/complaints" },
 ];
@@ -65,6 +71,10 @@ const menuItemsLoggedIn = [
   { name: "Blogs", href: "/blogs" },
   { name: "Switch to hosting", href: "/host/dashboard" },
   { name: "FAQ (Host)", href: "/host-faq" },
+  { name: "Privacy Policy", href: "/privacy-policy" },
+  { name: "Cancellation Policy", href: "/cancellation-policy" },
+  { name: "Refund Policy", href: "/cancellation-policy" },
+  { name: "Terms of Service", href: "/terms-of-service" },
   // Support Links
   { name: "Help Center", href: "/help-center" },
   // { name: "Complaints", href: "/complaints" },

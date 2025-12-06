@@ -13,13 +13,11 @@ import PropertySleepingArrangements from "./property-sleeping-arrangements";
 import { toast } from "sonner";
 
 export default function PropertyListing({
-  hostData,
   propertyDetails,
   isLoading,
   unavailableDates,
   loading,
 }) {
-  console.log("Host data", hostData);
   console.log("propertyDetails data", propertyDetails);
   console.log("isLoading ", isLoading);
   const [date, setDate] = useState({
@@ -107,7 +105,8 @@ export default function PropertyListing({
                 <h2 className="text-base md:text-lg font-medium text-stone">
                   Hosted by{" "}
                   <span className="text-absoluteDark font-semibold">
-                    {hostData?.firstName} {hostData?.lastName}
+                    {propertyDetails?.host?.firstName}{" "}
+                    {propertyDetails?.host?.lastName}
                   </span>
                 </h2>
                 {/* <p className="text-gray-600">2 years hosting</p> */}

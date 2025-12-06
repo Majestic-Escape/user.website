@@ -17,7 +17,22 @@ export const propertyService = {
       );
     }
   },
-
+  getFrontPageAllStays: async (type) => {
+    try {
+      const params = type ? { type } : {};
+      const response = await axios.get(
+        `${API_BASE_URL}/properties/front/dynamic`,
+        {
+          params,
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch properties"
+      );
+    }
+  },
   getAllStays: async (type) => {
     try {
       const params = type ? { type } : {};

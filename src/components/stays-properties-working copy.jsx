@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-"use client"
-import { useState, useEffect } from 'react';
-import PropertyCard from './stay-property-card';
-import StayCardSkeleton from './stay-card-skeleton';
-import { propertyService } from '../services/propertyService';
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
+"use client";
+import { useState, useEffect } from "react";
+import PropertyCard from "./stay-property-card";
+import StayCardSkeleton from "./stay-card-skeleton";
+import { propertyService } from "../services/propertyService";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export default function StaysProperties() {
   const [properties, setProperties] = useState([]);
@@ -14,7 +14,7 @@ export default function StaysProperties() {
   const [includeTaxes, setIncludeTaxes] = useState(true);
   const [showMore, setShowMore] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
-  const [isChecked, setIsChecked] = useState(false)
+  const [isChecked, setIsChecked] = useState(false);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -36,13 +36,11 @@ export default function StaysProperties() {
 
   if (loading) {
     return (
-   
-          <div className="grid grid-cols-1 max-w-[1760px]  px-4 sm:px-6 lg:px-[72px] py-8 sm:py-16 lg:py-[128px]  bg-white mx-auto sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, index) => (
-              <StayCardSkeleton key={index} />
-            ))}
-          </div>
-    
+      <div className="grid grid-cols-1 max-w-[1760px]  px-4 sm:px-6 lg:px-[72px] py-8 sm:py-16 lg:py-[128px]  bg-white mx-auto sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[...Array(8)].map((_, index) => (
+          <StayCardSkeleton key={index} />
+        ))}
+      </div>
     );
   }
 
@@ -57,8 +55,8 @@ export default function StaysProperties() {
   const displayedProperties = showMore ? properties : properties.slice(0, 8);
 
   return (
-    <div className='font-poppins flex justify-center w-full bg-white'>
-      <div className='w-full max-w-[1760px]'>
+    <div className="font-poppins flex justify-center w-full bg-white">
+      <div className="w-full max-w-[1760px]">
         <div className="mx-auto px-4 sm:px-6 lg:px-[72px] py-8 sm:py-16 lg:py-[128px] font-poppins bg-white text-absoluteDark">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl text-absoluteDark font-bricolage font-semibold mb-2">
             Discover Our Finest Stays
@@ -67,7 +65,7 @@ export default function StaysProperties() {
             Explore through featured properties available on Majestic Escape
           </p>
 
-          <div className="w-full  md:hidden rounded-md border  px-4 flex items-center justify-between  border-gray-400 py-3">
+          {/* <div className="w-full  md:hidden rounded-md border  px-4 flex items-center justify-between  border-gray-400 py-3">
       <div className="space-y-0.5">
         <Label htmlFor="price-toggle" className="text-sm font-medium">
           Display total price
@@ -82,16 +80,17 @@ export default function StaysProperties() {
         onCheckedChange={setIsChecked}
         className="data-[state=checked]:bg-primaryGreen"
       />
-    </div>
+    </div> */}
 
           {properties.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50 rounded-lg">
-              <div className="text-gray-500 text-lg mb-2">No properties to show</div>
+              <div className="text-gray-500 text-lg mb-2">
+                No properties to show
+              </div>
               <p className="text-gray-400 text-sm">
-                {selectedType 
+                {selectedType
                   ? `No properties found for type "${selectedType}"`
-                  : "Check back later for new properties"
-                }
+                  : "Check back later for new properties"}
               </p>
             </div>
           ) : (

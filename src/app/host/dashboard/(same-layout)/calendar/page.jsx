@@ -289,12 +289,30 @@ const FullCalendarPage = () => {
     try {
       const res = await axios.post(`${API_URL}/calendarSync/saveCalendar`, {
         propertyId,
-
         url,
         kind,
       });
+      if (!res.data.success) {
+        toast.error(
+          res.data.message ||
+            "Calendar sync has started. Please wait a few minutes and refresh the page."
+        );
+        return;
+      }
+
+      toast.success(
+        res.data.message ||
+          "Calendar sync has started. Please wait a few minutes and refresh the page."
+      );
     } catch (error) {
       console.error(error);
+      if (error.code === "ECONNABORTED" || error.message === "Network Error") {
+        toast.error("Calendar sync failed due to network issue.");
+        return;
+      }
+
+      // OTHER FAILURES
+      toast.error("Failed to sync calendar, try again.");
     }
   };
 

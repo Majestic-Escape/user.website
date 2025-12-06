@@ -17,6 +17,7 @@ import {
   MessageCircle,
   Calendar,
   User,
+  Languages,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -111,22 +112,22 @@ export function HostProfileSkeleton() {
 }
 
 // Main HostProfile component - now receives data as props
-export default function HostProfile({ hostData, isLoading, error }) {
-  if (isLoading) {
-    return <HostProfileSkeleton />;
-  }
+export default function HostProfile({ propertyData }) {
+  // if (isLoading) {
+  //   return <HostProfileSkeleton />;
+  // }
 
-  if (error) {
-    // You might want to pass the error object to display a more specific message
-    return (
-      <div className="text-center text-red-500 py-10">
-        Error loading host data. Please try again later.
-      </div>
-    );
-  }
+  // if (error) {
+  //   // You might want to pass the error object to display a more specific message
+  //   return (
+  //     <div className="text-center text-red-500 py-10">
+  //       Error loading host data. Please try again later.
+  //     </div>
+  //   );
+  // }
 
   // If not loading and no error, but hostData is somehow null/undefined (shouldn't happen with RQ enabled flag, but good practice)
-  if (!hostData) {
+  if (!propertyData?.host) {
     return (
       <div className="text-center text-gray-500 py-10">
         Host data not available.
@@ -149,6 +150,7 @@ export default function HostProfile({ hostData, isLoading, error }) {
 
     return age;
   }
+  console.log("deepam", propertyData?.host);
   // --- Render the actual profile using hostData ---
   return (
     <>
@@ -169,15 +171,20 @@ export default function HostProfile({ hostData, isLoading, error }) {
                     <Avatar className="w-24 h-24 border-2 border-white shadow-sm mx-auto">
                       <AvatarImage
                         src={
-                          hostData.avatar ||
+                          propertyData?.host?.profilePicture ||
                           "/placeholder.svg?height=96&width=96"
                         }
-                        alt={`${hostData.name || "Host"} Avatar`}
+                        alt={`${
+                          propertyData?.host?.firstname || "Host"
+                        } Avatar`}
                         className="object-cover"
                       />
                       <AvatarFallback>
-                        {hostData.name
-                          ? hostData.name
+                        {propertyData?.host
+                          ? (
+                              propertyData?.host?.firstName +
+                              propertyData?.host?.firstName
+                            )
                               .split(" ")
                               .map((part) => part[0])
                               .join("")
@@ -187,7 +194,7 @@ export default function HostProfile({ hostData, isLoading, error }) {
                       </AvatarFallback>
                     </Avatar>
                     {/* Display badge only once */}
-                    {hostData.isSuperhost && (
+                    {propertyData?.host?.isSuperhost && (
                       <Badge className="absolute bottom-0 right-0 bg-[#4D7C3F] text-white border-0 rounded-full p-1">
                         <Shield className="w-3 h-3" />
                       </Badge>
@@ -197,9 +204,17 @@ export default function HostProfile({ hostData, isLoading, error }) {
                 </div>
 
                 <h3 className="text-lg md:text-xl font-semibold font-bricolage text-gray-900 mb-1">
-                  {hostData.firstName + " " + hostData.lastName || "Host"}
+                  {propertyData?.host?.firstName +
+                    " " +
+                    propertyData?.host?.lastName || "Host"}
                 </h3>
-                {hostData.isSuperhost && (
+                <div className="flex justify-center">
+                  {" "}
+                  <MapPin className="w-4 h-4 text-[#4D7C3F] mr-1" />{" "}
+                  <p>{propertyData?.host?.address?.state || "Goa"}</p>
+                </div>
+
+                {propertyData?.host?.isSuperhost && (
                   <div className="flex items-center justify-center mb-4">
                     <Shield className="w-4 h-4 text-[#4D7C3F] mr-1" />
                     <span className="text-[#4D7C3F] font-medium text-sm">
@@ -209,33 +224,33 @@ export default function HostProfile({ hostData, isLoading, error }) {
                 )}
 
                 <div className="grid grid-cols-3 gap-2 mb-4 text-sm">
-                  {hostData.reviewCount !== undefined && (
+                  {/* {propertyData?.host?.reviewCount !== undefined && (
                     <div className="text-center">
                       <div className="text-lg font-semibold text-gray-900">
-                        {hostData?.reviewCount}
+                        {propertyData?.host?.reviewCount}
                       </div>
                       <div className="text-xs text-gray-500">Reviews</div>
                     </div>
-                  )}
-                  <div>Avg. Rating</div>
-                  {hostData.rating !== undefined && (
+                  )} */}
+                  {/* <div>Avg. Rating</div>
+                  {propertyData?.host?.rating !== undefined && (
                     <div className="text-center">
                       <div className="text-lg font-semibold text-gray-900 flex items-center justify-center">
-                        {hostData.rating}
+                        {propertyData?.host?.rating}
                         <Star className="w-3 h-3 text-[#4D7C3F] ml-1" />
                       </div>
                       <div className="text-xs text-gray-500">Rating</div>
                     </div>
                   )}
                   <div>Years of hosting</div>
-                  {hostData.yearsHosting !== undefined && (
+                  {propertyData?.host?.yearsHosting !== undefined && (
                     <div className="text-center">
                       <div className="text-lg font-semibold text-gray-900">
-                        {hostData.yearsHosting}s
+                        {propertyData?.host?.yearsHosting}s
                       </div>
                       <div className="text-xs text-gray-500">Years</div>
                     </div>
-                  )}
+                  )} */}
                 </div>
 
                 <Button className="w-full hidden bg-primaryGreen hover:bg-brightGreen font-normal text-white rounded-lg text-sm">
@@ -245,21 +260,25 @@ export default function HostProfile({ hostData, isLoading, error }) {
             </Card>
 
             <div></div>
-            {hostData.responseRate !== undefined &&
-              hostData.responseTime && ( // Simplified check
+            {propertyData?.host?.responseRate !== undefined &&
+              propertyData?.host?.responseTime && ( // Simplified check
                 <Card className="overflow-hidden border border-gray-200 rounded-xl shadow-sm p-4">
                   <div className="text-sm space-y-2">
-                    {hostData.responseRate !== undefined && (
+                    {propertyData?.host?.responseRate !== undefined && (
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-1 rounded-full bg-[#4D7C3F]"></div>
-                        <span>Response rate: {hostData.responseRate}%</span>
+                        <span>
+                          Response rate: {propertyData?.host?.responseRate}%
+                        </span>
                       </div>
                     )}
 
-                    {hostData.responseTime && (
+                    {propertyData?.host?.responseTime && (
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-1 rounded-full bg-[#4D7C3F]"></div>
-                        <span>Response time: {hostData.responseTime}</span>
+                        <span>
+                          Response time: {propertyData?.host?.responseTime}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -271,45 +290,53 @@ export default function HostProfile({ hostData, isLoading, error }) {
           <div className="space-y-4">
             {/* Conditionally render the details card only if there's info to show OR if they are a superhost (to show the superhost explanation) */}
 
-            {hostData.about && (
-              <div className="flex items-start gap-3">
-                <p className="text-md font-medium"></p>
-                <p className="text-md font-light">{hostData.about}</p>
+            {propertyData?.host?.about && (
+              <div className=" items-start gap-3">
+                <p className="text-md font-bold pb-4">Bio</p>
+                <p className="text-md font-light">
+                  {propertyData?.host?.about}
+                </p>
               </div>
             )}
+            {propertyData?.host?.languages &&
+              propertyData?.host?.languages.length > 0 && (
+                <div className="flex  items-start gap-3">
+                  <Languages className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
+                  <div>
+                    <p className="text-md font-thin text-gray-500">
+                      {propertyData?.host?.languages.map((item, index) => {
+                        if (propertyData?.host?.languages.length == index + 1) {
+                          return `${item} `;
+                        } else {
+                          return `${item}, `;
+                        }
+                      })}
+                    </p>
+                  </div>
+                </div>
+              )}
             <div className="flex justify-between pt-8">
-              {hostData?.dob && (
+              {/* {propertyData?.host?.dob && (
                 <div className="flex pl-3 items-start gap-3">
                   <Calendar className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
                   <div>
                     <p className="text-md font-medium">
-                      {calculateAge(hostData?.dob)} yrs old
+                      {calculateAge(propertyData?.host?.dob)} yrs old
                     </p>
                   </div>
                 </div>
-              )}
+              )} */}
 
-              {hostData.languages && hostData.languages.length > 0 && (
-                <div className="flex  items-start gap-3">
-                  <Globe className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
-                  <div>
-                    <p className="text-md font-medium">
-                      Speaks {hostData?.languages}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {hostData.address && (
+              {/* {propertyData?.host?.address && (
                 <div className="flex items-start gap-3 pr-8">
                   <MapPin className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
                   <div>
                     <p className="text-md font-medium">
-                      Lives in {hostData?.address?.city}
+                      Lives in {propertyData?.host?.address?.city}
                     </p>
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
             {/* {hostData && (
               <>
@@ -338,10 +365,10 @@ export default function HostProfile({ hostData, isLoading, error }) {
                         </div>
                       </div>
                     )} */}
-              {hostData && (
+              {/* {propertyData && (
                 <>
                   <div className="items-center pl-3 pt-8 gap-2 mb-4">
-                    {/* <Badge className="bg-[#4D7C3F]/10 text-[#4D7C3F] hover:bg-[#4D7C3F]/10 border-0"> */}
+                    <Badge className="bg-[#4D7C3F]/10 text-[#4D7C3F] hover:bg-[#4D7C3F]/10 border-0">
                     <p className="text-lg font-semibold text-gray-600">
                       Host Details
                     </p>
@@ -355,40 +382,43 @@ export default function HostProfile({ hostData, isLoading, error }) {
                   </div>
                   <Separator className="my-4" />
                 </>
-              )}
-              {hostData.education && (
+              )} */}
+              {/* {propertyData.education && (
                 <div className="flex items-start gap-3">
                   <BookOpen className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium">{hostData.education}</p>
+                    <p className="text-sm font-medium">
+                      {propertyData.education}
+                    </p>
                   </div>
                 </div>
-              )}
+              )} */}
 
-              {hostData.work && (
+              {propertyData.work && (
                 <div className="flex items-start gap-3">
                   <Briefcase className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium">{hostData.work}</p>
+                    <p className="text-sm font-medium">{propertyData.work}</p>
                   </div>
                 </div>
               )}
             </div>
             {/* Testimonial Card */}
-            {hostData.testimonial &&
-              (hostData.testimonial.text || hostData.testimonial.author) && (
+            {propertyData.testimonial &&
+              (propertyData.testimonial.text ||
+                propertyData.testimonial.author) && (
                 <Card className="overflow-hidden border border-gray-200 rounded-xl shadow-sm p-5">
                   <h3 className="text-base font-semibold text-gray-900 mb-3">
                     What guests are saying
                   </h3>
-                  {hostData.testimonial.text && (
+                  {propertyData.testimonial.text && (
                     <div className="text-sm text-gray-600 italic">
-                      "{hostData.testimonial.text}"
+                      "{propertyData.testimonial.text}"
                     </div>
                   )}
-                  {hostData.testimonial.author && (
+                  {propertyData.testimonial.author && (
                     <p className="text-xs text-gray-500 mt-2">
-                      — {hostData.testimonial.author}
+                      — {propertyData.testimonial.author}
                     </p>
                   )}
                 </Card>

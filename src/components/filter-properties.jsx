@@ -94,7 +94,7 @@ export default function FilterProperties({
                 Explore through featured properties available on Majestic Escape
               </p>
 
-              <div className="w-full  md:hidden rounded-md border  px-4 flex items-center justify-between  border-gray-400 py-3">
+              {/* <div className="w-full  md:hidden rounded-md border  px-4 flex items-center justify-between  border-gray-400 py-3">
                 <div className="space-y-0.5">
                   <Label htmlFor="price-toggle" className="text-sm font-medium">
                     Display total price
@@ -109,7 +109,7 @@ export default function FilterProperties({
                   onCheckedChange={setIsChecked}
                   className="data-[state=checked]:bg-primaryGreen"
                 />
-              </div>
+              </div> */}
 
               {properties.length === 0 ? (
                 <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50 rounded-lg">

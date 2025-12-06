@@ -10,36 +10,37 @@ export function useCheckToken() {
   const checkToken = async () => {
     try {
       const token = JSON.parse(localStorage.getItem("token"));
+      if (token) {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/check-token`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token }),
+          }
+        );
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/check-token`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
+        const result = await response.json();
+
+        if (!response.ok) {
+          if (result.code === "USER_BANNED") {
+            localStorage.clear();
+            sessionStorage.clear();
+
+            router.push("/login");
+            toast.error("Your account has been banned.");
+          }
+          // if (result.code === "TOKEN_INVALIDATED") {
+          //   localStorage.clear();
+          //   sessionStorage.clear();
+          //   router.push("/login");
+          //   toast.error("Session expired, please login again.");
+          // }
+          return null;
         }
-      );
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        if (result.code === "USER_BANNED") {
-          localStorage.clear();
-          sessionStorage.clear();
-
-          router.push("/login");
-          toast.error("Your account has been banned.");
-        }
-        // if (result.code === "TOKEN_INVALIDATED") {
-        //   localStorage.clear();
-        //   sessionStorage.clear();
-        //   router.push("/login");
-        //   toast.error("Session expired, please login again.");
-        // }
-        return null;
+        return result;
       }
-
-      return result;
     } catch (err) {
       console.error(err);
     }

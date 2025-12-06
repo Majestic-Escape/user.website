@@ -394,13 +394,15 @@ export default function HostOnboarding() {
           )}
         </div>
       </footer>
-      {offer ? (
-        <MembershipPopup
-          open={showMembershipPopup}
-          onOpenChange={setShowMembershipPopup}
-          onClose={handleRedirectToDashboard}
-        />
-      ) : null}
+      {/* {offer ? ( */}
+      <MembershipPopup
+        open={showMembershipPopup}
+        onOpenChange={setShowMembershipPopup}
+        onClose={handleRedirectToDashboard}
+        offer={offer}
+        reedit={false}
+      />
+      {/* ) : null} */}
     </div>
   );
 }
