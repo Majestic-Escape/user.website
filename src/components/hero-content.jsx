@@ -12,7 +12,7 @@ export function HeroContent() {
         <TextReveal>
           <h2 className="text-sm font-medium mb-4 text-primaryGreen inline-block rounded-2xl bg-green-50 ring-1 ring-green-300 px-2.5 py-1">
             {" "}
-            Quick confirmation, lasting memories
+            Memories you will never forget
           </h2>
         </TextReveal>
 
@@ -28,16 +28,13 @@ export function HeroContent() {
                 Majestic Stay
               </span>{" "}
             </span>
-            <span className="text-black ">Wherever You Go!</span>
+            <span className="text-black ">at the Rann Utsav!</span>
           </h1>
         </TextReveal>
 
         <TextReveal>
           <p className="hidden md:inline-block text-gray-700 mb-8">
-            From cozy hideaways to spacious retreats, your ideal escape is
-            waiting. Browse a wide range of homes, compare your favorites, and
-            choose the stay that feels just right. Start exploring and get ready
-            for a trip to remember.{" "}
+            From luxurious tents to cultural retreats, your perfect Rann Utsav experience awaits. Explore a variety of stays, compare your favorites, and choose the one that captures the spirit of Kutch. Start discovering now and get ready for a celebration you will remember forever.{" "}
           </p>
         </TextReveal>
         <TextReveal>

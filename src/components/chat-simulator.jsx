@@ -11,128 +11,131 @@ export default function ChatSimulator() {
   const [currentTime, setCurrentTime] = useState("");
   const [messages, setMessages] = useState([]);
 
-  const chatTemplates = [
-    [
-      {
-        sender: "Rohan",
-        text: "Hey, group! Super excited for the Goa trip!",
-        reactions: ["👍", "😍"],
-        typingDuration: 800,
-      },
-      {
-        sender: "Rishi",
-        text: "I hope we can find a nice place to stay last minute.",
-        reactions: ["🤔"],
-        typingDuration: 1000,
-      },
-      {
-        sender: "Rohan",
-        text: "Majestic Escape has us covered! Their homestays are beautiful and super easy to book.",
-        reactions: ["🎉", "👌"],
-        typingDuration: 1200,
-      },
-    ],
-    [
-      {
-        sender: "Sneha",
-        text: "Can’t believe we’re finally heading to Goa! Beach time!",
-        reactions: ["🌴", "🔥"],
-        typingDuration: 900,
-      },
-      {
-        sender: "Rohan",
-        text: "I've been dreaming of this all year. Sun, sand, and relaxation!",
-        reactions: ["😍"],
-        typingDuration: 1100,
-      },
-      {
-        sender: "Sneha",
-        text: "And Majestic Escape says we can book our homestay in under 10 mins!",
-        reactions: ["✈️"],
-        typingDuration: 1300,
-      },
-    ],
-    [
-      {
-        sender: "Rohan",
-        text: "Who’s ready for our adventure in Goa?",
-        reactions: ["🌞", "🔥"],
-        typingDuration: 900,
-      },
-      {
-        sender: "Gaurav",
-        text: "Can't wait! Heard Majestic Escape has some amazing beach-view properties.",
-        reactions: ["🌊"],
-        typingDuration: 1100,
-      },
-      {
-        sender: "Rohan",
-        text: "Yeah, their places look amazing and super cozy!",
-        reactions: ["🏠"],
-        typingDuration: 1300,
-      },
-    ],
-    [
-      {
-        sender: "Rohan",
-        text: "Goa road trip, here we come!",
-        reactions: ["🚗", "🏖️"],
-        typingDuration: 900,
-      },
-      {
-        sender: "Virat",
-        text: "Got my camera ready for all those beach and sunset shots!",
-        reactions: ["📸"],
-        typingDuration: 1100,
-      },
-      {
-        sender: "Rohan",
-        text: "Plus, Majestic Escape has awesome local experiences too!",
-        reactions: ["🌅"],
-        typingDuration: 1300,
-      },
-    ],
-    [
+const chatTemplates = [
+  [
+    {
+      sender: "Rohan",
+      text: "Guys, ready for that Rann Utsav trip? White desert calling! 🤍",
+      reactions: ["🤍", "🔥"],
+      typingDuration: 800,
+    },
+    {
+      sender: "Rishi",
+      text: "Bro I just hope we find a good tent stay this late 😭",
+      reactions: ["⛺"],
+      typingDuration: 1000,
+    },
+    {
+      sender: "Rohan",
+      text: "Majestic Escape has killer luxury tents, chill—we’re sorted!",
+      reactions: ["🎉", "👌"],
+      typingDuration: 1200,
+    },
+  ],
+
+  [
+    {
+      sender: "Sneha",
+      text: "Can’t believe we’re finally doing Rann Utsav! Full moon vibes incoming ✨",
+      reactions: ["🌕", "🔥"],
+      typingDuration: 900,
+    },
+    {
+      sender: "Rohan",
+      text: "Sameee! I’ve been manifesting this white desert view for months 😍",
+      reactions: ["😍"],
+      typingDuration: 1100,
+    },
+    {
+      sender: "Sneha",
+      text: "Majestic Escape said booking the tent stay barely takes 10 mins 🙌",
+      reactions: ["⛺"],
+      typingDuration: 1300,
+    },
+  ],
+
+  [
+    {
+      sender: "Rohan",
+      text: "Who’s hyped for our Rann adventure?",
+      reactions: ["🏜️", "🔥"],
+      typingDuration: 900,
+    },
+    {
+      sender: "Gaurav",
+      text: "Let’s gooo! Heard Majestic Escape has insane White Rann view tents.",
+      reactions: ["🤍"],
+      typingDuration: 1100,
+    },
+    {
+      sender: "Rohan",
+      text: "Yep, looks super cozy and perfect for night photography!",
+      reactions: ["📸"],
+      typingDuration: 1300,
+    },
+  ],
+
+  [
+    {
+      sender: "Rohan",
+      text: "Rann Utsav road trip loading… 🚗✨",
+      reactions: ["🚗", "🏜️"],
+      typingDuration: 900,
+    },
+    {
+      sender: "Virat",
+      text: "Got my camera ready for all those moonlit White Rann shots!",
+      reactions: ["📸"],
+      typingDuration: 1100,
+    },
+    {
+      sender: "Rohan",
+      text: "Majestic Escape even offers local Kutchi experiences. We’re gonna love it!",
+      reactions: ["🎪"],
+      typingDuration: 1300,
+    },
+  ],
+[
       {
         sender: "Aman",
-        text: "Thinking about a beach campfire night? Anyone?",
+        text: "Rann Utsav night under the full moon? Anyone?",
         reactions: ["🔥", "🌌"],
         typingDuration: 900,
       },
       {
         sender: "Rohan",
-        text: "You know I’m in! And Majestic Escape can set it up for us!",
+        text: "Say less! I'm in😎 Majestic Escape can hook us up with those cool Kutchi tents!",
         reactions: ["🍫"],
         typingDuration: 1100,
       },
       {
         sender: "Aman",
-        text: "Perfect! Let’s make this trip unforgettable.",
+        text: "Perfect! This trip is gonna be insane!",
         reactions: ["✨"],
         typingDuration: 1300,
       },
     ],
-    [
-      {
-        sender: "Rohan",
-        text: "Weekend Goa trip? Let’s do it!",
-        reactions: ["🌴", "🌞"],
-        typingDuration: 900,
-      },
-      {
-        sender: "Kunal",
-        text: "Beaches, shacks, and sunsets? Count me in!",
-        reactions: ["🍹"],
-        typingDuration: 1100,
-      },
-      {
-        sender: "Rohan",
-        text: "And booking a Majestic Escape homestay is just a few clicks!",
-        reactions: ["🌅"],
-        typingDuration: 1300,
-      },
-    ],
-  ];
+  [
+    {
+      sender: "Rohan",
+      text: "Weekend Rann plan? Let’s just do it 🤍",
+      reactions: ["🌕", "🏜️"],
+      typingDuration: 900,
+    },
+    {
+      sender: "Kunal",
+      text: "White desert, folk music, and bonfire nights? I'm in already 🔥",
+      reactions: ["🪘"],
+      typingDuration: 1100,
+    },
+    {
+      sender: "Rohan",
+      text: "Majestic Escape tents book super quick—two taps and done!",
+      reactions: ["⛺"],
+      typingDuration: 1300,
+    },
+  ],
+];
 
   const emojiMap = {
     "👍": "👍🏼",
