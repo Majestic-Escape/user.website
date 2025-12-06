@@ -77,7 +77,7 @@ export default function HostMembershipPage() {
     }
 
     const options = {
-      key: "rzp_test_RRelkKgMDh3dun", //"rzp_test_w0bKE5w5UPOPrY",
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, //"rzp_test_w0bKE5w5UPOPrY",
       amount: membershipDetails.price * 100, // Razorpay expects amount in paise
       currency: "INR",
       name: "Majestic Escape",

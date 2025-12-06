@@ -34,7 +34,7 @@ const propertyTypes = [
   { id: "woman", label: "Woman Stay", icon: "👩🏻" },
 ];
 
-export function PropertyType({ updateFormData, formData }) {
+export function PropertyType({ updateFormData, formData, error }) {
   const [propertyType, setPropertyType] = useState(
     formData?.propertyType || ""
   );

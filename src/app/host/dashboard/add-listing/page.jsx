@@ -25,7 +25,7 @@ export default function HostOnboarding() {
   const auth = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient(); // Initialize QueryClient
-
+  const [stepError, setStepError] = useState(null);
   const [isNextDisabled, setIsNextDisabled] = useState(true);
   const [id, setId] = useState(null);
   const [currentStep, setCurrentStep] = useState(0);
@@ -179,7 +179,7 @@ export default function HostOnboarding() {
         const result = currentStepData.validate(formData);
         return result;
       }
-
+      console.log("batm2", errors);
       return { isValid: true, errors: [] };
     } catch (error) {
       return {
@@ -240,11 +240,13 @@ export default function HostOnboarding() {
   // };
 
   const handleNext = async () => {
+    setStepError(null);
     if (steps[currentStep].requiresValidation) {
       const { isValid, errors } = await validateCurrentStep();
-
+      console.log("batm", errors);
       if (!isValid) {
-        errors.forEach((msg) => toast.error(msg));
+        errors?.forEach((msg) => toast?.error(msg));
+        setStepError(errors[0]);
         return;
       }
     }
@@ -380,7 +382,7 @@ export default function HostOnboarding() {
             <Button
               onClick={handleNext}
               className="bg-primaryGreen rounded-3xl transition-all hover:bg-brightGreen w-48 h-12 px-6 text-white"
-              disabled={isLoading}
+              disabled={isLoading || isNextDisabled}
             >
               {isLoading ? (
                 <>

@@ -198,7 +198,7 @@ export default function BookingSummaryPage() {
     <div className="min-h-screen font-poppins pt-24">
       <header className="flow-root bg-offWhite shadow-sm">
         <div className=" max-w-7xl mx-auto py-4 ml-10 sm:px-6 lg:px-8">
-          <div className="text-center">
+          <div className="text-center justify-center">
             {queryData?.instant == "true" ? (
               <h2 className="flex justify-center text-3xl pb-2 font-semibold font-bricolage text-absoluteDark mt-4">
                 Your reservation is confirmed

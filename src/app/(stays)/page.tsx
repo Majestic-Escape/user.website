@@ -15,7 +15,7 @@ export default function Component() {
       <BecomePartner />
 
       <LocationWiseStays />
-      <SpotWiseStays />
+      {/* <SpotWiseStays /> */}
 
       {/* <Testimonials /> */}
       <Blogs />

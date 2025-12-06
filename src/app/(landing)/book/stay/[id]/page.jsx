@@ -952,18 +952,19 @@ function BookPageContent() {
                   </p>
                 </div>
               </div>
-            </div>
-
-            <div className="mb-8 border-b pb-8">
-              <h2 className="text-xl font-semibold mb-4">Check-in details</h2>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-semibold mb-1">Check-in</h3>
-                  <p>{convertTo12HoursFormat(property?.checkinTime)}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">Check-out</h3>
-                  <p>{convertTo12HoursFormat(property?.checkoutTime)}</p>
+              <br />
+              <hr />
+              <div className="mb-2 pt-8">
+                <h2 className="text-xl font-semibold mb-4">Check-in details</h2>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold mb-1">Check-in</h3>
+                    <p>{convertTo12HoursFormat(property?.checkinTime)}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Check-out</h3>
+                    <p>{convertTo12HoursFormat(property?.checkoutTime)}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1062,6 +1063,10 @@ function BookPageContent() {
 
                   <div className="p-6">
                     {/* Adults section */}
+                    <p className=" pb-6 flex">
+                      <p className="text-red-500 pr-2">Note: </p> Enter names as
+                      per government ID
+                    </p>
                     {guestData.adults.length > 0 && (
                       <div className="mb-6">
                         <h3 className="text-lg font-medium mb-4">

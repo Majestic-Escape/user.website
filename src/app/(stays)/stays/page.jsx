@@ -9,7 +9,7 @@ export default function Stays() {
     <main className="py-32 md:pt-36">
       <StaysProperties />
       <LocationWiseStays />
-      <SpotWiseStays />
+      {/* <SpotWiseStays /> */}
       {/* <Testimonials /> */}
       {/* <Newsletter /> */}
     </main>

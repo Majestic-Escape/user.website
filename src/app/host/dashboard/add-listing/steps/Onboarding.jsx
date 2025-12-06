@@ -47,6 +47,11 @@ export default function Onboarding() {
                       src="/images/home-stay.png"
                       alt="Home stay"
                     />
+                    {/* <img
+                      className="w-full p-4 md:p-8  h-auto"
+                      src="/images/gem.png"
+                      alt="Home stay"
+                    /> */}
                   </div>
 
                   <div className="lg:w-1/2 mx-auto">

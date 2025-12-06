@@ -31,7 +31,7 @@ export default function BlogPost() {
                 Back to Blog
               </Link>
               <h2 className="text-3xl font-semibold lg:text-5xl text-absoluteDark font-bricolage">
-                Waves and Wheels: Goa&apos;s Best Water Sports and Bike Tours
+                How to Choose the Perfect Homestay for Your Family Trip
               </h2>
               <div className="flex items-center gap-x-5">
                 <a
@@ -45,16 +45,18 @@ export default function BlogPost() {
                 </p>
               </div>
               <p className="text-lg text-gray-800 ">
-                Goa, the land of sun, sea, and sand, has long been synonymous
-                with adventure. Whether it’s riding the waves or cruising the
-                streets, the state offers the perfect blend of water sports and
-                thrilling bike tours. From exploring the Arabian Sea&apos;s
-                vibrant marine life to winding through scenic coastal routes,
-                there&apos;s an adventure waiting for every thrill-seeker.
+                Choosing the right homestay can define the comfort, safety, and
+                overall experience of your family vacation. With so many options
+                available, it’s important to focus on factors that ensure
+                convenience, space, and a stress-free stay. Here’s a clear,
+                practical guide to help you pick the perfect homestay for your
+                next family trip.
               </p>
               <p className="text-lg text-gray-800 ">
-                Let’s dive into the best experiences that combine water and
-                wheels for an unforgettable Goan escapade.
+                <b>Check the Space and Room Layout :</b> Families need more than
+                just beds. Look for homestays with multiple rooms, larger common
+                areas, and enough space for kids to move comfortably. Ensure the
+                photos match the listed room sizes and layout.
               </p>
               <div className="text-center">
                 <div className="grid lg:grid-cols-2 gap-3">
@@ -89,19 +91,28 @@ export default function BlogPost() {
                   </figure>
                 </div>
                 <span className="mt-3 block text-sm text-center text-gray-500 ">
-                  Thrill-seekers’ paradise: Water sports and bike tours in Goa
+                  {/* Thrill-seekers’ paradise: Water sports and bike tours in Goa */}
                 </span>
               </div>
-              <h3 className="text-2xl font-semibold">
+              {/* <h3 className="text-2xl font-semibold">
                 Water Sports Highlights
-              </h3>
+              </h3> */}
               <p className="text-lg text-gray-800 ">
-                Goa is a water sports haven, offering activities ranging from
-                jet skiing and parasailing to scuba diving and windsurfing.
-                Popular spots like Calangute Beach and Baga Beach are teeming
-                with vendors ready to take you on an aquatic adventure.
+                <b>Prioritize Safety :</b>
+                Features Safety should be non-negotiable. Choose properties with
+                secure entrances, proper lighting, child-friendly furniture, and
+                reliable neighbourhoods. Read recent reviews to confirm the host
+                maintains safety standards.
               </p>
-              <ul className="list-disc list-outside space-y-5 ps-5 text-lg text-gray-800 ">
+              <p className="text-lg text-gray-800 ">
+                <b>Look for Family-Friendly Amenities :</b> Essential amenities
+                make a big difference. Prioritize WiFi, clean bathrooms, AC or
+                heating, kitchens, washing machines, and parking. If you’re
+                travelling with infants or seniors, check for extra features
+                like ground-floor rooms, cribs, or easy access.
+              </p>
+
+              {/* <ul className="list-disc list-outside space-y-5 ps-5 text-lg text-gray-800 ">
                 <li className="ps-2">
                   **Jet Skiing**: Zoom across the waves on a high-speed jet ski,
                   a must-try for adrenaline junkies.
@@ -114,8 +125,8 @@ export default function BlogPost() {
                   **Parasailing**: Enjoy panoramic views of Goa&apos;s coastline
                   as you soar high above the water.
                 </li>
-              </ul>
-              <blockquote className="text-center p-4 sm:px-7">
+              </ul> */}
+              {/* <blockquote className="text-center p-4 sm:px-7">
                 <p className="text-xl font-medium text-gray-800 lg:text-2xl lg:leading-normal xl:text-2xl xl:leading-normal ">
                   &quot;Nothing compares to the thrill of parasailing with the
                   wind in your face and the sea beneath you.&quot;
@@ -132,7 +143,7 @@ export default function BlogPost() {
                 chance to explore lush greenery, quaint villages, and stunning
                 beaches. Popular routes include the Vagator-Chapora stretch and
                 the scenic ride to Palolem.
-              </p>
+              </p> */}
               <figure>
                 <Image
                   width={600}
@@ -142,14 +153,40 @@ export default function BlogPost() {
                   alt="Biking through Goan countryside"
                 />
                 <figcaption className="mt-3 text-sm text-center text-gray-500 ">
-                  Uncover Goa&apos;s beauty with bike tours
+                  {/* Uncover Goa&apos;s beauty with bike tours */}
                 </figcaption>
               </figure>
               <p className="text-lg text-gray-800 ">
-                Renting a bike or scooter is easy and affordable, making it one
-                of the best ways to experience Goa at your own pace.
+                <b>Review the Host’s Ratings and Responsiveness :</b> A good
+                host ensures a smooth stay. Choose homestays with high ratings,
+                consistent positive reviews, and hosts known for quick replies.
+                Responsive hosts help with early check-ins, local tips, and
+                faster issue resolution.
               </p>
-              <div className="space-y-3">
+              <p className="text-lg text-gray-800 ">
+                <b>Check the Location Carefully :</b> Pick a neighbourhood close
+                to key attractions, restaurants, and medical facilities. For
+                family trips, convenience is more important than staying in
+                crowded hotspots. Search for homestays in safe, accessible areas
+                with good transport options.
+              </p>
+              <p className="text-lg text-gray-800 ">
+                <b>Browse Real Guest Photos :</b>
+                Guest photos reveal the actual condition of the property. They
+                show cleanliness, furnishing quality, and how well the homestay
+                is maintained—without filters or wide-angle tricks.
+              </p>
+              <p className="text-lg text-gray-800 ">
+                <b>Understand the Policies :</b>
+                Check cancellation rules, extra guest charges, house rules, and
+                check-in timings. Clear policies help avoid surprises and keep
+                your family’s schedule smooth. Choosing the right homestay
+                becomes easy when you focus on space, safety, amenities, and
+                trustworthy hosts. Start exploring well-reviewed homestays to
+                find the perfect fit for your family getaway.
+              </p>
+
+              {/* <div className="space-y-3">
                 <h3 className="text-2xl font-semibold ">
                   Tips for Adventure Enthusiasts
                 </h3>
@@ -168,7 +205,7 @@ export default function BlogPost() {
                     Respect local guidelines and the environment.
                   </li>
                 </ul>
-              </div>
+              </div> */}
               <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-y-5 lg:gap-y-0">
                 <div>
                   <a
@@ -252,7 +289,7 @@ export default function BlogPost() {
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">
-                    November Nooks: Hidden Gems to Explore in Goa Before Winter
+                    How to Plan a Budget Trip Without Compromising Comfort
                   </span>
                 </div>
                 <div className="shrink-0 relative rounded-lg overflow-hidden size-20">
@@ -273,7 +310,7 @@ export default function BlogPost() {
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">
-                    Exploring Sada Fort: Goa&apos;s Overlooked Coastal Gem{" "}
+                    Top 5 Reasons Why Homestays Are Better Than Hotels
                   </span>
                 </div>
                 <div className="shrink-0 relative rounded-lg overflow-hidden size-20">

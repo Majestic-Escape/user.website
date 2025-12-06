@@ -241,7 +241,7 @@ export default function BlogPost() {
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">
-                    November Nooks: Hidden Gems to Explore in Goa Before Winter
+                    How to Plan a Budget Trip Without Compromising Comfort
                   </span>
                 </div>
                 <div className="shrink-0 relative rounded-lg overflow-hidden size-20">
@@ -262,8 +262,7 @@ export default function BlogPost() {
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">
-                    Waves and Wheels: Goa&apos;s Best Water Sports and Bike
-                    Tours
+                    How to Choose the Perfect Homestay for Your Family Trip
                   </span>
                 </div>
                 <div className="shrink-0 relative rounded-lg overflow-hidden size-20">
@@ -284,7 +283,7 @@ export default function BlogPost() {
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">
-                    Exploring Sada Fort: Goa&apos;s Overlooked Coastal Gem
+                    Top 5 Reasons Why Homestays Are Better Than Hotels
                   </span>
                 </div>
                 <div className="shrink-0 relative rounded-lg overflow-hidden size-20">

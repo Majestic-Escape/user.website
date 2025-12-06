@@ -146,9 +146,12 @@ const Invoice = ({ payment, invoiceData }) => {
             Cancellation policy
           </h3>
           <p className="text-sm text-gray-600">
-            Free cancellation before 1:00 PM on Apr 20. After that, the
-            reservation is non-refundable. Cutoff times are based on the
-            listing’s local time.
+            {invoiceData?.cancellationPolicy == "moderate"
+              ? `Your booking has moderate cancellation policy. If you cancel anytime before 7 days of check-in, you receive a full refund. If the booking is within 7 days of check-in, the reservation becomes non-refundable, and you will not be able to cancel the booking. Once the check-in date has arrived, cancellation is not possible.`
+              : invoiceData?.cancellationPolicy == "flexible"
+              ? `Your booking has flexible cancellation policy. 
+If you cancel at anytime before 24 hours before check-in, you receive a full refund. If the booking is within 24 hours of check-in, the reservation becomes non-refundable, and you will not be able to cancel the booking. After the check-in time passes, cancellation is no longer possible.`
+              : `Your booking has strict cancellation policy. At no point will the booking be eligible for cancellation.The reservation is non-refundable.`}
           </p>
         </div>
 
@@ -207,7 +210,7 @@ const Invoice = ({ payment, invoiceData }) => {
 
         {/* Taxes Info */}
         <div className="mb-6 text-sm text-gray-600">
-          <p>Occupancy taxes include CGST (In - Goa), SGST (In - Goa).</p>
+          {/* <p>Occupancy taxes include CGST (In - Goa), SGST (In - Goa).</p> */}
           <p className="mt-2">
             Majestic Escape Payments India Pvt. Ltd. is a limited payment
             collection agent of your Host. Upon payment of the total price to

@@ -58,35 +58,35 @@ export function CancellationSettings({ updateFormData, formData }) {
     manual: {
       title: "Manual Booking",
       description: "Get complete control over who books your space",
-      details: [
-        "Review each booking request personally",
-        "Screen guests before accepting",
-        "Flexible cancellation policies",
-        "24 hours to respond to requests",
-        "Maintain direct communication with guests",
-      ],
+      // details: [
+      //   "Review each booking request personally",
+      //   "Screen guests before accepting",
+      //   "Flexible cancellation policies",
+      //   "24 hours to respond to requests",
+      //   "Maintain direct communication with guests",
+      // ],
     },
     instantBook: {
       title: "Instant Book",
       description: "Let guests book immediately",
-      details: [
-        "Higher visibility in search results",
-        "Automatic calendar updates",
-        "Built-in guest screening",
-        "Cancel penalty-free if uncomfortable",
-        "More bookings on average",
-      ],
+      // details: [
+      //   "Higher visibility in search results",
+      //   "Automatic calendar updates",
+      //   "Built-in guest screening",
+      //   "Cancel penalty-free if uncomfortable",
+      //   "More bookings on average",
+      // ],
     },
     flashBook: {
       title: "Flash Booking",
       description: "Premium instant booking experience",
-      details: [
-        "10 mins window to accept or cancel the booking",
-        "Priority notifications and customer support",
-        "Priority placement in search",
-        "Advanced guest verification",
-        "Higher earning potential",
-      ],
+      // details: [
+      //   "10 mins window to accept or cancel the booking",
+      //   "Priority notifications and customer support",
+      //   "Priority placement in search",
+      //   "Advanced guest verification",
+      //   "Higher earning potential",
+      // ],
     },
   };
 
@@ -98,7 +98,7 @@ export function CancellationSettings({ updateFormData, formData }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button
+        {/* <Button
           variant="outline"
           size="sm"
           className="ml-2"
@@ -107,7 +107,7 @@ export function CancellationSettings({ updateFormData, formData }) {
           }}
         >
           Know more
-        </Button>
+        </Button> */}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -118,12 +118,12 @@ export function CancellationSettings({ updateFormData, formData }) {
             {bookingInfo[type].description}
           </p>
           <ul className="space-y-2">
-            {bookingInfo[type].details.map((detail, index) => (
+            {/* {bookingInfo[type].details.map((detail, index) => (
               <li key={index} className="flex items-center gap-2">
                 <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                 {detail}
               </li>
-            ))}
+            ))} */}
           </ul>
         </div>
       </DialogContent>

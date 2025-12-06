@@ -1,15 +1,15 @@
-'use client'
+"use client";
 
-import { useState } from "react"
-import { Search, SlidersHorizontal } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { useSheet } from "@/components/providers/sheet-provider"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { SearchSheet } from "@/components/search-sheet"
+import { useState } from "react";
+import { Search, SlidersHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useSheet } from "@/components/providers/sheet-provider";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SearchSheet } from "@/components/search-sheet";
 
 export function MobileNavbar() {
-  const { setIsOpen } = useSheet()
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const { setIsOpen } = useSheet();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
     <div className="border-b">
@@ -25,9 +25,9 @@ export function MobileNavbar() {
               Start your search
             </Button>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="flex items-center gap-2"
             onClick={() => setIsOpen(true)}
           >
@@ -35,7 +35,7 @@ export function MobileNavbar() {
             Filters
           </Button>
         </div>
-        
+
         <div className="px-4 pb-4">
           <Tabs defaultValue="rooms">
             <TabsList>
@@ -49,11 +49,10 @@ export function MobileNavbar() {
         </div>
       </div>
 
-      <SearchSheet 
+      <SearchSheet
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
       />
     </div>
-  )
+  );
 }
-
