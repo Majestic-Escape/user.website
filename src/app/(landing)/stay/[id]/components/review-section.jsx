@@ -419,7 +419,7 @@ export default function ReviewSection({
           </div>
         </div>
         <Link href={`/manage-bookings`}>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 text-sm font-medium">
+          <button className="bg-primaryGreen hover:bg-brightGreen text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 text-sm font-medium">
             Write a review
           </button>
         </Link>
@@ -434,7 +434,7 @@ export default function ReviewSection({
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-semibold text-gray-800">
-                  {r.user.firstName}abc
+                  {r.user.firstName}
                 </h4>
                 <p className="text-sm text-gray-500">
                   {new Date(r.createdAt).getDate()}/
@@ -442,12 +442,12 @@ export default function ReviewSection({
                   {new Date(r.createdAt).getFullYear()}
                 </p>
               </div>
-              <Image
+              {/* <Image
                 src="/google-icon.png"
                 width={20}
                 height={20}
                 alt="Google"
-              />
+              /> */}
             </div>
 
             <div className="flex text-yellow-500">
