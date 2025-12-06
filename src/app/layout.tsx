@@ -6,6 +6,7 @@ import { WishlistProvider } from "@/components/wishlist-context";
 import { Providers } from "@/components/providers";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "sonner";
+export const revalidate = 0;
 export const metadata = {
   title: "Majestic Escape | Your Perfect Gateway",
   description:
