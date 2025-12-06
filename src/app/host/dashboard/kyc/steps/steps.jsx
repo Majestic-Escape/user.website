@@ -1,7 +1,7 @@
 import {
   validatePersonalInfo,
   validateDocumentUpload,
-  validateGSTVerification,
+  // validateGSTVerification,
   validateTermsAndConditions,
 } from "./validate";
 
@@ -27,8 +27,8 @@ export const steps = [
   {
     title: "GST Verification",
     component: GSTVerification,
-    requiresValidation: true,
-    validate: validateGSTVerification,
+    // requiresValidation: true,
+    // validate: validateGSTVerification,
   },
   // { title: "Selfie Capture", component: SelfieCapture },
   {
@@ -55,8 +55,8 @@ export const editSteps = [
   {
     title: "GST Verification",
     component: GSTVerification,
-    requiresValidation: true,
-    validate: validateGSTVerification,
+    // requiresValidation: true,
+    // validate: validateGSTVerification,
   },
   // { title: "Selfie Capture", component: SelfieCapture },
   {

@@ -354,41 +354,95 @@ export function LocationForm({ updateFormData, formData }) {
   //   }
   // };
 
+  // const handleRegistrationInputChange = (e) => {
+  //   let value = e.target.value.toUpperCase();
+
+  //   // Hard limit (allows backspace)
+  //   value = value.slice(0, 10);
+
+  //   // Always update state first
+  //   const newAddress = { ...address, registrationNumber: value };
+  //   setAddress(newAddress);
+
+  //   updateFormData({ address: newAddress, validRegistrationNo: false });
+  //   setValidRegistrationNo(false);
+
+  //   // Clear error when deleting
+  //   if (value.length < 3) {
+  //     setRegistrationNumberError("");
+  //     return;
+  //   }
+
+  //   // Validation only if enough characters
+  //   if (value.length === 10) {
+  //     const regEx = /^(?=.{10}$)(?:[A-Z0-9]*)(\d+)$/;
+  //     if (!regEx.test(value)) {
+  //       setRegistrationNumberError("Invalid registration number format");
+  //     } else {
+  //       setRegistrationNumberError("");
+  //       checkRegistrationNumber(value);
+  //     }
+  //   } else {
+  //     // Mid-length validation
+  //     const regEx = /^[A-Z0-9\/-]{3,30}$/;
+  //     if (regEx.test(value)) {
+  //       checkRegistrationNumber(value);
+  //     }
+  //   }
+  // };
   const handleRegistrationInputChange = (e) => {
-    let value = e.target.value.toUpperCase();
+    let value = e.target.value.toUpperCase().slice(0, 10);
 
-    // Hard limit (allows backspace)
-    value = value.slice(0, 10);
-
-    // Always update state first
     const newAddress = { ...address, registrationNumber: value };
     setAddress(newAddress);
 
-    updateFormData({ address: newAddress, validRegistrationNo: false });
+    // Reset validity on change
     setValidRegistrationNo(false);
+    updateFormData({ address: newAddress, validRegistrationNo: false });
 
-    // Clear error when deleting
-    if (value.length < 3) {
+    const isGoa = address.state === "Goa";
+
+    // ================================
+    // 🔵 CASE 1: If NOT GOA → allow any value or empty
+    // ================================
+    if (!isGoa) {
+      setRegistrationNumberError("");
+      setValidRegistrationNo(true);
+      updateFormData({ validRegistrationNo: true });
+      return;
+    }
+
+    // ================================
+    // 🔵 CASE 2: Goa + empty input → allowed
+    // ================================
+    if (value.trim() === "") {
+      setRegistrationNumberError("");
+      setValidRegistrationNo(true);
+      updateFormData({ validRegistrationNo: true });
+      return;
+    }
+
+    // ================================
+    // 🔵 CASE 3: Goa + user entered something → must match HOTN/HOTS + total 10 chars
+    // ================================
+
+    // Pattern: Starts with HOTN or HOTS + (6 more alphanumeric chars)
+    const regEx = /^(HOTN|HOTS)[A-Z0-9]{6}$/;
+
+    if (value.length < 10) {
+      // User still typing → don't show error yet
       setRegistrationNumberError("");
       return;
     }
 
-    // Validation only if enough characters
-    if (value.length === 10) {
-      const regEx = /^(?=.{10}$)(?:[A-Z0-9]*)(\d+)$/;
-      if (!regEx.test(value)) {
-        setRegistrationNumberError("Invalid registration number format");
-      } else {
-        setRegistrationNumberError("");
-        checkRegistrationNumber(value);
-      }
-    } else {
-      // Mid-length validation
-      const regEx = /^[A-Z0-9\/-]{3,30}$/;
-      if (regEx.test(value)) {
-        checkRegistrationNumber(value);
-      }
+    if (!regEx.test(value)) {
+      setRegistrationNumberError("Invalid Goa registration");
+      return;
     }
+
+    // If format valid → check backend
+    setRegistrationNumberError("");
+    checkRegistrationNumber(value);
   };
 
   console.log("we have reached", formData, address);
@@ -537,7 +591,7 @@ export function LocationForm({ updateFormData, formData }) {
           {registrationNumberError && (
             <p className="text-red-500 text-sm">{registrationNumberError}</p>
           )}
-          {/* <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 pl-1">
             Don't have a registration no.?{" "}
             <Link
               className="text-primaryGreen underline text-base"
@@ -546,7 +600,7 @@ export function LocationForm({ updateFormData, formData }) {
             >
               Register here
             </Link>
-          </p> */}
+          </p>
 
           <hr />
           <h3 className="text-lg font-semibold">

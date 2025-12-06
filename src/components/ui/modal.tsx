@@ -867,7 +867,7 @@ export default function FilterModal({
                     >
                       <Command className="bg-white">
                         <Input
-                          placeholder="Search Goa destinations..."
+                          placeholder="Search destinations..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           className="border-0 border-b rounded-none focus-visible:ring-0"

@@ -100,7 +100,7 @@ export default function LocalRules() {
                         target="_blank"
                         className="w-full bg-primaryGreen py-2 px-3 text-sm rounded-3xl hover:bg-brightGreen transition-colors text-white"
                       >
-                        +91 83699 95283
+                        +91 7219666822
                       </Link>
                     </div>
                   </CardContent>

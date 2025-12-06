@@ -135,20 +135,40 @@ export const validateLocationForm = (formData) => {
       errors: ["Please enter only numbers in pincode"],
     };
   }
+  // --- Registration number validation based on state ---
+  const reg = address.registrationNumber?.trim() || "";
+  const isGoa = address.state?.trim().toLowerCase() === "goa";
 
-  if (!address.registrationNumber?.trim()) {
-    return {
-      isValid: false,
-      errors: ["Please enter the Registration number"],
-    };
+  if (isGoa) {
+    // If empty → allowed
+    if (reg.length > 0) {
+      const pattern = /^(HOTN|HOTS)[A-Za-z0-9]{6}$/; // HOTN + 6 chars = 10 total
+
+      if (!pattern.test(reg)) {
+        return {
+          isValid: false,
+          errors: ["Invalid property registration"],
+        };
+      }
+    }
+  } else {
+    // For other states → allow anything (empty or filled)
+    // no validation applied
   }
 
-  if (!validRegistrationNo) {
-    return {
-      isValid: false,
-      errors: ["Registration number is incorrect"],
-    };
-  }
+  // if (!address.registrationNumber?.trim()) {
+  //   return {
+  //     isValid: false,
+  //     errors: ["Please enter the Registration number"],
+  //   };
+  // }
+
+  // if (!validRegistrationNo) {
+  //   return {
+  //     isValid: false,
+  //     errors: ["Registration number is incorrect"],
+  //   };
+  // }
   return {
     isValid: true,
   };

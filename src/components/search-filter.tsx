@@ -270,7 +270,7 @@ export default function SearcahFilter({
           >
             <Command className="bg-white">
               <Input
-                placeholder="Search Goa destinations..."
+                placeholder="Search destinations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />

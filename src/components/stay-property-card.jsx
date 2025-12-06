@@ -145,12 +145,14 @@ export default function StayCard({ property, includeTaxes }) {
         <div className="flex items-center justify-between mb-1">
           <div>
             <h3 className=" mt-1 font-medium  text-graphite">
-              {property?.title}
+              {property?.title.length > 30
+                ? property?.title.substring(0, 30) + "..."
+                : property?.title}
             </h3>
             <p className="text-sm mb-0.5 flex justify-start gap-x-1 items-center text-stone">
               <MapPin className="w-4 h-auto  inline-block mr-1 align-middle hover:text-stone text-stone" />
               <span className="text-stone text-sm">
-                {property?.address?.district}
+                {property?.address?.city}, {property?.address?.state}
               </span>
             </p>
             <p className="text-gray-600">

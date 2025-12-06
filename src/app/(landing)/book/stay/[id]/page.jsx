@@ -77,6 +77,7 @@ function BookPageContent() {
   const [isAuth, setIsAuth] = useState(false);
   const checkinDate = searchParams.get("checkin");
   const [ban, setBan] = useState(false);
+  const [guestSaving, setGuestSaving] = useState(false);
   const [date, setDate] = useState({
     from: searchParams.get("checkin")
       ? new Date(searchParams.get("checkin"))
@@ -256,7 +257,7 @@ function BookPageContent() {
     const initialAdults = Array.from(
       { length: parseInt(adults) },
       (_, index) => ({
-        name: index === 0 ? `${firstName} ${lastName}`.trim() : "User",
+        name: index === 0 ? `${firstName} ${lastName}`.trim() : "",
         age: index === 0 ? dob : 18,
       })
     );
@@ -282,27 +283,63 @@ function BookPageContent() {
   };
 
   // Add this function to handle form validation and submission
+  // const handleConfirmGuestInfo = async () => {
+  //   const errors = {};
+
+  //   // Validate adults
+  //   guestData.adults.forEach((adult, index) => {
+  //     if (!adult.name.trim()) {
+  //       errors[`adult-name-${index}`] = "Name is required";
+  //     }
+  //     if (adult.age < 18) {
+  //       errors[`adult-age-${index}`] = "Age must be 18 or above";
+  //     }
+  //   });
+
+  //   // Validate children
+  //   guestData.children.forEach((child, index) => {
+  //     if (!child.name.trim()) {
+  //       errors[`child-name-${index}`] = "Name is required";
+  //     }
+  //     if (child.age < 3 || child.age >= 18) {
+  //       errors[`child-age-${index}`] = "Age must be between 3 and 17";
+  //     }
+  //   });
+
+  //   if (Object.keys(errors).length > 0) {
+  //     setFormErrors(errors);
+  //     return;
+  //   }
+
+  //   // If validation passes, close modal and proceed with payment
+  //   setShowGuestModal(false);
+
+  //   // Check dates again and proceed with payment
+
+  //   const date = await fetchDates();
+  //   console.log("sor", date);
+  //   if (date.includes(checkinDate)) {
+  //     toast.error("Sorry, someone has already booked");
+  //   } else {
+  //     await handlePayment();
+  //   }
+  // };
   const handleConfirmGuestInfo = async () => {
     const errors = {};
 
-    // Validate adults
+    // Validation logic (unchanged)
     guestData.adults.forEach((adult, index) => {
-      if (!adult.name.trim()) {
+      if (!adult.name.trim())
         errors[`adult-name-${index}`] = "Name is required";
-      }
-      if (adult.age < 18) {
+      if (adult.age < 18)
         errors[`adult-age-${index}`] = "Age must be 18 or above";
-      }
     });
 
-    // Validate children
     guestData.children.forEach((child, index) => {
-      if (!child.name.trim()) {
+      if (!child.name.trim())
         errors[`child-name-${index}`] = "Name is required";
-      }
-      if (child.age < 3 || child.age >= 18) {
+      if (child.age < 3 || child.age >= 18)
         errors[`child-age-${index}`] = "Age must be between 3 and 17";
-      }
     });
 
     if (Object.keys(errors).length > 0) {
@@ -310,20 +347,28 @@ function BookPageContent() {
       return;
     }
 
-    // If validation passes, close modal and proceed with payment
-    setShowGuestModal(false);
+    // Start loader
+    setGuestSaving(true);
 
-    // Check dates again and proceed with payment
+    try {
+      const dateCheck = await fetchDates();
 
-    const date = await fetchDates();
-    console.log("sor", date);
-    if (date.includes(checkinDate)) {
-      toast.error("Sorry, someone has already booked");
-    } else {
+      if (dateCheck.includes(checkinDate)) {
+        toast.error("Sorry, someone has already booked");
+        setGuestSaving(false);
+        return;
+      }
+
+      // Proceed to payment
       await handlePayment();
+      setShowGuestModal(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong. Try again!");
+    } finally {
+      setGuestSaving(false); // remove loader
     }
   };
-
   // Add this function to update guest data
   const updateGuestData = (type, index, field, value) => {
     // For the first adult, only allow age to be changed, not name
@@ -657,7 +702,7 @@ function BookPageContent() {
       );
       console.log("ordersssss", order_id.data);
       const options = {
-        key: "rzp_test_RRelkKgMDh3dun", //"rzp_test_w0bKE5w5UPOPrY", // Replace with your actual test key
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, //"rzp_test_w0bKE5w5UPOPrY", // Replace with your actual test key
         amount: totals.total * 100,
         currency: "INR",
         order_id: order_id?.data?.id,
@@ -835,9 +880,7 @@ function BookPageContent() {
           <h2 className="text-2xl font-bold text-red-700 mb-2">
             Error loading property
           </h2>
-          <p className="text-red-600">
-            {error.message || "An unknown error occurred."}
-          </p>
+          <p className="text-red-600">Try refreshing</p>
           <Button
             onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-primaryGreen text-white rounded hover:bg-brightGreen"
@@ -979,25 +1022,42 @@ function BookPageContent() {
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                   <div className="flex justify-between items-center p-6 border-b">
-                    <h2 className="text-xl font-semibold">Guest Information</h2>
-                    <button
-                      onClick={() => setShowGuestModal(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
+                    {guestSaving ? (
+                      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="min-h-screen flex items-center justify-center">
+                            <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
+                          </div>
+                          <p className="text-white text-sm">
+                            Saving guest details...
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <h2 className="text-xl font-semibold">
+                          Guest Information
+                        </h2>
+                        <button
+                          onClick={() => setShowGuestModal(false)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          <svg
+                            className="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      </>
+                    )}
                   </div>
 
                   <div className="p-6">

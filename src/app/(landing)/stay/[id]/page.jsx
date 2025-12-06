@@ -238,9 +238,7 @@ export default function PropertyPage() {
           <h2 className="text-2xl font-bold text-red-700 mb-2">
             Error loading property
           </h2>
-          <p className="text-red-600">
-            {propertyError.message || "An unknown error occurred."}
-          </p>
+          <p className="text-red-600">Try refreshing</p>
           <button
             onClick={() => window.location.reload()} // Simple refresh action
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"

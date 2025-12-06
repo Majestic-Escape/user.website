@@ -8,7 +8,7 @@ export const validatePersonalInfo = (formData) => {
       personalInfo.address.city.trim() !== "" &&
       personalInfo.address.state.trim() !== "" &&
       personalInfo.address.pincode.trim() !== "",
-    errorMessage: "Please fill in all required personal information fields.",
+    errorMessage: "Missing required personal information fields.",
   };
 };
 
@@ -24,14 +24,14 @@ export const validateDocumentUpload = (formData) => {
   };
 };
 
-export const validateGSTVerification = (formData) => {
-  const { gstInfo } = formData;
+// export const validateGSTVerification = (formData) => {
+//   const { gstInfo } = formData;
 
-  return {
-    isValid: gstInfo.isVerified,
-    errorMessage: "Please enter and verify your GST information.",
-  };
-};
+//   return {
+//     isValid: gstInfo.isVerified,
+//     errorMessage: "Please enter and verify your GST information.",
+//   };
+// };
 
 export const validateTermsAndConditions = (formData) => {
   const { acceptedTerms } = formData;
