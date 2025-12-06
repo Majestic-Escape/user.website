@@ -16,7 +16,7 @@ export function StepTwoIntro() {
   <p className="text-stone text-sm md:text-base">In this step, you'll list the amenities your place provides, upload at least 5 photos, and craft a title and description.</p>
        </div>
        <div>
-  <img src="/step-one-illustration.webp" className="rounded-md max-w-[400px]" alt="Step one" />
+  <img src="/step-two-illustration.png" className="rounded-md max-w-[400px]" alt="Step one" />
        </div>
        </section>
        </TextReveal>

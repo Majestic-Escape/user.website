@@ -17,7 +17,7 @@ export function StepThreeIntro() {
   </TextReveal>
       </div>
        <div>
-  <img src="/step-one-illustration.webp" className="rounded-md max-w-[400px]" alt="Step one" />
+  <img src="/step-three-illustration.png" className="rounded-md max-w-[400px]" alt="Step one" />
        </div>
        </section>
        

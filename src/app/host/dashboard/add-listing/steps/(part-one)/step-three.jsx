@@ -591,7 +591,7 @@ export function LocationForm({ updateFormData, formData }) {
           {registrationNumberError && (
             <p className="text-red-500 text-sm">{registrationNumberError}</p>
           )}
-          <p className="text-sm text-gray-600 pl-1">
+          {/* <p className="text-sm text-gray-600 pl-1">
             Don't have a registration no.?{" "}
             <Link
               className="text-primaryGreen underline text-base"
@@ -600,7 +600,7 @@ export function LocationForm({ updateFormData, formData }) {
             >
               Register here
             </Link>
-          </p>
+          </p> */}
 
           <hr />
           <h3 className="text-lg font-semibold">
