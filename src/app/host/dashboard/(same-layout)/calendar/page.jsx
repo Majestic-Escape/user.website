@@ -54,6 +54,7 @@ const FullCalendarPage = () => {
     from: null,
     to: null,
   });
+
   const [blockReason, setBlockReason] = useState("");
   const [syncPlatform, setSyncPlatform] = useState("");
   const [iCalUrl, setICalUrl] = useState("");
@@ -331,6 +332,8 @@ const FullCalendarPage = () => {
   console.log("what th", arr);
   const renderCalendar = () => {
     const monthStart = startOfMonth(currentDate);
+    const startDayIndex = monthStart.getDay();
+    const emptyDays = Array.from({ length: startDayIndex });
     console.log("supss", currentDate, monthStart);
     const monthEnd = endOfMonth(currentDate);
     const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -342,6 +345,11 @@ const FullCalendarPage = () => {
             {day}
           </div>
         ))}
+
+        {emptyDays.map((_, i) => (
+          <div key={`empty-${i}`} />
+        ))}
+
         {monthDays.map((day) => {
           const isReserved = unavailableDates.some((date) =>
             isSameDay(date.toString(), day)

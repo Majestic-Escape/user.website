@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import NavTabLayout from "@/components/nav-tab-layout";
 import { useWishlist } from "@/components/wishlist-context";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import WishlistPopup from "../wishlist-popup";
 import { UserDropdownMenu } from "@/components/user-dropdown-menu";
@@ -18,6 +18,7 @@ export default function Navbar() {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState(null);
   const { user, logout } = useAuth();
+
   const [totalMessages, setTotalMessages] = useState(false);
   const router = useRouter();
 
@@ -38,12 +39,27 @@ export default function Navbar() {
       <div className="container max-w-[1400px] flex h-12 md:h-[76px] w-full items-center mx-auto">
         <div></div>{" "}
         <Link className="flex items-center gap-2 text-[#3B5D2D]" href="/">
-          <Image
+          {/* <Image
             className="h-6 md:h-6 w-auto"
             width={200}
             height={40}
             src="/images/logo.svg"
             alt="Logo"
+          /> */}
+          <Image
+            className="hidden lg:block h-6 w-auto"
+            width={200}
+            height={40}
+            src="/images/logo.svg"
+            alt="Logo"
+          />
+          {/* ✅ MEDIUM SCREENS ONLY */}
+          <Image
+            className=" lg:hidden h-6 w-auto"
+            width={200}
+            height={40}
+            src="/logo.png" // <-- medium-specific image
+            alt="Logo Medium"
           />
         </Link>
         <div className="z-50 absolute hidden md:block right-[50%] translate-x-1/2">
@@ -55,12 +71,26 @@ export default function Navbar() {
               isOpen={isWishlistOpen}
               onClose={() => setIsWishlistOpen(false)}
             /> */}
-            <Button
+            <button
+              onClick={switchToHosting}
+              className="hidden lg:inline-flex text-sm bg-transparent border-none shadow-none text-stone font-medium hover:text-brightGreen hover:underline"
+            >
+              Switch to Hosting
+            </button>
+
+            {/* ✅ MEDIUM SCREEN ONLY BUTTON */}
+            {/* <Button
+              onClick={() => router.push("/host")}
+              className="hidden md:inline-flex lg:hidden text-sm bg-primaryGreen text-white px-4 rounded-full hover:bg-brightGreen"
+            >
+              Host Switch
+            </Button> */}
+            {/* <Button
               onClick={switchToHosting}
               className="text-sm bg-transparent hover:bg-transparent border-none shadow-none  text-stone font-medium hover:text-brightGreen hover:transition-colors hover:underline"
             >
               Switch to Hosting
-            </Button>
+            </Button> */}
             {/* <Button
               variant="ghost"
               size="icon"

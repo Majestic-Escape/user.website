@@ -12,6 +12,7 @@ import {
   Heart,
   Building2Icon,
   HandHelping,
+  SquareUser,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -36,11 +37,11 @@ const navItems = [
 
 const navItemsLoggedIn = [
   { name: "Home", href: "/", icon: HomeIcon },
-  { name: "Stay", href: "/stays", icon: Building2Icon },
-  { name: "Experience", href: "/experiences", icon: Compass },
-  { name: "Trips", href: "/manage-bookings", icon: Calendar },
-  // { name: "Wishlist", href: "/wishlist", icon: Heart },
-];
+
+  { name: "Bookings", href: "/manage-bookings", icon: Calendar },
+  { name: "Hosting", href: "/host/dashboard", icon: SquareUser },
+  { name: "Help", href: "/help-center", icon: HandHelping },
+]; //trips
 
 const menuItems = [
   // Navigation Links

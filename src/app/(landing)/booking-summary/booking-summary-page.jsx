@@ -320,7 +320,9 @@ export default function BookingSummaryPage() {
 
                 <div>
                   <h4 className="font-medium text-gray-700">Total Amount</h4>
-                  <p className="text-gray-500">₹{queryData?.totalAmount}.00</p>
+                  <p className="text-gray-500">
+                    ₹{queryData?.totalAmount?.toLocaleString("en-IN")}.00
+                  </p>
                 </div>
 
                 {/* <button className="w-full border border-gray-300 py-2 rounded-lg">

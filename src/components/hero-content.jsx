@@ -34,7 +34,11 @@ export function HeroContent() {
 
         <TextReveal>
           <p className="hidden md:inline-block text-gray-700 mb-8">
-            From luxurious tents to cultural retreats, your perfect Rann Utsav experience awaits. Explore a variety of stays, compare your favorites, and choose the one that captures the spirit of Kutch. Start discovering now and get ready for a celebration you will remember forever.{" "}
+            From luxurious tents to cultural retreats, your perfect Rann Utsav
+            experience awaits. Explore a variety of stays, compare your
+            favorites, and choose the one that captures the spirit of Kutch.
+            Start discovering now and get ready for a celebration you will
+            remember forever.{" "}
           </p>
         </TextReveal>
         <TextReveal>

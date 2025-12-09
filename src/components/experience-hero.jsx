@@ -1,73 +1,82 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-"use client"
+"use client";
 
-import { useState, useRef, useEffect, createRef, useCallback } from 'react'
-import { Search, Calendar as CalendarIcon, Users, ChevronLeft, ChevronRight, ChevronDown,   Star, SlidersHorizontal, Play, Pause, X } from "lucide-react"
-import "react-datepicker/dist/react-datepicker.css"
-import { useWishlist } from './wishlist-context';
-import { createPortal } from 'react-dom';
-import {WishlistDialog} from './WishlistDialog';
-import * as Dialog from '@radix-ui/react-dialog'
-import { Checkbox } from "@/components/ui/checkbox"
-import { Slider } from "@/components/ui/slider"
-import Image from 'next/image'
-import Heading from "@/components/ui/heading"
-import SubHeading from "@/components/ui/sub-heading"
+import { useState, useRef, useEffect, createRef, useCallback } from "react";
+import {
+  Search,
+  Calendar as CalendarIcon,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Star,
+  SlidersHorizontal,
+  Play,
+  Pause,
+  X,
+} from "lucide-react";
+import "react-datepicker/dist/react-datepicker.css";
+import { useWishlist } from "./wishlist-context";
+import { createPortal } from "react-dom";
+import { WishlistDialog } from "./WishlistDialog";
+import * as Dialog from "@radix-ui/react-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
+import Image from "next/image";
+import Heading from "@/components/ui/heading";
+import SubHeading from "@/components/ui/sub-heading";
 
-import { MainTab } from './ui/main-tab';
+import { MainTab } from "./ui/main-tab";
 // import { ExperiencePartnerSection } from './experience-partner-section';
 
 const activities = [
-
   {
     icon: "/images/activities/paragliding1.svg",
-    label: "Paragliding"
+    label: "Paragliding",
   },
   {
     icon: "/images/activities/parasailing1.svg",
-    label: "Parasailing"
+    label: "Parasailing",
   },
   {
     icon: "/images/activities/riverrafting1.svg",
-    label: "River Rafting"
+    label: "River Rafting",
   },
   {
     icon: "/images/activities/cycling1.svg",
-    label: "Cycling"
+    label: "Cycling",
   },
   {
     icon: "/images/activities/hotairballoon1.svg",
-    label: "Hot air balloon"
+    label: "Hot air balloon",
   },
   {
     icon: "/images/activities/paragliding1.svg",
-    label: "Paragliding"
+    label: "Paragliding",
   },
   {
     icon: "/images/activities/parasailing1.svg",
-    label: "Parasailing"
+    label: "Parasailing",
   },
   {
     icon: "/images/activities/cycling1.svg",
-    label: "Cycling"
+    label: "Cycling",
   },
   {
     icon: "/images/activities/hot air balloon.svg",
-    label: "Hot air balloon"
+    label: "Hot air balloon",
   },
-
 
   {
     icon: "/images/activities/paragliding1.svg",
-    label: "Paragliding"
+    label: "Paragliding",
   },
   {
     icon: "/images/activities/parasailing1.svg",
-    label: "Parasailing"
+    label: "Parasailing",
   },
-
-]
+];
 
 const experiences = [
   {
@@ -78,7 +87,6 @@ const experiences = [
     images: [
       "/images/activities/nirvana-cruise.jpg",
       "/images/activities/nirvana-cruise1.jpeg",
-
     ],
   },
   {
@@ -89,8 +97,7 @@ const experiences = [
     images: [
       "/images/activities/swastik1.jpg",
       "/images/activities/swastik2.jpeg",
-      "/images/activities/swastik3.jpg"
-
+      "/images/activities/swastik3.jpg",
     ],
   },
   {
@@ -102,7 +109,6 @@ const experiences = [
       "/images/activities/vip-luxury1.jpeg",
       "/images/activities/vip-luxury2.jpg",
       "/images/activities/vip-luxury3.jpg",
-
     ],
   },
   {
@@ -114,7 +120,6 @@ const experiences = [
       "/images/activities/lexicon1.jpg",
       "/images/activities/lexicon2.jpg",
       "/images/activities/lexicon3.jpg",
-
     ],
   },
   {
@@ -122,9 +127,7 @@ const experiences = [
     title: "Dolphin Trip",
     location: "Spike's River, Goa",
     price: "300",
-    images: [
-      "/images/activities/dolphin-trip.png"
-    ],
+    images: ["/images/activities/dolphin-trip.png"],
   },
   {
     id: 6,
@@ -146,7 +149,6 @@ const experiences = [
       "/images/activities/chorao1.jpg",
       "/images/activities/chorao2.jpg",
       "/images/activities/chorao3.jpg",
-
     ],
   },
   {
@@ -158,7 +160,6 @@ const experiences = [
       "/images/activities/latin1.jpg",
       "/images/activities/latin2.jpg",
       "/images/activities/latin3.jpg",
-      
     ],
   },
   {
@@ -181,7 +182,6 @@ const experiences = [
       "/images/activities/culinary1.jpg",
       "/images/activities/culinary2.jpg",
       "/images/activities/culinary3.jpg",
-      
     ],
   },
   {
@@ -193,7 +193,6 @@ const experiences = [
       "/images/activities/old-goa1.jpg",
       "/images/activities/old-goa2.jpg",
       "/images/activities/old-goa3.jpg",
-      
     ],
   },
   {
@@ -205,7 +204,6 @@ const experiences = [
       "/images/activities/temple-trail1.jpeg",
       "/images/activities/temple-trail2.jpeg",
       "/images/activities/temple-trail3.jpeg",
-      
     ],
   },
   {
@@ -217,7 +215,6 @@ const experiences = [
       "/images/activities/velha1.jpg",
       "/images/activities/velha2.jpg",
       "/images/activities/velha3.jpg",
-      
     ],
   },
   {
@@ -229,7 +226,6 @@ const experiences = [
       "/images/activities/fishing1.jpg",
       "/images/activities/fishing2.jpg",
       "/images/activities/fishing3.jpg",
-      
     ],
   },
   {
@@ -241,7 +237,6 @@ const experiences = [
       "/images/activities/houses-of-goa1.jpg",
       "/images/activities/houses-of-goa2.jpg",
       "/images/activities/houses-of-goa3.jpg",
-      
     ],
   },
   {
@@ -253,7 +248,6 @@ const experiences = [
       "/images/activities/goan1.jpg",
       "/images/activities/goan2.jpg",
       "/images/activities/goan3.jpg",
-      
     ],
   },
   {
@@ -265,13 +259,9 @@ const experiences = [
       "/images/activities/margao1.jpg",
       "/images/activities/margao2.jpg",
       "/images/activities/margao3.jpg",
-      
     ],
   },
-
-
-
-]
+];
 
 function ShareDialog({ isOpen, onClose, property }) {
   const [mounted, setMounted] = useState(false);
@@ -290,17 +280,17 @@ function ShareDialog({ isOpen, onClose, property }) {
       }
     };
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, onClose]);
 
   // Generate sharing URL for the property using hash
   const getShareUrl = () => {
     // Get base URL without hash
-    const baseUrl = window.location.href.split('#')[0];
+    const baseUrl = window.location.href.split("#")[0];
     // Create the hash based on the ID
     const hash = `experience-${property.id}`;
     // Return the full URL
@@ -310,99 +300,125 @@ function ShareDialog({ isOpen, onClose, property }) {
   // Handle sharing functionality
   const handleShare = async (platform) => {
     const shareUrl = getShareUrl();
-    const shareText = `Check out ${property.title || property.name} in ${property.location}`;
-    const priceText = property.price ? ` - ₹${property.price} per person` : '';
+    const shareText = `Check out ${property.title || property.name} in ${
+      property.location
+    }`;
+    const priceText = property.price ? ` - ₹${property.price} per person` : "";
     const fullShareText = `${shareText}${priceText}`;
-    
+
     try {
       switch (platform) {
-        case 'copy':
+        case "copy":
           await navigator.clipboard.writeText(shareUrl);
           setCopySuccess(true);
           setTimeout(() => setCopySuccess(false), 2000);
           break;
 
-        case 'email':
-          const emailSubject = encodeURIComponent(`Amazing Experience in Goa: ${property.title || property.name}`);
-          const emailBody = encodeURIComponent(`${fullShareText}\n\n${shareUrl}`);
+        case "email":
+          const emailSubject = encodeURIComponent(
+            `Amazing Experience in Goa: ${property.title || property.name}`
+          );
+          const emailBody = encodeURIComponent(
+            `${fullShareText}\n\n${shareUrl}`
+          );
           window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
           break;
 
-        case 'whatsapp':
-          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-          const whatsappText = encodeURIComponent(`${fullShareText}\n\n${shareUrl}`);
+        case "whatsapp":
+          const isMobile = /iPhone|iPad|iPod|Android/i.test(
+            navigator.userAgent
+          );
+          const whatsappText = encodeURIComponent(
+            `${fullShareText}\n\n${shareUrl}`
+          );
           const whatsappUrl = isMobile
             ? `whatsapp://send?text=${whatsappText}`
             : `https://web.whatsapp.com/send?text=${whatsappText}`;
           window.open(whatsappUrl);
           break;
 
-        case 'twitter':
-          const tweetText = encodeURIComponent(`${fullShareText}\n\n${shareUrl}`);
+        case "twitter":
+          const tweetText = encodeURIComponent(
+            `${fullShareText}\n\n${shareUrl}`
+          );
           window.open(`https://twitter.com/intent/tweet?text=${tweetText}`);
           break;
 
-        case 'messages':
+        case "messages":
           const smsBody = encodeURIComponent(`${fullShareText}\n\n${shareUrl}`);
           if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
             window.open(`sms:?&body=${smsBody}`);
           } else {
             await navigator.clipboard.writeText(shareUrl);
-            console.log('Link copied! You can paste it in your messaging app');
+            console.log("Link copied! You can paste it in your messaging app");
           }
           break;
 
-        case 'messenger':
-            const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            if (isMobileDevice) {
-              // For mobile devices, try to open the Messenger app
-              window.open(`fb-messenger://share/?link=${encodeURIComponent(shareUrl)}&app_id=YOUR_FACEBOOK_APP_ID`);
-            } else {
-              // For desktop, open Facebook Messenger web
-              window.open(`https://www.facebook.com/dialog/send?link=${encodeURIComponent(shareUrl)}&app_id=YOUR_FACEBOOK_APP_ID&redirect_uri=${encodeURIComponent(window.location.origin)}`);
-            }
+        case "messenger":
+          const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(
+            navigator.userAgent
+          );
+          if (isMobileDevice) {
+            // For mobile devices, try to open the Messenger app
+            window.open(
+              `fb-messenger://share/?link=${encodeURIComponent(
+                shareUrl
+              )}&app_id=YOUR_FACEBOOK_APP_ID`
+            );
+          } else {
+            // For desktop, open Facebook Messenger web
+            window.open(
+              `https://www.facebook.com/dialog/send?link=${encodeURIComponent(
+                shareUrl
+              )}&app_id=YOUR_FACEBOOK_APP_ID&redirect_uri=${encodeURIComponent(
+                window.location.origin
+              )}`
+            );
+          }
           break;
-          case 'instagram':
-            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-              // Try to open Instagram app with the story share feature
-              try {
-                // First copy the link to clipboard
-                await navigator.clipboard.writeText(shareUrl);
-                
-                // Try to open Instagram app
-                window.open('instagram://story-camera');
-                
-                // Show instruction modal
-                setModalText('Link copied! Open Instagram and paste in your story or message');
-                setTimeout(() => setModalText(''), 3000);
-              } catch (error) {
-                // Fallback to copying link
-                console.log(error.message)
-                await navigator.clipboard.writeText(shareUrl);
-                setModalText('Link copied! You can paste it in Instagram');
-                setTimeout(() => setModalText(''), 2000);
-              }
-            } else {
-              // For desktop, just copy the link
+        case "instagram":
+          if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            // Try to open Instagram app with the story share feature
+            try {
+              // First copy the link to clipboard
               await navigator.clipboard.writeText(shareUrl);
-              setModalText('Link copied! You can paste it in Instagram');
-              setTimeout(() => setModalText(''), 2000);
+
+              // Try to open Instagram app
+              window.open("instagram://story-camera");
+
+              // Show instruction modal
+              setModalText(
+                "Link copied! Open Instagram and paste in your story or message"
+              );
+              setTimeout(() => setModalText(""), 3000);
+            } catch (error) {
+              // Fallback to copying link
+              console.log(error.message);
+              await navigator.clipboard.writeText(shareUrl);
+              setModalText("Link copied! You can paste it in Instagram");
+              setTimeout(() => setModalText(""), 2000);
             }
-            break;
+          } else {
+            // For desktop, just copy the link
+            await navigator.clipboard.writeText(shareUrl);
+            setModalText("Link copied! You can paste it in Instagram");
+            setTimeout(() => setModalText(""), 2000);
+          }
+          break;
       }
     } catch (error) {
-      console.error('Error sharing:', error);
+      console.error("Error sharing:", error);
       // Fallback to copying to clipboard
       try {
         await navigator.clipboard.writeText(shareUrl);
         setCopySuccess(true);
         setTimeout(() => setCopySuccess(false), 2000);
       } catch (clipboardError) {
-        console.error('Error copying to clipboard:', clipboardError);
+        console.error("Error copying to clipboard:", clipboardError);
       }
     }
-    
-    if (platform !== 'copy') {
+
+    if (platform !== "copy") {
       onClose();
     }
   };
@@ -411,8 +427,11 @@ function ShareDialog({ isOpen, onClose, property }) {
 
   const dialog = (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center font-poppins justify-center z-50">
-      <div ref={dialogRef} className="bg-white text-absolute-dark rounded-lg shadow-xl max-w-md w-full relative">
-        <button 
+      <div
+        ref={dialogRef}
+        className="bg-white text-absolute-dark rounded-lg shadow-xl max-w-md w-full relative"
+      >
+        <button
           onClick={onClose}
           className="absolute top-4 right-2 text-gray-500 hover:text-gray-700"
           aria-label="Close dialog"
@@ -422,37 +441,62 @@ function ShareDialog({ isOpen, onClose, property }) {
         <div className="p-4 pb-2">
           <h2 className="text-lg font-semibold">Share this experience</h2>
         </div>
-        
+
         <div className="p-4 pt-2">
           <div className="flex items-center gap-3 mb-4">
             <Image
-                width={48}
-                height={48}
-                src={property?.images[0]}
-                alt={property.title || property.name}
-                className="w-12 h-12 rounded-md object-cover"
+              width={48}
+              height={48}
+              src={property?.images[0]}
+              alt={property.title || property.name}
+              className="w-12 h-12 rounded-md object-cover"
             />
-            <span className="text-sm bg-white text-absolute-dark">{property.title || property.name}</span>
+            <span className="text-sm bg-white text-absolute-dark">
+              {property.title || property.name}
+            </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <ShareButton 
-              onClick={() => handleShare('copy')} 
-              icon="/icons/copy-link.svg" 
-              text="Copy Link" 
+            <ShareButton
+              onClick={() => handleShare("copy")}
+              icon="/icons/copy-link.svg"
+              text="Copy Link"
               isSuccess={copySuccess}
             />
-            <ShareButton onClick={() => handleShare('email')} icon="/icons/mail.svg" text="Email" />
-            <ShareButton onClick={() => handleShare('messages')} icon="/icons/message.svg" text="Messages" />
-            <ShareButton onClick={() => handleShare('whatsapp')} icon="/icons/whatsapp.svg" text="WhatsApp" />
-            <ShareButton onClick={() => handleShare('messenger')} icon="/icons/messenger.svg" text="Messenger" />
-            <ShareButton onClick={() => handleShare('instagram')} icon="/icons/instagram.svg" text="Instagram" />
-            <ShareButton onClick={() => handleShare('twitter')} icon="/icons/twitter.svg" text="Twitter" />
+            <ShareButton
+              onClick={() => handleShare("email")}
+              icon="/icons/mail.svg"
+              text="Email"
+            />
+            <ShareButton
+              onClick={() => handleShare("messages")}
+              icon="/icons/message.svg"
+              text="Messages"
+            />
+            <ShareButton
+              onClick={() => handleShare("whatsapp")}
+              icon="/icons/whatsapp.svg"
+              text="WhatsApp"
+            />
+            <ShareButton
+              onClick={() => handleShare("messenger")}
+              icon="/icons/messenger.svg"
+              text="Messenger"
+            />
+            <ShareButton
+              onClick={() => handleShare("instagram")}
+              icon="/icons/instagram.svg"
+              text="Instagram"
+            />
+            <ShareButton
+              onClick={() => handleShare("twitter")}
+              icon="/icons/twitter.svg"
+              text="Twitter"
+            />
           </div>
         </div>
       </div>
     </div>
-
   );
 
   return createPortal(dialog, document.body);
@@ -460,10 +504,10 @@ function ShareDialog({ isOpen, onClose, property }) {
 
 function ShareButton({ icon, text, onClick, isSuccess }) {
   const [buttonText, setButtonText] = useState(text);
-  
+
   useEffect(() => {
-    if (text === 'Copy Link' && isSuccess) {
-      setButtonText('Copied!');
+    if (text === "Copy Link" && isSuccess) {
+      setButtonText("Copied!");
       const timer = setTimeout(() => {
         setButtonText(text);
       }, 2000);
@@ -472,11 +516,10 @@ function ShareButton({ icon, text, onClick, isSuccess }) {
   }, [isSuccess, text]);
 
   return (
-
-    <button 
+    <button
       onClick={onClick}
       className={`flex items-center justify-start gap-2 p-2 border-2 border-[#F1F3F4] rounded-md hover:bg-gray-100 transition-colors duration-200 w-full ${
-        isSuccess ? 'bg-green-50 border-green-200' : ''
+        isSuccess ? "bg-green-50 border-green-200" : ""
       }`}
     >
       <Image src={icon} width={5} height={5} alt="Icon" className="w-5 h-5" />
@@ -497,20 +540,22 @@ function InfoDialog({ isOpen, onClose, property }) {
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-
   const dialog = (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div ref={dialogRef} className="bg-white text-absolute-dark rounded-lg shadow-xl w-full max-w-2xl relative">
+      <div
+        ref={dialogRef}
+        className="bg-white text-absolute-dark rounded-lg shadow-xl w-full max-w-2xl relative"
+      >
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
@@ -520,7 +565,6 @@ function InfoDialog({ isOpen, onClose, property }) {
         </button>
 
         <div className="p-6">
-
           <div className="grid gap-4">
             <div>
               <h2 className="text-2xl font-semibold mb-1">{property.title}</h2>
@@ -528,7 +572,6 @@ function InfoDialog({ isOpen, onClose, property }) {
             </div>
 
             <div className="grid gap-2">
-
               <div className="flex justify-between py-2 ">
                 <span className="text-gray-600">Price per night</span>
                 <span className="font-medium">₹{property.price}</span>
@@ -546,12 +589,13 @@ function InfoDialog({ isOpen, onClose, property }) {
                   <button
                     key={idx}
                     onClick={() => setCurrentImageIndex(idx)}
-                    className={`relative rounded-md overflow-hidden ${currentImageIndex === idx ? 'ring-2 ring-primary' : ''
-                      }`}
+                    className={`relative rounded-md overflow-hidden ${
+                      currentImageIndex === idx ? "ring-2 ring-primary" : ""
+                    }`}
                   >
                     <Image
-                    width={500}
-                    height={500}
+                      width={500}
+                      height={500}
                       src={image}
                       alt={`${property.title} thumbnail ${idx + 1}`}
                       className="w-full aspect-square object-cover"
@@ -569,34 +613,30 @@ function InfoDialog({ isOpen, onClose, property }) {
   return createPortal(dialog, document.body);
 }
 
-
-
 const calculatePriceWithTax = (price) => {
   return Math.round(price * 1.18); // 18% tax
 };
 
-
 const ExperienceCard = ({ experience, includeTaxes }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const {isInWishlist, wishlists } = useWishlist();
+  const { isInWishlist, wishlists } = useWishlist();
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const [isWishlistDialogOpen, setIsWishlistDialogOpen] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
   const cardRef = useRef(null);
-  
 
-  const isWishlisted = 
-    isInWishlist(experience.id, 'stays') || 
-    isInWishlist(experience.id, 'experiences') || 
-    Object.keys(wishlists.folders).some(folderId => 
+  const isWishlisted =
+    isInWishlist(experience.id, "stays") ||
+    isInWishlist(experience.id, "experiences") ||
+    Object.keys(wishlists.folders).some((folderId) =>
       isInWishlist(experience.id, folderId)
     );
 
   const formatPrice = (price) => {
-    return typeof price === 'string' ?
-      Number(price.replace(/,/g, '')) :
-      Number(price);
+    return typeof price === "string"
+      ? Number(price.replace(/,/g, ""))
+      : Number(price);
   };
 
   const handleWishlist = (e) => {
@@ -624,8 +664,8 @@ const ExperienceCard = ({ experience, includeTaxes }) => {
         setTimeout(() => {
           if (cardRef.current) {
             cardRef.current.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center'
+              behavior: "smooth",
+              block: "center",
             });
             setIsHighlighted(true);
             setTimeout(() => setIsHighlighted(false), 2000);
@@ -638,20 +678,20 @@ const ExperienceCard = ({ experience, includeTaxes }) => {
     handleHashChange();
 
     // Listen for hash changes
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
   }, [experience.id]);
 
   // Add scroll and highlight effect
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const hash = window.location.hash;
       if (hash === `#experience-${experience.id}`) {
         const element = document.getElementById(`experience-${experience.id}`);
         if (element) {
-          element.scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'center'
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
           });
           setIsHighlighted(true);
           setTimeout(() => {
@@ -662,129 +702,143 @@ const ExperienceCard = ({ experience, includeTaxes }) => {
     }
   }, [experience.id]);
 
-  const displayPrice = includeTaxes ? calculatePriceWithTax(experience.price) : experience.price;
+  const displayPrice = includeTaxes
+    ? calculatePriceWithTax(experience.price)
+    : experience.price;
 
   return (
     <div>
-    <MainTab/>
-    <div 
-    ref={cardRef}
-      id={`experience-${experience.id}`}
-      className={`overflow-hidden w-full font-poppins mt-8 group
+      {/* <MainTab /> */}
+      <div
+        ref={cardRef}
+        id={`experience-${experience.id}`}
+        className={`overflow-hidden w-full font-poppins mt-8 group
         transition-all duration-300 ease-in-out
-        ${isHighlighted ? 'scale-[1.02] shadow-lg shadow-blue-200 ring-2 ring-blue-500 ring-opacity-50' : ''}
+        ${
+          isHighlighted
+            ? "scale-[1.02] shadow-lg shadow-blue-200 ring-2 ring-blue-500 ring-opacity-50"
+            : ""
+        }
       `}
-    >
-      <div className="relative aspect-[4/3] rounded-2xl">
-        <div
-          className="absolute rounded-2xl inset-0 flex transition-transform duration-300 ease-out"
-          style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
-        >
-          {experience.images.map((image, index) => (
-            <Image
-            width={600}
-            height={600}
-              key={index}
-              src={image}
-              alt={`${experience.title} view ${index + 1}`}
-              className="w-full h-full rounded-xl object-cover flex-shrink-0"
-            />
-          ))}
-        </div>
-
-        <div
-          className="absolute inset-y-0 left-0 w-1/2 cursor-pointer"
-          onClick={prevImage}
-          aria-label="Previous image"
-        />
-
-        <div
-          className="absolute inset-y-0 right-0 w-1/2 cursor-pointer"
-          onClick={nextImage}
-          aria-label="Next image"
-        />
-
-        <div className="absolute top-3 left-3 right-3 flex justify-between items-center">
-          <div className="bg-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
-            Guest&apos;s fav
-          </div>
-          <div className="bg-white px-2 py-1 rounded-full text-xs sm:text-sm font-medium flex items-center gap-1">
-            <span>5</span>
-            <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-current text-yellow-400" />
-          </div>
-        </div>
-
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-          {experience.images.map((_, index) => (
-            <button
-              key={index}
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentImageIndex(index);
-              }}
-              className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                currentImageIndex === index ? 'bg-white' : 'bg-white/60'
-              }`}
-              aria-label={`View image ${index + 1}`}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="p-3 sm:p-4">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-base sm:text-lg font-semibold">{experience.title}</h3>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <button
-              className="inline-flex items-center justify-center h-8 w-8 right-4 hover:text-gray"
-              onClick={() => setIsInfoDialogOpen(true)}
-            >
+      >
+        <div className="relative aspect-[4/3] rounded-2xl">
+          <div
+            className="absolute rounded-2xl inset-0 flex transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
+          >
+            {experience.images.map((image, index) => (
               <Image
-              width={24}
-              height={24}
-               src="/icons/info-icon.svg"
-                alt="Info Icon" 
-                className="w-6 h-6 justify-center" />
-            </button>
+                width={600}
+                height={600}
+                key={index}
+                src={image}
+                alt={`${experience.title} view ${index + 1}`}
+                className="w-full h-full rounded-xl object-cover flex-shrink-0"
+              />
+            ))}
+          </div>
 
-            <button
-              onClick={handleWishlist}
-              className={`inline-flex h-6 w-6 items-center justify-center rounded-md border border-opacity-60 border-[#A7A7A7] bg-white hover:bg-accent hover:text-accent-foreground ${
-                isWishlisted ? 'text-red-500' : 'text-gray'
-              }`}
-              aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill={isWishlisted ? 'currentColor' : 'none'}
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="w-4 h-4 transition-colors duration-300"
+          <div
+            className="absolute inset-y-0 left-0 w-1/2 cursor-pointer"
+            onClick={prevImage}
+            aria-label="Previous image"
+          />
+
+          <div
+            className="absolute inset-y-0 right-0 w-1/2 cursor-pointer"
+            onClick={nextImage}
+            aria-label="Next image"
+          />
+
+          <div className="absolute top-3 left-3 right-3 flex justify-between items-center">
+            <div className="bg-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+              Guest&apos;s fav
+            </div>
+            <div className="bg-white px-2 py-1 rounded-full text-xs sm:text-sm font-medium flex items-center gap-1">
+              <span>5</span>
+              <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-current text-yellow-400" />
+            </div>
+          </div>
+
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+            {experience.images.map((_, index) => (
+              <button
+                key={index}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentImageIndex(index);
+                }}
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                  currentImageIndex === index ? "bg-white" : "bg-white/60"
+                }`}
+                aria-label={`View image ${index + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-base sm:text-lg font-semibold">
+              {experience.title}
+            </h3>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button
+                className="inline-flex items-center justify-center h-8 w-8 right-4 hover:text-gray"
+                onClick={() => setIsInfoDialogOpen(true)}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                <Image
+                  width={24}
+                  height={24}
+                  src="/icons/info-icon.svg"
+                  alt="Info Icon"
+                  className="w-6 h-6 justify-center"
                 />
-              </svg>
-            </button>
-            
-            <button
-              className="text-gray inline-flex h-8 w-8 items-center justify-center rounded-md hover:text-gray-600"
-              onClick={() => setIsShareDialogOpen(true)}
-            >
-              <Image
-              width={24}
-              height={24}
-               src="/icons/share-icon.svg" alt="Share Icon" className="w-6 h-6 justify-center" />
-            </button>
+              </button>
+
+              <button
+                onClick={handleWishlist}
+                className={`inline-flex h-6 w-6 items-center justify-center rounded-md border border-opacity-60 border-[#A7A7A7] bg-white hover:bg-accent hover:text-accent-foreground ${
+                  isWishlisted ? "text-red-500" : "text-gray"
+                }`}
+                aria-label={
+                  isWishlisted ? "Remove from wishlist" : "Add to wishlist"
+                }
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill={isWishlisted ? "currentColor" : "none"}
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  className="w-4 h-4 transition-colors duration-300"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                  />
+                </svg>
+              </button>
+
+              <button
+                className="text-gray inline-flex h-8 w-8 items-center justify-center rounded-md hover:text-gray-600"
+                onClick={() => setIsShareDialogOpen(true)}
+              >
+                <Image
+                  width={24}
+                  height={24}
+                  src="/icons/share-icon.svg"
+                  alt="Share Icon"
+                  className="w-6 h-6 justify-center"
+                />
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 text-gray-600 mb-2">
-          <span className="text-xs sm:text-sm">{experience.location}</span>
-        </div>
-        {/* <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-gray-600 mb-2">
+            <span className="text-xs sm:text-sm">{experience.location}</span>
+          </div>
+          {/* <div className="flex items-center justify-between">
           <div className="flex items-baseline">
             <span className="text-base sm:text-lg font-semibold">₹{displayPrice}</span>
             <span className="text-xs sm:text-sm text-gray-500 ml-1">per person</span>
@@ -796,45 +850,43 @@ const ExperienceCard = ({ experience, includeTaxes }) => {
             </span>
           )}
         </div> */}
-      </div>
+        </div>
 
-      <InfoDialog
-        isOpen={isInfoDialogOpen}
-        onClose={() => setIsInfoDialogOpen(false)}
-        property={experience}
-      />
-      <ShareDialog
-        isOpen={isShareDialogOpen}
-        onClose={() => setIsShareDialogOpen(false)}
-        property={experience}
-      />
-      <WishlistDialog
-        isOpen={isWishlistDialogOpen}
-        onClose={() => setIsWishlistDialogOpen(false)}
-        property={{
-          id: experience.id,
-          name: experience.title,
-          location: experience.location,
-          price: formatPrice(experience.price),
-          dates: experience.dateRange,
-          images: experience.images,
-          itemType: 'experiences'
-        }}
-      />
-    </div>
+        <InfoDialog
+          isOpen={isInfoDialogOpen}
+          onClose={() => setIsInfoDialogOpen(false)}
+          property={experience}
+        />
+        <ShareDialog
+          isOpen={isShareDialogOpen}
+          onClose={() => setIsShareDialogOpen(false)}
+          property={experience}
+        />
+        <WishlistDialog
+          isOpen={isWishlistDialogOpen}
+          onClose={() => setIsWishlistDialogOpen(false)}
+          property={{
+            id: experience.id,
+            name: experience.title,
+            location: experience.location,
+            price: formatPrice(experience.price),
+            dates: experience.dateRange,
+            images: experience.images,
+            itemType: "experiences",
+          }}
+        />
+      </div>
     </div>
   );
 };
 
-
-
 export default function Component() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [activitiesStart, setActivitiesStart] = useState(0)
+  const [activitiesStart, setActivitiesStart] = useState(0);
 
-  const [searchAdventure, setSearchAdventure] = useState("")
-  const [searchDates, setSearchDates] = useState(null)
-  const [searchGuests, setSearchGuests] = useState("")
+  const [searchAdventure, setSearchAdventure] = useState("");
+  const [searchDates, setSearchDates] = useState(null);
+  const [searchGuests, setSearchGuests] = useState("");
   const [includeTaxes, setIncludeTaxes] = useState(true);
   const scrollContainerRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -845,7 +897,8 @@ export default function Component() {
 
   const checkScroll = () => {
     if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      const { scrollLeft, scrollWidth, clientWidth } =
+        scrollContainerRef.current;
       setCanScrollLeft(scrollLeft > 0);
       setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
     }
@@ -853,38 +906,36 @@ export default function Component() {
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', checkScroll);
+      scrollContainer.addEventListener("scroll", checkScroll);
       // Check initial scroll state
       checkScroll();
 
       // Check again after content loads (for images)
-      window.addEventListener('load', checkScroll);
+      window.addEventListener("load", checkScroll);
 
       return () => {
-        scrollContainer.removeEventListener('scroll', checkScroll);
-        window.removeEventListener('load', checkScroll);
+        scrollContainer.removeEventListener("scroll", checkScroll);
+        window.removeEventListener("load", checkScroll);
       };
     }
-  }, []); const scrollLeft = () => {
+  }, []);
+  const scrollLeft = () => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+      scrollContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
     }
   };
 
   const scrollRight = () => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+      scrollContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
     }
   };
 
-
-
-  
   function FilterSheet() {
-    const [open, setOpen] = useState(false)
-    const [priceRange, setPriceRange] = useState([84, 8411])
-    const [showMoreActivity, setShowMoreActivity] = useState(false)
-    const [showMoreLanguage, setShowMoreLanguage] = useState(false)
+    const [open, setOpen] = useState(false);
+    const [priceRange, setPriceRange] = useState([84, 8411]);
+    const [showMoreActivity, setShowMoreActivity] = useState(false);
+    const [showMoreLanguage, setShowMoreLanguage] = useState(false);
 
     return (
       <Dialog.Root open={open} onOpenChange={setOpen}>
@@ -943,8 +994,12 @@ export default function Component() {
                       onClick={() => setShowMoreActivity(!showMoreActivity)}
                       className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
                     >
-                      Show {showMoreActivity ? 'less' : 'more'}
-                      <ChevronDown className={`w-4 h-4 transition-transform ${showMoreActivity ? 'rotate-180' : ''}`} />
+                      Show {showMoreActivity ? "less" : "more"}
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform ${
+                          showMoreActivity ? "rotate-180" : ""
+                        }`}
+                      />
                     </button>
                   </div>
                 </div>
@@ -952,7 +1007,9 @@ export default function Component() {
                 {/* Price range */}
                 <div>
                   <h3 className="text-xl font-semibold mb-4">Price range</h3>
-                  <p className="text-gray-600 mb-4">The average price of an experience is ₹3,39,980.</p>
+                  <p className="text-gray-600 mb-4">
+                    The average price of an experience is ₹3,39,980.
+                  </p>
                   <div className="px-2">
                     <Slider
                       defaultValue={[84, 8411]}
@@ -964,15 +1021,21 @@ export default function Component() {
                       className="mb-4"
                     />
                     <div className="flex justify-between">
-                      <div className="rounded-full border px-4 py-2">₹{priceRange[0]}</div>
-                      <div className="rounded-full border px-4 py-2">₹{priceRange[1]}+</div>
+                      <div className="rounded-full border px-4 py-2">
+                        ₹{priceRange[0]}
+                      </div>
+                      <div className="rounded-full border px-4 py-2">
+                        ₹{priceRange[1]}+
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Language offered */}
                 <div>
-                  <h3 className="text-xl font-semibold mb-4">Language offered</h3>
+                  <h3 className="text-xl font-semibold mb-4">
+                    Language offered
+                  </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <label className="flex items-center gap-3">
                       <Checkbox id="english" />
@@ -1007,8 +1070,12 @@ export default function Component() {
                     onClick={() => setShowMoreLanguage(!showMoreLanguage)}
                     className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mt-4"
                   >
-                    Show {showMoreLanguage ? 'less' : 'more'}
-                    <ChevronDown className={`w-4 h-4 transition-transform ${showMoreLanguage ? 'rotate-180' : ''}`} />
+                    Show {showMoreLanguage ? "less" : "more"}
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform ${
+                        showMoreLanguage ? "rotate-180" : ""
+                      }`}
+                    />
                   </button>
                 </div>
 
@@ -1020,21 +1087,27 @@ export default function Component() {
                       <Checkbox id="morning" />
                       <div>
                         <div>Morning</div>
-                        <div className="text-sm text-gray-500">Starts before 12pm</div>
+                        <div className="text-sm text-gray-500">
+                          Starts before 12pm
+                        </div>
                       </div>
                     </label>
                     <label className="flex items-center gap-3">
                       <Checkbox id="afternoon" />
                       <div>
                         <div>Afternoon</div>
-                        <div className="text-sm text-gray-500">Starts after noon</div>
+                        <div className="text-sm text-gray-500">
+                          Starts after noon
+                        </div>
                       </div>
                     </label>
                     <label className="flex items-center gap-3">
                       <Checkbox id="evening" />
                       <div>
                         <div>Evening</div>
-                        <div className="text-sm text-gray-500">Starts after 5pm</div>
+                        <div className="text-sm text-gray-500">
+                          Starts after 5pm
+                        </div>
                       </div>
                     </label>
                   </div>
@@ -1042,7 +1115,9 @@ export default function Component() {
 
                 {/* Accessibility features */}
                 <div>
-                  <h3 className="text-xl font-semibold mb-4">Accessibility features</h3>
+                  <h3 className="text-xl font-semibold mb-4">
+                    Accessibility features
+                  </h3>
                   <div className="space-y-6">
                     <div>
                       <h4 className="font-medium mb-3">Mobility</h4>
@@ -1108,36 +1183,32 @@ export default function Component() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
-    )
+    );
   }
 
   return (
     <div className="w-full font-poppins bg-white text-absolute-dark md:pt-16 ">
-      
       {/* <ExperiencePartnerSection/> */}
 
-      <section id='experiences' className="px-4 md:px-[72px] sm:px-6 lg:px-[72px] py-12 sm:py-16 lg:py-[128px]">
-
-        <Heading text="Exciting Experiences in Goa"/>
-        <SubHeading className="text-left" text="Live Goa, not just visit"/>
-
-        
+      <section
+        id="experiences"
+        className="px-4 md:px-[72px] sm:px-6 lg:px-[72px] py-12 sm:py-16 lg:py-[128px]"
+      >
+        <Heading text="Exciting Experiences in Goa" />
+        <SubHeading className="text-left" text="Live Goa, not just visit" />
 
         <div className="flex flex-col rounded-full sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-8">
-
           <div className="w-full relative max-w-[850px]">
             <div
               ref={scrollContainerRef}
               className="flex space-x-6 overflow-x-hidden  px-2 py-2 max-w-[850px]"
-
             >
-
               {activities.map((type, index) => (
                 <div key={index} className="text-center flex-shrink-0">
                   <div className="w-[78px] h-[68px] bg-[#F7F7F7] rounded-lg flex items-center justify-center mb-2">
                     <Image
-                    width={78}
-                    height={78}
+                      width={78}
+                      height={78}
                       src={type.icon}
                       alt={type.label}
                       className="w-[78px] h-[68px] rounded-full object-contain opacity-75"
@@ -1193,10 +1264,13 @@ export default function Component() {
           </div> */}
         </div>
 
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {displayedExperiences.map((experience, index) => (
-            <ExperienceCard key={index} experience={experience} includeTaxes={includeTaxes} />
+            <ExperienceCard
+              key={index}
+              experience={experience}
+              includeTaxes={includeTaxes}
+            />
           ))}
         </div>
         {!showAll && experiences.length > 8 && (
@@ -1211,5 +1285,5 @@ export default function Component() {
         )}
       </section>
     </div>
-  )
+  );
 }

@@ -104,7 +104,7 @@ export default function HostOnboarding() {
     },
     host: null,
     status: "incomplete",
-    hostEmail: auth.user && auth.user.email,
+    hostEmail: auth?.user && auth?.user?.email,
     selectedRules: [],
     customRules: [],
     checkinTime: "11",
@@ -125,17 +125,17 @@ export default function HostOnboarding() {
       // If the current step is the Location Form, ensure that the registration number has been validated.
       // (Assuming the Location Form step has a "name" property set to "LocationForm")
       if (
-        currentStepData.name === "LocationForm" &&
-        !formData.validRegistrationNo
+        currentStepData?.name === "LocationForm" &&
+        !formData?.validRegistrationNo
       ) {
         isValid = false;
       }
 
       if (
-        currentStepData.requiresValidation &&
-        typeof currentStepData.validate === "function"
+        currentStepData?.requiresValidation &&
+        typeof currentStepData?.validate === "function"
       ) {
-        const { isValid: stepIsValid } = currentStepData.validate(formData);
+        const { isValid: stepIsValid } = currentStepData?.validate(formData);
         isValid = isValid && stepIsValid;
       }
       setIsNextDisabled(!isValid);
@@ -144,7 +144,7 @@ export default function HostOnboarding() {
     checkValidation();
   }, [formData, currentStep]);
 
-  const CurrentStepComponent = steps[currentStep].component;
+  const CurrentStepComponent = steps[currentStep]?.component;
 
   // const validateCurrentStep = async () => {
   //   try {
@@ -173,10 +173,10 @@ export default function HostOnboarding() {
       const currentStepData = steps[currentStep];
 
       if (
-        currentStepData.requiresValidation &&
-        typeof currentStepData.validate === "function"
+        currentStepData?.requiresValidation &&
+        typeof currentStepData?.validate === "function"
       ) {
-        const result = currentStepData.validate(formData);
+        const result = currentStepData?.validate(formData);
         return result;
       }
       console.log("batm2", errors);
@@ -205,21 +205,21 @@ export default function HostOnboarding() {
       const dataToSave = {
         ...formData,
         status:
-          isExiting || currentStep < steps.length - 1
+          isExiting || currentStep < steps?.length - 1
             ? "incomplete"
             : "processing",
       };
       console.log("id", id);
       const response = id
-        ? await propertyService.updateProperty(id, dataToSave)
-        : await propertyService.createProperty(dataToSave);
+        ? await propertyService?.updateProperty(id, dataToSave)
+        : await propertyService?.createProperty(dataToSave);
 
       if (!id) setId(response._id);
       setFormData(response);
 
       // Invalidate cached listing status so that any component using it re-fetches new data
-      queryClient.invalidateQueries({
-        queryKey: ["listingStatus", auth.user.email],
+      queryClient?.invalidateQueries({
+        queryKey: ["listingStatus", auth?.user?.email],
       });
     } catch (error) {
       toast.error("Failed to save progress. Please try again.");
@@ -241,7 +241,7 @@ export default function HostOnboarding() {
 
   const handleNext = async () => {
     setStepError(null);
-    if (steps[currentStep].requiresValidation) {
+    if (steps[currentStep]?.requiresValidation) {
       const { isValid, errors } = await validateCurrentStep();
       console.log("batm", errors);
       if (!isValid) {
@@ -255,14 +255,14 @@ export default function HostOnboarding() {
     await saveData();
     setIsLoading(false);
 
-    if (currentStep < steps.length - 1) {
+    if (currentStep < steps?.length - 1) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleSaveAndExit = async () => {
     await saveData(true);
-    router.push("/host/dashboard/listings");
+    router?.push("/host/dashboard/listings");
   };
 
   const handleSubmit = async (id) => {
@@ -276,8 +276,8 @@ export default function HostOnboarding() {
       });
 
       // Invalidate the cached listing status on final submission.
-      queryClient.invalidateQueries({
-        queryKey: ["listingStatus", auth.user.email],
+      queryClient?.invalidateQueries({
+        queryKey: ["listingStatus", auth?.user?.email],
       });
 
       toast.success("Listing submitted successfully.");
@@ -342,7 +342,7 @@ export default function HostOnboarding() {
           >
             Back to Dashboard
           </Link>
-          <StepIndicator currentStep={currentStep} totalSteps={steps.length} />
+          <StepIndicator currentStep={currentStep} totalSteps={steps?.length} />
           <div className="gap-x-4 flex">
             <Button
               onClick={handleSaveAndExit}
@@ -371,7 +371,7 @@ export default function HostOnboarding() {
           >
             Back
           </Button>
-          {currentStep === steps.length - 1 ? (
+          {currentStep === steps?.length - 1 ? (
             <Button
               onClick={() => handleSubmit(id)}
               className="bg-primaryGreen rounded-3xl hover:bg-brightGreen py-5 px-6 h-12 text-white"
@@ -382,7 +382,7 @@ export default function HostOnboarding() {
             <Button
               onClick={handleNext}
               className="bg-primaryGreen rounded-3xl transition-all hover:bg-brightGreen w-48 h-12 px-6 text-white"
-              disabled={isLoading || isNextDisabled}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <>

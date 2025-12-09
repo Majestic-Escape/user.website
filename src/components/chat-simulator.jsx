@@ -11,91 +11,91 @@ export default function ChatSimulator() {
   const [currentTime, setCurrentTime] = useState("");
   const [messages, setMessages] = useState([]);
 
-const chatTemplates = [
-  [
-    {
-      sender: "Rohan",
-      text: "Guys, ready for that Rann Utsav trip? White desert calling! 🤍",
-      reactions: ["🤍", "🔥"],
-      typingDuration: 800,
-    },
-    {
-      sender: "Rishi",
-      text: "Bro I just hope we find a good tent stay this late 😭",
-      reactions: ["⛺"],
-      typingDuration: 1000,
-    },
-    {
-      sender: "Rohan",
-      text: "Majestic Escape has killer luxury tents, chill—we’re sorted!",
-      reactions: ["🎉", "👌"],
-      typingDuration: 1200,
-    },
-  ],
+  const chatTemplates = [
+    [
+      {
+        sender: "Rohan",
+        text: "Guys, ready for that Rann Utsav trip? White desert calling! 🤍",
+        reactions: ["🤍", "🔥"],
+        typingDuration: 800,
+      },
+      {
+        sender: "Rishi",
+        text: "Bro I just hope we find a good tent stay this late 😭",
+        reactions: ["⛺"],
+        typingDuration: 1000,
+      },
+      {
+        sender: "Rohan",
+        text: "Majestic Escape has killer luxury tents, chill—we’re sorted!",
+        reactions: ["🎉", "👌"],
+        typingDuration: 1200,
+      },
+    ],
 
-  [
-    {
-      sender: "Sneha",
-      text: "Can’t believe we’re finally doing Rann Utsav! Full moon vibes incoming ✨",
-      reactions: ["🌕", "🔥"],
-      typingDuration: 900,
-    },
-    {
-      sender: "Rohan",
-      text: "Sameee! I’ve been manifesting this white desert view for months 😍",
-      reactions: ["😍"],
-      typingDuration: 1100,
-    },
-    {
-      sender: "Sneha",
-      text: "Majestic Escape said booking the tent stay barely takes 10 mins 🙌",
-      reactions: ["⛺"],
-      typingDuration: 1300,
-    },
-  ],
+    [
+      {
+        sender: "Sneha",
+        text: "Can’t believe we’re finally doing Rann Utsav! Full moon vibes incoming ✨",
+        reactions: ["🌕", "🔥"],
+        typingDuration: 900,
+      },
+      {
+        sender: "Rohan",
+        text: "Sameee! I’ve been manifesting this white desert view for months 😍",
+        reactions: ["😍"],
+        typingDuration: 1100,
+      },
+      {
+        sender: "Sneha",
+        text: "Majestic Escape said booking the tent stay barely takes 10 mins 🙌",
+        reactions: ["⛺"],
+        typingDuration: 1300,
+      },
+    ],
 
-  [
-    {
-      sender: "Rohan",
-      text: "Who’s hyped for our Rann adventure?",
-      reactions: ["🏜️", "🔥"],
-      typingDuration: 900,
-    },
-    {
-      sender: "Gaurav",
-      text: "Let’s gooo! Heard Majestic Escape has insane White Rann view tents.",
-      reactions: ["🤍"],
-      typingDuration: 1100,
-    },
-    {
-      sender: "Rohan",
-      text: "Yep, looks super cozy and perfect for night photography!",
-      reactions: ["📸"],
-      typingDuration: 1300,
-    },
-  ],
+    [
+      {
+        sender: "Rohan",
+        text: "Who’s hyped for our Rann adventure?",
+        reactions: ["🏜️", "🔥"],
+        typingDuration: 900,
+      },
+      {
+        sender: "Gaurav",
+        text: "Let’s gooo! Heard Majestic Escape has insane White Rann view tents.",
+        reactions: ["🤍"],
+        typingDuration: 1100,
+      },
+      {
+        sender: "Rohan",
+        text: "Yep, looks super cozy and perfect for night photography!",
+        reactions: ["📸"],
+        typingDuration: 1300,
+      },
+    ],
 
-  [
-    {
-      sender: "Rohan",
-      text: "Rann Utsav road trip loading… 🚗✨",
-      reactions: ["🚗", "🏜️"],
-      typingDuration: 900,
-    },
-    {
-      sender: "Virat",
-      text: "Got my camera ready for all those moonlit White Rann shots!",
-      reactions: ["📸"],
-      typingDuration: 1100,
-    },
-    {
-      sender: "Rohan",
-      text: "Majestic Escape even offers local Kutchi experiences. We’re gonna love it!",
-      reactions: ["🎪"],
-      typingDuration: 1300,
-    },
-  ],
-[
+    [
+      {
+        sender: "Rohan",
+        text: "Rann Utsav road trip loading… 🚗✨",
+        reactions: ["🚗", "🏜️"],
+        typingDuration: 900,
+      },
+      {
+        sender: "Virat",
+        text: "Got my camera ready for all those moonlit White Rann shots!",
+        reactions: ["📸"],
+        typingDuration: 1100,
+      },
+      {
+        sender: "Rohan",
+        text: "Majestic Escape even offers local Kutchi experiences. We’re gonna love it!",
+        reactions: ["🎪"],
+        typingDuration: 1300,
+      },
+    ],
+    [
       {
         sender: "Aman",
         text: "Rann Utsav night under the full moon? Anyone?",
@@ -115,27 +115,27 @@ const chatTemplates = [
         typingDuration: 1300,
       },
     ],
-  [
-    {
-      sender: "Rohan",
-      text: "Weekend Rann plan? Let’s just do it 🤍",
-      reactions: ["🌕", "🏜️"],
-      typingDuration: 900,
-    },
-    {
-      sender: "Kunal",
-      text: "White desert, folk music, and bonfire nights? I'm in already 🔥",
-      reactions: ["🪘"],
-      typingDuration: 1100,
-    },
-    {
-      sender: "Rohan",
-      text: "Majestic Escape tents book super quick—two taps and done!",
-      reactions: ["⛺"],
-      typingDuration: 1300,
-    },
-  ],
-];
+    [
+      {
+        sender: "Rohan",
+        text: "Weekend Rann plan? Let’s just do it 🤍",
+        reactions: ["🌕", "🏜️"],
+        typingDuration: 900,
+      },
+      {
+        sender: "Kunal",
+        text: "White desert, folk music, and bonfire nights? I'm in already 🔥",
+        reactions: ["🪘"],
+        typingDuration: 1100,
+      },
+      {
+        sender: "Rohan",
+        text: "Majestic Escape tents book super quick—two taps and done!",
+        reactions: ["⛺"],
+        typingDuration: 1300,
+      },
+    ],
+  ];
 
   const emojiMap = {
     "👍": "👍🏼",
@@ -209,7 +209,7 @@ const chatTemplates = [
   }, []);
 
   return (
-    <div className="w-full max-w-[300px] mx-auto mt-4 md:mt-8">
+    <div className="w-full max-w-[300px] mx-auto mt-4 md:mt-32">
       <div className="relative w-full aspect-[9/16] bg-gradient-to-br from-[#6e6e6e] via-[#ccc] to-[#D1D5DB] rounded-[2rem] shadow-xl overflow-hidden">
         <div className="absolute inset-1 bg-white text-absolute-dark rounded-[1.75rem] flex flex-col overflow-hidden">
           {/* Status Bar */}

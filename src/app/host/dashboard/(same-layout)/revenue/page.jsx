@@ -912,7 +912,9 @@ const AnalyticsPage = () => {
                       }
                     )}
                   </TableCell>
-                  <TableCell>₹{booking?.amount?.toLocaleString()}</TableCell>
+                  <TableCell>
+                    ₹{booking?.amount?.toLocaleString("en-IN")}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant={

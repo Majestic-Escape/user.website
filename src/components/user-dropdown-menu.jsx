@@ -68,8 +68,12 @@ export function UserDropdownMenu() {
             </Link>
           </DropdownMenuItem>
 
-          <hr />
-          <DropdownMenuItem asChild>
+          {/* <hr /> */}
+
+          <DropdownMenuItem className="lg:hidden" asChild>
+            <Link href="/host/dashboard" className=" py-2">
+              Switch to Hosting
+            </Link>
             {/* <Link
               className="py-2"
               href="/host/dashboard/add-listing"

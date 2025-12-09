@@ -32,6 +32,9 @@ export default function FarmHouse() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const { modalFilter, openModal, closeModal, toggleModal } = useAuth();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
+  const LIMIT = 16;
 
   const array = amenities
     ? amenities
@@ -65,12 +68,15 @@ export default function FarmHouse() {
               bookingType: bookingType,
               pets: pets,
               amenities: array,
+              page: currentPage,
+              limit: LIMIT,
             },
           }
         );
 
         console.log("Available properties:", response.data.data);
-        await setData(response.data.data);
+        setData(response.data.data);
+        setPagination(response.data.pagination);
       } catch (err) {
         console.error("Frontend fetch error:", err);
         // Show different error messages based on error type
@@ -80,22 +86,10 @@ export default function FarmHouse() {
     }
 
     fetchDates();
-  }, [
-    from,
-    to,
-    guests,
-    location,
-    property,
-    minPrice,
-    maxPrice,
-    placeType,
-    beds,
-    bedrooms,
-    bathrooms,
-    checkinType,
-    bookingType,
-    pets,
-  ]);
+  }, [from, to, guests, location, property, currentPage]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [location, from, to, guests, property]);
   const { setAddPropertyType } = useAuth();
   console.log("now", data);
   useEffect(() => {
@@ -127,6 +121,44 @@ export default function FarmHouse() {
             infants={infants}
             property={property}
           />
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex justify-center mt-8 gap-2 flex-wrap mb-24">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                className="px-3 py-2 border rounded disabled:opacity-50"
+              >
+                Prev
+              </button>
+
+              {Array.from(
+                { length: pagination.totalPages },
+                (_, i) => i + 1
+              ).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-2 border rounded ${
+                    currentPage === page
+                      ? "bg-primaryGreen text-white"
+                      : "bg-white"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                disabled={currentPage === pagination.totalPages}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(p + 1, pagination.totalPages))
+                }
+                className="px-3 py-2 border rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
           <FilterModal
             isOpen={modalFilter}
             onClose={closeModal}

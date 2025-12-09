@@ -107,7 +107,7 @@ export function MembershipPopup({
                 <p className="text-base text-gray-600">
                   {!offer
                     ? "Please complete your KYC to make your property go live. It only takes a few minutes and helps us verify your hosting details."
-                    : hostData.kyc
+                    : hostData?.kyc
                     ? "Great news! Your offer is now active. Start enjoying all the benefits right away."
                     : "You're almost ready! Just finish your KYC verification so we can publish your property and start getting you bookings."}
                 </p>
@@ -120,7 +120,7 @@ export function MembershipPopup({
                 >
                   Go to Dashboard
                 </Link>
-                {hostData.kyc ? null : (
+                {hostData?.kyc ? null : (
                   <Link
                     href={"/host/dashboard/kyc"}
                     className="text-white flex justify-center items-center  text-center w-full  h-10 rounded-3xl bg-primaryGreen hover:brightGreen mt-6"
@@ -144,7 +144,7 @@ export function MembershipPopup({
             <div className="p-6">
               <div className="space-y-4 text-center">
                 <p className="text-base text-gray-600">
-                  {hostData.kyc
+                  {hostData?.kyc
                     ? "Changes updated sucessfully"
                     : "Complete your KYC to go live now!"}
                 </p>
@@ -157,7 +157,7 @@ export function MembershipPopup({
                 >
                   Go to Dashboard
                 </Link>
-                {hostData.kyc ? null : (
+                {hostData?.kyc ? null : (
                   <Link
                     href={"/host/dashboard/kyc"}
                     className="text-white flex justify-center items-center  text-center w-full  h-10 rounded-3xl bg-primaryGreen hover:brightGreen mt-6"

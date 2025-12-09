@@ -856,7 +856,9 @@ const AnalyticsPage = () => {
                       day: "numeric",
                     })}
                   </TableCell>
-                  <TableCell>₹{booking?.price?.toLocaleString()}</TableCell>
+                  <TableCell>
+                    ₹{booking?.price?.toLocaleString("en-IN")}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant={

@@ -700,6 +700,11 @@ function BookPageContent() {
         totals?.total * 100,
         property?._id
       );
+      if (!order_id?.data?.id) {
+        toast.error("Unable to initiate payment. Please try again.");
+        return;
+      }
+
       console.log("ordersssss", order_id.data);
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, //"rzp_test_w0bKE5w5UPOPrY", // Replace with your actual test key
@@ -1254,7 +1259,7 @@ function BookPageContent() {
               >
                 {ban
                   ? "You are banned from platform. Check your email"
-                  : `Pay ₹${totals.total.toLocaleString()}`}
+                  : `Pay ₹${totals.total.toLocaleString("en-IN")}`}
               </Button>
               {property.bookingType.manual ? (
                 <p className="text-sm text-center mt-4 text-gray-500">
@@ -1301,31 +1306,32 @@ function BookPageContent() {
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <span className="underline">
-                      ₹{propertyPrice.toLocaleString()} x {totals.nights} night
+                      ₹{propertyPrice.toLocaleString("en-IN")} x {totals.nights}{" "}
+                      night
                       {totals.nights > 1 ? "s" : ""}
                     </span>
-                    <span>₹{totals.subtotal.toLocaleString()}</span>
+                    <span>₹{totals.subtotal.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="hidden justify-between">
                     <span className="underline">Cleaning fee</span>
-                    <span>₹{totals.cleaningFee.toLocaleString()}</span>
+                    <span>₹{totals.cleaningFee.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="underline">
                       Majestic Escape service fee
                     </span>
-                    <span>₹{totals.serviceFee.toLocaleString()}</span>
+                    <span>₹{totals.serviceFee.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="underline">Taxes</span>
-                    <span>₹{totals.taxes.toLocaleString()}</span>
+                    <span>₹{totals.taxes.toLocaleString("en-IN")}</span>
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="border-t pt-4">
                 <div className="flex justify-between w-full font-semibold text-lg">
                   <span>Total (INR)</span>
-                  <span>₹{totals.total.toLocaleString()}</span>
+                  <span>₹{totals.total.toLocaleString("en-IN")}</span>
                 </div>
               </CardFooter>
             </Card>

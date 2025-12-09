@@ -47,7 +47,11 @@ export default function StayCard({ property, includeTaxes }) {
     // Format number in Indian style
     return totalPrice.toLocaleString("en-IN");
   };
-
+  const formattedPrice = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 2,
+  });
   const openBookingDialog = () => {
     if (user) {
       setIsBookingDialogOpen(true);
@@ -157,7 +161,7 @@ export default function StayCard({ property, includeTaxes }) {
             </p>
             <p className="text-gray-600">
               <span className="text-absoluteDark text-base font-semibold">
-                ₹{property?.basePrice}&nbsp;
+                {formattedPrice.format(property?.basePrice)}&nbsp;
               </span>
               {/* <Link href={`/stay/${property?._id}`}> */}
               per night

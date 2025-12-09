@@ -1,22 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSheet } from "@/components/providers/sheet-provider";
-import { SearchSheet } from "@/components/search-sheet";
-
 import Image from "next/image";
-import { FilterSheet } from "./filter-sheet";
 import Link from "next/link";
+import { SearchSheet } from "@/components/search-sheet";
+import MobileNavTabLayout from "@/components/nav-tab-layout-mobile";
+import { FilterSheet } from "./filter-sheet";
+import {
+  Compass,
+  Calendar,
+  User,
+  MenuIcon,
+  HomeIcon,
+  Heart,
+  Building2Icon,
+  ConciergeBell,
+  CableCar,
+  HandHelping,
+} from "lucide-react";
 export function MobileNavbar({ openModal }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  const [hideTabs, setHideTabs] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        // scrolling DOWN
+        setHideTabs(true);
+      } else {
+        // scrolling UP
+        setHideTabs(false);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
   return (
-    <div className="lg:hidden fixed w-screen top-0 left-0 right-0 z-50 bg-white">
-      <div className="border-b">
+    <div className="md:hidden fixed w-screen top-0 left-0 right-0 z-50 bg-white">
+      <div className="bg-white">
+        {/* TOP HEADER */}
         <div className="flex flex-col max-w-7xl mx-auto">
           <div className="flex items-center h-16 px-4">
+            {/* Logo */}
             <Link href="/">
               <Image
                 width={20}
@@ -26,6 +60,8 @@ export function MobileNavbar({ openModal }) {
                 alt="Logo"
               />
             </Link>
+
+            {/* Search bar */}
             <div className="flex-1 flex items-center">
               <Button
                 variant="outline"
@@ -36,6 +72,8 @@ export function MobileNavbar({ openModal }) {
                 Start your search
               </Button>
             </div>
+
+            {/* Filter Button */}
             <Button
               variant="outline"
               size="sm"
@@ -47,22 +85,117 @@ export function MobileNavbar({ openModal }) {
           </div>
         </div>
 
+        {/* Search Sheet */}
         <SearchSheet
           isOpen={isSearchOpen}
           onClose={() => setIsSearchOpen(false)}
         />
+        <MobileNavTabLayout hideTabs={hideTabs} />
+        {/* ⭐ CATEGORY TABS (Homes | Experiences | Services) */}
+        {/* <div
+          className={`w-full justify-center overflow-x-auto flex items-center gap-8 px-6 pb-2 border-t border-gray-200
+          transition-all duration-300 ease-in-out 
+       
+        `}
+        >
+      
+          <Link href="/stays" className="flex flex-col items-center min-w-fit">
+            <div className="flex flex-col items-center justify-center text-center">
+              <div
+                className={`${
+                  hideTabs
+                    ? "-translate-y-full opacity-0 h-0 py-2"
+                    : "translate-y-0 opacity-100 py-3 h-auto"
+                }`}
+              >
+                {" "}
+                <Image src="/icons/home.png" width={32} height={32} alt="Homes" />
+                <Building2Icon className="w-6 h-6 mx-auto" />{" "}
+                <span className="text-4xl mb-2 ">🏠</span>
+              </div>
+              <div>
+                <span
+                  className={
+                    hideTabs
+                      ? "text-base font-medium text-black"
+                      : "text-sm mt-1 font-medium text-black"
+                  }
+                >
+                  Stays
+                </span>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href="/experiences"
+            className="flex flex-col items-center min-w-fit"
+          >
+            <div className="flex flex-col items-center justify-center text-center">
+              <div
+                className={`${
+                  hideTabs
+                    ? "-translate-y-full opacity-0 h-0 py-2"
+                    : "translate-y-0 opacity-100 py-3 h-auto"
+                }`}
+              >
+                {" "}
+                <Image src="/icons/home.png" width={32} height={32} alt="Homes" />
+                <CableCar className="w-6 h-6 mx-auto" />{" "}
+                <span className="text-4xl mb-2">🧗</span>
+              </div>
+
+              <div>
+                <span
+                  className={
+                    hideTabs
+                      ? "text-base font-medium text-black"
+                      : "text-sm mt-1 font-medium text-black"
+                  }
+                >
+                  Experiences
+                </span>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href="/services"
+            className="flex flex-col items-center min-w-fit"
+          >
+            <div className="flex flex-col items-center justify-center text-center">
+              <div
+                className={`${
+                  hideTabs
+                    ? "-translate-y-full opacity-0 h-0 py-2"
+                    : "translate-y-0 opacity-100 py-3 h-auto"
+                }`}
+              >
+                {" "}
+                <Image src="/icons/home.png" width={32} height={32} alt="Homes" />
+                <ConciergeBell className="w-6 h-6 mx-auto" />
+                <span className="text-4xl mb-2 ">🛎️</span>
+              </div>
+              <div>
+                <span
+                  className={
+                    hideTabs
+                      ? "text-base font-medium text-black"
+                      : "text-sm mt-1 font-medium text-black"
+                  }
+                >
+                  Services
+                </span>
+              </div>
+            </div>
+          </Link>
+        </div> */}
       </div>
 
-      <div className="px-6 py-2 bg-white">
+      {/* FILTER BAR BELOW TABS */}
+      {/* <div className="px-6 py-2 bg-white">
         <FilterSheet />
-        {/* <FilterStaysBar /> */}
-        <SearchSheet
-          isOpen={false}
-          onClose={function () {
-            throw new Error("Function not implemented.");
-          }}
-        />
-      </div>
+      </div> */}
     </div>
   );
 }

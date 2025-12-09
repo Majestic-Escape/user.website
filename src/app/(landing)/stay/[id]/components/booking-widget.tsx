@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { eachDayOfInterval, format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,7 @@ export default function BookingWidget({
   const [calendarOpen, setCalendarOpen] = useState<boolean>(false);
   const [isAuth, setIsAuth] = useState<boolean>(false);
   const [isValid, setIsValid] = useState<boolean>(false);
+  const guestsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (date?.from && date?.to) {
@@ -77,6 +78,23 @@ export default function BookingWidget({
       setTotalPrice(pricePerNight * nights);
     }
   }, [date, pricePerNight]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        showGuestsDropdown &&
+        guestsRef.current &&
+        !guestsRef.current.contains(event.target as Node)
+      ) {
+        toggleGuestsDropdown(); // close dropdown
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showGuestsDropdown, toggleGuestsDropdown]);
 
   const auth = async () => {
     const getLocalData = await localStorage.getItem("token");
@@ -208,7 +226,7 @@ export default function BookingWidget({
           <div className="flex justify-between items-center mb-4">
             <div>
               <span className="text-2xl font-semibold font-bricolage">
-                ₹{pricePerNight.toLocaleString()}
+                ₹{pricePerNight.toLocaleString("en-IN")}
               </span>
               <span className="text-gray-600"> night</span>
             </div>
@@ -247,7 +265,7 @@ export default function BookingWidget({
                 </PopoverTrigger>
               </div>
 
-              <div
+              {/* <div
                 className="border-t border-gray-300 p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-b-lg flex justify-between items-center"
                 onClick={toggleGuestsDropdown}
               >
@@ -262,6 +280,181 @@ export default function BookingWidget({
                     <ChevronDown size={18} />
                   )}
                 </div>
+              </div> */}
+              <div ref={guestsRef} className="relative">
+                <div
+                  className="border-t border-gray-300 p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-b-lg flex justify-between items-center"
+                  onClick={toggleGuestsDropdown}
+                >
+                  <div>
+                    <div className="text-xs font-semibold uppercase">
+                      GUESTS
+                    </div>
+                    <div className="mt-1 text-base">{getGuestsText()}</div>
+                  </div>
+                  {showGuestsDropdown ? (
+                    <ChevronUp size={18} />
+                  ) : (
+                    <ChevronDown size={18} />
+                  )}
+                </div>
+
+                {showGuestsDropdown && (
+                  <div className="absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-4 left-0 right-0 mt-2">
+                    <div className="">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="font-medium">Adults</div>
+                            <div className="text-sm text-gray-600">Age 18+</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 rounded-full"
+                              onClick={() =>
+                                onGuestChange("adults", guests.adults - 1)
+                              }
+                              disabled={guests.adults <= 1}
+                            >
+                              -
+                            </Button>
+                            <span className="w-6 text-center">
+                              {guests.adults}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 rounded-full"
+                              onClick={() =>
+                                onGuestChange("adults", guests.adults + 1)
+                              }
+                              disabled={getTotalGuests() >= allowedGuests}
+                            >
+                              +
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="font-medium">Children</div>
+                            <div className="text-sm text-gray-600">
+                              Ages 2-12
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 rounded-full"
+                              onClick={() =>
+                                onGuestChange("children", guests.children - 1)
+                              }
+                              disabled={guests.children <= 0}
+                            >
+                              -
+                            </Button>
+                            <span className="w-6 text-center">
+                              {guests.children}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 rounded-full"
+                              onClick={() =>
+                                onGuestChange("children", guests.children + 1)
+                              }
+                              disabled={getTotalGuests() >= allowedGuests}
+                            >
+                              +
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="font-medium">Infants</div>
+                            <div className="text-sm text-gray-600">Under 2</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 rounded-full"
+                              onClick={() =>
+                                onGuestChange("infants", guests.infants - 1)
+                              }
+                              disabled={guests.infants <= 0}
+                            >
+                              -
+                            </Button>
+                            <span className="w-6 text-center">
+                              {guests.infants}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 rounded-full"
+                              onClick={() => {
+                                if (guests.infants < 5) {
+                                  onGuestChange("infants", guests.infants + 1);
+                                }
+                              }}
+                            >
+                              +
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-medium">Pets</div>
+                    <div className="text-sm text-gray-600">
+                      Bringing a service animal?
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => onGuestChange("pets", guests.pets - 1)}
+                      disabled={guests.pets <= 0}
+                    >
+                      -
+                    </Button>
+                    <span className="w-6 text-center">{guests.pets}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => onGuestChange("pets", guests.pets + 1)}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div> */}
+
+                        <div className="text-sm text-gray-600 pt-2 border-t">
+                          {/* This place has a maximum of 2 guests, not including infants.
+                  Pets aren't allowed. */}
+                        </div>
+
+                        <div className="flex justify-end">
+                          <Button
+                            variant="default"
+                            className="bg-primaryGreen hover:brightGreen"
+                            onClick={toggleGuestsDropdown}
+                          >
+                            Close
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -325,148 +518,6 @@ export default function BookingWidget({
             </PopoverContent>
           </Popover>
 
-          {showGuestsDropdown && (
-            <div className="absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-4 left-0 right-0 mt-2">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">Adults</div>
-                    <div className="text-sm text-gray-600">Age 18+</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 rounded-full"
-                      onClick={() => onGuestChange("adults", guests.adults - 1)}
-                      disabled={guests.adults <= 1}
-                    >
-                      -
-                    </Button>
-                    <span className="w-6 text-center">{guests.adults}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 rounded-full"
-                      onClick={() => onGuestChange("adults", guests.adults + 1)}
-                      disabled={getTotalGuests() >= allowedGuests}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">Children</div>
-                    <div className="text-sm text-gray-600">Ages 2-12</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 rounded-full"
-                      onClick={() =>
-                        onGuestChange("children", guests.children - 1)
-                      }
-                      disabled={guests.children <= 0}
-                    >
-                      -
-                    </Button>
-                    <span className="w-6 text-center">{guests.children}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 rounded-full"
-                      onClick={() =>
-                        onGuestChange("children", guests.children + 1)
-                      }
-                      disabled={getTotalGuests() >= allowedGuests}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">Infants</div>
-                    <div className="text-sm text-gray-600">Under 2</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 rounded-full"
-                      onClick={() =>
-                        onGuestChange("infants", guests.infants - 1)
-                      }
-                      disabled={guests.infants <= 0}
-                    >
-                      -
-                    </Button>
-                    <span className="w-6 text-center">{guests.infants}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 rounded-full"
-                      onClick={() => {
-                        if (guests.infants < 5) {
-                          onGuestChange("infants", guests.infants + 1);
-                        }
-                      }}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                {/* <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">Pets</div>
-                    <div className="text-sm text-gray-600">
-                      Bringing a service animal?
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 rounded-full"
-                      onClick={() => onGuestChange("pets", guests.pets - 1)}
-                      disabled={guests.pets <= 0}
-                    >
-                      -
-                    </Button>
-                    <span className="w-6 text-center">{guests.pets}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 rounded-full"
-                      onClick={() => onGuestChange("pets", guests.pets + 1)}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div> */}
-
-                <div className="text-sm text-gray-600 pt-2 border-t">
-                  {/* This place has a maximum of 2 guests, not including infants.
-                  Pets aren't allowed. */}
-                </div>
-
-                <div className="flex justify-end">
-                  <Button
-                    variant="default"
-                    className="bg-primaryGreen hover:brightGreen"
-                    onClick={toggleGuestsDropdown}
-                  >
-                    Close
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
           <div onClick={() => createReserveRecord()}>
             {isAuth || isValid ? (
               activation ? (
@@ -556,10 +607,13 @@ export default function BookingWidget({
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between">
                   <div className="underline text-sm">
-                    ₹{pricePerNight.toLocaleString()} x {nightsCount} night
+                    ₹{pricePerNight.toLocaleString("en-IN")} x {nightsCount}{" "}
+                    night
                     {nightsCount !== 1 ? "s" : ""}
                   </div>
-                  <div className="text-sm">₹{totalPrice.toLocaleString()}</div>
+                  <div className="text-sm">
+                    ₹{totalPrice.toLocaleString("en-IN")}
+                  </div>
                 </div>
 
                 <div className="flex justify-between">

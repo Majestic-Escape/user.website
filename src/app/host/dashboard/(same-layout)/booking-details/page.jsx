@@ -231,7 +231,9 @@ export default function Page() {
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-700">Amount Paid</h4>
-                  <p className="text-gray-500">₹{fetchedData?.price}.00</p>
+                  <p className="text-gray-500">
+                    ₹{fetchedData?.price?.toLocaleString("en-IN")}.00
+                  </p>
                 </div>
 
                 <div>

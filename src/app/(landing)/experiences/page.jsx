@@ -3,16 +3,19 @@ import Hero from "@/components/experience-hero";
 import Blogs from "@/components/blogs";
 import Newsletter from "@/components/newsletter";
 import { ExpHero } from "@/components/exp-hero";
-// import ExperienceSection from '@/components/experiences/experience-section';
-// import ExperienceSoulTraveling from '@/components/experiences/experience-soul-traveling';
-
+import ExperienceSection from "@/components/experiences/experience-section";
+import ExperienceSoulTraveling from "@/components/experiences/experience-soul-traveling";
+import { useEffect } from "react";
+import { MobileNavbar } from "@/components/stays-mobile-navbar";
 export default function Component() {
   return (
     <div>
+      <MobileNavbar />
       <ExpHero />
-      {/* <Hero /> */}
-      {/* <ExperienceSection/> */}
-      {/* <ExperienceSoulTraveling/> */}
+      <Hero />
+
+      {/* <ExperienceSection /> */}
+      {/* <ExperienceSoulTraveling /> */}
       <Blogs />
       {/* <Newsletter /> */}
     </div>

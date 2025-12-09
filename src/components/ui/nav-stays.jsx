@@ -56,12 +56,27 @@ export default function Navbar() {
         <div className="container max-w-[1400px] flex h-12 md:h-16 w-full items-center mx-auto">
           <div></div>{" "}
           <Link className="flex items-center gap-2 text-[#3B5D2D]" href="/">
-            <Image
+            {/* <Image
               className="hidden md:inline-block h-4 md:h-7 w-auto"
               width={200}
               height={40}
               src="/images/logo.svg"
               alt="Logo"
+            /> */}
+            <Image
+              className="hidden lg:block h-6 w-auto"
+              width={200}
+              height={40}
+              src="/images/logo.svg"
+              alt="Logo"
+            />
+            {/* ✅ MEDIUM SCREENS ONLY */}
+            <Image
+              className="hidden md:block lg:hidden h-6 w-auto"
+              width={200}
+              height={40}
+              src="/logo.png" // <-- medium-specific image
+              alt="Logo Medium"
             />
           </Link>
           <div></div>
@@ -81,12 +96,26 @@ export default function Navbar() {
                 isOpen={isWishlistOpen}
                 onClose={() => setIsWishlistOpen(false)}
               /> */}
-              <button
+              {/* <button
                 onClick={switchToHosting}
                 className="text-base bg-transparent shadow:none  border-none outline-none hover:bg-transparent focus:outline-none focus:border-none text-absoluteDark font-medium hover:text-brightGreen hover:transition-colors hover:underline"
               >
                 Switch to Hosting
+              </button> */}
+              <button
+                onClick={switchToHosting}
+                className="hidden lg:inline-flex text-sm bg-transparent border-none shadow-none text-stone font-medium hover:text-brightGreen hover:underline"
+              >
+                Switch to Hosting
               </button>
+
+              {/* ✅ MEDIUM SCREEN ONLY BUTTON */}
+              {/* <Button
+                onClick={() => router.push("/host")}
+                className="hidden md:inline-flex lg:hidden text-sm bg-primaryGreen text-white px-4 rounded-full hover:bg-brightGreen"
+              >
+                Host Switch
+              </Button> */}
               {/* <Button
                 variant="ghost"
                 size="icon"

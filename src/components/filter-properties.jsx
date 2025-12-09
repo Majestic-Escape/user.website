@@ -59,7 +59,7 @@ export default function FilterProperties({
   //   );
   // }
 
-  const displayedProperties = showMore ? properties : properties.slice(0, 8);
+  const displayedProperties = properties; //showMore ? properties : properties.slice(0, 8);
 
   return (
     <>
@@ -130,7 +130,7 @@ export default function FilterProperties({
                     ))}
                   </div>
 
-                  {!showMore && properties.length > 8 && (
+                  {/* {!showMore && properties.length > 8 && (
                     <div className="flex justify-center mt-12">
                       <button
                         className="bg-primaryGreen hover:bg-brightGreen text-white px-16 py-4 rounded-full transition-colors duration-300"
@@ -139,7 +139,7 @@ export default function FilterProperties({
                         View More
                       </button>
                     </div>
-                  )}
+                  )} */}
                 </>
               )}
             </div>
