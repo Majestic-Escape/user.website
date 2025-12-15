@@ -38,7 +38,9 @@ export function PropertyType({ updateFormData, formData, error }) {
   const handleChange = (value) => {
     setPropertyType(value);
     updateFormData({ propertyType: value });
-    console.log("Selected Property Type:", value);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("Selected Property Type:", value);
+    }
   };
 
   return (

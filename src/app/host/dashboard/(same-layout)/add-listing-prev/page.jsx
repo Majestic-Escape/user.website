@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import React from 'react'
-import { createListing } from './actions'
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
+import React from "react";
+import { createListing } from "./actions";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -14,20 +14,26 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { toast } from 'sonner'
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -55,7 +61,7 @@ const formSchema = z.object({
   houseRules: z.string(),
   cancellationPolicy: z.string(),
   minimumStay: z.number().min(1),
-})
+});
 
 export default function AddListingView() {
   const form = useForm({
@@ -81,54 +87,52 @@ export default function AddListingView() {
       cancellationPolicy: "",
       minimumStay: 1,
     },
-  })
-
+  });
 
   async function onSubmit(data) {
-
-
-    const formData = new FormData()
-   
-
+    const formData = new FormData();
 
     Object.entries(data).forEach(([key, value]) => {
       if (Array.isArray(value)) {
-        value.forEach(item => formData.append(key, item))
+        value.forEach((item) => formData.append(key, item));
       } else {
-        formData.append(key, value.toString())
+        formData.append(key, value.toString());
       }
-    })
+    });
 
-    const userInfo = localStorage.getItem('userInfo')
+    const userInfo = localStorage.getItem("userInfo");
     if (userInfo) {
-      const parsedUserInfo = JSON.parse(userInfo)
-      formData.append('userInfo', JSON.stringify({ userId: parsedUserInfo.userId }))
-      // console.log(userInfo, parsedUserInfo, parsedUserInfo.userId);
-
+      const parsedUserInfo = JSON.parse(userInfo);
+      formData.append(
+        "userInfo",
+        JSON.stringify({ userId: parsedUserInfo.userId })
+      );
+      // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      //   console.log(userInfo, parsedUserInfo, parsedUserInfo.userId);
+      // }
     }
-    
-    const result = await createListing(formData)
-    if (result?.error) {
-      
 
-      console.error(result.error)
-      toast.error("Couldn't add the listing. Please try again")
+    const result = await createListing(formData);
+    if (result?.error) {
+      console.error(result.error);
+      toast.error("Couldn't add the listing. Please try again");
 
       // Handle error (e.g., show error message to user)
-    }
-    else{
-      toast.success("Added successfully")
-
+    } else {
+      toast.success("Added successfully");
     }
   }
 
   return (
     <div className="container mx-auto ">
-      
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold text-absoluteDark font-bricolage">Add New Listing</CardTitle>
-          <CardDescription>Fill in the details to create a new property listing.</CardDescription>
+          <CardTitle className="text-2xl font-semibold text-absoluteDark font-bricolage">
+            Add New Listing
+          </CardTitle>
+          <CardDescription>
+            Fill in the details to create a new property listing.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -156,7 +160,10 @@ export default function AddListingView() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Property Type*</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a property type" />
@@ -208,7 +215,11 @@ export default function AddListingView() {
                     <FormItem>
                       <FormLabel>Bedrooms*</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) => field.onChange(+e.target.value)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -221,7 +232,11 @@ export default function AddListingView() {
                     <FormItem>
                       <FormLabel>Bathrooms*</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) => field.onChange(+e.target.value)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -234,7 +249,11 @@ export default function AddListingView() {
                     <FormItem>
                       <FormLabel>Max Guests*</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) => field.onChange(+e.target.value)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -298,7 +317,6 @@ export default function AddListingView() {
                     </FormItem>
                   )}
                 />
-             
               </div>
 
               <FormField
@@ -308,7 +326,11 @@ export default function AddListingView() {
                   <FormItem>
                     <FormLabel>Price per Night (₹)*</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(+e.target.value)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -351,7 +373,11 @@ export default function AddListingView() {
                   <FormItem>
                     <FormLabel>Minimum Stay (nights)*</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(+e.target.value)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -372,7 +398,8 @@ export default function AddListingView() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Specify any rules or guidelines for guests staying at your property.
+                      Specify any rules or guidelines for guests staying at your
+                      property.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -385,7 +412,10 @@ export default function AddListingView() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Cancellation Policy*</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a cancellation policy" />
@@ -395,7 +425,9 @@ export default function AddListingView() {
                         <SelectItem value="flexible">Flexible</SelectItem>
                         <SelectItem value="moderate">Moderate</SelectItem>
                         <SelectItem value="strict">Strict</SelectItem>
-                        <SelectItem value="nonRefundable">Non-refundable</SelectItem>
+                        <SelectItem value="nonRefundable">
+                          Non-refundable
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>
@@ -419,11 +451,15 @@ export default function AddListingView() {
                         multiple
                         onChange={(e) => {
                           const files = Array.from(e.target.files || []);
-                          field.onChange(files.map(file => URL.createObjectURL(file)));
+                          field.onChange(
+                            files.map((file) => URL.createObjectURL(file))
+                          );
                         }}
                       />
                     </FormControl>
-                    <FormDescription>Upload images of your property (at least one is required)</FormDescription>
+                    <FormDescription>
+                      Upload images of your property (at least one is required)
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -445,17 +481,13 @@ export default function AddListingView() {
                           <FormControl>
                             <RadioGroupItem value="yes" />
                           </FormControl>
-                          <FormLabel className="font-normal">
-                            Yes
-                          </FormLabel>
+                          <FormLabel className="font-normal">Yes</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
                             <RadioGroupItem value="no" />
                           </FormControl>
-                          <FormLabel className="font-normal">
-                            No
-                          </FormLabel>
+                          <FormLabel className="font-normal">No</FormLabel>
                         </FormItem>
                       </RadioGroup>
                     </FormControl>
@@ -476,7 +508,39 @@ export default function AddListingView() {
                       </FormDescription>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {['WiFi', 'AC', 'Kitchen', 'TV', 'Parking', 'Pool', 'Beach Access', 'Balcony', 'Garden', 'BBQ', 'Gym', 'Hot Tub', 'Washing Machine', 'Dryer', 'Fireplace', 'Workspace', 'Breakfast', 'Elevator', 'Smoke Alarm', 'First Aid Kit', 'Fire Extinguisher', 'Essentials', 'Hair Dryer', 'Iron', 'Indoor Fireplace', 'Hangers', 'Coffee Maker', 'Dishwasher', 'Microwave', 'Oven', 'Refrigerator'].map((item) => (
+                      {[
+                        "WiFi",
+                        "AC",
+                        "Kitchen",
+                        "TV",
+                        "Parking",
+                        "Pool",
+                        "Beach Access",
+                        "Balcony",
+                        "Garden",
+                        "BBQ",
+                        "Gym",
+                        "Hot Tub",
+                        "Washing Machine",
+                        "Dryer",
+                        "Fireplace",
+                        "Workspace",
+                        "Breakfast",
+                        "Elevator",
+                        "Smoke Alarm",
+                        "First Aid Kit",
+                        "Fire Extinguisher",
+                        "Essentials",
+                        "Hair Dryer",
+                        "Iron",
+                        "Indoor Fireplace",
+                        "Hangers",
+                        "Coffee Maker",
+                        "Dishwasher",
+                        "Microwave",
+                        "Oven",
+                        "Refrigerator",
+                      ].map((item) => (
                         <FormField
                           key={item}
                           control={form.control}
@@ -497,7 +561,7 @@ export default function AddListingView() {
                                             field.value?.filter(
                                               (value) => value !== item
                                             )
-                                          )
+                                          );
                                     }}
                                   />
                                 </FormControl>
@@ -505,7 +569,7 @@ export default function AddListingView() {
                                   {item}
                                 </FormLabel>
                               </FormItem>
-                            )
+                            );
                           }}
                         />
                       ))}
@@ -514,11 +578,16 @@ export default function AddListingView() {
                   </FormItem>
                 )}
               />
-              <Button className='text-white  bg-primaryGreen hover:bg-brightGreen rounded-3xl px-8 py-4' type="submit">Add Listing</Button>
+              <Button
+                className="text-white  bg-primaryGreen hover:bg-brightGreen rounded-3xl px-8 py-4"
+                type="submit"
+              >
+                Add Listing
+              </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

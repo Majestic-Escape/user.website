@@ -573,7 +573,9 @@ function ShareDialog({ isOpen, onClose, property }) {
       switch (platform) {
         case "copy":
           await navigator.clipboard.writeText(shareUrl);
-          console.log("Link copied to clipboard!");
+          if (process.env.NEXT_PUBLIC_ENV === "dev") {
+            console.log("Link copied to clipboard!");
+          }
           break;
 
         case "email":
@@ -608,7 +610,12 @@ function ShareDialog({ isOpen, onClose, property }) {
             window.open(`sms:?&body=${smsBody}`);
           } else {
             await navigator.clipboard.writeText(shareUrl);
-            console.log("Link copied! You can paste it in your messaging app");
+
+            if (process.env.NEXT_PUBLIC_ENV === "dev") {
+              console.log(
+                "Link copied! You can paste it in your messaging app"
+              );
+            }
           }
           break;
       }
@@ -617,7 +624,10 @@ function ShareDialog({ isOpen, onClose, property }) {
       // Fallback to copying to clipboard
       try {
         await navigator.clipboard.writeText(shareUrl);
-        console.log("Link copied to clipboard as fallback!");
+
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("Link copied to clipboard as fallback!");
+        }
       } catch (clipboardError) {
         console.error("Error copying to clipboard:", clipboardError);
       }

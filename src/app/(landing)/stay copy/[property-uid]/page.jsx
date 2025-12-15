@@ -28,7 +28,9 @@ export default function Page({ params }) {
         // Use the correct parameter name that matches your route
         const data = await propertyService.getPropertyById(propertyUid);
         setProperty(data);
-        console.log("Data showing:", data)
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("Data showing:", data);
+        }
         setError(null);
       } catch (err) {
         setError(err.message);
@@ -48,7 +50,6 @@ export default function Page({ params }) {
       <div className="max-w-7xl mx-auto">
         <div className="p-4 space-y-4">
           {/* <ImageGrid images={property?.photos} /> */}
-         
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Left side content */}

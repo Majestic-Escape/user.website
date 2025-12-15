@@ -45,7 +45,9 @@ export default function CheckInModal({
   //   }
   // };
   // getData();
-  console.log("ajfdjkajdkjda", listing);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("ajfdjkajdkjda", listing);
+  }
   async function saveData() {
     try {
       const getLocalData = await localStorage.getItem("token");
@@ -78,7 +80,9 @@ export default function CheckInModal({
     }
   }
 
-  console.log("nice", listing);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("nice", listing);
+  }
   const prev = 12;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">

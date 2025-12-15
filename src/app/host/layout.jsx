@@ -44,7 +44,9 @@ const Layout = ({ children }) => {
   //     // Token is valid
   //     setIsAuth(true);
   //   } catch (err) {
-  //     console.log("Token invalid:", err?.response?.data);
+  //     process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("Token invalid:", err?.response?.data);
+  // }
 
   //     // Token invalid → remove and logout
   //     localStorage.removeItem("token");
@@ -56,7 +58,13 @@ const Layout = ({ children }) => {
   useEffect(() => {
     auth();
   }, []);
-
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
+      </div>
+    );
+  }
   if (!isAuth) {
     return (
       <>
@@ -72,13 +80,7 @@ const Layout = ({ children }) => {
       </>
     );
   }
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
-      </div>
-    );
-  }
+
   return (
     <>
       <QueryClientProvider client={queryClient}>

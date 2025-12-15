@@ -5,7 +5,7 @@ import FooterWrapper from "@/components/footer-wrapper";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
-
+import { MobileNavbar } from "@/components/stays-mobile-navbar";
 const queryClient = new QueryClient();
 
 export default function Layout({ children }) {
@@ -14,6 +14,7 @@ export default function Layout({ children }) {
       <div className="font-poppins">
         <div>
           <Navbar />
+          <MobileNavbar />
           {children}
 
           <FooterWrapper />

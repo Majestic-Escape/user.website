@@ -119,7 +119,9 @@ export default function RegisterPage() {
       });
       const data = await response.json();
       if (!response.ok) {
-        console.log("OTP Request Error:", data.code);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("OTP Request Error:", data.code);
+        }
 
         switch (data.code) {
           case "USER_EXISTS":
@@ -140,7 +142,9 @@ export default function RegisterPage() {
       }
 
       // const data = await response.json();
-      console.log("Data:", data);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("Data:", data);
+      }
       if (resend) {
         toast.success("OTP resent successfully to your email");
         setResend(false);

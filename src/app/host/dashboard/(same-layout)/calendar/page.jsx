@@ -77,7 +77,9 @@ const FullCalendarPage = () => {
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const searchParams = useSearchParams();
   const propertyId = searchParams.get("propertyId");
-  console.log("nik", unavailableDates, hostBlock);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("nik", unavailableDates, hostBlock);
+  }
 
   const toIST = (date) => {
     return moment(date).tz("Asia/Kolkata").startOf("day");
@@ -97,7 +99,10 @@ const FullCalendarPage = () => {
           `Failed to fetch host data (status: ${response.status})`
         );
       }
-      console.log("aaaa", response.data.data, response.data.blocked);
+
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("aaaa", response.data.data, response.data.blocked);
+      }
       setUnavailableDates(response.data.data);
       setHostBlock(response.data.blocked);
     } catch (err) {
@@ -117,7 +122,9 @@ const FullCalendarPage = () => {
 
       // ✅ Axios automatically throws on error, so no need for res.ok
       const final = res.data;
-      console.log("sss", final);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("sss", final);
+      }
 
       if (final.success) {
         setExportUrl(final.url);
@@ -319,22 +326,30 @@ const FullCalendarPage = () => {
 
   const handleSyncCalendar = (kind) => {
     // if (syncPlatform === "google") {
-    // console.log("Syncing with Google Calendar");
+    // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
     // // Implement Google Calendar sync logic here
     // } else
     if (syncPlatform === "ical") {
       syncWithUrl(kind);
-      console.log("Syncing with iCal URL:", iCalUrl);
+
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("Syncing with iCal URL:", iCalUrl);
+      }
       // Implement iCal sync logic here
     }
   };
 
-  console.log("what th", arr);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("what th", arr);
+  }
   const renderCalendar = () => {
     const monthStart = startOfMonth(currentDate);
     const startDayIndex = monthStart.getDay();
     const emptyDays = Array.from({ length: startDayIndex });
-    console.log("supss", currentDate, monthStart);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("supss", currentDate, monthStart);
+    }
     const monthEnd = endOfMonth(currentDate);
     const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
@@ -424,7 +439,8 @@ const FullCalendarPage = () => {
       //   start: dateRange.from,
       //   end: dateRange.to,
       // });
-      // console.log("k", dateDays);
+      // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
       // let hasOverlap = false; // use local variable
 
       // for (let i = 1; i < dateDays.length; i++) {

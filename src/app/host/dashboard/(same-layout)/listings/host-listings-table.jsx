@@ -137,7 +137,9 @@ export function HostListingsTable({ userEmail }) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
-  console.log("gogog", userEmail);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("gogog", userEmail);
+  }
   const fetchListings = useCallback(async () => {
     setLoading(true);
     try {
@@ -249,7 +251,9 @@ export function HostListingsTable({ userEmail }) {
       }
     }
   }, [listingToRelist]);
-  console.log("all the ", selectedListing);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("all the ", selectedListing);
+  }
   const columns = React.useMemo(
     () => [
       {

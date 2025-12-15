@@ -114,6 +114,7 @@ onApply: () => void;
 onClear: () => void;
 }) => {
 return (
+
 <Dialog open={open} onOpenChange={onOpenChange}>
 <DialogContent>
 <DialogHeader>
@@ -239,7 +240,9 @@ fetchData();
 setIsLoading(false);
 }, []);
 const getPayment = async (bookingId: string): Promise<void> => {
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("booking now", bookingId);
+}
 const data = JSON.parse(localStorage.getItem("token") || "null");
 if (data) {
 try {
@@ -257,17 +260,23 @@ if (response.status != 200) {
 return;
 }
 const result = await response.json();
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("enll", result);
+}
 setPayment(result.data);
 } catch (err) {
 console.error(err);
 }
 }
 };
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("booking", payment);
+}
 const filteredBookings = useMemo(() => {
 return (bookings ?? [])?.filter((booking) => {
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log(booking.propertyId?.address?.city);
+}
 const checkIn = new Date(booking.checkIn);
 const checkOut = new Date(booking.checkOut);
 
@@ -334,7 +343,9 @@ window.URL.revokeObjectURL(url);
 // pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
 // pdf.save("examplepdf.pdf");
 };
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log(filteredBookings);
+}
 const handleClearFilters = () => {
 const emptyFilters = { location: "", minPrice: "", maxPrice: "" };
 setTempFilters(emptyFilters);
@@ -358,6 +369,7 @@ setTempFilters((prev) => ({ ...prev, [field]: "" }));
 
 if (isLoading) {
 return (
+
 <div className="min-h-screen flex items-center justify-center">
 <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
 </div>
@@ -415,7 +427,7 @@ const data = JSON.parse(localStorage.getItem("token") || "null");
 // const futureDateObj = new Date(futureDate);
 // const differenceInDays =
 // (futureDateObj.getTime() - date1.getTime()) / 86400000;
-// console.log(
+// process.env.ENV === 'dev' && console.log(
 // "Moderate Policy",
 // date,
 // "future",
@@ -449,31 +461,52 @@ if (!checkinDate) return 0;
     // Find difference in hours
     const diffHours = checkinIST.diff(nowIST, "hours");
 
-    console.log("🔎 DEBUG MODERATE CHECK");
-    console.log("Original CheckIn:", checkinDate);
-    console.log("CheckIn IST:", checkinIST.format());
-    console.log("Now IST:", nowIST.format());
-    console.log("Checkin Time (24hr):", checkinTime);
-    console.log("Diff in Hours:", diffHours);
+    process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+console.log("🔎 DEBUG MODERATE CHECK");
+}
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("Original CheckIn:", checkinDate);
+}
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("CheckIn IST:", checkinIST.format());
+}
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("Now IST:", nowIST.format());
+}
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("Checkin Time (24hr):", checkinTime);
+}
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("Diff in Hours:", diffHours);
+}
 
     // If exactly 24 hours → return 1 day
     if (diffHours === 24) {
-      console.log("Final days:", 1);
-      return 1;
-    }
+      process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+console.log("Final days:", 1);
+}
+return 1;
+}
 
     // If more than 24 hours → convert hours to full days
     if (diffHours > 24) {
-      console.log("Final days:", Math.floor(diffHours / 24));
-      return Math.floor(diffHours / 24);
-    }
+      process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+console.log("Final days:", Math.floor(diffHours / 24));
+}
+return Math.floor(diffHours / 24);
+}
 
     // Otherwise → less than 24 hours → return 0
     return 0;
 
 }
 
-// console.log("blackpa", new Date());
+// process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("blackpa", new Date());
+}
 // function canShowReview(booking: Booking): boolean {
 // if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
 
@@ -500,7 +533,9 @@ if (!checkinDate) return 0;
 // }
 // }
 // }
-// // console.log("dta", today.toDateString(), checkoutDate.toDateString());
+// // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("dta", today.toDateString(), checkoutDate.toDateString());
+}
 
 // // const isSameDay = today.toDateString() === checkoutDate.toDateString();
 
@@ -569,7 +604,9 @@ if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
 // // const date2 = new Date();
 // const date1 = new Date();
 // const differenceInHours = (futureHours - date1.getTime()) / 3600000;
-// // console.log("Flexible policy", futureDate, time, date1, differenceInHours);
+// // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("Flexible policy", futureDate, time, date1, differenceInHours);
+}
 // return differenceInHours;
 // }
 function differenceInHours(
@@ -577,7 +614,9 @@ checkinDate: string | number | Date,
 booking: Booking
 ): number {
 if (!checkinDate) return 0;
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("has entered the diff");
+}
 const checkinTime = Number(booking?.propertyId?.checkinTime || 11);
 
     // Convert check-in date to IST with checkin time applied
@@ -593,12 +632,25 @@ const checkinTime = Number(booking?.propertyId?.checkinTime || 11);
     // Find difference in hours
     const diffHours = checkinIST.diff(nowIST, "hours");
 
-    console.log("🔎 DEBUG FLEXIBLE CHECK");
-    console.log("Original CheckIn:", checkinDate);
-    console.log("CheckIn IST:", checkinIST.format());
-    console.log("Now IST:", nowIST.format());
-    console.log("Checkin Time (24hr):", checkinTime);
-    console.log("Diff in Hours:", diffHours);
+    process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+console.log("🔎 DEBUG FLEXIBLE CHECK");
+}
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("Original CheckIn:", checkinDate);
+}
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("CheckIn IST:", checkinIST.format());
+}
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("Now IST:", nowIST.format());
+}
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("Checkin Time (24hr):", checkinTime);
+}
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("Diff in Hours:", diffHours);
+}
 
     // If exactly 24 hours → return 1 day
 
@@ -640,8 +692,11 @@ day: "numeric",
 year: "numeric",
 });
 
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("Invoice Data", invoiceData, payment);
+}
 return (
+
 <main className="py-16 md:py-24">
 <div className="container max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 <h1 className="text-2xl font-bricolage text-absoluteDark font-bold">
@@ -964,7 +1019,7 @@ My Booking
                             flexible &&
                           booking?.cancellationPolicy == "flexible" ? (
                           <>
-                            {console.log("Cancel Policies")}
+                            {process.env.ENV === 'dev' && console.log("Cancel Policies")}
                             <Button
                               variant="outline"
                               size="sm"

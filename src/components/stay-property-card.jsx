@@ -91,7 +91,9 @@ export default function StayCard({ property, includeTaxes }) {
       }
     }
   }, [property?._id]);
-  console.log(property);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log(property);
+  }
   return (
     <div
       id={`property-${property?._id}`}

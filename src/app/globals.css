@@ -2,12 +2,129 @@
 @tailwind components;
 @tailwind utilities;
 
+@media (max-width: 699px) {
+  .chat-simulator {
+    margin-top: 24px !important; /* or 32px if you want more space */
+  }
+  .mobile {
+    margin-top: 80px;
+  }
+  .hero-root {
+    padding-top: 140px !important; /* Reduce large gap under navbar */
+    padding-bottom: 40px !important;
+  }
+  .hero-main {
+    display: flex;
+    flex-direction: column;
+  }
+}
+@media (min-width: 700px) and (max-width: 999px) {
+  .hero-root {
+    padding-top: 170px !important; /* Reduce large gap under navbar */
+    padding-bottom: 20px !important;
+  }
 
+  .hero-inner {
+    min-height: calc(100vh - 80px); /* True vertical centering */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
+  .hero-main {
+    display: flex;
+    flex-direction: column;
+
+    align-items: center !important; /* Horizontal centering */
+  }
+  .tab-margin {
+    margin-top: 70px;
+  }
+
+  .scroll-icon {
+    visibility: hidden;
+  }
+  .reset-icon {
+    display: none;
+    visibility: hidden;
+  }
+  .filter-icon {
+    padding-top: 24px;
+  }
+}
+@media (min-width: 700px) and (max-width: 800px) {
+  .hero-margin {
+    margin-top: 50px;
+  }
+}
+@media (min-width: 800px) and (max-width: 900px) {
+  .hero-margin {
+    margin-top: 10px;
+  }
+}
+/* 1000px – 1199px (iPad Pro / small laptops) */
+@media (min-width: 1000px) and (max-width: 1199px) {
+  /* .hero-inner {
+    padding-bottom: 0 !important;
+    align-items: center;
+  } */
+  .hero-root {
+    padding-top: 210px !important; /* balanced */
+    padding-bottom: 40px !important;
+    min-height: auto !important; /* ← Prevents vertical stretching */
+  }
+  .hero-inner {
+    margin-top: 0 !important; /* remove overlapping margins */
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  /* .hero-main {
+    display: flex;
+    flex-direction: column;
+  } */
+  .hero-main {
+    flex-direction: column !important;
+    align-items: center !important; /* center EVERYTHING */
+    gap: 32px; /* consistent spacing between text, button, mobile */
+  }
+  .chat-simulator {
+    margin-top: 60 !important; /* Kill md:mt-32 */
+  }
+  .scroll-icon {
+    visibility: hidden;
+  }
+  .mid-tab-margin {
+    margin-top: 40px !important;
+  }
+  .outer-mid-tab-margin {
+    margin-top: 20px !important;
+  }
+  .mid-book {
+    margin-left: 25px !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .hero-inner {
+    padding-bottom: 0 !important; /* Remove extra bottom space */
+  }
+  .hero-main {
+    display: flex;
+    flex-direction: row;
+  }
+  .chat-simulator {
+    margin-top: 60 !important; /* Kill md:mt-32 */
+  }
+  .property-filter {
+    overflow-x: hidden;
+  }
+  .filter-icon {
+    padding-left: 52;
+  }
+}
 
 @layer base {
-:root {
-
+  :root {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
@@ -33,9 +150,7 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --font-poppins: 'poppins'
-  
-  ;
+    --font-poppins: "poppins";
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -43,28 +158,25 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%}
-
-
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
 }
 
-
-
-
-*, *::after, *::before{
-  margin:0;
-  padding:0;
+*,
+*::after,
+*::before {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
-html, body {
-  font-family: 'poppins', system-ui, sans-serif;
-  background:white;
-  color:black;
+html,
+body {
+  font-family: "poppins", system-ui, sans-serif;
+  background: white;
+  color: black;
   overflow-x: hidden;
   font-size: 15px;
   scroll-behavior: smooth;
-
-
 }
 .no-spinner::-webkit-outer-spin-button,
 .no-spinner::-webkit-inner-spin-button {
@@ -85,7 +197,3 @@ html, body {
     @apply bg-background text-foreground;
   }
 }
-
-
-
-

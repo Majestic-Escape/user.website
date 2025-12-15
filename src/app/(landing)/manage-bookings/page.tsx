@@ -237,7 +237,6 @@ const ManageBookings: React.FC = () => {
     setIsLoading(false);
   }, []);
   const getPayment = async (bookingId: string): Promise<void> => {
-    console.log("booking now", bookingId);
     const data = JSON.parse(localStorage.getItem("token") || "null");
     if (data) {
       try {
@@ -255,17 +254,21 @@ const ManageBookings: React.FC = () => {
           return;
         }
         const result = await response.json();
-        console.log("enll", result);
+
         setPayment(result.data);
       } catch (err) {
         console.error(err);
       }
     }
   };
-  console.log("booking", payment);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("booking", payment);
+  }
   const filteredBookings = useMemo(() => {
     return (bookings ?? [])?.filter((booking) => {
-      console.log(booking.propertyId?.address?.city);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log(booking.propertyId?.address?.city);
+      }
       const checkIn = new Date(booking.checkIn);
       const checkOut = new Date(booking.checkOut);
 
@@ -331,7 +334,9 @@ const ManageBookings: React.FC = () => {
     // pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
     // pdf.save("examplepdf.pdf");
   };
-  console.log(filteredBookings);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log(filteredBookings);
+  }
   const handleClearFilters = () => {
     const emptyFilters = { location: "", minPrice: "", maxPrice: "" };
     setTempFilters(emptyFilters);
@@ -411,7 +416,7 @@ const ManageBookings: React.FC = () => {
   // const futureDateObj = new Date(futureDate);
   // const differenceInDays =
   // (futureDateObj.getTime() - date1.getTime()) / 86400000;
-  // console.log(
+  // process.env.ENV === 'dev' && console.log(
   // "Moderate Policy",
   // date,
   // "future",
@@ -424,7 +429,8 @@ const ManageBookings: React.FC = () => {
   // return differenceInDays;
   // }
 
-  // console.log("blackpa", new Date());
+  // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
   // function canShowReview(booking: Booking): boolean {
   // if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
 
@@ -451,7 +457,7 @@ const ManageBookings: React.FC = () => {
   // }
   // }
   // }
-  // // console.log("dta", today.toDateString(), checkoutDate.toDateString());
+  // // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 
   // // const isSameDay = today.toDateString() === checkoutDate.toDateString();
 
@@ -533,22 +539,34 @@ const ManageBookings: React.FC = () => {
   //   // Find difference in hours
   //   const diffHours = checkinIST.diff(nowIST, "hours");
 
-  //   console.log("🔎 DEBUG MODERATE CHECK");
-  //   console.log("Original CheckIn:", checkinDate);
-  //   console.log("CheckIn IST:", checkinIST.format());
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
   //   console.log("Now IST:", nowIST.format());
-  //   console.log("Checkin Time (24hr):", checkinTime);
+  // }
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
   //   console.log("Diff in Hours:", diffHours);
+  // }
 
   //   // If exactly 24 hours → return 1 day
   //   if (diffHours === 24) {
-  //     console.log("Final days:", 1);
+  //     process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("Final days:", 1);
+  // }
   //     return 1;
   //   }
 
   //   // If more than 24 hours → convert hours to full days
   //   if (diffHours > 24) {
-  //     console.log("Final days:", Math.floor(diffHours / 24));
+  //     process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("Final days:", Math.floor(diffHours / 24));
+  // }
   //     return Math.floor(diffHours / 24);
   //   }
 
@@ -563,7 +581,9 @@ const ManageBookings: React.FC = () => {
   // // const date2 = new Date();
   // const date1 = new Date();
   // const differenceInHours = (futureHours - date1.getTime()) / 3600000;
-  // // console.log("Flexible policy", futureDate, time, date1, differenceInHours);
+  // // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("Flexible policy", futureDate, time, date1, differenceInHours);
+  // }
   // return differenceInHours;
   // }
   // function differenceInHours(
@@ -571,7 +591,9 @@ const ManageBookings: React.FC = () => {
   //   booking: Booking
   // ): number {
   //   if (!checkinDate) return 0;
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
   //   console.log("has entered the diff");
+  // }
   //   const checkinTime = Number(booking?.propertyId?.checkinTime || 11);
 
   //   // Convert check-in date to IST with checkin time applied
@@ -587,12 +609,23 @@ const ManageBookings: React.FC = () => {
   //   // Find difference in hours
   //   const diffHours = checkinIST.diff(nowIST, "hours");
 
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
   //   console.log("🔎 DEBUG FLEXIBLE CHECK");
+  // }
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
   //   console.log("Original CheckIn:", checkinDate);
+  // }
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
   //   console.log("CheckIn IST:", checkinIST.format());
-  //   console.log("Now IST:", nowIST.format());
+  // }
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
   //   console.log("Checkin Time (24hr):", checkinTime);
+  // }
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
   //   console.log("Diff in Hours:", diffHours);
+  // }
 
   //   // If exactly 24 hours → return 1 day
 
@@ -610,7 +643,9 @@ const ManageBookings: React.FC = () => {
     const nowIST = moment().tz("Asia/Kolkata");
     const diffHours = checkinIST.diff(nowIST, "hours");
     const diffDays = diffHours / 24;
-    console.log("days", diffDays);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("days", diffDays);
+    }
     return diffDays >= 7;
   }
 
@@ -623,7 +658,9 @@ const ManageBookings: React.FC = () => {
 
     const nowIST = moment().tz("Asia/Kolkata");
     const diffHours = checkinIST.diff(nowIST, "hours");
-    console.log("hours", diffHours);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("hours", diffHours);
+    }
     return diffHours >= 24;
   }
   function canShowCancelButton(booking: Booking): boolean {
@@ -674,7 +711,9 @@ const ManageBookings: React.FC = () => {
     year: "numeric",
   });
 
-  console.log("Invoice Data", invoiceData, payment);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("Invoice Data", invoiceData, payment);
+  }
   return (
     <main className="py-16 md:py-24">
       <div className="container max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">

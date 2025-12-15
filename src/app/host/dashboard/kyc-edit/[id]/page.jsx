@@ -61,7 +61,9 @@ export default function KycEdit({ params }) {
         setIsLoading(true);
         const response = await kycService.getFormDataById(id);
         const result = await response.data;
-        console.log("thi v", result);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("thi v", result);
+        }
 
         setFormData(result);
         return result;
@@ -128,12 +130,18 @@ export default function KycEdit({ params }) {
           ? "pending"
           : "processing",
       };
-      console.log("dataToSave", id);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("dataToSave", id);
+      }
 
       if (id) {
-        console.log("ID present", id);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("ID present", id);
+        }
       } else {
-        console.log("ID missing");
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("ID missing");
+        }
       }
       const response = id
         ? await kycService.updateProperty(id, dataToSave)
@@ -154,8 +162,12 @@ export default function KycEdit({ params }) {
   // const saveData = async (isExiting = false) => {
   //   setIsLoading(true);
   //   try {
-  //     console.log("curent st", currentStep);
-  //     console.log("len st", steps.length);
+  //     process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("curent st", currentStep);
+  // }
+  //     process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("len st", steps.length);
+  // }
   //     const dataToSave = {
   //       ...formData,
   //       status:
@@ -189,9 +201,7 @@ export default function KycEdit({ params }) {
       ) {
         const { isValid, errorMessage } = currentStepData.validate(formData);
         if (!isValid) {
-          toast.error(
-            errorMessage || "Validation failed. Please check the fields."
-          );
+          toast.error(errorMessage || "Please check the fields.");
           return false;
         }
       }
@@ -225,7 +235,9 @@ export default function KycEdit({ params }) {
 
   // const handleSaveAndExit = () => {
   //   setIsLoading(true);
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
   //   console.log("Saving data:", formData);
+  // }
   //   router.push("/host/dashboard");
   // };
   const handleSaveAndExit = async () => {
@@ -250,7 +262,9 @@ export default function KycEdit({ params }) {
     if (!auth) redirect("/login");
   }, [auth]);
 
-  console.log("ddd", formData);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("ddd", formData);
+  }
   if (formCompleted) {
     return (
       <div className="min-h-screen flex items-center justify-center font-poppins pt-24">

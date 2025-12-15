@@ -30,8 +30,8 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { name: "Home", href: "/", icon: HomeIcon },
-  { name: "Stay", href: "/stays", icon: Building2Icon },
-  { name: "Experience", href: "/experiences", icon: Compass },
+  { name: "Help", href: "/help-center", icon: HandHelping },
+  // { name: "Experience", href: "/experiences", icon: Compass },
   { name: "Login", href: "/login-options", icon: User },
 ];
 
@@ -39,7 +39,7 @@ const navItemsLoggedIn = [
   { name: "Home", href: "/", icon: HomeIcon },
 
   { name: "Bookings", href: "/manage-bookings", icon: Calendar },
-  { name: "Hosting", href: "/host/dashboard", icon: SquareUser },
+  // { name: "Hosting", href: "/host/dashboard", icon: SquareUser },
   { name: "Help", href: "/help-center", icon: HandHelping },
 ]; //trips
 
@@ -67,17 +67,18 @@ const menuItems = [
 
 const menuItemsLoggedIn = [
   // Navigation Links
-  { name: "Services", href: "/services" },
+  // { name: "Services", href: "/services" },
+  { name: "Switch to Hosting", href: "/host/dashboard" },
   { name: "FAQ", href: "/faq" },
   { name: "Blogs", href: "/blogs" },
-  { name: "Switch to hosting", href: "/host/dashboard" },
+
   { name: "FAQ (Host)", href: "/host-faq" },
   { name: "Privacy Policy", href: "/privacy-policy" },
   { name: "Cancellation Policy", href: "/cancellation-policy" },
   { name: "Refund Policy", href: "/cancellation-policy" },
   { name: "Terms of Service", href: "/terms-of-service" },
   // Support Links
-  { name: "Help Center", href: "/help-center" },
+  // { name: "Help Center", href: "/help-center" },
   // { name: "Complaints", href: "/complaints" },
 ];
 
@@ -99,7 +100,7 @@ export function BottomNavigation() {
 
   return (
     <div className="md:hidden  font-poppins fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200">
-      <div className="grid h-full max-w-lg grid-cols-5 mx-auto">
+      <div className="grid h-full max-w-lg grid-cols-4 mx-auto">
         {user
           ? navItemsLoggedIn.map((item) => (
               <Link
@@ -156,7 +157,10 @@ export function BottomNavigation() {
                         href={item.href}
                         className={cn(
                           "px-4 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors text-gray-700",
-                          pathname === item.href ? "bg-gray-100" : ""
+                          pathname === item.href ? "bg-gray-100" : "",
+                          item.name == "Switch to Hosting"
+                            ? " text-primaryGreen hover:text-brightGreen "
+                            : ""
                         )}
                         onClick={() => setOpen(false)}
                       >

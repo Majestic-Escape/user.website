@@ -150,7 +150,9 @@ export default function HostProfile({ propertyData }) {
 
     return age;
   }
-  console.log("deepam", propertyData?.host);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("deepam", propertyData?.host);
+  }
   // --- Render the actual profile using hostData ---
   return (
     <>

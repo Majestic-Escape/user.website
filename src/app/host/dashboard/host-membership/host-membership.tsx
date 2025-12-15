@@ -84,7 +84,9 @@ export default function HostMembershipPage() {
       description: "Host Membership Subscription",
       image: "/logo.png",
       handler: (response: any) => {
-        console.log(response);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log(response);
+        }
         // Redirect to success page
         const successParams = new URLSearchParams({
           memberId: response.razorpay_payment_id,

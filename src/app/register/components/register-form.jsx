@@ -117,7 +117,10 @@ export default function RegisterPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.log("OTP Request Error:", errorData.code);
+
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("OTP Request Error:", errorData.code);
+        }
 
         switch (errorData.code) {
           case "USER_EXISTS":
@@ -138,7 +141,9 @@ export default function RegisterPage() {
       }
 
       const data = await response.json();
-      console.log("Data:", data);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("Data:", data);
+      }
       toast.success("OTP sent successfully to your phone");
       setStep(2);
     } catch (error) {

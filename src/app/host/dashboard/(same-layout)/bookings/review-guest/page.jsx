@@ -41,7 +41,9 @@ export default function ReviewGuest() {
         }
 
         const final = await response.json();
-        console.log("jl", response);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("jl", response);
+        }
         setReviewed(final.data);
       }
     } catch (err) {
@@ -178,8 +180,12 @@ export default function ReviewGuest() {
     setRating(value);
   };
   // setData(bookingData.checkOut);
-  console.log(bookingData);
-  console.log("bb", reviewed, bookingId);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log(bookingData);
+  }
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("bb", reviewed, bookingId);
+  }
   if (isBookingLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

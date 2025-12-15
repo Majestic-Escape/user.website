@@ -18,7 +18,11 @@ export const kycService = {
   getFormData: async (id) => {
     try {
       const response = await axios.get(`${API_BASE_URL}/kyc/form/${id}`);
-      // console.log("cap", response.status);
+      if (process.env.ENV == "dev") {
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("cap", response.status);
+        }
+      }
       if (response.status == 200) {
         return response.data;
       }
@@ -31,7 +35,9 @@ export const kycService = {
   getFormDataById: async (id) => {
     try {
       const response = await axios.get(`${API_BASE_URL}/kyc/form-kyc/${id}`);
-      console.log("cap am", response);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("cap am", response);
+      }
       if (response.status == 200) {
         return response.data;
       }
@@ -44,11 +50,15 @@ export const kycService = {
 
   getFormDataByUserId: async (id) => {
     try {
-      console.log("we have just got", id);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("we have just got", id);
+      }
       const response = await axios.get(`${API_BASE_URL}/kyc/user/${id}`);
 
       if (response.status == 200) {
-        console.log("rrrc", response);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("rrrc", response);
+        }
         return response.data;
       } else {
         return "Form doesnt exits";
@@ -72,17 +82,25 @@ export const kycService = {
   },
   createKycHostData: async (propertyData) => {
     try {
-      console.log("new prop 1");
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("new prop 1");
+      }
 
       // delete propertyData._id;
       const userId = JSON.parse(localStorage.getItem("userId"));
-      console.log("new prop 2", userId);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("new prop 2", userId);
+      }
 
       // const getLocalData = await localStorage.getItem("token");
 
-      console.log("new prop 3");
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("new prop 3");
+      }
       // const data = JSON.parse(userId);
-      console.log("new prop", propertyData);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("new prop", propertyData);
+      }
 
       const response = await fetch(`${API_BASE_URL}/kyc/form`, {
         method: "POST",
@@ -134,7 +152,9 @@ export const kycService = {
 
   updateProperty: async (id, propertyData) => {
     try {
-      console.log("in this how", id);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("in this how", id);
+      }
       const response = await axios.put(
         `${API_BASE_URL}/kyc/update-form/${id}`,
         propertyData

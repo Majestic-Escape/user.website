@@ -177,12 +177,14 @@ export default function FilterStaysBar({
   };
 
   return (
-    <div className="flex max-w-[1400px] mx-auto flex-row items-start lg:items-center justify-between  gap-4 lg:gap-0">
-      <div className="w-full md:w-auto relative flex gap-x-6">
+    <div className="flex max-w-[1400px] xl:max-w-[1000px] max-lg:mx-auto  flex-row items-start lg:items-center justify-between  gap-4 lg:gap-0">
+      <div className="w-full md:w-auto relative flex gap-x-6 px-8">
         <div
           ref={scrollContainerRef}
-          className="flex space-x-8  md:space-x-8 flex-shrink-0 overflow-x-hidden   px-2 py-2  max-w-full md:max-w-[70vw] lg:[65vw] "
+          // className="flex space-x-8  md:space-x-8 flex-shrink-0 overflow-x-hidden   px-2 py-2  max-w-full md:max-w-[70vw] lg:[65vw] "
+          className=" desktop:overflow-x-hidden md:filter-scroll flex space-x-6 md:space-x-8 flex-shrink-0 overflow-x-auto px-2 py-2 max-w-full md:max-w-[70vw]"
         >
+          {/* property-filter */}
           {propertyTypes.map((type, index) => (
             <div
               key={index}
@@ -222,7 +224,7 @@ export default function FilterStaysBar({
             {canScrollLeft && (
               <button
                 onClick={scrollLeft}
-                className="absolute flex justify-center items-center -translate-y-1/2 -left-6 top-1/2 bg-white h-9 rounded-full shadow w-9 border border-gray "
+                className="tab:invisible midtab:invisible absolute flex justify-center items-center -translate-y-1/2 -left-6 top-1/2 bg-white h-9 rounded-full shadow w-9 border border-gray "
                 aria-label="Scroll left"
               >
                 <ChevronLeft className="w-5 h-5 text-gray" />
@@ -231,7 +233,8 @@ export default function FilterStaysBar({
             {canScrollRight && (
               <button
                 onClick={scrollRight}
-                className="absolute flex justify-center items-center -translate-y-1/2 -right-6 top-1/2 bg-white h-9 rounded-full shadow w-9 border border-gray "
+                className="tab:invisible midtab:invisible absolute flex justify-center items-center -translate-y-1/2 -right-6 top-1/2 bg-white h-9 rounded-full shadow w-9 border border-gray "
+                // scroll-icon
                 aria-label="Next"
               >
                 <ChevronRight className="w-5 h-5 text-gray" />
@@ -241,7 +244,10 @@ export default function FilterStaysBar({
         )}
       </div>
 
-      <div className="hidden md:flex flex-row font-poppins items-center gap-4">
+      <div className="desktop:pl-[52px] tab:pt-6 hidden md:flex flex-row font-poppins items-center gap-4 filter-actions">
+        {/* filter-icon */}
+
+        {/* "hidden md:flex flex-row font-poppins items-center gap-4 xl:pl-12" */}
         <button
           className=" py-2.5 px-4 ring-1 ring-lightGray text-absoluteDark rounded-full hover:ring-absoluteDark transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2"
           onClick={() => {
@@ -249,7 +255,8 @@ export default function FilterStaysBar({
           }}
         >
           <SlidersHorizontal className="w-4 h-4" />
-          <span>Filter</span>
+          {/* reset-icon */}
+          <span className=" tab:hidden">Filter</span>
         </button>
         <button
           className=" py-2.5 px-4 ring-1 ring-lightGray text-absoluteDark rounded-full hover:ring-absoluteDark transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2"
@@ -290,7 +297,8 @@ export default function FilterStaysBar({
           }}
         >
           <SearchX className="w-4 h-4" />
-          <span>Reset</span>
+          <span className="tab:hidden">Reset</span>
+          {/* reset-icon */}
         </button>
         {/* <div
           className={`${

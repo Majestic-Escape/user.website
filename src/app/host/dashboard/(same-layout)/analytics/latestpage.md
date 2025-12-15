@@ -172,10 +172,14 @@ const getLocalData = await localStorage.getItem("token");
 const data = JSON.parse(getLocalData);
 const hostData = await localStorage.getItem("userId");
 const hostId = JSON.parse(hostData);
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("why is", dateRange.from);
+}
 const from = dateRange.from ? dateRange.from.toLocaleDateString() : null;
 const to = dateRange.to ? dateRange.to.toLocaleDateString() : null;
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log(from, to);
+}
 if (data) {
 try {
 const response = await fetch(
@@ -201,7 +205,9 @@ const getLocalData = await localStorage.getItem("token");
 const data = JSON.parse(getLocalData);
 const host = await localStorage.getItem("userId");
 const hostId = JSON.parse(host);
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("hosting", host);
+}
 if (data) {
 try {
 const response = await fetch(`${API_URL}/properties/active/${hostId}`, {
@@ -212,7 +218,9 @@ Authorization: `Bearer ${data}`,
 },
 });
 const result = await response.json();
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("sssss", result);
+}
 const final = await result.data;
 setProperty(final);
 } catch (err) {
@@ -224,7 +232,9 @@ console.error(err);
 useEffect(() => {
 fetchPropertyTitle();
 }, []);
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("titles", currentProperty);
+}
 useEffect(() => {
 fetchData();
 }, [searchTerm, status, dateRange, currentProperty]);
@@ -438,6 +448,7 @@ setTotal(add);
 }, [propertyPieData]);
 
 return (
+
 <div className="container mx-auto space-y-6">
 <div className="flex justify-between">
 <div>

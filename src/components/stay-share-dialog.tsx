@@ -56,7 +56,10 @@ export default function ShareDialog({
         setTimeout(() => setCopySuccess(false), 2000);
       } else {
         // Handle other share methods (email, whatsapp, etc.)
-        console.log(`Sharing via ${method}:`, shareUrl);
+
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log(`Sharing via ${method}:`, shareUrl);
+        }
       }
     } catch (error) {
       console.error("Error sharing:", error);

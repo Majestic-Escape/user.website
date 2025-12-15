@@ -255,7 +255,9 @@ export function LocationForm({ updateFormData, formData }) {
 
       setLocationStatus((prev) => ({ ...prev, loading: false }));
     } catch (error) {
-      console.log(error);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log(error);
+      }
       setLocationStatus((prev) => ({
         ...prev,
         loading: false,
@@ -274,11 +276,15 @@ export function LocationForm({ updateFormData, formData }) {
           `${API_BASE_URL}/property-registration-no/${number}`
         );
 
-        console.log(response);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log(response);
+        }
 
         if (!response.ok) {
           const data = await response.json();
-          console.log(data);
+          if (process.env.NEXT_PUBLIC_ENV === "dev") {
+            console.log(data);
+          }
           setRegistrationNumberError(data?.message);
           setValidRegistrationNo(false);
           updateFormData({ validRegistrationNo: false });
@@ -445,7 +451,9 @@ export function LocationForm({ updateFormData, formData }) {
     checkRegistrationNumber(value);
   };
 
-  console.log("we have reached", formData, address);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("we have reached", formData, address);
+  }
   // Retain manual input changes for other address fields.
   const handleManualInputChange = (key, value) => {
     const newAddress = { ...address, [key]: value };
@@ -492,7 +500,9 @@ export function LocationForm({ updateFormData, formData }) {
     "Lakshadweep",
     "Puducherry",
   ];
-  console.log("sjadjaaa", address, formData);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("sjadjaaa", address, formData);
+  }
   return (
     <div className="max-w-4xl mx-auto p-6">
       <TextReveal>
@@ -591,16 +601,18 @@ export function LocationForm({ updateFormData, formData }) {
           {registrationNumberError && (
             <p className="text-red-500 text-sm">{registrationNumberError}</p>
           )}
-          {/* <p className="text-sm text-gray-600 pl-1">
-            Don't have a registration no.?{" "}
-            <Link
-              className="text-primaryGreen underline text-base"
-              target="_blank"
-              href="https://goaonline.gov.in/Appln/Uil/DeptServices?__DocId=TOU&__ServiceId=TOU03"
-            >
-              Register here
-            </Link>
-          </p> */}
+          {address.state == "Goa" ? (
+            <p className="text-sm text-gray-600 pl-1">
+              Don't have a registration no.?{" "}
+              <Link
+                className="text-primaryGreen underline text-base"
+                target="_blank"
+                href="https://goaonline.gov.in/Appln/Uil/DeptServices?__DocId=TOU&__ServiceId=TOU03"
+              >
+                Register here
+              </Link>
+            </p>
+          ) : null}
 
           <hr />
           <h3 className="text-lg font-semibold">

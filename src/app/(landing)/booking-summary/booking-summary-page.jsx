@@ -162,7 +162,9 @@ export default function BookingSummaryPage() {
 
   const checkInDate = parseDateSafe(queryData?.checkin);
   const checkOutDate = parseDateSafe(queryData?.checkout);
-  // console.log("logiteh", propertyImage);
+  // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("logiteh", propertyImage);
+  // }
   const days = [
     "Sunday",
     "Monday",

@@ -9,7 +9,11 @@ export const propertyService = {
       const response = await axios.get(`${API_BASE_URL}/properties/static`, {
         params,
       });
-      console.log("ms marv");
+      if (process.env.ENV === "dev") {
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("ms marv");
+        }
+      }
       return response.data;
     } catch (error) {
       throw new Error(

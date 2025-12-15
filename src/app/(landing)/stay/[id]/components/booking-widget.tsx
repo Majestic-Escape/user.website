@@ -103,11 +103,15 @@ export default function BookingWidget({
       setIsAuth(true);
     }
   };
-  console.log("nonssssssss", isAuth, isValid);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("nonssssssss", isAuth, isValid);
+  }
   useEffect(() => {
     auth();
   }, []);
-  console.log("logite", propertyImages[0]);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("logite", propertyImages[0]);
+  }
   const calculatePriceWithTax = (basePrice: number) => {
     const serviceFee = Math.round((basePrice * 14) / 100);
     const priceWithServiceFee = basePrice + serviceFee;
@@ -148,7 +152,10 @@ export default function BookingWidget({
   const formatRevDate = (date: Date | undefined) => {
     return date ? format(date, "yyyy-MM-dd") : "";
   };
-  console.log("not what", formatRevDate(new Date()));
+
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("not what", formatRevDate(new Date()));
+  }
   const getTotalGuests = () => {
     return guests.adults + guests.children;
   };
@@ -164,7 +171,9 @@ export default function BookingWidget({
       const data = getLocalData ? JSON.parse(getLocalData) : null;
       const getUserId = await localStorage.getItem("userId");
       const userId = getUserId ? JSON.parse(getUserId) : null;
-      console.log("this is user log", userId);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("this is user log", userId);
+      }
       if (!data) {
         toast.error("You need to signup or login to reserve.");
         return;
@@ -216,9 +225,16 @@ export default function BookingWidget({
     return range.some((d) => unavailableDates.includes(d));
   }
   const filename = propertyImages[0].split("/").pop();
-  console.log("bailan", filename);
-  console.log("get tyep", Object.prototype.toString.call(date?.from));
-  console.log("we have got this date", date?.from);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("bailan", filename);
+  }
+
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("get tyep", Object.prototype.toString.call(date?.from));
+  }
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("we have got this date", date?.from);
+  }
   return (
     <Card className="border rounded-xl sticky shadow-lg">
       <CardContent className="p-0">

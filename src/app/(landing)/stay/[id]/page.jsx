@@ -99,7 +99,9 @@ export default function PropertyPage() {
   const [unavailableDates, setUnavailableDates] = useState([]);
 
   const handleNext = () => {
-    console.log("ggg", propertyData.reviewCount);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("ggg", propertyData.reviewCount);
+    }
     if (next != limit && next < propertyData.reviewCount) {
       setPrev(next);
       setNext(next + 2);
@@ -133,7 +135,9 @@ export default function PropertyPage() {
             `Failed to fetch host data (status: ${response.status})`
           );
         }
-        console.log("bbbbbbb", response);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("bbbbbbb", response);
+        }
         setUnavailableDates(response.data.data);
       } catch (err) {
         console.error(err);
@@ -203,10 +207,14 @@ export default function PropertyPage() {
     // Optional: Add staleTime, cacheTime etc.
     // staleTime: 5 * 60 * 1000, // 5 minutes
   });
-  console.log("rev", unavailableDates);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("rev", unavailableDates);
+  }
   // --- Log states for debugging ---
   // useEffect(() => {
-  //   // console.log("Property Query:", { propertyId, isPropertyLoading, isPropertyFetching, isPropertyError, propertyError: propertyError?.message });
+  //   // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("Property Query:", { propertyId, isPropertyLoading, isPropertyFetching, isPropertyError, propertyError: propertyError?.message });
+  // }
   // }, [
   //   propertyId,
   //   isPropertyLoading,
@@ -216,18 +224,29 @@ export default function PropertyPage() {
   // ]);
 
   // useEffect(() => {
-  //   // console.log("Host Query:", { hostIdStr, isHostLoading, isHostFetching, isHostError, hostError: hostError?.message });
+  //   // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("Host Query:", { hostIdStr, isHostLoading, isHostFetching, isHostError, hostError: hostError?.message });
+  // }
   // }, [hostIdStr, isHostLoading, isHostFetching, isHostError, hostError]);
 
   // --- Handle Main Property Loading/Error State ---
   // Show loading indicator if the main property data is loading
   if (isPropertyLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-32">
-        {/* You might want a more sophisticated page-level skeleton here */}
-        <p className="text-xl text-gray-600">Loading Property Details...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
+        <p className="pt-8 text-xl text-gray-600">
+          Loading Property Details...
+        </p>
       </div>
     );
+
+    // return (
+    //   <div className="min-h-screen flex items-center justify-center pt-32">
+    //     {/* You might want a more sophisticated page-level skeleton here */}
+
+    //   </div>
+    // );
   }
 
   // Show error message if the main property fetch failed
@@ -263,10 +282,12 @@ export default function PropertyPage() {
         ? `${propertyData.address.city}, ${propertyData.address.state}, ${propertyData.address.country}`
         : "Location not fully specified",
   };
-  console.log("new prop", propertyData?.host);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("new prop", propertyData?.host);
+  }
   // --- Render the Page Content ---
   return (
-    <main className="min-h-screen pt-16 md:pt-32 bg-white">
+    <main className="min-h-screen pt-44 md:pt-32 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Property Title */}
         <h1 className="text-xl md:text-2xl font-bricolage font-semibold mb-4 md:mb-6">

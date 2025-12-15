@@ -61,7 +61,8 @@ export default function DashboardLayout({ children }) {
                 {routes.length > 1 && (
                   <>
                     <BreadcrumbItem>
-                      <BreadcrumbLink href={`/${routes[0]}`}>
+                      <BreadcrumbLink>
+                        {/* href={`/${routes[0]}`} */}
                         {routes[0].charAt(0).toUpperCase() + routes[0].slice(1)}
                       </BreadcrumbLink>
                     </BreadcrumbItem>
@@ -70,14 +71,14 @@ export default function DashboardLayout({ children }) {
                 )}
 
                 <BreadcrumbItem>
-                  <BreadcrumbPage href={pathname}>{displayText}</BreadcrumbPage>
+                  <BreadcrumbPage>{displayText}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
 
             <div className=" flex justify-end gap-x-4 ">
-              <MessageCircle className="text-gray-500" />
-              <BellDotIcon className="text-gray-500" />
+              {/* <MessageCircle className="text-gray-500" /> */}
+              {/* <BellDotIcon className="text-gray-500" /> */}
             </div>
           </div>
 

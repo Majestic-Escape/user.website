@@ -30,7 +30,9 @@ export default function HostListingsPage() {
   //       }
 
   //       const result = await response.json();
-  //       console.log("numb", result);
+  //       process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("numb", result);
+  // }
   //       setShow(result.kyc);
   //       return result;
   //     }

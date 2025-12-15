@@ -13,16 +13,19 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const offer = process.env.HOST_COMMISSION_OFFER;
 export function MembershipPopup({
   open,
   onOpenChange,
   onClose,
-  offer,
+
   reedit,
 }) {
   const [hostData, setHostData] = useState([]);
   const fetchHostData = async () => {
-    console.log("enter here");
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("enter here");
+    }
     const getLocalData = await localStorage.getItem("token");
     const data = JSON.parse(getLocalData);
     const userData = await localStorage.getItem("userId");
@@ -36,7 +39,9 @@ export function MembershipPopup({
             Authorization: `Bearer ${data}`,
           },
         });
-        // console.log("djfjdf", await response.json());
+        // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        //   console.log("djfjdf", await response.json());
+        // }
         if (!response.ok) {
           return;
         }
@@ -59,8 +64,10 @@ export function MembershipPopup({
     onClose();
   };
 
-  console.log(" found h", hostData);
-
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log(" found h", hostData);
+  }
+  console.log("offer", offer);
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
@@ -78,16 +85,18 @@ export function MembershipPopup({
                   className="mb-2 bg-white text-emerald-700"
                 >
                   <Sparkles className="mr-1 h-3 w-3" />
-                  {offer ? "Exclusive Offer" : "Property Successfully Created"}
+                  {offer == "true"
+                    ? "Exclusive Offer"
+                    : "Property Successfully Created"}
                 </Badge>
-                {offer ? (
+                {offer == "true" ? (
                   <h3 className="text-3xl font-semibold mt-2">3 Months Free</h3>
                 ) : null}
                 {/* <p className="text-xl mt-1">Host Membership at  ₹99 </p> */}
               </div>
             </div>
             <div className="p-6">
-              {offer ? (
+              {offer == "true" ? (
                 <div className="space-y-4 text-center">
                   <div className="flex items-center pl-8">
                     <span className="text-gray-500 text-xl line-through">
@@ -105,11 +114,13 @@ export function MembershipPopup({
               ) : null}
               <div className="space-y-4 text-center">
                 <p className="text-base text-gray-600">
-                  {!offer
-                    ? "Please complete your KYC to make your property go live. It only takes a few minutes and helps us verify your hosting details."
+                  {offer == "true"
+                    ? hostData?.kyc
+                      ? "Great news! Your offer is now active. Start enjoying all the benefits right away."
+                      : "You're almost ready! Just finish your KYC verification so we can publish your property and start getting you bookings."
                     : hostData?.kyc
-                    ? "Great news! Your offer is now active. Start enjoying all the benefits right away."
-                    : "You're almost ready! Just finish your KYC verification so we can publish your property and start getting you bookings."}
+                    ? "Great news! You have successfully added your new property."
+                    : "Please complete your KYC to make your property go live. It only takes a few minutes and helps us verify your hosting details."}
                 </p>
               </div>
               <div className="flex space-x-4">
@@ -137,7 +148,7 @@ export function MembershipPopup({
             <div className="bg-gradient-to-br from-primaryGreen to-brightGreen p-6 text-white">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-medium text-center">
-                  Re-Edit Completed! 🎉
+                  Listing Update Completed! 🎉
                 </DialogTitle>
               </DialogHeader>
             </div>
@@ -145,7 +156,7 @@ export function MembershipPopup({
               <div className="space-y-4 text-center">
                 <p className="text-base text-gray-600">
                   {hostData?.kyc
-                    ? "Changes updated sucessfully"
+                    ? "You have successfully updated your property details."
                     : "Complete your KYC to go live now!"}
                 </p>
               </div>

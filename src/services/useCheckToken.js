@@ -36,6 +36,12 @@ export function useCheckToken() {
           //   router.push("/login");
           //   toast.error("Session expired, please login again.");
           // }
+          if (result.code === "TOKEN_EXPIRED") {
+            localStorage.clear();
+            sessionStorage.clear();
+            router.push("/login");
+            toast.error("Session expired, please login again.");
+          }
           return null;
         }
 

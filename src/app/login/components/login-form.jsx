@@ -83,7 +83,10 @@ export default function LoginForm() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.log("OTP Request Error:", errorData.code);
+
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("OTP Request Error:", errorData.code);
+        }
         switch (errorData.code) {
           case "USER_EXISTS":
             toast.error("Account already exists, please login");
@@ -109,7 +112,7 @@ export default function LoginForm() {
       }
 
       const data = await response.json();
-      // console.log("Data:", data)
+      // process.env.ENV === 'dev' && console.log("Data:", data)
       toast.success("OTP sent successfully to your email");
       setStep(2);
     } catch (error) {
@@ -159,10 +162,14 @@ export default function LoginForm() {
       // Parse successful response
       const data = await response.json();
       const { token } = data.token;
-      console.log(data);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log(data);
+      }
       // Store token and show success message
       localStorage.setItem("token", JSON.stringify(token));
-      console.log("why this is going", data);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("why this is going", data);
+      }
       localStorage.setItem("userId", JSON.stringify(data.userId));
       login({ email });
       toast.success("Welcome. You are now signed in.");

@@ -5,7 +5,7 @@ export function ExpHero() {
   return (
     <section className="relative h-[500px] md:h-[80vh]  w-full">
       <VideoBackground />
-      <div className="relative h-full px-4 sm:px-6 md:px-[72px] py-8 sm:py-12 md:py-[128px] flex flex-col items-center justify-center">
+      <div className="mobile:mt-20 relative h-full px-4 sm:px-6 md:px-[72px] py-8 sm:py-12 md:py-[128px] flex flex-col items-center justify-center">
         <h1 className="text-2xl font-bricolage sm:text-3xl md:text-5xl font-bold text-white text-center mb-2 sm:mb-4">
           Discover Thrilling Experiences in Goa
         </h1>

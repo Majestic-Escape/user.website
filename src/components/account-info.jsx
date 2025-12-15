@@ -112,7 +112,10 @@ export default function AccountInfo() {
           throw new Error("Network response was not ok");
         }
         const data = await res.json();
-        console.log("Fetched Data:", data);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("Fetched Data:", data);
+        }
+
         setProfileData(data);
         setAvatarUrl(data.profilePicture);
       } catch (error) {
@@ -121,7 +124,7 @@ export default function AccountInfo() {
     };
 
     fetchProfileInfo();
-  }, [avatarUrl]);
+  }, [auth?.user?.email]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -151,18 +154,26 @@ export default function AccountInfo() {
     fileInputRef.current?.click();
   };
 
-  console.log("xyzabc", avatarUrl);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("xyzabc", avatarUrl);
+  }
   // Handle file upload and convert file to base64 URL
   const handleFileChange = async (event) => {
-    console.log("reaching0");
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("reaching0");
+    }
     const file = event.target.files?.[0];
     const MAX_SIZE = 5 * 1024 * 1024;
-    console.log("reaching1");
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("reaching1");
+    }
     if (!file) {
       toast.error("No file found. Reupload the file");
       return;
     }
-    console.log("reaching2");
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("reaching2");
+    }
     if (file.size > MAX_SIZE) {
       toast.error(`File too large: ${file.name}. Max size is 5MB.`);
       return;
@@ -183,7 +194,9 @@ export default function AccountInfo() {
           data: { url: avatarUrl },
         });
         update = true;
-        console.log("Deleted");
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("Deleted");
+        }
       }
 
       const formData = new FormData();
@@ -197,7 +210,9 @@ export default function AccountInfo() {
           headers: { "Content-Type": "multipart/form-data" },
         }
       );
-      console.log("reaching4");
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("reaching4");
+      }
       const newUrl = res.data.url;
 
       // STEP 3: Set new image
@@ -231,8 +246,10 @@ export default function AccountInfo() {
   };
 
   // Update phone number in state
-  const handleChangePhone = (e) => {
-    setProfileData((prev) => ({ ...prev, phone: e.target.value }));
+  const handleChangePhone = (value) => {
+    const digitsOnly = (value || "").replace(/\D/g, "").slice(0, 10);
+    setProfileData((prev) => ({ ...prev, phone: digitsOnly }));
+    // setProfileData((prev) => ({ ...prev, phone: e.target.value }));
   };
   const handleChangeLanguage = (value) => {
     setProfileData((prev) => ({ ...prev, languages: value }));
@@ -249,6 +266,17 @@ export default function AccountInfo() {
 
   // Update address fields in state
   const handleChangeAddress = (field, value) => {
+    if (field === "postalCode") {
+      const digitsOnly = (value || "").replace(/\D/g, "").slice(0, 6);
+      setProfileData((prev) => ({
+        ...prev,
+        address: {
+          ...prev.address,
+          [field]: digitsOnly,
+        },
+      }));
+      return;
+    }
     setProfileData((prev) => ({
       ...prev,
       address: {
@@ -257,9 +285,30 @@ export default function AccountInfo() {
       },
     }));
   };
+  const validatePhoneAndPostal = () => {
+    const phone = profileData?.phone ? String(profileData.phone) : "";
+    const postal = profileData?.address?.postalCode
+      ? String(profileData.address.postalCode)
+      : "";
 
+    if (!/^\d{10}$/.test(phone)) {
+      toast.error("Mobile number must be exactly 10 digits.");
+      return false;
+    }
+
+    if (postal && !/^\d{6}$/.test(postal)) {
+      // If postal is optional, you may only validate when non-empty. Change as needed.
+      toast.error("Postal code must be exactly 6 digits.");
+      return false;
+    }
+
+    return true;
+  };
   // Submit the updated profile data via a PUT request
   const handleSubmit = async () => {
+    if (!validatePhoneAndPostal()) {
+      return; // don't proceed when invalid
+    }
     // Build the form data payload matching the backend route requirements
     const formData = {
       firstName: profileData.firstName,
@@ -297,18 +346,19 @@ export default function AccountInfo() {
 
       const updatedData = await res.json();
       toast.success("Profile updated successfully!");
-      setProfileData(updatedData); // Update local state with the latest profile data
+      setProfileData((prev) => ({ ...prev, ...updatedData })); // Update local state with the latest profile data
     } catch (error) {
       console.error("Error saving profile:", error);
       toast.error("Failed to save profile.");
     }
   };
-  console.log(
-    "abbbout",
-    profileData?.about,
-    profileData?.email,
-    profileData?.languages
-  );
+
+  // console.log(
+  //   "abbbout",
+  //   profileData?.about,
+  //   profileData?.email,
+  //   profileData?.languages
+  // );
   // Render a skeleton view until profileData is loaded
   if (!profileData) {
     return (
@@ -422,7 +472,7 @@ export default function AccountInfo() {
           <div>
             <h2 className="text-lg font-semibold mb-1">Full Name</h2>
             <p>
-              {profileData.firstName} {profileData.lastName}
+              {profileData?.firstName} {profileData?.lastName}
             </p>
           </div>
           <hr />
@@ -442,14 +492,25 @@ export default function AccountInfo() {
           {/* Date of Birth (non-editable) */}
 
           {/* Phone Number (editable) */}
-          <div>
-            <h2 className="text-lg font-semibold mb-1">Phone no.</h2>
+          <h2 className="text-lg font-semibold">Mobile Number</h2>
+          <div className="flex items-center max-w-md">
+            <div
+              aria-hidden
+              className="px-3 h-10 flex items-center justify-center bg-gray-50 text-sm rounded-l-md border border-r-0 border-gray-200"
+            >
+              +91
+            </div>
+
             <Input
-              placeholder="+91 9876543211"
+              placeholder="98765*****"
               value={profileData.phone || ""}
-              onChange={handleChangePhone}
+              onChange={(e) => handleChangePhone(e.target.value)}
+              className="rounded-r-md h-10 border-gray-200"
+              inputMode="tel"
+              pattern="\d*"
             />
           </div>
+
           <hr />
 
           {/* Government Registered ID */}
@@ -542,6 +603,8 @@ export default function AccountInfo() {
                 className="h-10"
                 placeholder="Postal Code"
                 value={profileData.address?.postalCode || ""}
+                inputMode="numeric"
+                pattern="\d*"
                 onChange={(e) =>
                   handleChangeAddress("postalCode", e.target.value)
                 }
@@ -638,6 +701,7 @@ export default function AccountInfo() {
           <hr />
           <div>
             <h2 className="text-lg font-semibold mb-2">About Me</h2>
+
             <Textarea
               className="px-4 py-4 border border-gray h-40 w-full "
               type="text"

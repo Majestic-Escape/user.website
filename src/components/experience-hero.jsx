@@ -350,7 +350,12 @@ function ShareDialog({ isOpen, onClose, property }) {
             window.open(`sms:?&body=${smsBody}`);
           } else {
             await navigator.clipboard.writeText(shareUrl);
-            console.log("Link copied! You can paste it in your messaging app");
+
+            if (process.env.NEXT_PUBLIC_ENV === "dev") {
+              console.log(
+                "Link copied! You can paste it in your messaging app"
+              );
+            }
           }
           break;
 
@@ -393,7 +398,9 @@ function ShareDialog({ isOpen, onClose, property }) {
               setTimeout(() => setModalText(""), 3000);
             } catch (error) {
               // Fallback to copying link
-              console.log(error.message);
+              if (process.env.NEXT_PUBLIC_ENV === "dev") {
+                console.log(error.message);
+              }
               await navigator.clipboard.writeText(shareUrl);
               setModalText("Link copied! You can paste it in Instagram");
               setTimeout(() => setModalText(""), 2000);
@@ -783,7 +790,7 @@ const ExperienceCard = ({ experience, includeTaxes }) => {
               {experience.title}
             </h3>
             <div className="flex items-center gap-1 sm:gap-2">
-              <button
+              {/* <button
                 className="inline-flex items-center justify-center h-8 w-8 right-4 hover:text-gray"
                 onClick={() => setIsInfoDialogOpen(true)}
               >
@@ -794,9 +801,9 @@ const ExperienceCard = ({ experience, includeTaxes }) => {
                   alt="Info Icon"
                   className="w-6 h-6 justify-center"
                 />
-              </button>
+              </button> */}
 
-              <button
+              {/* <button
                 onClick={handleWishlist}
                 className={`inline-flex h-6 w-6 items-center justify-center rounded-md border border-opacity-60 border-[#A7A7A7] bg-white hover:bg-accent hover:text-accent-foreground ${
                   isWishlisted ? "text-red-500" : "text-gray"
@@ -819,7 +826,7 @@ const ExperienceCard = ({ experience, includeTaxes }) => {
                     d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
                   />
                 </svg>
-              </button>
+              </button> */}
 
               <button
                 className="text-gray inline-flex h-8 w-8 items-center justify-center rounded-md hover:text-gray-600"

@@ -59,7 +59,9 @@ export default function ReservationsPage() {
   const [showInvoice, setShowInvoice] = useState(false);
   const [payment, setPayment] = useState();
   const [mssg, setMssg] = useState(false);
-  console.log("cl", payment);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("cl", payment);
+  }
   const handleDateRangeChange = (range) => {
     const today = new Date();
     switch (range) {
@@ -123,7 +125,9 @@ export default function ReservationsPage() {
     const newDate = new Date(Date.UTC(year, month, day));
     return newDate.toISOString();
   };
-  console.log("boolean mssg", mssg);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("boolean mssg", mssg);
+  }
   const fetchData = async () => {
     const getLocalData = await localStorage.getItem("token");
     const data = JSON.parse(getLocalData);
@@ -131,7 +135,9 @@ export default function ReservationsPage() {
     const hostId = JSON.parse(hostData);
     const from = date.from ? date.from.toLocaleDateString() : null;
     const to = date.to ? date.to.toLocaleDateString() : null;
-    console.log(from, to);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log(from, to);
+    }
     setMssg(false);
     if (data) {
       try {
@@ -146,7 +152,9 @@ export default function ReservationsPage() {
           }
         );
         const result = await response.json();
-        console.log("aaaaaaa", result);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("aaaaaaa", result);
+        }
         const mssg = await result.error;
         if (mssg == "toDate") {
           toast.error("Cannot select same date twice");
@@ -156,7 +164,9 @@ export default function ReservationsPage() {
           return;
         }
 
-        console.log(result);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log(result);
+        }
         const final = await result.data;
         setBookings(final);
       } catch (err) {
@@ -183,7 +193,9 @@ export default function ReservationsPage() {
           return;
         }
         const result = await response.json();
-        console.log("enll", result);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("enll", result);
+        }
         setPayment(result.data);
       } catch (err) {
         console.error(err);
@@ -282,7 +294,17 @@ export default function ReservationsPage() {
     try {
       const getLocalData = await localStorage.getItem("token");
       const data = JSON.parse(getLocalData);
-      console.log("term", bookingId, userEmail, hostEmail, userName, hostName);
+
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log(
+          "term",
+          bookingId,
+          userEmail,
+          hostEmail,
+          userName,
+          hostName
+        );
+      }
       if (data) {
         const response = await fetch(`${API_URL}/booking/host/terminate`, {
           method: "PATCH",
@@ -316,7 +338,10 @@ export default function ReservationsPage() {
 
     setTimeout(() => setModalOpen(true), 50);
   };
-  console.log("what the hell is", date.from, date.to);
+
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("what the hell is", date.from, date.to);
+  }
   const handleModalConfirm = () => {
     const booking = selectedBooking;
     const { _id, userId, hostId } = booking;
@@ -372,7 +397,9 @@ export default function ReservationsPage() {
   //       }
   //     }
   //   }
-  //   // console.log("dta", today.toDateString(), checkoutDate.toDateString());
+  //   // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("dta", today.toDateString(), checkoutDate.toDateString());
+  // }
 
   //   // const isSameDay = today.toDateString() === checkoutDate.toDateString();
 
@@ -432,7 +459,10 @@ export default function ReservationsPage() {
 
     return false;
   }
-  console.log("we want to know date", date.from, date.to);
+
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("we want to know date", date.from, date.to);
+  }
   return (
     <div className="w-full space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-4">
@@ -781,7 +811,10 @@ export default function ReservationsPage() {
                               .second(0);
 
                             const hoursDiff = checkInTime.diff(now, "hours");
-                            console.log("what i", hoursDiff);
+
+                            if (process.env.NEXT_PUBLIC_ENV === "dev") {
+                              console.log("what i", hoursDiff);
+                            }
                             return hoursDiff >= 24 ? (
                               <DropdownMenuItem
                                 className="text-red-600"
@@ -830,7 +863,10 @@ export default function ReservationsPage() {
                             .second(0);
 
                           const hoursDiff = checkInTime.diff(now, "hours");
-                          console.log("what i", hoursDiff);
+
+                          if (process.env.NEXT_PUBLIC_ENV === "dev") {
+                            console.log("what i", hoursDiff);
+                          }
                           return hoursDiff >= 24 ? (
                             <DropdownMenuItem
                               className="text-red-600"

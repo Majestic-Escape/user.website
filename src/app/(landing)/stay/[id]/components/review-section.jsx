@@ -25,7 +25,9 @@ export default function ReviewSection({
   // const [reviews, setReviews] = useState<Review[] | null>(null);
 
   const [averageRating, setAverageRating] = useState(0);
-  console.log("zzzz", reviews, isLoading);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("zzzz", reviews, isLoading);
+  }
   const router = useRouter();
   const b = "68909384202eafcb9eaa7b33";
   // Modify the useEffect to allow for testing the empty state
@@ -263,7 +265,9 @@ export default function ReviewSection({
       </p>
     </div>
   );
-  console.log("glanter", reviews);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("glanter", reviews);
+  }
   if (reviews?.data?.length == 0) {
     return <EmptyState />;
   }
@@ -398,7 +402,9 @@ export default function ReviewSection({
   //     </div>
   //   </div>
   // );
-  console.log("nice ma", property);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("nice ma", property);
+  }
   return (
     <section className="bg-white p-6 md:p-10 rounded-xl shadow-lg max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">

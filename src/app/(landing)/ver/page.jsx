@@ -28,7 +28,9 @@ export default function KYCVerification() {
   }, [loading]);
 
   const handleImageUpload = (e) => {
-    console.log("ou", e.target.files?.[0]);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("ou", e.target.files?.[0]);
+    }
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -36,8 +38,13 @@ export default function KYCVerification() {
         setImage(reader.result);
       };
       reader.readAsDataURL(file);
-      console.log("reader", reader);
-      console.log("readasdata", reader.readAsDataURL(file));
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("reader", reader);
+      }
+
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("readasdata", reader.readAsDataURL(file));
+      }
     }
   };
 

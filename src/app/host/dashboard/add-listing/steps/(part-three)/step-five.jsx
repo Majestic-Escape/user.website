@@ -18,7 +18,9 @@ export function SetRules({ updateFormData, formData }) {
   );
   const [customRules, setCustomRules] = useState(formData?.customRules || []);
   const [newRule, setNewRule] = useState("");
-  console.log("this is", formData);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("this is", formData);
+  }
 
   useEffect(() => {
     updateFormData({ selectedRules, customRules });

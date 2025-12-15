@@ -95,7 +95,9 @@ export default function ReservationsPage() {
 
     const from = getDate(date.from);
     const to = getDate(date.to);
-    console.log(from, to);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log(from, to);
+    }
     if (data) {
       try {
         const response = await fetch(
@@ -109,7 +111,9 @@ export default function ReservationsPage() {
           }
         );
         const result = await response.json();
-        console.log(result);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log(result);
+        }
         const final = await result.data;
         setBookings(final);
       } catch (err) {
@@ -266,7 +270,9 @@ export default function ReservationsPage() {
     }
     return value;
   }
-  console.log(bookings);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log(bookings);
+  }
   return (
     <div className="w-full space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-4">

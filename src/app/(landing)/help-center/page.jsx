@@ -465,23 +465,23 @@ export default function LocalRules() {
                         <Link href="/help-center/local-rules/goa">
                           <div className="underline">Goa</div>
                         </Link>{" "}
-                        <Link href="/help-center/local-rules/karnataks">
+                        <Link href="/help-center/local-rules/karnataka">
                           {" "}
                           <div className="underline">Karnataka</div>
                         </Link>
                         <Link href="/help-center/local-rules/maharashtra">
                           <div className="underline">Maharashtra</div>{" "}
                         </Link>
-                        <Link href="/help-center/local-rules/gujarat">
+                        {/* <Link href="/help-center/local-rules/gujarat">
                           <div className="underline">Gujarat</div>
-                        </Link>
-                        <Link href="/help-center/goa">
+                        </Link> */}
+                        {/* <Link href="/help-center/goa">
                           <div className="underline">Delhi</div>
-                        </Link>
-                        <Link href="/help-center/goa">
+                        </Link> */}
+                        {/* <Link href="/help-center/goa">
                           {" "}
                           <div className="underline">Madhya Pradesh</div>
-                        </Link>
+                        </Link> */}
                       </div>
                     </dd>
                   </div>

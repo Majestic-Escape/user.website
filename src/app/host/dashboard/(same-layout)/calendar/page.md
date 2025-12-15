@@ -76,7 +76,9 @@ const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
 const searchParams = useSearchParams();
 const propertyId = searchParams.get("propertyId");
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("nik", unavailableDates, hostBlock);
+}
 async function fetchDates() {
 try {
 const response = await axios.get(
@@ -88,12 +90,15 @@ const response = await axios.get(
           `Failed to fetch host data (status: ${response.status})`
         );
       }
-      console.log("aaaa", response.data.data, response.data.blocked);
-      setUnavailableDates(response.data.data);
-      setHostBlock(response.data.blocked);
-    } catch (err) {
-      console.error(err);
-    }
+      process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+console.log("aaaa", response.data.data, response.data.blocked);
+}
+setUnavailableDates(response.data.data);
+setHostBlock(response.data.blocked);
+} catch (err) {
+console.error(err);
+}
 
 }
 useEffect(() => {
@@ -109,7 +114,10 @@ kind,
 
       // ✅ Axios automatically throws on error, so no need for res.ok
       const final = res.data;
-      console.log("sss", final);
+      process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+console.log("sss", final);
+}
 
       if (final.success) {
         setExportUrl(final.url);
@@ -289,20 +297,28 @@ const url = iCalUrl;
 
 const handleSyncCalendar = (kind) => {
 // if (syncPlatform === "google") {
-// console.log("Syncing with Google Calendar");
+// process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("Syncing with Google Calendar");
+}
 // // Implement Google Calendar sync logic here
 // } else
 if (syncPlatform === "ical") {
 syncWithUrl(kind);
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("Syncing with iCal URL:", iCalUrl);
+}
 // Implement iCal sync logic here
 }
 };
 
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("what th", arr);
+}
 const renderCalendar = () => {
 const monthStart = startOfMonth(currentDate);
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("supss", currentDate, monthStart);
+}
 const monthEnd = endOfMonth(currentDate);
 const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
@@ -387,8 +403,11 @@ const selectedTab = tab;
       //   start: dateRange.from,
       //   end: dateRange.to,
       // });
-      // console.log("k", dateDays);
-      // let hasOverlap = false; // use local variable
+      // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+console.log("k", dateDays);
+}
+// let hasOverlap = false; // use local variable
 
       // for (let i = 1; i < dateDays.length; i++) {
       //   const dateStr = dateDays[i].toISOString().split("T")[0];
@@ -417,7 +436,7 @@ const selectedTab = tab;
         unavailableDates.includes(d)
       );
 
-      console.log(
+      process.env.ENV === 'dev' && console.log(
         "what is this",
         selectedRange,
         unavailableDates,
@@ -458,6 +477,7 @@ const selectedTab = tab;
 };
 
 return (
+
 <div className="container mx-auto p-4">
 <ConfirmCancelDialog
 choice={"Unblock"}

@@ -172,10 +172,14 @@ const AnalyticsPage = () => {
     const data = JSON.parse(getLocalData);
     const hostData = await localStorage.getItem("userId");
     const hostId = JSON.parse(hostData);
-    console.log("why is", dateRange.from);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("why is", dateRange.from);
+    }
     const from = dateRange.from ? dateRange.from.toLocaleDateString() : null;
     const to = dateRange.to ? dateRange.to.toLocaleDateString() : null;
-    console.log(from, to);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log(from, to);
+    }
     if (data) {
       try {
         const response = await fetch(
@@ -201,7 +205,9 @@ const AnalyticsPage = () => {
     const data = JSON.parse(getLocalData);
     const host = await localStorage.getItem("userId");
     const hostId = JSON.parse(host);
-    console.log("hosting", host);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("hosting", host);
+    }
     if (data) {
       try {
         const response = await fetch(`${API_URL}/properties/active/${hostId}`, {
@@ -212,7 +218,9 @@ const AnalyticsPage = () => {
           },
         });
         const result = await response.json();
-        console.log("sssss", result);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("sssss", result);
+        }
         const final = await result.data;
         setProperty(final);
       } catch (err) {
@@ -224,7 +232,9 @@ const AnalyticsPage = () => {
   useEffect(() => {
     fetchPropertyTitle();
   }, []);
-  console.log("titles", currentProperty);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("titles", currentProperty);
+  }
   useEffect(() => {
     fetchData();
   }, [searchTerm, status, dateRange, currentProperty]);

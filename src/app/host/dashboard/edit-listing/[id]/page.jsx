@@ -57,7 +57,9 @@ export default function EditListing({ params }) {
   //       }
 
   //       const result = await response.json();
-  //       console.log("numb", result);
+  //       process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("numb", result);
+  // }
   //       setShow(result.kyc);
   //       return result;
   //     }
@@ -94,9 +96,16 @@ export default function EditListing({ params }) {
 
     fetchListingData();
   }, [id, auth.user?.email]);
-  console.log("we got the original", originalData);
-  console.log("we got the original2", originalData?.host?.kyc);
-  console.log("which is this", formData);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("we got the original", originalData);
+  }
+
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("we got the original2", originalData?.host?.kyc);
+  }
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("which is this", formData);
+  }
   const checkForSignificantChanges = () => {
     if (!originalData || !formData) return false;
     const significantFields = ["images", "title", "description", "customRules"];
@@ -188,11 +197,9 @@ export default function EditListing({ params }) {
         currentStepData.requiresValidation &&
         typeof currentStepData.validate === "function"
       ) {
-        const { isValid, errorMessage } = currentStepData.validate(formData);
+        const { isValid, errorMessage } = currentStepData?.validate(formData);
         if (!isValid) {
-          toast.error(
-            errorMessage || "Validation failed. Please check the fields."
-          );
+          toast.error(errorMessage || "Please check the fields.");
           return false;
         }
       }

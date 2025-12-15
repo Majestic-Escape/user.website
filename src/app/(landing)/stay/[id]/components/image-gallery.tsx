@@ -1,33 +1,42 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useState } from "react"
-import PhotoGalleryModal from "./photo-gallery-modal"
+import Image from "next/image";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
+import PhotoGalleryModal from "./photo-gallery-modal";
 
 interface ImageGalleryProps {
-  images: string[]
-  isLoading: boolean
-  height?: number // Optional prop to control the height
+  images: string[];
+  isLoading: boolean;
+  height?: number; // Optional prop to control the height
 }
 
-export default function ImageGallery({ images, isLoading, height = 360 }: ImageGalleryProps) {
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false)
-  console.log("Photos", images)
+export default function ImageGallery({
+  images,
+  isLoading,
+  height = 360,
+}: ImageGalleryProps) {
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("Photos", images);
+  }
 
   // Limit to 5 images for display in the grid
-  const displayImages = images.slice(0, 5)
+  const displayImages = images.slice(0, 5);
 
   if (isLoading) {
     return (
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2" style={{ height: `${height}px` }}>
+      <div
+        className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2"
+        style={{ height: `${height}px` }}
+      >
         <Skeleton className="aspect-square sm:col-span-2 sm:row-span-2 h-full" />
         <Skeleton className="aspect-square hidden sm:block h-full" />
         <Skeleton className="aspect-square hidden sm:block h-full" />
         <Skeleton className="aspect-square hidden md:block h-full" />
         <Skeleton className="aspect-square hidden md:block h-full" />
       </div>
-    )
+    );
   }
 
   return (
@@ -55,7 +64,12 @@ export default function ImageGallery({ images, isLoading, height = 360 }: ImageG
             )}
           </div>
           {displayImages.slice(1).map((image, index) => (
-            <div key={index} className={`${index > 1 ? "hidden md:block" : "hidden sm:block"} relative h-full`}>
+            <div
+              key={index}
+              className={`${
+                index > 1 ? "hidden md:block" : "hidden sm:block"
+              } relative h-full`}
+            >
               <Image
                 src={image || "/placeholder.svg"}
                 alt={`Property image ${index + 2}`}
@@ -76,8 +90,11 @@ export default function ImageGallery({ images, isLoading, height = 360 }: ImageG
           </button>
         )}
       </div>
-      <PhotoGalleryModal images={images} isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} />
+      <PhotoGalleryModal
+        images={images}
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+      />
     </>
-  )
+  );
 }
-

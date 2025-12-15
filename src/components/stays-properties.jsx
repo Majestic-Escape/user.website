@@ -8,6 +8,15 @@ import { propertyService } from "../services/propertyService";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
+
+import {
+  Bell,
+  Search,
+  Settings,
+  HelpCircle,
+  LogOut,
+  RotateCw,
+} from "lucide-react";
 // import { useCheckToken } from "@/services/useCheckToken";
 export default function StaysProperties() {
   const [properties, setProperties] = useState([]);
@@ -18,6 +27,10 @@ export default function StaysProperties() {
   const [selectedType, setSelectedType] = useState(null);
   const [isChecked, setIsChecked] = useState(false);
   const router = useRouter();
+
+  const handleRefresh = () => {
+    window.location.reload();
+  };
   // const { checkToken } = useCheckToken();
 
   // useEffect(() => {
@@ -56,8 +69,26 @@ export default function StaysProperties() {
 
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div className="text-center py-8 text-red-500">{error}</div>
+      // <div className="flex justify-center items-center min-h-[400px]">
+      //   <div className="text-center py-8 text-gray-500">Refresh</div>
+      // </div>
+      <div className="font-poppins flex justify-center w-full bg-white">
+        <div className="w-full max-w-[1760px]">
+          <div className="mx-auto px-4 sm:px-6 lg:px-[72px] py-8 sm:py-16 lg:py-[128px] font-poppins bg-white text-absoluteDark">
+            <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50 rounded-lg">
+              <div className="flex cursor-pointer" onClick={handleRefresh}>
+                <div className="text-gray-500 text-lg mb-2 pr-2">
+                  Refresh Now
+                </div>
+                <RotateCw color="gray" />
+              </div>
+              <p className="text-gray-400 text-sm">
+                The page loaded, but the properties missed the memo. Give it
+                another go.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

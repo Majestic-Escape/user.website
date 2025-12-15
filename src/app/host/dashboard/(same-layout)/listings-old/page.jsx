@@ -1,22 +1,27 @@
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
-
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal, Grid, List } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+} from "@tanstack/react-table";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  MoreHorizontal,
+  Grid,
+  List,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -25,30 +30,49 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { propertyService } from "@/services/propertyService"
-import { useAuth } from "@/contexts/AuthContext"
-
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { propertyService } from "@/services/propertyService";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ListingsPage() {
-  const auth = useAuth()
-  const router = useRouter()
-  const [properties, setProperties] = React.useState([])
-  const [loading, setLoading] = React.useState(true)
-  const [error, setError] = React.useState(null)
-  const [page, setPage] = React.useState(1)
-  const [hasMore, setHasMore] = React.useState(true)
-  const [view, setView] = React.useState("table")
-  const [sorting, setSorting] = React.useState([])
-  const [columnFilters, setColumnFilters] = React.useState([])
-  const [columnVisibility, setColumnVisibility] = React.useState({})
-  const [rowSelection, setRowSelection] = React.useState({})
+  const auth = useAuth();
+  const router = useRouter();
+  const [properties, setProperties] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+  const [page, setPage] = React.useState(1);
+  const [hasMore, setHasMore] = React.useState(true);
+  const [view, setView] = React.useState("table");
+  const [sorting, setSorting] = React.useState([]);
+  const [columnFilters, setColumnFilters] = React.useState([]);
+  const [columnVisibility, setColumnVisibility] = React.useState({});
+  const [rowSelection, setRowSelection] = React.useState({});
 
   const columns = [
     {
@@ -66,11 +90,14 @@ export default function ListingsPage() {
       accessorKey: "title",
       header: ({ column }) => {
         return (
-          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
             Title
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
     },
     {
@@ -85,13 +112,13 @@ export default function ListingsPage() {
       accessorKey: "basePrice",
       header: () => <div className="text-right">Price</div>,
       cell: ({ row }) => {
-        const price = Number.parseFloat(row.getValue("basePrice"))
+        const price = Number.parseFloat(row.getValue("basePrice"));
         const formatted = new Intl.NumberFormat("en-IN", {
           style: "currency",
           currency: "INR",
-        }).format(price)
+        }).format(price);
 
-        return <div className="text-right font-medium">{formatted}/night</div>
+        return <div className="text-right font-medium">{formatted}/night</div>;
       },
     },
     {
@@ -100,7 +127,9 @@ export default function ListingsPage() {
       cell: ({ row }) => (
         <span
           className={`px-2 py-1 rounded-full text-xs ${
-            row.original.status === "Active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+            row.original.status === "Active"
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
           }`}
         >
           {row.original.status}
@@ -110,7 +139,7 @@ export default function ListingsPage() {
     {
       id: "actions",
       cell: ({ row }) => {
-        const property = row.original
+        const property = row.original;
 
         return (
           <DropdownMenu>
@@ -122,53 +151,68 @@ export default function ListingsPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(property._id)}>
+              <DropdownMenuItem
+                onClick={() => navigator.clipboard.writeText(property._id)}
+              >
                 Copy property ID
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleEdit(property)}>Edit property</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(property._id)}>Delete property</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleEdit(property)}>
+                Edit property
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleDelete(property._id)}>
+                Delete property
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        )
+        );
       },
     },
-  ]
+  ];
 
   React.useEffect(() => {
-    fetchListings()
-  }, [])
+    fetchListings();
+  }, []);
 
   const fetchListings = async () => {
     try {
-      setLoading(true)
-      const data = await propertyService.getUserPropertyListings(auth.user.email, page)
+      setLoading(true);
+      const data = await propertyService.getUserPropertyListings(
+        auth.user.email,
+        page
+      );
       if (data.listings.length === 0) {
-        setHasMore(false)
+        setHasMore(false);
       } else {
-        setProperties((prevProperties) => [...prevProperties, ...data.listings])
+        setProperties((prevProperties) => [
+          ...prevProperties,
+          ...data.listings,
+        ]);
       }
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleEdit = (property) => {
-    router.push(`/host/dashboard/edit-listing/${property._id}`)
-  }
+    router.push(`/host/dashboard/edit-listing/${property._id}`);
+  };
 
   const handleDelete = async (id) => {
     // Implement delete logic here
-    console.log(`Deleting property with id: ${id}`)
-  }
+
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log(`Deleting property with id: ${id}`);
+    }
+  };
 
   const loadMore = () => {
     if (!loading && hasMore) {
-      setPage((prevPage) => prevPage + 1)
+      setPage((prevPage) => prevPage + 1);
     }
-  }
+  };
 
   const table = useReactTable({
     data: properties,
@@ -187,7 +231,7 @@ export default function ListingsPage() {
       columnVisibility,
       rowSelection,
     },
-  })
+  });
 
   return (
     <div className="space-y-6">
@@ -195,7 +239,9 @@ export default function ListingsPage() {
       {error && <p>Error: {error}</p>}
 
       <div className="flex justify-between items-center">
-        <h1 className="text-xl sm:text-2xl font-semibold font-bricolage">Manage Listing</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold font-bricolage">
+          Manage Listing
+        </h1>
         <Link
           className="text-white bg-primaryGreen hover:to-brightGreen py-2 px-4 rounded-3xl"
           href="/host/dashboard/add-listing"
@@ -208,13 +254,17 @@ export default function ListingsPage() {
         <div className="flex-1">
           <Input
             placeholder="Filter titles..."
-            value={(table.getColumn("title")?.getFilterValue() ) ?? ""}
-            onChange={(event) => table.getColumn("title")?.setFilterValue(event.target.value)}
+            value={table.getColumn("title")?.getFilterValue() ?? ""}
+            onChange={(event) =>
+              table.getColumn("title")?.setFilterValue(event.target.value)
+            }
           />
         </div>
         <Select
-          value={(table.getColumn("propertyType")?.getFilterValue() ) ?? ""}
-          onValueChange={(value) => table.getColumn("propertyType")?.setFilterValue(value)}
+          value={table.getColumn("propertyType")?.getFilterValue() ?? ""}
+          onValueChange={(value) =>
+            table.getColumn("propertyType")?.setFilterValue(value)
+          }
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Property Type" />
@@ -228,8 +278,10 @@ export default function ListingsPage() {
           </SelectContent>
         </Select>
         <Select
-          value={(table.getColumn("status")?.getFilterValue() ) ?? ""}
-          onValueChange={(value) => table.getColumn("status")?.setFilterValue(value)}
+          value={table.getColumn("status")?.getFilterValue() ?? ""}
+          onValueChange={(value) =>
+            table.getColumn("status")?.setFilterValue(value)
+          }
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Status" />
@@ -256,11 +308,13 @@ export default function ListingsPage() {
                     key={column.id}
                     className="capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
                   >
                     {column.id}
                   </DropdownMenuCheckboxItem>
-                )
+                );
               })}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -296,8 +350,16 @@ export default function ListingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">₹{property.basePrice}/night</p>
-                <p className={`mt-2 ${property.status === "Active" ? "text-green-600" : "text-red-600"}`}>
+                <p className="text-2xl font-bold">
+                  ₹{property.basePrice}/night
+                </p>
+                <p
+                  className={`mt-2 ${
+                    property.status === "Active"
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
                   {property.status}
                 </p>
               </CardContent>
@@ -305,7 +367,10 @@ export default function ListingsPage() {
                 <Button variant="outline" onClick={() => handleEdit(property)}>
                   Edit
                 </Button>
-                <Button variant="destructive" onClick={() => handleDelete(property._id)}>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDelete(property._id)}
+                >
                   Delete
                 </Button>
               </CardFooter>
@@ -321,9 +386,14 @@ export default function ListingsPage() {
                   {headerGroup.headers.map((header) => {
                     return (
                       <TableHead key={header.id}>
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
                       </TableHead>
-                    )
+                    );
                   })}
                 </TableRow>
               ))}
@@ -331,15 +401,26 @@ export default function ListingsPage() {
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
                     No results.
                   </TableCell>
                 </TableRow>
@@ -354,6 +435,5 @@ export default function ListingsPage() {
         </Button>
       )}
     </div>
-  )
+  );
 }
-

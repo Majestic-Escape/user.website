@@ -29,7 +29,7 @@ export default function Component() {
               <PrimaryLink
                 text="Explore Features"
                 variant="secondary"
-                href="/host/#features"
+                href="/hosting/#features"
               />
             </div>
           </div>

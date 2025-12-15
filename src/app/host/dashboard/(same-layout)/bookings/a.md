@@ -82,7 +82,9 @@ const [bookingToReject, setBookingToReject] = useState(null);
 const fetchData = async () => {
 const getLocalData = await localStorage.getItem("token");
 const data = JSON.parse(getLocalData);
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log(data);
+}
 if (data) {
 try {
 const response = await fetch(`${API_URL}/booking/`, {
@@ -93,7 +95,9 @@ Authorization: `Bearer ${data}`,
 },
 });
 const result = await response.json();
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log(result);
+}
 const final = await result.data;
 setBookings(final);
 } catch (err) {
@@ -224,8 +228,11 @@ const data = JSON.parse(getLocalData);
 
 };
 
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log(bookings);
+}
 return (
+
 <div className=" space-y-6">
 <div className="flex justify-between items-center flex-wrap gap-4">
 <h1 className="text-2xl font-semibold font-bricolage text-absoluteDark">

@@ -1,49 +1,59 @@
-import { useState } from 'react'
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { useState } from "react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const propertyTypes = [
-  { id: 'house', label: 'House', icon: '🏠' },
-  { id: 'apartment', label: 'Apartment', icon: '🏢' },
-  { id: 'guesthouse', label: 'Guesthouse', icon: '🏡' },
-  { id: 'hotel', label: 'Hotel', icon: '🏨' },
-  { id: 'cabin', label: 'Cabin', icon: '🌳' },
-  { id: 'villa', label: 'Villa', icon: '🏛️' },
-  { id: 'cottage', label: 'Cottage', icon: '🏚️' },
-  { id: 'bungalow', label: 'Bungalow', icon: '🏘️' },
-  { id: 'townhouse', label: 'Townhouse', icon: '🏪' },
-  { id: 'condo', label: 'Condo', icon: '🏙️' },
-  { id: 'treehouse', label: 'Treehouse', icon: '🌴' },
-  { id: 'farmhouse', label: 'Farmhouse', icon: '🚜' },
-  { id: 'houseboat', label: 'Houseboat', icon: '⛵' },
-  { id: 'yurt', label: 'Yurt', icon: '⛺' },
-  { id: 'dome', label: 'Dome house', icon: '🏠' },
-  { id: 'castle', label: 'Castle', icon: '🏰' },
-  { id: 'lighthouse', label: 'Lighthouse', icon: '🗼' },
-  { id: 'windmill', label: 'Windmill', icon: '🏔️' },
-  { id: 'cave', label: 'Cave', icon: '🕳️' },
-  { id: 'container', label: 'Container', icon: '📦' },
-  { id: 'camper', label: 'Camper/RV', icon: '🚐' },
-  { id: 'barn', label: 'Barn', icon: '🏚️' },
-  { id: 'boat', label: 'Boat', icon: '🚤' },
-  { id: 'tiny_house', label: 'Tiny house', icon: '🏠' },
-]
+  { id: "house", label: "House", icon: "🏠" },
+  { id: "apartment", label: "Apartment", icon: "🏢" },
+  { id: "guesthouse", label: "Guesthouse", icon: "🏡" },
+  { id: "hotel", label: "Hotel", icon: "🏨" },
+  { id: "cabin", label: "Cabin", icon: "🌳" },
+  { id: "villa", label: "Villa", icon: "🏛️" },
+  { id: "cottage", label: "Cottage", icon: "🏚️" },
+  { id: "bungalow", label: "Bungalow", icon: "🏘️" },
+  { id: "townhouse", label: "Townhouse", icon: "🏪" },
+  { id: "condo", label: "Condo", icon: "🏙️" },
+  { id: "treehouse", label: "Treehouse", icon: "🌴" },
+  { id: "farmhouse", label: "Farmhouse", icon: "🚜" },
+  { id: "houseboat", label: "Houseboat", icon: "⛵" },
+  { id: "yurt", label: "Yurt", icon: "⛺" },
+  { id: "dome", label: "Dome house", icon: "🏠" },
+  { id: "castle", label: "Castle", icon: "🏰" },
+  { id: "lighthouse", label: "Lighthouse", icon: "🗼" },
+  { id: "windmill", label: "Windmill", icon: "🏔️" },
+  { id: "cave", label: "Cave", icon: "🕳️" },
+  { id: "container", label: "Container", icon: "📦" },
+  { id: "camper", label: "Camper/RV", icon: "🚐" },
+  { id: "barn", label: "Barn", icon: "🏚️" },
+  { id: "boat", label: "Boat", icon: "🚤" },
+  { id: "tiny_house", label: "Tiny house", icon: "🏠" },
+];
 
 export function GetStarted({ updateFormData, formData }) {
-  const [propertyType, setPropertyType] = useState(formData?.propertyType || '')
+  const [propertyType, setPropertyType] = useState(
+    formData?.propertyType || ""
+  );
 
   const handleChange = (value) => {
-    setPropertyType(value)
-    updateFormData({ propertyType: value })
-    console.log(propertyType, value)
-  }
+    setPropertyType(value);
+    updateFormData({ propertyType: value });
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log(propertyType, value);
+    }
+  };
 
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-semibold">What kind of place will you host?</h3>
+      <h3 className="text-xl font-semibold">
+        What kind of place will you host?
+      </h3>
       <ScrollArea className=" w-full rounded-md border p-4">
-        <RadioGroup value={propertyType} onValueChange={handleChange} className="grid md:grid-cols-3 grid-cols-2 gap-4">
+        <RadioGroup
+          value={propertyType}
+          onValueChange={handleChange}
+          className="grid md:grid-cols-3 grid-cols-2 gap-4"
+        >
           {propertyTypes.map((type) => (
             <div key={type.id} className="relative">
               <RadioGroupItem
@@ -54,7 +64,9 @@ export function GetStarted({ updateFormData, formData }) {
 
               <Label
                 htmlFor={type.id}
-                className={`${type.label === propertyType? 'ring-primaryGreen ring-2':''} flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:border-brightGreen peer-checked:border-brightGreen peer-checked:bg-brightGreen/10`}
+                className={`${
+                  type.label === propertyType ? "ring-primaryGreen ring-2" : ""
+                } flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:border-brightGreen peer-checked:border-brightGreen peer-checked:bg-brightGreen/10`}
               >
                 <span className="text-4xl mb-2">{type.icon}</span>
                 <span className="font-medium text-center">{type.label}</span>
@@ -64,5 +76,5 @@ export function GetStarted({ updateFormData, formData }) {
         </RadioGroup>
       </ScrollArea>
     </div>
-  )
+  );
 }

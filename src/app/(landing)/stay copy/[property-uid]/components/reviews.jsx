@@ -50,7 +50,9 @@ export default function Review({ property }) {
           <Button
             className="min-w-[44px] min-h-[44px] aspect-square bg-[#46921E] text-white rounded-full flex items-center justify-center hover:bg-[#387819] transition-colors"
             onClick={() => {
-              console.log("Submitted thought:", thought);
+              if (process.env.NEXT_PUBLIC_ENV === "dev") {
+                console.log("Submitted thought:", thought);
+              }
               setThought("");
             }}
           >

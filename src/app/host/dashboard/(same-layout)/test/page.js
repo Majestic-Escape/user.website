@@ -14,7 +14,9 @@ const TestPage = () => {
           <Button
             className="text-white bg-primaryGreen hover:bg-brightGreen rounded-3xl"
             onClick={async () => {
-              console.log("payouts cron API called");
+              if (process.env.NEXT_PUBLIC_ENV === "dev") {
+                console.log("payouts cron API called");
+              }
               const response = await fetch(`${API_URL}/payment/schedule-cron`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

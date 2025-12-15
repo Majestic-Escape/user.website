@@ -6,9 +6,7 @@ import Link from "next/link";
 export function HeroContent() {
   return (
     <>
-      <br />
-      <br />
-      <div className="w-full md:pt-12 text-center md:text-left max-w-[600px] lg:pr-8 align mb-8 lg:mb-0">
+      <div className="w-full md:pt-12 mx-auto text-center md:text-center midtab:text-center lg:text-left max-w-[600px] lg:pr-8 align  lg:mb-0">
         <TextReveal>
           <h2 className="text-sm font-medium mb-4 text-primaryGreen inline-block rounded-2xl bg-green-50 ring-1 ring-green-300 px-2.5 py-1">
             {" "}
@@ -44,7 +42,8 @@ export function HeroContent() {
         <TextReveal>
           <Link
             href={"/stays"}
-            className="bg-primaryGreen hover:bg-brightGreen text-white px-6 py-2.5 inline-block sm:px-8 md:px-10  font-bricolage rounded-full text-lg sm:text-lg sm:w-auto"
+            className=" midtab:ml-[25px] bg-primaryGreen hover:bg-brightGreen text-white px-6 py-2.5 inline-block sm:px-8 md:px-10  font-bricolage rounded-full text-lg sm:text-lg sm:w-auto"
+            //mid-book
           >
             Book your stay
           </Link>

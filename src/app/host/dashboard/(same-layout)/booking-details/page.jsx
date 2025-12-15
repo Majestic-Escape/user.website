@@ -70,7 +70,9 @@ export default function Page() {
       return `${Number(num) - 12} p.m.`;
     }
   };
-  console.log("m", fetchedData);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("m", fetchedData);
+  }
   if (fetchedData.length == 0)
     return (
       <div className="min-h-screen font-poppins pt-24">

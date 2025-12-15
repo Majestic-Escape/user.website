@@ -61,7 +61,9 @@ export default function Dashboard() {
         if (userId) {
           const response = await kycService.getFormData(userId);
 
-          console.log("doomd", response);
+          if (process.env.NEXT_PUBLIC_ENV === "dev") {
+            console.log("doomd", response);
+          }
           setExist(true);
           setForm(response.data);
           return result.data;

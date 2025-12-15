@@ -56,7 +56,9 @@ export default function ReviewsPage() {
     to: new Date(),
   });
   const [hostEmail, setHostEmail] = useState("");
-  console.log("what now", selectedRating);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("what now", selectedRating);
+  }
   const fetchData = async () => {
     try {
       const getUserId = await localStorage.getItem("userId");
@@ -64,7 +66,9 @@ export default function ReviewsPage() {
       const from = date.from ? new Date(date.from).toLocaleDateString() : "";
 
       const to = date.to ? new Date(date.to).toLocaleDateString() : "";
-      console.log(from, to);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log(from, to);
+      }
       const getLocalData = await localStorage.getItem("token");
       const data = JSON.parse(getLocalData);
       if (data) {
@@ -82,7 +86,9 @@ export default function ReviewsPage() {
           toast.error("Error in fetching data");
         }
         const result = await response.json();
-        console.log("what now", result);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("what now", result);
+        }
         const final = await result;
         setReviewData(result);
 
@@ -92,7 +98,9 @@ export default function ReviewsPage() {
       console.error(err);
     }
   };
-  console.log("bla", reviewData);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("bla", reviewData);
+  }
   const fetchProperties = async () => {
     try {
       const getUserId = await localStorage.getItem("userId");
@@ -171,7 +179,9 @@ export default function ReviewsPage() {
   };
   const handleModal = (review) => {
     setDialogOpen(true);
-    console.log("ogs", review?.bookingId?._id);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("ogs", review?.bookingId?._id);
+    }
     setBookingId(review?.bookingId?._id);
     setHostEmail(review?.property?.hostEmail);
   };

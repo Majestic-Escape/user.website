@@ -146,10 +146,14 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
     reader.readAsDataURL(file);
   };
 
-  console.log("url", image);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("url", image);
+  }
   const handleUpload = async (email, image) => {
     try {
-      console.log("your", email, image);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("your", email, image);
+      }
       if (!email || !image) {
         toast.error("Please upload an image");
         return;
@@ -159,7 +163,9 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
       const base64Image = image.split(",")[1];
       const getLocalData = await localStorage.getItem("userId");
       const data = JSON.parse(getLocalData);
-      console.log("ud", formData);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("ud", formData);
+      }
       const doc = formData?.documentInfo?.documentType;
       try {
         //verify pan, voter and passport on same route
@@ -227,8 +233,12 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
       setIsUploading(false); // Always called
     }
   };
-  console.log("llloa", isUploading);
-  console.log("sds", formData);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("llloa", isUploading);
+  }
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("sds", formData);
+  }
   return (
     <Card className="max-w-3xl mx-auto">
       <CardHeader>

@@ -21,7 +21,9 @@ export default function StaysProperties() {
       try {
         setLoading(true);
         const data = await propertyService.getAllProperties(selectedType);
-        // console.log("Data:",data.properties);
+        // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        //   console.log("Data:",data.properties);
+        // }
         setProperties(data.properties);
         setError(null);
       } catch (err) {

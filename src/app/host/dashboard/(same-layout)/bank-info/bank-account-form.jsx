@@ -57,7 +57,9 @@ export function BankAccountForm() {
   }, []);
   const handleSubmit = async (e) => {
     e.preventDefault(); // prevent full page reload
-    console.log("enterr");
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("enterr");
+    }
     const formData = new FormData(e.target);
     const accountNumber = formData.get("accountNumber");
     const accountNumberRepeat = formData.get("accountNumberRepeat");
@@ -73,7 +75,9 @@ export function BankAccountForm() {
       accountHolderName: formData.get("accountHolderName"),
       bankName: formData.get("bankName"),
     };
-    console.log("stage1", payload);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("stage1", payload);
+    }
     setIsSubmitting(true);
     try {
       const tokenData = await localStorage.getItem("token");
@@ -85,7 +89,9 @@ export function BankAccountForm() {
         setIsSubmitting(false);
         return;
       }
-      console.log("stage2", API_URL);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("stage2", API_URL);
+      }
       const response = await fetch(`${API_URL}/hostData/bank/${parsedhost}`, {
         method: "PUT",
         headers: {
@@ -94,7 +100,9 @@ export function BankAccountForm() {
         },
         body: JSON.stringify(payload),
       });
-      console.log("stage3");
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("stage3");
+      }
       if (!response.ok) {
         // Handle HTTP errors (4xx, 5xx)
         const errorText = await response.text();
@@ -113,7 +121,10 @@ export function BankAccountForm() {
       }
       // Parse successful response
       const responseData = await response.json();
-      console.log("🔍 Stage 4 - Success response:", responseData);
+
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("🔍 Stage 4 - Success response:", responseData);
+      }
       if (responseData.success) {
         toast.success("✅ Bank info saved successfully");
       } else {

@@ -36,6 +36,18 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const filesArray = Array.from(files);
+    const MAX_FILES = 20;
+
+    const totalFilesAfterUpload = photos.length + filesArray.length;
+
+    if (totalFilesAfterUpload > MAX_FILES) {
+      toast.error(
+        `You can upload a maximum of ${MAX_FILES} images. You already have ${photos.length}.`
+      );
+      return;
+    }
+
     const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
     const ALLOWED_TYPES = [
       "image/jpeg",
@@ -45,6 +57,10 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
     ];
     if (files.length > 0 && Array.from(files).some((f) => f.size > MAX_SIZE)) {
       toast.error("One or more selected files exceed 5MB");
+      return;
+    }
+    if (files.length > 20) {
+      toast.error("Max 20 files can be uploaded");
       return;
     }
     const validFiles: File[] = [];
@@ -90,12 +106,14 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
         url,
       }));
       const updatedPhotos = [...photos, ...newPhotos];
-      console.log("we are reaching", updatedPhotos);
+
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("we are reaching", updatedPhotos);
+      }
       setPhotos(updatedPhotos);
       updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
     } catch (error) {
-      console.error("Upload failed:", error);
-      alert("Failed to upload photos");
+      console.error(error);
     } finally {
       setUploading(false);
     }

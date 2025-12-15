@@ -209,8 +209,10 @@ export default function ChatSimulator() {
   }, []);
 
   return (
-    <div className="w-full max-w-[300px] mx-auto mt-4 md:mt-32">
-      <div className="relative w-full aspect-[9/16] bg-gradient-to-br from-[#6e6e6e] via-[#ccc] to-[#D1D5DB] rounded-[2rem] shadow-xl overflow-hidden">
+    //chat-simulator mid-tab-margin tab-margin
+    <div className="mobile:mt-6 desktop:mt-[60px] midtab:mt-[60px] tab:mt-[70px] midtab:mt-10 w-full max-w-[300px] mx-auto ">
+      {/* inner-mid-tab-margin */}
+      <div className="inner-mid-tab-margin relative w-full aspect-[9/16] bg-gradient-to-br from-[#6e6e6e] via-[#ccc] to-[#D1D5DB] rounded-[2rem] shadow-xl overflow-hidden">
         <div className="absolute inset-1 bg-white text-absolute-dark rounded-[1.75rem] flex flex-col overflow-hidden">
           {/* Status Bar */}
           <div className="flex justify-between items-center px-4 py-1 text-xs bg-white">

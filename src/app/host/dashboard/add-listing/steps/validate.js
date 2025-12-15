@@ -80,7 +80,7 @@ export const validateLocationForm = (formData) => {
   if (isAllAddressEmpty) {
     return {
       isValid: false,
-      errors: ["Please fill in all address fields before proceeding."],
+      errorMessage: "Please fill in all address fields before proceeding.",
     };
   }
 
@@ -88,51 +88,51 @@ export const validateLocationForm = (formData) => {
   if (!address.latitude || !address.longitude) {
     return {
       isValid: false,
-      errors: ["Please enter the location in map"],
+      errorMessage: "Please enter the location in map",
     };
   }
   if (!address.street?.trim()) {
     return {
       isValid: false,
-      errors: ["Please enter the street"],
+      errorMessage: "Please enter the street",
     };
   }
   if (!address.district?.trim()) {
     return {
       isValid: false,
-      errors: ["Please enter the district"],
+      errorMessage: "Please enter the district",
     };
   }
   if (!address.city?.trim()) {
     return {
       isValid: false,
-      errors: ["Please enter the city"],
+      errorMessage: "Please enter the city",
     };
   }
   if (!address.state?.trim()) {
     return {
       isValid: false,
-      errors: ["Please enter the state"],
+      errorMessage: "Please enter the state",
     };
   }
 
   if (!address.pincode?.trim()) {
     return {
       isValid: false,
-      errors: ["Please enter the pincode"],
+      errorMessage: "Please enter the pincode",
     };
   }
 
   if (address.pincode.trim().length !== 6) {
     return {
       isValid: false,
-      errors: ["Please enter 6 digit pincode"],
+      errorMessage: "Please enter 6 digit pincode",
     };
   }
   if (!re.test(address.pincode.trim())) {
     return {
       isValid: false,
-      errors: ["Please enter only numbers in pincode"],
+      errorMessage: "Please enter only numbers in pincode",
     };
   }
   // --- Registration number validation based on state ---
@@ -147,7 +147,7 @@ export const validateLocationForm = (formData) => {
       if (!pattern.test(reg)) {
         return {
           isValid: false,
-          errors: ["Invalid property registration"],
+          errorMessage: "Invalid property registration",
         };
       }
     }
@@ -235,16 +235,20 @@ export const validateBathroomSelector = (formData) => {
     formData.bathroomTypes.dedicated;
 
   return {
-    isValid: totalBathrooms > 0, // At least one bathroom must be selected
-    errorMessage: "Please select at least one bathroom type.",
+    isValid:
+      totalBathrooms > 0 &&
+      Number(totalBathrooms) === Number(formData.bathrooms), // At least one bathroom must be selected
+    errorMessage:
+      totalBathrooms != formData.bathrooms
+        ? `Selected bathroom count is less than total count (${formData.bathrooms}) set  in previous step.`
+        : null,
   };
 };
 
 export const validateOccupancySelector = (formData) => {
   return {
     isValid: Array.isArray(formData.occupancy) && formData.occupancy.length > 0,
-    errorMessage:
-      "Please select at least one option for 'Who else might be there?'.",
+    errorMessage: "Please select at least one option.",
   };
 };
 
@@ -258,7 +262,7 @@ export const validateAmenitiesSelector = (formData) => {
 export const validateAddPhotos = (formData) => {
   return {
     isValid: Array.isArray(formData.photos) && formData.photos.length >= 5,
-    errorMessage: "Please upload at least 5 photos, one at a time.",
+    errorMessage: "Please upload at least 5 photos.",
   };
 };
 
@@ -267,7 +271,7 @@ export const validateListingDetails = (formData) => {
     isValid:
       formData.title.trim().length >= 3 &&
       formData.description.trim().length > 15,
-    errorMessage: "",
+    errorMessage: "Title or description is missing.",
   };
 };
 export const validateCancellationSettings = (formData) => {

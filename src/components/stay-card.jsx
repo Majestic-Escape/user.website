@@ -1,25 +1,25 @@
-
 /* eslint-disable @typescript-eslint/no-unused-vars */
-"use client"
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useWishlist } from './wishlist-context';
-import Image from 'next/image';
-import { WishlistDialog } from './WishlistDialog';
+import { useEffect, useState } from "react";
+import { useWishlist } from "./wishlist-context";
+import Image from "next/image";
+import { WishlistDialog } from "./WishlistDialog";
 // import { ChevronLeft, ChevronRight } from 'lucide-react';
-import InfoDialog from './stay-info-card';
-import ShareDialog from './stay-share-dialog';
+import InfoDialog from "./stay-info-card";
+import ShareDialog from "./stay-share-dialog";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@/components/ui/carousel"
+} from "@/components/ui/carousel";
 
 export default function StayCard({ property, includeTaxes }) {
-
-  console.log("Property form stay card", property)
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("Property form stay card", property);
+  }
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { isInWishlist, wishlists } = useWishlist();
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
@@ -27,10 +27,10 @@ export default function StayCard({ property, includeTaxes }) {
   const [isWishlistDialogOpen, setIsWishlistDialogOpen] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
 
-  const isLiked = 
-    isInWishlist(property?.id, 'stays') ||
-    isInWishlist(property?.id, 'experiences') ||
-    Object.keys(wishlists.folders).some(folderId =>
+  const isLiked =
+    isInWishlist(property?.id, "stays") ||
+    isInWishlist(property?.id, "experiences") ||
+    Object.keys(wishlists.folders).some((folderId) =>
       isInWishlist(property?.id, folderId)
     );
 
@@ -40,14 +40,14 @@ export default function StayCard({ property, includeTaxes }) {
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const hash = window.location.hash;
       if (hash === `#property-${property?.id}`) {
         const element = document.getElementById(`property-${property?.id}`);
         if (element) {
-          element.scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'center'
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
           });
           setIsHighlighted(true);
           setTimeout(() => {
@@ -59,12 +59,16 @@ export default function StayCard({ property, includeTaxes }) {
   }, [property?.id]);
 
   return (
-    <div 
+    <div
       id={`property-${property?.id}`}
       className={`w-full font-poppins mt-8 transition-all duration-300 ease-in-out
-        ${isHighlighted ? 'scale-[1.02] shadow-lg shadow-brightGreen ring-2 ring-brightGreen-500 ring-opacity-50' : ''}
+        ${
+          isHighlighted
+            ? "scale-[1.02] shadow-lg shadow-brightGreen ring-2 ring-brightGreen-500 ring-opacity-50"
+            : ""
+        }
       `}
-    >               
+    >
       <div className="relative">
         <Carousel className="w-full">
           <CarouselContent>
@@ -96,7 +100,9 @@ export default function StayCard({ property, includeTaxes }) {
                 e.stopPropagation();
                 setCurrentImageIndex(idx);
               }}
-              className={`w-1.5 h-1.5 rounded-full ${currentImageIndex === idx ? 'bg-white' : 'bg-white/50'}`}
+              className={`w-1.5 h-1.5 rounded-full ${
+                currentImageIndex === idx ? "bg-white" : "bg-white/50"
+              }`}
             />
           ))}
         </div>
@@ -105,14 +111,16 @@ export default function StayCard({ property, includeTaxes }) {
       <div className="mt-1 sm:mt-2">
         <div className="flex items-center justify-between mb-1">
           <div>
-            <h3 className="text-lg mt-1 font-semibold font-bricolage text-graphite">{property?.title}</h3>
+            <h3 className="text-lg mt-1 font-semibold font-bricolage text-graphite">
+              {property?.title}
+            </h3>
             <p className="text-sm text-solidGray">
               <span className="inline-block align-middle">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="mr-1 inline h-4 w-4"
                   viewBox="0 0 20 20"
-                  fill='none'
+                  fill="none"
                   stroke="currentColor"
                 >
                   <path
@@ -125,25 +133,31 @@ export default function StayCard({ property, includeTaxes }) {
               {property?.location}
             </p>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <button 
+            <button
               className="inline-flex items-center justify-center h-8 w-8 right-4 hover:text-solidGray"
               onClick={() => setIsInfoDialogOpen(true)}
             >
-              <Image width={24} height={24} src="/icons/info-icon.svg" alt="Info Icon" className="w-6 h-6 justify-center" />
+              <Image
+                width={24}
+                height={24}
+                src="/icons/info-icon.svg"
+                alt="Info Icon"
+                className="w-6 h-6 justify-center"
+              />
             </button>
 
             <button
               onClick={handleWishlist}
               className={`inline-flex h-6 w-6 items-center justify-center rounded-md border border-opacity-60 border-[#A7A7A7] bg-white hover:bg-accent hover:text-accent-foreground ${
-                isLiked ? 'text-red-500' : 'text-solidGray'
+                isLiked ? "text-red-500" : "text-solidGray"
               }`}
-              aria-label={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
+              aria-label={isLiked ? "Remove from wishlist" : "Add to wishlist"}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                fill={isLiked ? 'currentColor' : 'none'}
+                fill={isLiked ? "currentColor" : "none"}
                 viewBox="0 0 24 24"
                 strokeWidth="1.5"
                 stroke="currentColor"
@@ -157,24 +171,30 @@ export default function StayCard({ property, includeTaxes }) {
               </svg>
             </button>
 
-            <button 
+            <button
               className="text-solidGray inline-flex h-8 w-8 items-center justify-center rounded-md hover:text-gray-600"
               onClick={() => setIsShareDialogOpen(true)}
             >
-              <Image src="/icons/share-icon.svg" width={6} height={6} alt="Share Icon" className="w-6 h-6 justify-center" />
+              <Image
+                src="/icons/share-icon.svg"
+                width={6}
+                height={6}
+                alt="Share Icon"
+                className="w-6 h-6 justify-center"
+              />
             </button>
           </div>
         </div>
       </div>
-      
-      <InfoDialog 
+
+      <InfoDialog
         isOpen={isInfoDialogOpen}
         onClose={() => setIsInfoDialogOpen(false)}
         property={property}
       />
       <ShareDialog
-        isOpen={isShareDialogOpen} 
-        onClose={() => setIsShareDialogOpen(false)} 
+        isOpen={isShareDialogOpen}
+        onClose={() => setIsShareDialogOpen(false)}
         property={property}
       />
       <WishlistDialog
@@ -185,4 +205,3 @@ export default function StayCard({ property, includeTaxes }) {
     </div>
   );
 }
-

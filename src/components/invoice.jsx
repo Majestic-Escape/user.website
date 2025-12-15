@@ -39,7 +39,9 @@ const Invoice = ({ payment, invoiceData }) => {
       return Math.round(subtotal * 0.18) + Math.round(serviceFee * 0.18); // 18% GST in India
     }
   };
-  console.log("ul", payment);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("ul", payment);
+  }
 
   return (
     <div className="min-h-screen  flex justify-center py-10">

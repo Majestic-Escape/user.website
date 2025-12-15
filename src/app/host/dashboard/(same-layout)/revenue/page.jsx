@@ -183,7 +183,9 @@ const AnalyticsPage = () => {
 
     const from = dateRange.from ? dateRange.from.toLocaleDateString() : null;
     const to = dateRange.to ? dateRange.to.toLocaleDateString() : null;
-    console.log(from, to);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log(from, to);
+    }
     if (data) {
       try {
         const response = await fetch(
@@ -198,7 +200,9 @@ const AnalyticsPage = () => {
         );
         const result = await response.json();
         const final = await result.data;
-        console.log("what", final);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("what", final);
+        }
         setBookings(final);
       } catch (err) {
         console.error(err);
@@ -210,7 +214,9 @@ const AnalyticsPage = () => {
     const data = JSON.parse(getLocalData);
     const host = await localStorage.getItem("userId");
     const hostId = JSON.parse(host);
-    console.log("hosting", host);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("hosting", host);
+    }
     if (data) {
       try {
         const response = await fetch(`${API_URL}/properties/active/${hostId}`, {
@@ -221,7 +227,9 @@ const AnalyticsPage = () => {
           },
         });
         const result = await response.json();
-        console.log("sssss", result);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("sssss", result);
+        }
         const final = await result.data;
         setProperty(final);
       } catch (err) {
@@ -233,7 +241,9 @@ const AnalyticsPage = () => {
   useEffect(() => {
     fetchPropertyTitle();
   }, []);
-  console.log("titles", currentProperty);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("titles", currentProperty);
+  }
   useEffect(() => {
     fetchData();
   }, [searchTerm, status, dateRange, currentProperty]);
@@ -474,7 +484,9 @@ const AnalyticsPage = () => {
     const data = arr.map((propTitle, i) => {
       const final = bookings?.filter((item) => {
         if (item?.propertyId?.title && propTitle) {
-          console.log("who the", item?.propertyId?.title, propTitle);
+          if (process.env.NEXT_PUBLIC_ENV === "dev") {
+            console.log("who the", item?.propertyId?.title, propTitle);
+          }
           return (
             item?.propertyId?.title?.toLowerCase() === propTitle.toLowerCase()
           );
@@ -519,15 +531,24 @@ const AnalyticsPage = () => {
         XLSX.utils.book_append_sheet(workbook, worksheet, `${worksheetname}`);
         // Save the workbook as an Excel file
         XLSX.writeFile(workbook, `${title}.xlsx`);
-        console.log(`Exported data to ${title}.xlsx`);
+
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log(`Exported data to ${title}.xlsx`);
+        }
         setLoading(false);
       } else {
         setLoading(false);
-        console.log("#==================Export Error");
+
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("#==================Export Error");
+        }
       }
     } catch (error) {
       setLoading(false);
-      console.log("#==================Export Error", error.message);
+
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("#==================Export Error", error.message);
+      }
     }
   };
   // Update total only when data changes
@@ -548,7 +569,9 @@ const AnalyticsPage = () => {
     year: "numeric",
   });
   const arrayCheckoutDate = exportCheckoutDate.split("/");
-  console.log("jhdjhd", total);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("jhdjhd", total);
+  }
   return (
     <div ref={printRef} className="container mx-auto space-y-6">
       <div className="flex justify-between">

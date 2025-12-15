@@ -53,7 +53,9 @@ export default function HostOnboarding() {
   //       }
 
   //       const result = await response.json();
-  //       console.log("numb", result);
+  //       process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("numb", result);
+  // }
   //       setShow(result.kyc);
   //       return result;
   //     }
@@ -168,6 +170,29 @@ export default function HostOnboarding() {
   //   }
   // };
 
+  // const validateCurrentStep = async () => {
+  //   try {
+  //     const currentStepData = steps[currentStep];
+
+  //     if (
+  //       currentStepData?.requiresValidation &&
+  //       typeof currentStepData?.validate === "function"
+  //     ) {
+  //       const result = currentStepData?.validate(formData);
+  //       return result;
+  //     }
+  //      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("batm2", errors);
+  // }
+  //     return { isValid: true, errors: [] };
+  //   } catch (error) {
+  //     return {
+  //       isValid: false,
+  //       errors: ["Validation failed due to system error."],
+  //     };
+  //   }
+  // };
+
   const validateCurrentStep = async () => {
     try {
       const currentStepData = steps[currentStep];
@@ -176,15 +201,14 @@ export default function HostOnboarding() {
         currentStepData?.requiresValidation &&
         typeof currentStepData?.validate === "function"
       ) {
-        const result = currentStepData?.validate(formData);
-        return result;
+        return currentStepData.validate(formData);
       }
-      console.log("batm2", errors);
-      return { isValid: true, errors: [] };
+
+      return { isValid: true };
     } catch (error) {
       return {
         isValid: false,
-        errors: ["Validation failed due to system error."],
+        errorMessage: "Validation failed due to system error.",
       };
     }
   };
@@ -209,7 +233,9 @@ export default function HostOnboarding() {
             ? "incomplete"
             : "processing",
       };
-      console.log("id", id);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("id", id);
+      }
       const response = id
         ? await propertyService?.updateProperty(id, dataToSave)
         : await propertyService?.createProperty(dataToSave);
@@ -239,14 +265,37 @@ export default function HostOnboarding() {
   //   }
   // };
 
+  // const handleNext = async () => {
+  //   setStepError(null);
+  //   if (steps[currentStep]?.requiresValidation) {
+  //     const { isValid, errors } = await validateCurrentStep();
+  //      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //   console.log("batm", errors);
+  // }
+  //     if (!isValid) {
+  //       errors?.forEach((msg) => toast?.error(msg));
+  //       setStepError(errors[0]);
+  //       return;
+  //     }
+  //   }
+
+  //   setIsLoading(true);
+  //   await saveData();
+  //   setIsLoading(false);
+
+  //   if (currentStep < steps?.length - 1) {
+  //     setCurrentStep(currentStep + 1);
+  //   }
+  // };
   const handleNext = async () => {
     setStepError(null);
+
     if (steps[currentStep]?.requiresValidation) {
-      const { isValid, errors } = await validateCurrentStep();
-      console.log("batm", errors);
+      const { isValid, errorMessage } = await validateCurrentStep();
+
       if (!isValid) {
-        errors?.forEach((msg) => toast?.error(msg));
-        setStepError(errors[0]);
+        toast.error(errorMessage || "Please check the fields.");
+        setStepError(errorMessage);
         return;
       }
     }
@@ -255,7 +304,7 @@ export default function HostOnboarding() {
     await saveData();
     setIsLoading(false);
 
-    if (currentStep < steps?.length - 1) {
+    if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -268,7 +317,9 @@ export default function HostOnboarding() {
   const handleSubmit = async (id) => {
     setIsLoading(true);
     try {
-      console.log(id);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log(id);
+      }
       toast("Submitting your listing...");
       await propertyService.updateProperty(id, {
         ...formData,
@@ -303,7 +354,9 @@ export default function HostOnboarding() {
   };
 
   const updateFormData = (stepData) => {
-    console.log("id", id);
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("id", id);
+    }
     setFormData((prevData) => ({
       ...prevData,
       ...stepData,
@@ -313,7 +366,9 @@ export default function HostOnboarding() {
 
   useEffect(() => {
     if (!auth) redirect("/login");
-    console.log("User not found");
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("User not found");
+    }
   }, [auth]);
 
   // if (!show) {

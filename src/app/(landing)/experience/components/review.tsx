@@ -8,8 +8,6 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { reviewsData } from "@/lib/experience/data";
 
-
-
 export default function Review() {
   const [thought, setThought] = useState("");
 
@@ -27,10 +25,7 @@ export default function Review() {
 
   return (
     <div className="sm:pt-[340px] pb-4">
-      <div
-        className=
-          "mx-auto p-6  white-border rounded-lg"
-      >
+      <div className="mx-auto p-6  white-border rounded-lg">
         <h2 className="text-2xl mb-4 font-semibold">
           Reviews ({reviewsData.totalReviews} reviews)
         </h2>
@@ -48,7 +43,9 @@ export default function Review() {
           <Button
             className="min-w-[44px] min-h-[44px] aspect-square bg-[#46921E] text-white rounded-full flex items-center justify-center hover:bg-[#387819] transition-colors"
             onClick={() => {
-              console.log("Submitted thought:", thought);
+              if (process.env.NEXT_PUBLIC_ENV === "dev") {
+                console.log("Submitted thought:", thought);
+              }
               setThought("");
             }}
           >

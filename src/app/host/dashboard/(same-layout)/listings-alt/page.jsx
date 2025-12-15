@@ -321,7 +321,9 @@ export default function ManagePropertiesPage() {
               </TableRow>
             ) : (
               properties.map((property) => {
-                console.log(property);
+                if (process.env.NEXT_PUBLIC_ENV === "dev") {
+                  console.log(property);
+                }
                 return (
                   <TableRow key={property.id}>
                     <TableCell>

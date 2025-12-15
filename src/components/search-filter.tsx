@@ -496,7 +496,7 @@ export default function SearcahFilter({
         </Button>
       </div>
       <div
-        className={`hidden lg:block px-6 bg-white transition-all duration-300 ${
+        className={`lg:block px-6 bg-white transition-all duration-300 ${
           isScrolled
             ? "md:opacity-100 md:-translate-y-3/4 border-b border-gray-100 shadow-sm"
             : "opacity-100 translate-y-0 "

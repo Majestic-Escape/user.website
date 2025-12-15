@@ -59,7 +59,9 @@ const [invoiceData, setInvoiceData] = useState();
 const [showInvoice, setShowInvoice] = useState(false);
 const [payment, setPayment] = useState();
 
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("cl", payment);
+}
 const handleDateRangeChange = (range) => {
 const today = new Date();
 switch (range) {
@@ -130,7 +132,9 @@ const hostData = await localStorage.getItem("userId");
 const hostId = JSON.parse(hostData);
 const from = date.from ? date.from.toLocaleDateString() : null;
 const to = date.to ? date.to.toLocaleDateString() : null;
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log(from, to);
+}
 if (data) {
 try {
 const response = await fetch(
@@ -151,7 +155,9 @@ router.push("/"); // redirect to login
 return;
 }
 const result = await response.json();
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log(result);
+}
 const final = await result.data;
 setBookings(final);
 } catch (err) {
@@ -178,7 +184,9 @@ if (response.status != 200) {
 return;
 }
 const result = await response.json();
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("enll", result);
+}
 setPayment(result.data);
 } catch (err) {
 console.error(err);
@@ -279,7 +287,9 @@ hostName
 try {
 const getLocalData = await localStorage.getItem("token");
 const data = JSON.parse(getLocalData);
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("term", bookingId, userEmail, hostEmail, userName, hostName);
+}
 if (data) {
 const response = await fetch(`${API_URL}/booking/host/terminate`, {
 method: "PATCH",
@@ -371,7 +381,9 @@ year: "numeric",
 // }
 // }
 // }
-// // console.log("dta", today.toDateString(), checkoutDate.toDateString());
+// // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+console.log("dta", today.toDateString(), checkoutDate.toDateString());
+}
 
 // // const isSameDay = today.toDateString() === checkoutDate.toDateString();
 
@@ -432,8 +444,11 @@ if (!booking?.checkOut || !booking?.propertyId?.checkoutTime) return false;
     return false;
 
 }
+process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 console.log("we want to know date", date.from, date.to);
+}
 return (
+
 <div className="w-full space-y-6">
 <div className="flex justify-between items-center flex-wrap gap-4">
 <h1 className="text-2xl font-semibold font-bricolage text-absoluteDark">
@@ -763,75 +778,78 @@ className="text-gray-500 hover:text-gray-700" >
                               .second(0);
 
                             const hoursDiff = checkInTime.diff(now, "hours");
-                            console.log("what i", hoursDiff);
-                            return hoursDiff >= 24 ? (
-                              <DropdownMenuItem
-                                className="text-red-600"
-                                onClick={() => openModal("cancel", booking)}
-                              >
-                                Cancel Reservation
-                              </DropdownMenuItem>
-                            ) : null;
-                          })()}
-                        </>
-                      ) : null
-                    ) : booking?.propertyId?.bookingType?.instantBook &&
-                      booking?.status == "confirmed" ? (
-                      <>
-                        {canShowReview(booking) ? (
-                          <DropdownMenuItem>Review</DropdownMenuItem>
-                        ) : null}
-                        {/* {new Date().setHours(0, 0, 0, 0) <
-                        new Date(booking?.checkIn).setHours(0, 0, 0, 0) ? (
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onClick={() => {
-                              openModal("cancel", booking);
-                              // sendCancelToUser(
-                              //   booking?._id,
-                              //   booking?.userId?.email,
-                              //   booking?.hostId?.email,
-                              //   booking?.userId?.firstName +
-                              //     " " +
-                              //     booking?.userId?.lastName,
-                              //   booking?.hostId?.firstName +
-                              //     " " +
-                              //     booking?.hostId?.lastName
-                              // );
-                            }}
-                          >
-                            Cancel Reservation
-                          </DropdownMenuItem>
-                        ) : null} */}
-                        {(() => {
-                          const now = moment().tz("Asia/Kolkata");
-                          const checkInTime = moment(booking?.checkIn)
-                            .tz("Asia/Kolkata")
-                            .hour(booking?.propertyId?.checkinTime)
-                            .minute(0)
-                            .second(0);
+                            process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+console.log("what i", hoursDiff);
+}
+return hoursDiff >= 24 ? (
+<DropdownMenuItem
+className="text-red-600"
+onClick={() => openModal("cancel", booking)} >
+Cancel Reservation
+</DropdownMenuItem>
+) : null;
+})()}
+</>
+) : null
+) : booking?.propertyId?.bookingType?.instantBook &&
+booking?.status == "confirmed" ? (
+<>
+{canShowReview(booking) ? (
+<DropdownMenuItem>Review</DropdownMenuItem>
+) : null}
+{/_ {new Date().setHours(0, 0, 0, 0) <
+new Date(booking?.checkIn).setHours(0, 0, 0, 0) ? (
+<DropdownMenuItem
+className="text-red-600"
+onClick={() => {
+openModal("cancel", booking);
+// sendCancelToUser(
+// booking?.\_id,
+// booking?.userId?.email,
+// booking?.hostId?.email,
+// booking?.userId?.firstName +
+// " " +
+// booking?.userId?.lastName,
+// booking?.hostId?.firstName +
+// " " +
+// booking?.hostId?.lastName
+// );
+}} >
+Cancel Reservation
+</DropdownMenuItem>
+) : null} _/}
+{(() => {
+const now = moment().tz("Asia/Kolkata");
+const checkInTime = moment(booking?.checkIn)
+.tz("Asia/Kolkata")
+.hour(booking?.propertyId?.checkinTime)
+.minute(0)
+.second(0);
 
                           const hoursDiff = checkInTime.diff(now, "hours");
-                          console.log("what i", hoursDiff);
-                          return hoursDiff >= 24 ? (
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => openModal("cancel", booking)}
-                            >
-                              Cancel Reservation
-                            </DropdownMenuItem>
-                          ) : null;
-                        })()}
-                      </>
-                    ) : null}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+                          process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
+console.log("what i", hoursDiff);
+}
+return hoursDiff >= 24 ? (
+<DropdownMenuItem
+className="text-red-600"
+onClick={() => openModal("cancel", booking)} >
+Cancel Reservation
+</DropdownMenuItem>
+) : null;
+})()}
+</>
+) : null}
+</DropdownMenuContent>
+</DropdownMenu>
+</TableCell>
+</TableRow>
+))}
+</TableBody>
+</Table>
+</div>
 
 );
 }

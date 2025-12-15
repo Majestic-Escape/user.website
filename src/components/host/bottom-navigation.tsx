@@ -13,6 +13,11 @@ import {
   MessageCircle,
   Star,
   FileText,
+  HousePlus,
+  Building2,
+  ChartNoAxesColumn,
+  Landmark,
+  HelpingHand,
 } from "lucide-react";
 import {
   Sheet,
@@ -22,11 +27,12 @@ import {
 } from "@/components/ui/sheet";
 
 const navItems = [
-  { name: "Listings", icon: Home, href: "/host/dashboard/listings" },
-  { name: "Bookings", icon: BookOpen, href: "/host/dashboard/bookings" },
   { name: "Home", icon: LayoutDashboard, href: "/host/dashboard" },
+  { name: "Bookings", icon: BookOpen, href: "/host/dashboard/bookings" },
 
-  { name: "Calendar", icon: Calendar, href: "/host/dashboard/calendar" },
+  { name: "Listings", icon: Building2, href: "/host/dashboard/listings" },
+
+  { name: "Add", icon: HousePlus, href: "/host/dashboard/add-listing" },
 ];
 
 export default function HostBottomNavigation() {
@@ -63,35 +69,51 @@ export default function HostBottomNavigation() {
               </SheetTitle>
               <nav className="flex flex-col space-y-4">
                 <Link
-                  href="/host/dashboard/taxes"
+                  href="/"
+                  className="flex  text-primaryGreen hover:text-brightGreen items-center space-x-2 text-sm"
+                >
+                  <User className="w-4 h-4" />
+                  <span className="  ">Switch to Guest</span>
+                </Link>
+                <Link
+                  href="/host/dashboard/revenue"
                   className="flex items-center space-x-2 text-sm"
                 >
                   <Receipt className="w-4 h-4" />
-                  <span>Taxes</span>
-                </Link>
-
-                <Link href="/" className="flex items-center space-x-2 text-sm">
-                  <User className="w-4 h-4" />
-                  <span>Switch to guest</span>
+                  <span>Revenue</span>
                 </Link>
                 <Link
-                  href="/host/dashboard/queries"
+                  href="/host/dashboard/analytics"
                   className="flex items-center space-x-2 text-sm"
                 >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>Queries</span>
+                  <ChartNoAxesColumn className="w-4 h-4" />
+                  <span>Analytics</span>
+                </Link>
+                <Link
+                  href="/host/dashboard/bank-info"
+                  className="flex items-center space-x-2 text-sm"
+                >
+                  <Landmark className="w-4 h-4" />
+                  <span>Bank Details</span>
+                </Link>
+                <Link
+                  href="/help-center"
+                  className="flex items-center space-x-2 text-sm"
+                >
+                  <HelpingHand className="w-4 h-4" />
+                  <span>Help</span>
                 </Link>
                 {/* <Link href="/host/dashboard/complaints" className="flex items-center space-x-2 text-sm">
                   <MessageCircle className="w-4 h-4" />
                   <span>Complaints</span>
                 </Link> */}
-                <Link
+                {/* <Link
                   href="/host/dashboard/invoices"
                   className="flex items-center space-x-2 text-sm"
                 >
                   <FileText className="w-4 h-4" />
                   <span>Invoices</span>
-                </Link>
+                </Link> */}
                 <Link
                   href="/host/dashboard/reviews"
                   className="flex items-center space-x-2 text-sm"

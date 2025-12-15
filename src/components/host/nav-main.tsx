@@ -41,7 +41,9 @@ export function NavMain({
       <SidebarMenu>
         {items.map((item) => {
           /** ACTIVE CHECK */
-          console.log("numba", item);
+          if (process.env.NEXT_PUBLIC_ENV === "dev") {
+            console.log("numba", item);
+          }
           const isActive = pathname === item.url;
 
           return (

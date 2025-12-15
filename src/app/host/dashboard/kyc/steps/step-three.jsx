@@ -83,7 +83,9 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
             panNumber: gstInfo.rePanNumber,
             gstNumber: gstInfo.gstNumber,
           });
-          console.log("gst reached");
+          if (process.env.NEXT_PUBLIC_ENV === "dev") {
+            console.log("gst reached");
+          }
           // const resData = response.data;
           // if (
           //   resData?.success === false ||
@@ -101,7 +103,9 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
           //   toast.error(msg);
           //   throw new Error(msg);
           // }
-          console.log("gst reached2");
+          if (process.env.NEXT_PUBLIC_ENV === "dev") {
+            console.log("gst reached2");
+          }
           if (response.status == 200) {
             setTimeout(() => {
               setGstInfo((prev) => ({
@@ -115,8 +119,12 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
               setShowDialog(true);
             }, 2000);
           }
-          console.log("gst reached3");
-          console.log("gst reached3");
+          if (process.env.NEXT_PUBLIC_ENV === "dev") {
+            console.log("gst reached3");
+          }
+          if (process.env.NEXT_PUBLIC_ENV === "dev") {
+            console.log("gst reached3");
+          }
         }
       } else {
         toast.error("Cross check pan number in both input fields.");

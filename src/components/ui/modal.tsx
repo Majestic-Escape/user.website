@@ -483,7 +483,9 @@ export default function FilterModal({
     : properties.slice(0, 4);
 
   if (!isOpen) return null;
-  console.log("pri", addPropertyType);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("pri", addPropertyType);
+  }
   const newAmenities = addAmenities.map((x) =>
     x.toLowerCase().replaceAll(" ", "_")
   );

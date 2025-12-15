@@ -48,7 +48,8 @@ const fetchProperty = async (id) => {
           Authorization: `Bearer ${data}`,
         },
       });
-      // console.log("djfjdf", await response.json());
+      // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
       if (!response.ok) {
         console.error(
           "Failed to fetch property:",
@@ -121,7 +122,8 @@ function BookPageContent() {
             },
           }
         );
-        // console.log("djfjdf", await response.json());
+        // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
         if (!response.ok) {
           const data = await response.json();
           if (data.code == "USER_BANNED") {
@@ -172,7 +174,9 @@ function BookPageContent() {
   const children = searchParams.get("children");
   const infants = searchParams.get("infants");
   const propertyImg = searchParams.get("propertyImage");
-  console.log("bumd", propertyImg);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("bumd", propertyImg);
+  }
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [guestData, setGuestData] = useState({
     adults: [],
@@ -189,7 +193,9 @@ function BookPageContent() {
     queryFn: () => fetchProperty(propertyId),
     enabled: !!propertyId,
   });
-  console.log("property", property);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("property", property);
+  }
   const calculateTotal = () => {
     if (!property)
       return {
@@ -245,7 +251,9 @@ function BookPageContent() {
 
     return age;
   }
-  console.log("nice no", guestInfo?.dob);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("nice no", guestInfo?.dob);
+  }
   const fetchForm = async () => {
     // Get user data from localStorage
 
@@ -317,7 +325,8 @@ function BookPageContent() {
   //   // Check dates again and proceed with payment
 
   //   const date = await fetchDates();
-  //   console.log("sor", date);
+  //   process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+
   //   if (date.includes(checkinDate)) {
   //     toast.error("Sorry, someone has already booked");
   //   } else {
@@ -435,7 +444,9 @@ function BookPageContent() {
       const userId = JSON.parse(localStorage.getItem("userId"));
       const getLocalData = await localStorage.getItem("token");
       const data = JSON.parse(getLocalData);
-      console.log("bat", subTotal);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("bat", subTotal);
+      }
       const response = await fetch(`${API_URL}/booking/`, {
         method: "POST",
         headers: {
@@ -465,7 +476,9 @@ function BookPageContent() {
         const errorText = await response.text();
         throw new Error(`Booking failed: ${errorText}`);
       }
-      console.log("trhis is how", response.json);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("trhis is how", response.json);
+      }
       const result = await response.json();
 
       return result;
@@ -579,7 +592,9 @@ function BookPageContent() {
   };
   const closeModalUpdate = async (bookingId) => {
     try {
-      console.log("enter close");
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("enter close");
+      }
       const userId = JSON.parse(localStorage.getItem("userId"));
       const getLocalData = await localStorage.getItem("token");
       const data = JSON.parse(getLocalData);
@@ -595,7 +610,9 @@ function BookPageContent() {
         }),
       });
       const result = await response.json();
-      console.log("enter close", result);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("enter close", result);
+      }
       return result;
     } catch (err) {
       console.error(err);
@@ -689,7 +706,9 @@ function BookPageContent() {
         totals.subtotal,
         found[0]
       );
-      console.log("green lan", booking);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("green lan", booking);
+      }
 
       if (!booking || !booking.data?._id) {
         toast.error("Booking could not be created. Please try again.");
@@ -705,7 +724,9 @@ function BookPageContent() {
         return;
       }
 
-      console.log("ordersssss", order_id.data);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("ordersssss", order_id.data);
+      }
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, //"rzp_test_w0bKE5w5UPOPrY", // Replace with your actual test key
         amount: totals.total * 100,
@@ -717,7 +738,9 @@ function BookPageContent() {
         } (${date.from.toLocaleDateString()} - ${date.to.toLocaleDateString()})`,
         image: "/logo.png",
         handler: async (response) => {
-          console.log("Payment successful:", response);
+          if (process.env.NEXT_PUBLIC_ENV === "dev") {
+            console.log("Payment successful:", response);
+          }
           // Redirect to booking summary page
 
           const totalAmount = totals.total;
@@ -764,7 +787,9 @@ function BookPageContent() {
             setSummaryRoute(true);
             window.scrollTo(0, 0);
             if (property.bookingType.manual) {
-              console.log("not selected");
+              if (process.env.NEXT_PUBLIC_ENV === "dev") {
+                console.log("not selected");
+              }
               const update = await updateBookingStatus(
                 booking?.data?._id,
                 hostEmail,
@@ -785,7 +810,9 @@ function BookPageContent() {
               //   propertyTitle
               // );
             } else {
-              console.log("This got selected");
+              if (process.env.NEXT_PUBLIC_ENV === "dev") {
+                console.log("This got selected");
+              }
               const confirm = await updateConfirmStatus(
                 booking?.data?._id,
                 property?.title
@@ -821,7 +848,9 @@ function BookPageContent() {
         },
         modal: {
           ondismiss: async () => {
-            console.log("its closed no");
+            if (process.env.NEXT_PUBLIC_ENV === "dev") {
+              console.log("its closed no");
+            }
             await closeModalUpdate(booking?.data?._id);
           },
         },
@@ -855,7 +884,9 @@ function BookPageContent() {
           `Failed to fetch host data (status: ${response.status})`
         );
       }
-      console.log("oppo", response);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("oppo", response);
+      }
       setUnavailableDates(response?.data?.data);
       return response?.data?.data;
     } catch (err) {

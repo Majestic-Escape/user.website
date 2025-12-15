@@ -47,7 +47,7 @@ export default function PropertyDescription({ description, property }) {
 
   // Filter the amenities using the dynamic prop (matching by id)
   const matchedAmenities = allAmenities.filter((amenity) =>
-    property.occupancy.includes(amenity.id)
+    property?.occupancy.includes(amenity.id)
   );
   const changeTime = (num) => {
     return `${Number(num) - 12} p.m.`;

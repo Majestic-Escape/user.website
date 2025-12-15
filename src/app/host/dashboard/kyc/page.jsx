@@ -117,9 +117,7 @@ export default function KYC() {
       ) {
         const { isValid, errorMessage } = currentStepData.validate(formData);
         if (!isValid) {
-          toast.error(
-            errorMessage || "Validation failed. Please check the fields."
-          );
+          toast.error(errorMessage || "Please check the fields.");
           return false;
         }
       }
@@ -158,12 +156,18 @@ export default function KYC() {
           ? "pending"
           : "processing",
       };
-      console.log("dataToSave", id);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("dataToSave", id);
+      }
 
       if (id) {
-        console.log("ID present", id);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("ID present", id);
+        }
       } else {
-        console.log("ID missing");
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("ID missing");
+        }
       }
       const response = id
         ? await kycService.updateProperty(id, dataToSave)
@@ -181,16 +185,24 @@ export default function KYC() {
       setIsLoading(false);
     }
   };
-  console.log("new form", formData);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("new form", formData);
+  }
   const handleNext = async () => {
-    console.log("enterd  next noew");
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("enterd  next noew");
+    }
     if (steps[currentStep].requiresValidation) {
       const isValid = await validateCurrentStep();
       if (!isValid) return;
     }
-    console.log("reached here");
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("reached here");
+    }
     await saveData();
-    console.log("passed save");
+    if (process.env.NEXT_PUBLIC_ENV === "dev") {
+      console.log("passed save");
+    }
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
@@ -200,12 +212,16 @@ export default function KYC() {
     setIsLoading(true);
     try {
       toast("Submitting your kyc...");
-      console.log("finally", formData?.hostId);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("finally", formData?.hostId);
+      }
       await kycService.updateProperty(id, {
         ...formData,
         status: "completed",
       });
-      console.log("finally", formData?.hostId);
+      if (process.env.NEXT_PUBLIC_ENV === "dev") {
+        console.log("finally", formData?.hostId);
+      }
       // await propertyService.updateKyc(formData?.hostId);
 
       queryClient.invalidateQueries({

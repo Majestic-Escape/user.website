@@ -18,8 +18,12 @@ export default function PropertyListing({
   unavailableDates,
   loading,
 }) {
-  console.log("propertyDetails data", propertyDetails);
-  console.log("isLoading ", isLoading);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("propertyDetails data", propertyDetails);
+  }
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("isLoading ", isLoading);
+  }
   const [date, setDate] = useState({
     from: new Date(),
     to: addDays(new Date(), 1),
@@ -68,14 +72,14 @@ export default function PropertyListing({
         <div className="lg:col-span-2">
           <div className="border-b pb-6 mb-6">
             <div className="flex items-center gap-4 mt-6">
-              {propertyDetails.placeType[0].toUpperCase() +
-                propertyDetails.placeType.slice(1)}{" "}
-              {propertyDetails.propertyType[0].toUpperCase() +
-                propertyDetails.propertyType.slice(1)}
+              {propertyDetails?.placeType[0].toUpperCase() +
+                propertyDetails?.placeType.slice(1)}{" "}
+              {propertyDetails?.propertyType[0].toUpperCase() +
+                propertyDetails?.propertyType.slice(1)}
             </div>
             <div className="flex items-center gap-4 mt-6">
-              {propertyDetails.guests} Guests | {propertyDetails.beds} Beds |{" "}
-              {propertyDetails.bedrooms} Bedroom | {propertyDetails.bathrooms}{" "}
+              {propertyDetails?.guests} Guests | {propertyDetails?.beds} Beds |{" "}
+              {propertyDetails?.bedrooms} Bedroom | {propertyDetails?.bathrooms}{" "}
               Bathroom
             </div>
             <div className="flex items-center gap-4 mt-6">

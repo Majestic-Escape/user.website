@@ -43,7 +43,9 @@ export default function FarmHouse() {
         .filter((x) => x)
     : [];
 
-  console.log("arry", array);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("arry", array);
+  }
 
   useEffect(() => {
     async function fetchDates() {
@@ -74,7 +76,9 @@ export default function FarmHouse() {
           }
         );
 
-        console.log("Available properties:", response.data.data);
+        if (process.env.NEXT_PUBLIC_ENV === "dev") {
+          console.log("Available properties:", response.data.data);
+        }
         setData(response.data.data);
         setPagination(response.data.pagination);
       } catch (err) {
@@ -91,7 +95,9 @@ export default function FarmHouse() {
     setCurrentPage(1);
   }, [location, from, to, guests, property]);
   const { setAddPropertyType } = useAuth();
-  console.log("now", data);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("now", data);
+  }
   useEffect(() => {
     if (property) {
       setAddPropertyType(property);

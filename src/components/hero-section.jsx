@@ -45,9 +45,10 @@ export default function HeroSection() {
   // }, [])
 
   return (
-    <div className="relative border-b border-b-gray-100 bg-white flex justify-center w-full min-h-screen font-poppins md:pt-48 md:pb-0 px-2 sm:px-6 overflow-hidden pt-36 pb-8">
-      <div className="w-full max-w-6xl mx-auto py-5 md:py-12 relative z-10">
-        <main className="container w-full flex flex-col justify-between items-center md:items-start lg:flex-row font-poppins">
+    <div className="mobile:pt-[140px] mobile:pb-10 tab:pt-[170px] tab:pb-5 midtab:pt-[210px] midtab:pb-10 relative border-b border-b-gray-100 bg-white flex justify-center w-full min-h-screen font-poppins md:pt-48 md:pb-0 px-2 sm:px-6 overflow-hidden pt-24 sm:pt-24 pb-8">
+      <div className="tab:min-h-[calc(100vh-80px)] tab:flex tab:items-center tab:justify-center desktop:pb-0 smtab:mt-[50px] mtab:mt-[10px] midtab:mt-5 w-full max-w-6xl mx-auto py-5 relative z-10">
+        <main className="mobile:flex-col tab:flex tab:flex-col tab:items-center midtab:flex-col midtab:items-center midtab:gap-8 desktop:flex-row container w-full flex flex-col justify-between items-center md:items-start font-poppins">
+          {/* hero-root hero-inner outer-mid-tab-margin hero-margin hero-main */}
           <HeroContent />
           <ChatSimulator />
         </main>

@@ -37,7 +37,9 @@ export default function FilterProperties({
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-  console.log("new pr", properties);
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("new pr", properties);
+  }
   if (!properties) {
     setLoading(true);
   }
