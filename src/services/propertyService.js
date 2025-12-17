@@ -78,11 +78,11 @@ export const propertyService = {
     }
   },
 
-  updateProperty: async (id, propertyData) => {
+  updateProperty: async (id, status, submit = false, propertyData) => {
     try {
       console.group("back", propertyData);
       const response = await axios.put(
-        `${API_BASE_URL}/properties/update-listing-property/${id}`,
+        `${API_BASE_URL}/properties/update-listing-property/${id}?submit=${submit}&status=${status}`,
         propertyData
       );
       return response.data;

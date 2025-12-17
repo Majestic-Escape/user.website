@@ -81,15 +81,16 @@ export function DescribeYourPlace({ updateFormData, formData }) {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto p-6 md:max-w-2xl md:p-0 md:space-y-6">
+      {" "}
+      {/* max-w-4xl mx-auto p-6 */}
       <TextReveal>
         <h3 className="text-xl md:text-2xl font-bricolage text-absoluteDark font-semibold">
           Let's begin with the fundamentals
         </h3>
       </TextReveal>
-
       <TextReveal>
-        <div className="grid grid-cols-1 gap-4">
+        <div className="pt-4 md:pt-0 grid grid-cols-1 gap-4">
           {/* Guests Input */}
           <div className="flex justify-between items-center">
             <Label htmlFor="guests" className="text-lg text-absoluteDark">

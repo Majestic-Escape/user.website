@@ -535,7 +535,7 @@ export function LocationForm({ updateFormData, formData }) {
       )}
 
       <div className="flex flex-col gap-x-8 justify-between items-start md:flex-row gap-y-4">
-        <div className="md:w-1/2">
+        <div className="w-full md:w-1/2">
           <TextReveal>
             <div className="space-y-4">
               <div className="relative">

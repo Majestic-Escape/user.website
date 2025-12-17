@@ -127,7 +127,7 @@ export function SafetyDetails({ updateFormData, formData }) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="max-w-4xl mx-auto p-6 md:min-h-screen md:bg-background">
       <main className="container mx-auto max-w-3xl py-12">
         <div className="">
           <TextReveal>

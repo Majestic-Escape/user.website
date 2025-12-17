@@ -184,7 +184,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
   }, [photos, updateFormData]);
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto py-4">
+    <div className=" max-w-4xl mx-auto p-6 md:space-y-8 md:max-w-3xl md:py-4">
       <TextReveal>
         <h3 className="text-xl md:text-2xl font-bricolage text-absoluteDark font-semibold">
           Add photos to make your place stand out
@@ -192,7 +192,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
       </TextReveal>
       <TextReveal>
         <div>
-          <div className="space-y-4">
+          <div className="pt-4 md:pt-0 space-y-4">
             {/* <Input
               id="photos"
               type="file"

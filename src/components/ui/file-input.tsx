@@ -120,7 +120,7 @@ export const FileInput = forwardRef<FileInputRef, FileInputProps>(
         <input
           ref={inputRef}
           type="file"
-          className="hidden"
+          className="sr-only"
           onChange={handleChange}
           {...props}
         />

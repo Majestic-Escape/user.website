@@ -58,14 +58,14 @@ export function SetRules({ updateFormData, formData }) {
   };
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto ">
+    <div className="max-w-4xl mx-auto p-6 md:space-y-8 md:max-w-3xl ">
       <TextReveal>
         <h3 className="text-xl md:text-2xl font-bricolage text-absoluteDark font-semibold">
           Let's set the stay rules
         </h3>
       </TextReveal>
       <TextReveal>
-        <div className="">
+        <div className="pt-4 md:pt-0">
           <h3 className="text-base text-absoluteDark mb-2 font-medium font-bricolage">
             House Rules
           </h3>

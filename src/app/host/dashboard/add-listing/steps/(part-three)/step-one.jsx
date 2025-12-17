@@ -131,7 +131,7 @@ export function ReservationSettings({ updateFormData, formData }) {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className=" max-w-4xl mx-auto p-6 md:min-h-screen md:bg-background">
       <main className="container max-w-3xl mx-auto py-12">
         <TextReveal>
           <h3 className="text-xl md:text-2xl mb-8 font-bricolage text-absoluteDark font-semibold">
@@ -157,7 +157,7 @@ export function ReservationSettings({ updateFormData, formData }) {
                   <RadioGroupItem value="manual" id="manual" className="mt-1" />
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
-                      <MessageCircle className="h-5 w-5" />
+                      <MessageCircle className="hidden md:block md:h-5 md:w-5" />
                       <h3 className="font-medium">
                         Approve or decline requests
                       </h3>
@@ -188,7 +188,7 @@ export function ReservationSettings({ updateFormData, formData }) {
                     />
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2">
-                        <Zap className="h-5 w-5" />
+                        <Zap className="hidden md:block md:h-5 md:w-5" />
                         <h3 className="font-medium">Use Instant Book</h3>
                         <InfoDialog type="instantBook" />
                       </div>

@@ -182,7 +182,7 @@ export default function FilterStaysBar({
         <div
           ref={scrollContainerRef}
           // className="flex space-x-8  md:space-x-8 flex-shrink-0 overflow-x-hidden   px-2 py-2  max-w-full md:max-w-[70vw] lg:[65vw] "
-          className=" desktop:overflow-x-hidden md:filter-scroll flex space-x-6 md:space-x-8 flex-shrink-0 overflow-x-auto px-2 py-2 max-w-full md:max-w-[70vw]"
+          className="hidden md:block desktop:overflow-x-hidden md:filter-scroll md:flex space-x-6 md:space-x-8 flex-shrink-0 overflow-x-auto px-2 py-2 max-w-full md:max-w-[70vw]"
         >
           {/* property-filter */}
           {propertyTypes.map((type, index) => (

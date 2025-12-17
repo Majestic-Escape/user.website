@@ -81,12 +81,16 @@ const activities = [
 const experiences = [
   {
     id: 1,
-    title: "Cruise Experience",
-    location: "Panaji, North Goa, Goa",
+    // title: "Cruise Experience",
+    // location: "Panaji, North Goa, Goa",
+    title: "Kutchi Handicraft",
+    location: "Rann of Kutch, Gujarat",
+
     price: "1800",
     images: [
-      "/images/activities/nirvana-cruise.jpg",
-      "/images/activities/nirvana-cruise1.jpeg",
+      "/images/experiences/kutchi.png",
+      // "/images/activities/nirvana-cruise.jpg",
+      // "/images/activities/nirvana-cruise1.jpeg",
     ],
   },
   {
@@ -102,24 +106,32 @@ const experiences = [
   },
   {
     id: 3,
-    title: "VIP Luxury Dinner Cruise Goa",
-    location: "Mhadei River, Goa",
+    // title: "VIP Luxury Dinner Cruise Goa",
+    // location: "Mhadei River, Goa",
+
+    title: "Puppet Show",
+    location: "Rann of Kutch, Gujarat",
     price: "2500",
     images: [
-      "/images/activities/vip-luxury1.jpeg",
-      "/images/activities/vip-luxury2.jpg",
-      "/images/activities/vip-luxury3.jpg",
+      "/images/experiences/puppet.png",
+      // "/images/activities/vip-luxury1.jpeg",
+      // "/images/activities/vip-luxury2.jpg",
+      // "/images/activities/vip-luxury3.jpg",
     ],
   },
   {
     id: 4,
-    title: "Dinner & Party Boat Cruise",
-    location: "Calangute Beach, Goa",
+    // title: "Dinner & Party Boat Cruise",
+    // location: "Calangute Beach, Goa",
+    title: "Rogan Art",
+    location: "Rann of Kutch, Gujarat",
+
     price: "1099",
     images: [
-      "/images/activities/lexicon1.jpg",
-      "/images/activities/lexicon2.jpg",
-      "/images/activities/lexicon3.jpg",
+      "/images/experiences/roganart.png",
+      // "/images/activities/lexicon1.jpg",
+      // "/images/activities/lexicon2.jpg",
+      // "/images/activities/lexicon3.jpg",
     ],
   },
   {
@@ -142,13 +154,17 @@ const experiences = [
   },
   {
     id: 7,
-    title: "A Nature Trail at Chorao Island",
-    location: "Ribandar, Goa",
+    // title: "A Nature Trail at Chorao Island",
+    // location: "Ribandar, Goa",
+    title: "Folk Music",
+    location: "Rann of Kutch, Gujarat",
+
     price: "1799",
     images: [
-      "/images/activities/chorao1.jpg",
-      "/images/activities/chorao2.jpg",
-      "/images/activities/chorao3.jpg",
+      "/images/experiences/folkmusic.png",
+      // "/images/activities/chorao1.jpg",
+      // "/images/activities/chorao2.jpg",
+      // "/images/activities/chorao3.jpg",
     ],
   },
   {
@@ -164,13 +180,17 @@ const experiences = [
   },
   {
     id: 9,
-    title: "A Saligao Paasai (Village Trail)",
-    location: "Saligao Church",
+    // title: "A Saligao Paasai (Village Trail)",
+    // location: "Saligao Church",
+    title: "Karna No Vesh",
+    location: "Rann of Kutch, Gujarat",
+
     price: "2800",
     images: [
-      "/images/activities/saligao1.jpg",
-      "/images/activities/saligao2.jpg",
-      "/images/activities/saligao3.jpeg",
+      "/images/experiences/kala.png",
+      // "/images/activities/saligao1.jpg",
+      // "/images/activities/saligao2.jpg",
+      // "/images/activities/saligao3.jpeg",
     ],
   },
   {
@@ -208,24 +228,32 @@ const experiences = [
   },
   {
     id: 13,
-    title: "Velha Goa to Nova Goa",
-    location: "Velha Goa, Goa",
+    // title: "Velha Goa to Nova Goa",
+    // location: "Velha Goa, Goa",
+    title: "Folk Dance",
+    location: "Rann of Kutch, Gujarat",
+
     price: "999",
     images: [
-      "/images/activities/velha1.jpg",
-      "/images/activities/velha2.jpg",
-      "/images/activities/velha3.jpg",
+      "/images/experiences/folkdance.png",
+      // "/images/activities/velha1.jpg",
+      // "/images/activities/velha2.jpg",
+      // "/images/activities/velha3.jpg",
     ],
   },
   {
     id: 14,
-    title: "Fishing and Crab Cooking",
-    location: "Chimbel, Goa",
+    // title: "Fishing and Crab Cooking",
+    // location: "Chimbel, Goa",
+    title: "Bell Art",
+    location: "Rann of Kutch, Gujarat",
+
     price: "999",
     images: [
-      "/images/activities/fishing1.jpg",
-      "/images/activities/fishing2.jpg",
-      "/images/activities/fishing3.jpg",
+      "/images/experiences/bell.png",
+      // "/images/activities/fishing1.jpg",
+      // "/images/activities/fishing2.jpg",
+      // "/images/activities/fishing3.jpg",
     ],
   },
   {
@@ -758,13 +786,13 @@ const ExperienceCard = ({ experience, includeTaxes }) => {
           />
 
           <div className="absolute top-3 left-3 right-3 flex justify-between items-center">
-            <div className="bg-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+            {/* <div className="bg-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
               Guest&apos;s fav
-            </div>
-            <div className="bg-white px-2 py-1 rounded-full text-xs sm:text-sm font-medium flex items-center gap-1">
+            </div> */}
+            {/* <div className="bg-white px-2 py-1 rounded-full text-xs sm:text-sm font-medium flex items-center gap-1">
               <span>5</span>
               <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-current text-yellow-400" />
-            </div>
+            </div> */}
           </div>
 
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
@@ -1201,14 +1229,14 @@ export default function Component() {
         id="experiences"
         className="px-4 md:px-[72px] sm:px-6 lg:px-[72px] py-12 sm:py-16 lg:py-[128px]"
       >
-        <Heading text="Exciting Experiences in Goa" />
-        <SubHeading className="text-left" text="Live Goa, not just visit" />
+        <Heading text="Exciting Experiences in India" />
+        {/* <SubHeading className="text-left" text="Live Goa, not just visit" /> */}
 
         <div className="flex flex-col rounded-full sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-8">
-          <div className="w-full relative max-w-[850px]">
+          {/* <div className="w-full relative max-w-full">
             <div
               ref={scrollContainerRef}
-              className="flex space-x-6 overflow-x-hidden  px-2 py-2 max-w-[850px]"
+              className="flex space-x-6 overflow-x-hidden  px-2 py-2 max-w-full"
             >
               {activities.map((type, index) => (
                 <div key={index} className="text-center flex-shrink-0">
@@ -1246,7 +1274,7 @@ export default function Component() {
                 )}
               </>
             )}
-          </div>
+          </div> */}
 
           {/* <div className="flex flex-row items-center gap-4">
             <FilterSheet>

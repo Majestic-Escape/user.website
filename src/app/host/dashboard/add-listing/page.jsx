@@ -237,7 +237,7 @@ export default function HostOnboarding() {
         console.log("id", id);
       }
       const response = id
-        ? await propertyService?.updateProperty(id, dataToSave)
+        ? await propertyService?.updateProperty(id, "", "", dataToSave)
         : await propertyService?.createProperty(dataToSave);
 
       if (!id) setId(response._id);
@@ -321,7 +321,8 @@ export default function HostOnboarding() {
         console.log(id);
       }
       toast("Submitting your listing...");
-      await propertyService.updateProperty(id, {
+      const submit = true;
+      await propertyService.updateProperty(id, "", submit, {
         ...formData,
         status: "processing",
       });

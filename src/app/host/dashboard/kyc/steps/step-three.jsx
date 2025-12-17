@@ -144,9 +144,14 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
   return (
     <Card className="max-w-3xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl font-bricolage">
-          GST Verification
-        </CardTitle>
+        <div className="flex items-center">
+          <div>
+            <CardTitle className="text-2xl font-bricolage">
+              GST Verification
+            </CardTitle>
+          </div>
+          <div className="pl-2"> (Optional)</div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
@@ -203,26 +208,36 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
         </div>
       </CardContent>
       <CardFooter>
-        <Button
-          onClick={handleVerify}
-          disabled={
-            !gstInfo.panNumber ||
-            !gstInfo.rePanNumber ||
-            !gstInfo.gstNumber ||
-            isVerifying ||
-            gstInfo.isVerified
-          }
-          className="w-full"
-        >
-          {isVerifying ? (
-            <>
-              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-              Verifying...
-            </>
-          ) : (
-            "Verify GST"
-          )}
-        </Button>
+        <div className="flex grid grid-cols-2 w-full gap-4 mx-auto">
+          <Button
+            onClick={handleVerify}
+            disabled={
+              !gstInfo.panNumber ||
+              !gstInfo.rePanNumber ||
+              !gstInfo.gstNumber ||
+              isVerifying ||
+              gstInfo.isVerified
+            }
+            className="w-full"
+          >
+            {isVerifying ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                Verifying...
+              </>
+            ) : (
+              "Verify your GST"
+            )}
+          </Button>
+          <Button
+            className="w-full bg-white text-black border-2 border-primaryGreen hover:bg-white"
+            onClick={() => {
+              goNext();
+            }}
+          >
+            Skip this step
+          </Button>
+        </div>
       </CardFooter>
       <Dialog
         open={showDialog}

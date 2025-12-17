@@ -16,7 +16,7 @@ export default function Component() {
 
       {/* <ExperienceSection /> */}
       {/* <ExperienceSoulTraveling /> */}
-      <Blogs />
+      {/* <Blogs /> */}
       {/* <Newsletter /> */}
     </div>
   );

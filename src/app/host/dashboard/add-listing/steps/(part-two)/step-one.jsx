@@ -100,7 +100,7 @@ export function AmenitiesSelector({ updateFormData, formData }) {
     },
     {
       id: "exercise",
-      title: "Exercise equipment",
+      title: "Exercise equip.",
       icon: Dumbbell,
       category: "standout",
       selected: false,
@@ -287,51 +287,48 @@ export function AmenitiesSelector({ updateFormData, formData }) {
     [toggleAmenity]
   );
   return (
-    <div className="space-y-12 mb-12">
+    <div className="max-w-4xl mx-auto p-6 md:max-w-none md:mx-0 md:p-0 md:space-y-12 md:mb-12">
+      {/* space-y-12 mb-12 */}
       <TextReveal>
+        <div className="mx-auto container max-w-5xl ">
+          <h3 className="pb-4 md:pb-0 text-xl md:text-2xl font-bricolage text-absoluteDark font-semibold">
+            Tell guests what your place has to offer
+          </h3>
 
-
-      <div className="mx-auto container max-w-5xl ">
-        <h3 className="text-xl md:text-2xl font-bricolage text-absoluteDark font-semibold">
-          Tell guests what your place has to offer
-        </h3>
-
-        <p className="text-muted-foreground">
-          You can add more amenities after you publish your listing.
-        </p>
-      </div>
+          <p className="pb-4 md:pb-0 text-muted-foreground">
+            You can add more amenities after you publish your listing.
+          </p>
+        </div>
       </TextReveal>
       <TextReveal>
+        <div className="space-y-8 mx-auto container max-w-5xl">
+          <section>
+            <h2 className="text-base font-medium mb-4">
+              Do you have any standout amenities?
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {renderAmenityCards(standoutAmenities)}
+            </div>
+          </section>
 
-   
-      <div className="space-y-8 mx-auto container max-w-5xl">
-        <section>
-          <h2 className="text-base font-medium mb-4">
-            Do you have any standout amenities?
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {renderAmenityCards(standoutAmenities)}
-          </div>
-        </section>
+          <section>
+            <h2 className="text-xl font-semibold mb-4">
+              Do you have any of these safety items?
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {renderAmenityCards(safetyAmenities)}
+            </div>
+          </section>
 
-        <section>
-          <h2 className="text-xl font-semibold mb-4">
-            Do you have any of these safety items?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {renderAmenityCards(safetyAmenities)}
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-semibold mb-4">
-            What about these guest favourites?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {renderAmenityCards(favoriteAmenities)}
-          </div>
-        </section>
-      </div>
+          <section>
+            <h2 className="text-xl font-semibold mb-4">
+              What about these guest favourites?
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {renderAmenityCards(favoriteAmenities)}
+            </div>
+          </section>
+        </div>
       </TextReveal>
     </div>
   );

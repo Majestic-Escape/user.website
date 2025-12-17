@@ -337,8 +337,8 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
             >
               {!image && (
                 <div className="text-center pointer-events-none">
-                  <Icons.Upload className="mx-auto h-8 w-8 text-gray-400" />
-                  <span className="mt-2 block text-sm font-medium text-gray-700">
+                  <Icons.Upload className=" mx-auto h-32 md:h-16 w-8 text-gray-400" />
+                  <span className="hidden md:block mt-2 block text-sm font-medium text-gray-700">
                     Drop your file here, or click to browse
                   </span>
                 </div>

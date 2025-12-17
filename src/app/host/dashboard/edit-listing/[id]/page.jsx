@@ -138,7 +138,12 @@ export default function EditListing({ params }) {
         status: newStatus,
       };
 
-      const response = await propertyService.updateProperty(id, dataToSave);
+      const response = await propertyService.updateProperty(
+        id,
+        "",
+        "",
+        dataToSave
+      );
       setFormData(response);
       // toast.success("Progress saved successfully");
     } catch (error) {
@@ -153,8 +158,9 @@ export default function EditListing({ params }) {
     try {
       const hasSignificantChanges = checkForSignificantChanges();
       const newStatus = determineNewStatus(false, hasSignificantChanges);
+      const submit = true;
 
-      await propertyService.updateProperty(id, {
+      await propertyService.updateProperty(id, initialStatus, submit, {
         ...formData,
         status: newStatus,
       });
