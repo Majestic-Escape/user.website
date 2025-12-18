@@ -236,17 +236,21 @@ export default function HostOnboarding() {
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
         console.log("id", id);
       }
-      const response = id
-        ? await propertyService?.updateProperty(id, "", "", dataToSave)
-        : await propertyService?.createProperty(dataToSave);
+      const SKIP_SAVE_STEPS = ["Onboarding", "Step 1 Intro"];
+      const currentTitle = steps[currentStep]?.title;
+      if (!SKIP_SAVE_STEPS.includes(currentTitle)) {
+        const response = id
+          ? await propertyService?.updateProperty(id, "", "", dataToSave)
+          : await propertyService?.createProperty(dataToSave);
 
-      if (!id) setId(response._id);
-      setFormData(response);
+        if (!id) setId(response._id);
+        setFormData(response);
 
-      // Invalidate cached listing status so that any component using it re-fetches new data
-      queryClient?.invalidateQueries({
-        queryKey: ["listingStatus", auth?.user?.email],
-      });
+        // Invalidate cached listing status so that any component using it re-fetches new data
+        queryClient?.invalidateQueries({
+          queryKey: ["listingStatus", auth?.user?.email],
+        });
+      }
     } catch (error) {
       toast.error("Failed to save progress. Please try again.");
     } finally {

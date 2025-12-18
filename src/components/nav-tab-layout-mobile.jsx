@@ -5,9 +5,19 @@ import { usePathname } from "next/navigation";
 import { Tabs, MobileTabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const tabs = [
-  { name: "Stays", id: "1", href: "/stays", icon: "🏠" },
-  { name: "Experiences", id: "2", href: "/experiences", icon: "🧗" },
-  { name: "Services", id: "3", href: "/services", icon: "🛎️" },
+  { name: "Stays", id: "1", href: "/stays", icon: "/images/mobile/house.png" },
+  {
+    name: "Experiences",
+    id: "2",
+    href: "/experiences",
+    icon: "/images/mobile/experience.png",
+  },
+  {
+    name: "Services",
+    id: "3",
+    href: "/services",
+    icon: "/images/mobile/service.png",
+  },
 ];
 
 export default function MobileNavTabLayout({ hideTabs }) {
@@ -27,7 +37,13 @@ export default function MobileNavTabLayout({ hideTabs }) {
               href={tab.href}
               className="flex flex-col items-center  justify-center w-full pt-2"
             >
-              <span className="text-2xl leading-none">{tab.icon}</span>
+              <img src={tab.icon} height="30" width="30" />
+              {/* {tab.id == 1 ? (
+                <img src={tab.icon} height="30" width="30" />
+              ) : null}
+              {tab.id == 1 ? null : (
+                <span className="text-2xl leading-none">{tab.icon}</span>
+              )} */}
               <span className="text-sm font-medium text-absoluteDark">
                 {tab.name}
               </span>

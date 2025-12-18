@@ -96,7 +96,7 @@ const experiences = [
   {
     id: 2,
     title: "3-Deck Dine Cruise",
-    location: "Malvan Lake, Goa",
+    location: "Panaji, Goa",
     price: "1200",
     images: [
       "/images/activities/swastik1.jpg",
@@ -1222,12 +1222,12 @@ export default function Component() {
   }
 
   return (
-    <div className="w-full font-poppins bg-white text-absolute-dark md:pt-16 ">
+    <div className="w-full font-poppins bg-white text-absolute-dark md:pt-8 lg:pt-0">
       {/* <ExperiencePartnerSection/> */}
 
       <section
         id="experiences"
-        className="px-4 md:px-[72px] sm:px-6 lg:px-[72px] py-12 sm:py-16 lg:py-[128px]"
+        className="px-4 md:px-[72px] sm:px-6 lg:px-[72px] py-16 md:py-10 lg:py-16 "
       >
         <Heading text="Exciting Experiences in India" />
         {/* <SubHeading className="text-left" text="Live Goa, not just visit" /> */}

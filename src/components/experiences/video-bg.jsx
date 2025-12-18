@@ -8,8 +8,9 @@ export default function VideoBackground() {
   const [isPlaying, setIsPlaying] = useState(true);
 
   const videos = [
-    "https://cdn.pixabay.com/video/2024/02/13/200427-912684284_large.mp4",
-    "https://cdn.pixabay.com/video/2024/02/21/201308-915375262_large.mp4",
+    "https://www.youtube.com/embed/T-kulebBnxg?si=SIPe4hJgOX55_IAm",
+    // "https://cdn.pixabay.com/video/2024/02/13/200427-912684284_large.mp4",
+    // "https://cdn.pixabay.com/video/2024/02/21/201308-915375262_large.mp4",
   ];
 
   const videoRefs = useRef(videos.map(() => createRef()));
@@ -48,7 +49,8 @@ export default function VideoBackground() {
 
   return (
     <>
-      {videos.map((video, index) => (
+      {}
+      {/* {videos.map((video, index) => (
         <video
           key={index}
           ref={videoRefs.current[index]}
@@ -61,7 +63,7 @@ export default function VideoBackground() {
           loop
           playsInline
         />
-      ))}
+      ))} */}
       <div className="absolute inset-0 bg-black/30" />
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-20">

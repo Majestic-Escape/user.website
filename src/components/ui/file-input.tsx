@@ -123,6 +123,17 @@ export const FileInput = forwardRef<FileInputRef, FileInputProps>(
           className="sr-only"
           onChange={handleChange}
           {...props}
+          style={{
+            position: "absolute",
+            width: 0,
+            height: 0,
+            padding: 0,
+            margin: 0,
+            border: 0,
+            opacity: 0,
+            overflow: "hidden",
+            pointerEvents: "none",
+          }}
         />
         <div
           className={`absolute inset-0 ${

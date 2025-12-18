@@ -797,11 +797,11 @@ function BookPageContent() {
                 verify?.data?._id
               );
 
-              await createPayout(
-                booking?.data?._id,
-                propertyId,
-                totals.subtotal
-              );
+              // await createPayout(
+              //   booking?.data?._id,
+              //   propertyId,
+              //   totals.subtotal
+              // );
               // const payout = await initiatePayout(
               //   propertyId,
               //   totals?.total * 100,
@@ -823,11 +823,11 @@ function BookPageContent() {
                 property.bookingType.manual,
                 verify?.data?._id
               );
-              await createPayout(
-                booking?.data?._id,
-                propertyId,
-                totals.subtotal
-              );
+              // await createPayout(
+              //   booking?.data?._id,
+              //   propertyId,
+              //   totals.subtotal
+              // );
               // const payout = await initiatePayout(
               //   propertyId,
               //   totals?.total * 100,
