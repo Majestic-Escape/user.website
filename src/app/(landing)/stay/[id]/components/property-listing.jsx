@@ -65,7 +65,8 @@ export default function PropertyListing({
     setShowGuestsDropdown(!showGuestsDropdown);
     if (showCalendar) setShowCalendar(false);
   };
-
+  const obj = propertyDetails.bookingType;
+  const manual = Object.keys(obj).filter((key) => obj[key]);
   return (
     <div className="max-w-7xl  mx-auto relative">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6 px-4 lg:px-0">
@@ -123,6 +124,7 @@ export default function PropertyListing({
             property={propertyDetails}
           />
           <PropertyAmenities
+            manual={manual}
             amenities={propertyDetails?.amenities}
             showAmenitiesDialog={showAmenitiesDialog}
             setShowAmenitiesDialog={setShowAmenitiesDialog}
@@ -140,6 +142,7 @@ export default function PropertyListing({
         <div className="lg:sticky lg:top-0 lg:right-0 lg:self-start">
           <BookingWidget
             propertyId={propertyDetails?._id}
+            manual={manual}
             propertyImages={propertyDetails?.photos}
             pricePerNight={propertyDetails?.basePrice}
             checkinTime={propertyDetails?.checkinTime}

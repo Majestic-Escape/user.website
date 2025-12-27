@@ -46,7 +46,8 @@ type AuthContextType = {
   setPetAllowed: React.Dispatch<React.SetStateAction<string>>;
   checkinType: string;
   setCheckinType: React.Dispatch<React.SetStateAction<string>>;
-
+  activeTab: string;
+  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
   // Filter functions
   clearAllFilters: () => void;
   addAmenitiesList: (value: string) => void;
@@ -73,6 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [bookingType, setBookingType] = useState("");
   const [petAllowed, setPetAllowed] = useState("");
   const [checkinType, setCheckinType] = useState("");
+  const [activeTab, setActiveTab] = useState("filters");
   const { checkToken } = useCheckToken();
   const pathname = usePathname();
 
@@ -230,6 +232,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     addAmenitiesList,
     addPropertiesList,
     handleRoomChange,
+    activeTab,
+    setActiveTab,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import PrimaryLink from "@/components/primary-link";
 
-export default function Component() {
+export default function Component({ user }) {
   return (
     <section className="w-full  flex md:items-center items-start min-h-screen  bg-white pt-24 sm:py-16 ">
       <div className="container max-w-7xl mx-auto px-4 md:px-6">
@@ -21,11 +21,19 @@ export default function Component() {
               on all fronts
             </p>
             <div className="flex flex-row justify-center md:justify-start gap-x-2 md:gap-x-4 gap-y-3 items-center">
-              <PrimaryLink
-                text="Become a Host"
-                variant="primary"
-                href="/register"
-              />
+              {!user ? (
+                <PrimaryLink
+                  text="Become a Host"
+                  variant="primary"
+                  href="/register"
+                />
+              ) : (
+                <PrimaryLink
+                  text="Become a Host"
+                  variant="primary"
+                  href="/host/dashboard"
+                />
+              )}
               <PrimaryLink
                 text="Explore Features"
                 variant="secondary"

@@ -43,34 +43,37 @@ export default function KarnatakaRules() {
                       <br />
                       <p>For hosts operating a Homestay:</p>
                       <br />
-                      <li>
-                        <strong>Registration of Homestays.</strong> Homestays
-                        operating in Karnataka are required to be registered
-                        with the Karnataka Department of Tourism. If you are
-                        listing a premises in which you or members of your
-                        family are also staying, this would be considered a
-                        homestay, and you should submit an application for
-                        registration here. For guidance/help with registration,
-                        you can refer to these instructions. In order to be
-                        eligible for registration, your premises should meet the
-                        requirements put in place by the Karnataka Department of
-                        Tourism. Your premises should also not be registered as
-                        a hotel or similar commercial establishment.
-                      </li>
-                      <br />
-                      <li>
-                        <strong>Display Name Board.</strong> After completing
-                        registration, you should display a name board at the
-                        entrance of the homestay, with the following words -
-                        “Registered under the Tourism Department of Karnataka
-                        Government”.
-                      </li>
-                      <br />
-                      <li>
-                        <strong>Maintain Books and Registers</strong>. While
-                        operating your homestay in Karnataka, you should
-                        maintain the following books and registers:
+                      <ul className="list-disc ml-5 space-y-2">
+                        <li>
+                          <strong>Registration of Homestays.</strong> Homestays
+                          operating in Karnataka are required to be registered
+                          with the Karnataka Department of Tourism. If you are
+                          listing a premises in which you or members of your
+                          family are also staying, this would be considered a
+                          homestay, and you should submit an application for
+                          registration here. For guidance/help with
+                          registration, you can refer to these instructions. In
+                          order to be eligible for registration, your premises
+                          should meet the requirements put in place by the
+                          Karnataka Department of Tourism. Your premises should
+                          also not be registered as a hotel or similar
+                          commercial establishment.
+                        </li>
                         <br />
+                        <li>
+                          <strong>Display Name Board.</strong> After completing
+                          registration, you should display a name board at the
+                          entrance of the homestay, with the following words -
+                          “Registered under the Tourism Department of Karnataka
+                          Government”.
+                        </li>
+                        <br />
+                        <li>
+                          <strong>Maintain Books and Registers</strong>. While
+                          operating your homestay in Karnataka, you should
+                          maintain the following books and registers:
+                          <br />
+                        </li>
                         <li>A complaint/suggestion book;</li>
                         <li>
                           A registration book to record complete details of
@@ -82,7 +85,7 @@ export default function KarnatakaRules() {
                         <li>
                           A serially numbered payment/advance receipt book.
                         </li>
-                      </li>
+                      </ul>
                     </dd>
                   </div>
                 </dl>

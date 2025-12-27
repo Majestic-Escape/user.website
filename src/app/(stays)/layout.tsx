@@ -21,13 +21,12 @@ export default function StaysLayout({ children }: { children: ReactNode }) {
 
         <Navbar />
 
-        <MobileNavbar openModal={openModal} />
+        <MobileNavbar />
 
         <main className={modalFilter ? "filter blur-sm" : ""}>{children}</main>
+        <FilterModal isOpen={modalFilter} onClose={closeModal} />
         <FooterWrapper />
         <BottomNavigation />
-
-        <FilterModal isOpen={modalFilter} onClose={closeModal} />
       </div>
     </SheetProvider>
   );

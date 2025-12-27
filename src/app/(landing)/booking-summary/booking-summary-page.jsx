@@ -141,8 +141,8 @@ export default function BookingSummaryPage() {
 
   if (!queryData)
     return (
-      <div className="min-h-screen font-poppins pt-24">
-        <p>Loading...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
       </div>
     );
 
@@ -198,20 +198,20 @@ export default function BookingSummaryPage() {
   });
   return (
     <div className="min-h-screen font-poppins pt-24">
-      <header className="flow-root bg-offWhite shadow-sm">
-        <div className=" max-w-7xl mx-auto py-4 ml-10 sm:px-6 lg:px-8">
+      <header className="flow-root bg-offWhite shadow-sm bg-primaryGreen">
+        <div className=" max-w-7xl mx-auto py-4  sm:px-6 lg:px-8 ">
           <div className="text-center justify-center">
             {queryData?.instant == "true" ? (
-              <h2 className="flex justify-center text-3xl pb-2 font-semibold font-bricolage text-absoluteDark mt-4">
+              <h2 className="flex justify-center text-3xl pb-2 font-semibold font-bricolage text-white text-absoluteDark mt-4">
                 Your reservation is confirmed
               </h2>
             ) : (
-              <h2 className="flex justify-center text-3xl pb-2 font-semibold font-bricolage text-absoluteDark mt-4">
+              <h2 className="flex justify-center text-3xl pb-2 font-semibold font-bricolage  text-white text-absoluteDark mt-4">
                 Wait for host email for confirmation
               </h2>
             )}
             {/* <p className="text-gray-600">You're going to San Francisco!</p> */}
-            <p className="flex justify-center text-gray-600 ">
+            <p className="flex justify-center  text-white ">
               Thanks for choosing Us
             </p>
           </div>

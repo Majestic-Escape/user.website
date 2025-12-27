@@ -17,6 +17,7 @@ import { toast } from "sonner";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 interface BookingWidgetProps {
   propertyId: string;
+  manual: string;
   propertyImages: Array<string>;
   pricePerNight: number;
   date: DateRange | undefined;
@@ -45,6 +46,7 @@ interface BookingWidgetProps {
 
 export default function BookingWidget({
   propertyId,
+  manual,
   propertyImages,
   pricePerNight,
   date,

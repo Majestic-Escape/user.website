@@ -461,7 +461,7 @@ export default function LocalRules() {
                         region-specific info.
                       </span>
                       <br />
-                      <div class="grid grid-cols-4 gap-4">
+                      <div className="grid grid-cols-4 gap-4">
                         <Link href="/help-center/local-rules/goa">
                           <div className="underline">Goa</div>
                         </Link>{" "}

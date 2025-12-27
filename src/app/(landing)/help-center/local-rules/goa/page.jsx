@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 export default function GoaRules() {
@@ -29,34 +31,34 @@ export default function GoaRules() {
                       Listing registration requirements
                     </dt>
                     <dd className="mt-1  text-gray-900 sm:mt-0 sm:col-span-2">
-                      <p>
-                        The{" "}
-                        <a
-                          className="underline"
-                          href={
-                            "https://goaprintingpress.gov.in/downloads/2021/2021-52-SI-OG-0.pdf"
-                          }
-                          target="_blank"
-                        >
-                          {" "}
-                          Goa Registration of Tourist Trade Rules, 1985
-                        </a>
-                        , which were amended in March 2021, have been further
-                        amended on December 29, 2022 (collectively, the “Goa
-                        Rules”). The Goa Rules outline the process for
-                        registration by a person intending to carry out business
-                        as a dealer, hotel keeper, travel agent, or any other
-                        tourism trade in Goa and lays down requisite reporting
-                        obligations.
-                        <br />
-                        <br />
-                        Under the Goa Rules, rented/serviced apartments,
-                        bungalows, homestay units, and bed and breakfast
-                        establishments fall under Category “D”, a new category.
-                        The accommodation establishments included in this new
-                        category are broadly defined below:
-                        <br />
-                        <br />
+                      The{" "}
+                      <a
+                        className="underline"
+                        href={
+                          "https://goaprintingpress.gov.in/downloads/2021/2021-52-SI-OG-0.pdf"
+                        }
+                        target="_blank"
+                      >
+                        {" "}
+                        Goa Registration of Tourist Trade Rules, 1985
+                      </a>
+                      , which were amended in March 2021, have been further
+                      amended on December 29, 2022 (collectively, the “Goa
+                      Rules”). The Goa Rules outline the process for
+                      registration by a person intending to carry out business
+                      as a dealer, hotel keeper, travel agent, or any other
+                      tourism trade in Goa and lays down requisite reporting
+                      obligations.
+                      <br />
+                      <br />
+                      Under the Goa Rules, rented/serviced apartments,
+                      bungalows, homestay units, and bed and breakfast
+                      establishments fall under Category “D”, a new category.
+                      The accommodation establishments included in this new
+                      category are broadly defined below:
+                      <br />
+                      <br />
+                      <ul className="list-disc ml-5 space-y-2">
                         <li>
                           <span className="font-semibold">
                             Other accommodation
@@ -89,49 +91,50 @@ export default function GoaRules() {
                           establishment should have a minimum of one lettable
                           room and a maximum of six lettable rooms (12 beds).
                         </li>{" "}
-                        <br />
-                        For the Hosts operating listings that fall under
-                        Category “D” under the Goa Rules as set out above, the
-                        following registration and other rules apply: <br />{" "}
-                        <br />
-                      </p>
+                      </ul>
+                      <br />
+                      For the Hosts operating listings that fall under Category
+                      “D” under the Goa Rules as set out above, the following
+                      registration and other rules apply: <br /> <br />
                       <span className="flex text-lg font-semibold">
                         Registration
                       </span>
                       <br />
-                      <li>
-                        {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
-                        If you operate listings that fall under Category “D” and
-                        are operating in Goa, you are{" "}
-                        <a
-                          href={
-                            "https://goaprintingpress.gov.in/downloads/2021/2021-52-SI-OG-0.pdf"
-                          }
-                          target="_blank"
-                          className="underline"
-                        >
-                          required to be registered with the Goa Department of
-                          Tourism
-                        </a>{" "}
-                        by submitting an application in Form XXIII under the Goa
-                        Rules.
-                      </li>{" "}
-                      <br />
-                      <li>
-                        {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
-                        <a
-                          href={
-                            "https://goaonline.gov.in/Appln/Uil/DeptServices?__DocId=TOU&__ServiceId=TOU03"
-                          }
-                          target="_blank"
-                          className="underline"
-                        >
-                          Applications for registration can be submitted here.
-                        </a>{" "}
-                        In order to be eligible for registration, your premises
-                        should meet the requirements put in place by the Goa
-                        Department of Tourism under the Goa Rules.
-                      </li>{" "}
+                      <ul className="list-disc ml-5 space-y-2">
+                        <li>
+                          {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
+                          If you operate listings that fall under Category “D”
+                          and are operating in Goa, you are{" "}
+                          <a
+                            href={
+                              "https://goaprintingpress.gov.in/downloads/2021/2021-52-SI-OG-0.pdf"
+                            }
+                            target="_blank"
+                            className="underline"
+                          >
+                            required to be registered with the Goa Department of
+                            Tourism
+                          </a>{" "}
+                          by submitting an application in Form XXIII under the
+                          Goa Rules.
+                        </li>{" "}
+                        <br />
+                        <li>
+                          {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
+                          <a
+                            href={
+                              "https://goaonline.gov.in/Appln/Uil/DeptServices?__DocId=TOU&__ServiceId=TOU03"
+                            }
+                            target="_blank"
+                            className="underline"
+                          >
+                            Applications for registration can be submitted here.
+                          </a>{" "}
+                          In order to be eligible for registration, your
+                          premises should meet the requirements put in place by
+                          the Goa Department of Tourism under the Goa Rules.
+                        </li>{" "}
+                      </ul>
                       <br />
                       <span className="flex">
                         <p>
@@ -157,73 +160,77 @@ export default function GoaRules() {
                         Displaying your registration certificate number
                       </span>
                       <br />
-                      <li>
-                        You are required to display the registration certificate
-                        number in your listing. To make it easier for Hosts to
-                        display their number, Majestic Escape allows Hosts in
-                        Goa to fill in their registration number in a dedicated
-                        field in your listing. Add your registration number in
-                        the Manage Your Space section of your hosting dashboard.
-                        You will be in violation of the Goa Rules if you fail to
-                        provide the registration number in the dedicated field
-                        as stated above. Majestic Escape may be directed by the
-                        prescribed authority under the Goa Rules to take
-                        down/remove your listing from its platform in case of
-                        your non-compliance with the aforesaid registration
-                        rules.
-                      </li>{" "}
-                      <br />
-                      <p>
+                      <ul className="list-disc ml-5 space-y-2">
+                        <li>
+                          You are required to display the registration
+                          certificate number in your listing. To make it easier
+                          for Hosts to display their number, Majestic Escape
+                          allows Hosts in Goa to fill in their registration
+                          number in a dedicated field in your listing. Add your
+                          registration number in the Manage Your Space section
+                          of your hosting dashboard. You will be in violation of
+                          the Goa Rules if you fail to provide the registration
+                          number in the dedicated field as stated above.
+                          Majestic Escape may be directed by the prescribed
+                          authority under the Goa Rules to take down/remove your
+                          listing from its platform in case of your
+                          non-compliance with the aforesaid registration rules.
+                        </li>{" "}
+                        <br />
                         Here are more specific instructions on registering with
                         the Goa Tourism Department and displaying your
                         registration certificate number on Majestic Escape.
-                      </p>
-                      <br />
-                      <li>
-                        {" "}
-                        Use your email address and mobile number to register for
-                        an account on the{" "}
-                        <a
-                          href={
-                            "https://goaonline.gov.in/Appln/Uil/DeptServices?__DocId=TOU&__ServiceId=TOU03"
-                          }
-                          target="_blank"
-                          className="underline"
-                        >
-                          Goa Government portal
-                        </a>
-                      </li>
-                      <br />
-                      <li>
-                        {" "}
-                        Fill in the application form and upload the necessary
-                        documents on the portal to apply for registration of
-                        your homestay or bed and breakfast establishment <br />
-                        <b>Note:</b> The only mandatory documents are the copy
-                        of trade tax/house tax receipt (in original) and the
-                        ownership documents. However, if you lease your
-                        property, please add your lease and license agreement or
-                        a notarized copy of NOC from the owner of the premises
-                      </li>
-                      <br />
-                      <li>
-                        {" "}
-                        Once submitted, the application will be sent to the
-                        Department of Tourism, and an acknowledgment number for
-                        tracking the status of the application is generated
-                      </li>
-                      <br />
-                      <li>
-                        The processing time for the registration application
-                        process is provided by the Department of Tourism as 90
-                        days
-                      </li>
-                      <br />
-                      <li>
-                        {" "}
-                        Once you obtain the acknowledgment number, please update
-                        your registration status by visiting your listing’s
-                      </li>
+                        <br />
+                        <li>
+                          {" "}
+                          Use your email address and mobile number to register
+                          for an account on the{" "}
+                          <a
+                            href={
+                              "https://goaonline.gov.in/Appln/Uil/DeptServices?__DocId=TOU&__ServiceId=TOU03"
+                            }
+                            target="_blank"
+                            className="underline"
+                          >
+                            Goa Government portal
+                          </a>
+                        </li>
+                        <br />
+                        <li>
+                          {" "}
+                          Fill in the application form and upload the necessary
+                          documents on the portal to apply for registration of
+                          your homestay or bed and breakfast establishment{" "}
+                          <br />
+                          <b>Note:</b> The only mandatory documents are the copy
+                          of trade tax/house tax receipt (in original) and the
+                          ownership documents. However, if you lease your
+                          property, please add your lease and license agreement
+                          or a notarized copy of NOC from the owner of the
+                          premises
+                        </li>
+                        <br />
+                        <li>
+                          {" "}
+                          Once submitted, the application will be sent to the
+                          Department of Tourism, and an acknowledgment number
+                          for tracking the status of the application is
+                          generated
+                        </li>
+                        <br />
+                        <li>
+                          The processing time for the registration application
+                          process is provided by the Department of Tourism as 90
+                          days
+                        </li>
+                        <br />
+                        <li>
+                          {" "}
+                          Once you obtain the acknowledgment number, please
+                          update your registration status by visiting your
+                          listing’s
+                        </li>
+                      </ul>
                       <br />
                       <br />
                       <p>
@@ -244,65 +251,68 @@ export default function GoaRules() {
                         Mandatory reporting of tourist data
                       </span>
                       <br />
-                      <li>
-                        {" "}
-                        As per the Goa Rules, it is mandatory for every person
-                        running the business of hotels/homestays in a tourist
-                        area to submit statistics containing details of the
-                        tourists residing in his hotel/other accommodation unit
-                        on a monthly basis before the 5th of the month following
-                        the month to which it pertains. The statistics are
-                        required to be submitted in Form XI in electronic mode
-                        only.
-                      </li>
-                      <br />
-                      <li>
-                        {" "}
-                        To ease the process of collecting the said data, the
-                        Department of Tourism, Goa, has commissioned a new
-                        service by the name 'Statistics Proforma as per Form XI'
-                        which can be accessed from the Department of Tourism
-                        website at the{" "}
-                        <a
-                          href={"https://www.goatourism.gov.in/"}
-                          target="_blank"
-                          className="underline"
-                        >
-                          Tourist Statistics Data Registration portal
-                        </a>{" "}
-                        (Tourist Statistics Data Registration) or{" "}
-                        <a
-                          href={"https://goaonline.gov.in/"}
-                          target="_blank"
-                          className="underline"
-                        >
-                          Goa Online
-                        </a>{" "}
-                        portal under the service list of Tourism Department.
-                        While submitting Form XI, a processing fee is required
-                        to be paid.{" "}
-                        <a
-                          href={
-                            " https://www.goatourism.gov.in/online-submission-of-statistics-proforma-data-as-per-form-xi."
-                          }
-                          target="_blank"
-                          className="underline"
-                        >
-                          Refer this for more details.
-                        </a>{" "}
-                      </li>
-                      <br />
-                      <li>
-                        {" "}
-                        Failure to submit statistics within the due date will
-                        amount to a violation of the Goa Rules and attract a
-                        fine that may range from Rs.10,000 INR to Rs. 25,000
-                        INR. Further, as per the Goa Rules, the registration of
-                        tourist accommodations that are in violation of the Goa
-                        Rules will not be renewed by the Goa Tourism Department
-                        unless the aforesaid statistics are submitted and fines
-                        for any defaulting periods are paid.
-                      </li>
+                      <ul className="list-disc ml-5 space-y-2">
+                        <li>
+                          {" "}
+                          As per the Goa Rules, it is mandatory for every person
+                          running the business of hotels/homestays in a tourist
+                          area to submit statistics containing details of the
+                          tourists residing in his hotel/other accommodation
+                          unit on a monthly basis before the 5th of the month
+                          following the month to which it pertains. The
+                          statistics are required to be submitted in Form XI in
+                          electronic mode only.
+                        </li>
+                        <br />
+                        <li>
+                          {" "}
+                          To ease the process of collecting the said data, the
+                          Department of Tourism, Goa, has commissioned a new
+                          service by the name 'Statistics Proforma as per Form
+                          XI' which can be accessed from the Department of
+                          Tourism website at the{" "}
+                          <a
+                            href={"https://www.goatourism.gov.in/"}
+                            target="_blank"
+                            className="underline"
+                          >
+                            Tourist Statistics Data Registration portal
+                          </a>{" "}
+                          (Tourist Statistics Data Registration) or{" "}
+                          <a
+                            href={"https://goaonline.gov.in/"}
+                            target="_blank"
+                            className="underline"
+                          >
+                            Goa Online
+                          </a>{" "}
+                          portal under the service list of Tourism Department.
+                          While submitting Form XI, a processing fee is required
+                          to be paid.{" "}
+                          <a
+                            href={
+                              " https://www.goatourism.gov.in/online-submission-of-statistics-proforma-data-as-per-form-xi."
+                            }
+                            target="_blank"
+                            className="underline"
+                          >
+                            Refer this for more details.
+                          </a>{" "}
+                        </li>
+                        <br />
+                        <li>
+                          {" "}
+                          Failure to submit statistics within the due date will
+                          amount to a violation of the Goa Rules and attract a
+                          fine that may range from Rs.10,000 INR to Rs. 25,000
+                          INR. Further, as per the Goa Rules, the registration
+                          of tourist accommodations that are in violation of the
+                          Goa Rules will not be renewed by the Goa Tourism
+                          Department unless the aforesaid statistics are
+                          submitted and fines for any defaulting periods are
+                          paid.
+                        </li>
+                      </ul>
                       <br />
                     </dd>
                   </div>

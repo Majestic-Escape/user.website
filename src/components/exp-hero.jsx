@@ -120,7 +120,7 @@ export function ExpHero() {
       <div className="absolute inset-0 bg-black/50 z-[1]" />
 
       {/* Text Content Overlay */}
-      <div className="absolute inset-0 z-10  flex flex-col items-center justify-center px-4 sm:px-6 md:px-[72px] pt-36 md:pt-16 lg:pt-20 text-center">
+      <div className="absolute inset-0 z-10  flex flex-col items-center justify-center px-4 sm:px-6 md:px-[72px] pt-16 md:pt-0  text-center">
         <h1 className="text-2xl sm:text-3xl md:text-5xl font-bricolage font-bold text-white mb-3">
           Discover Thrilling Experiences in India
         </h1>

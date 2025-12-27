@@ -135,48 +135,50 @@ export default function MaharashtraRules() {
                       etc.). You may be required to comply and obtain certain
                       registrations under the: <br />
                       <br />
-                      <li>
-                        {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
-                        <a
-                          href={
-                            "https://www.maharashtratourism.gov.in/documents/38210/1718089/Adventure+Tourism+Policy.pdf"
-                          }
-                          target="_blank"
-                          className="underline"
-                        >
-                          Adventure Tourism (Activities) Policy
-                        </a>{" "}
-                        – Adventure tourism activities conducted on land, water
-                        and air.
-                      </li>{" "}
-                      <br />
-                      <li>
-                        {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
-                        <a
-                          href={
-                            "https://www.maharashtratourism.gov.in/documents/38210/1718089/Caravan+Tourism+Policy.pdf"
-                          }
-                          target="_blank"
-                          className="underline"
-                        >
-                          Caravan Tourism Policy
-                        </a>{" "}
-                        – Caravans and caravan parks.
-                      </li>{" "}
-                      <br />
-                      <li>
-                        {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
-                        <a
-                          href={
-                            "https://www.maharashtratourism.gov.in/documents/38210/1718089/Beach+Shack+Policy.pdf"
-                          }
-                          target="_blank"
-                          className="underline"
-                        >
-                          Beach Shack Policy
-                        </a>{" "}
-                        – Beach shacks, deck-beds, giant umbrellas.
-                      </li>{" "}
+                      <ul className="list-disc ml-5 space-y-2">
+                        <li>
+                          {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
+                          <a
+                            href={
+                              "https://www.maharashtratourism.gov.in/documents/38210/1718089/Adventure+Tourism+Policy.pdf"
+                            }
+                            target="_blank"
+                            className="underline"
+                          >
+                            Adventure Tourism (Activities) Policy
+                          </a>{" "}
+                          – Adventure tourism activities conducted on land,
+                          water and air.
+                        </li>{" "}
+                        <br />
+                        <li>
+                          {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
+                          <a
+                            href={
+                              "https://www.maharashtratourism.gov.in/documents/38210/1718089/Caravan+Tourism+Policy.pdf"
+                            }
+                            target="_blank"
+                            className="underline"
+                          >
+                            Caravan Tourism Policy
+                          </a>{" "}
+                          – Caravans and caravan parks.
+                        </li>{" "}
+                        <br />
+                        <li>
+                          {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
+                          <a
+                            href={
+                              "https://www.maharashtratourism.gov.in/documents/38210/1718089/Beach+Shack+Policy.pdf"
+                            }
+                            target="_blank"
+                            className="underline"
+                          >
+                            Beach Shack Policy
+                          </a>{" "}
+                          – Beach shacks, deck-beds, giant umbrellas.
+                        </li>{" "}
+                      </ul>
                       <br />
                       <span className="flex">
                         <p>

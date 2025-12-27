@@ -241,8 +241,9 @@ export default function RegisterPage() {
 
       case 423:
         if (errorData.code === "ACCOUNT_LOCKED") {
+          const minutes = errorData.unlocksAt?.remainingMinutes ?? "a few";
           toast.error(
-            `Your account is locked. Try again after ${errorData.unlocksAt.remainingMinutes} minutes.`
+            `Your account is locked. Try again after ${minutes} minutes.`
           );
         }
         break;

@@ -118,6 +118,10 @@ export default function ReservationsPage() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [status, setStatus] = useState("all");
+  const [page, setPage] = React.useState(1);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const skip = (page - 1) * rowsPerPage;
+  const [count, setCount] = React.useState(0);
   const getDate = (item) => {
     const month = new Date(item).getMonth();
     const year = new Date(item).getFullYear();
@@ -142,7 +146,7 @@ export default function ReservationsPage() {
     if (data) {
       try {
         const response = await fetch(
-          `${API_URL}/booking/analytics-filter?search=${searchValue}&status=${status}&from=${from}&to=${to}&hostId=${hostId}`,
+          `${API_URL}/booking/analytics-filter?search=${searchValue}&status=${status}&from=${from}&to=${to}&hostId=${hostId}&limit=${rowsPerPage}&skip=${skip}`,
           {
             method: "GET",
             headers: {
@@ -155,6 +159,8 @@ export default function ReservationsPage() {
         if (process.env.NEXT_PUBLIC_ENV === "dev") {
           console.log("aaaaaaa", result);
         }
+        console.log("aaaaaaa", result);
+
         const mssg = await result.error;
         if (mssg == "toDate") {
           toast.error("Cannot select same date twice");
@@ -167,7 +173,9 @@ export default function ReservationsPage() {
         if (process.env.NEXT_PUBLIC_ENV === "dev") {
           console.log(result);
         }
+        setCount(result.total);
         const final = await result.data;
+
         setBookings(final);
       } catch (err) {
         console.error(err);
@@ -205,7 +213,7 @@ export default function ReservationsPage() {
 
   useEffect(() => {
     fetchData();
-  }, [searchValue, status, date]);
+  }, [page, rowsPerPage, searchValue, status, date]);
 
   const sendConfirmationToUser = async (
     bookingId,
@@ -885,6 +893,7 @@ export default function ReservationsPage() {
           ))}
         </TableBody>
       </Table>
+
       {/* EMPTY STATE CHECK */}
       {bookings && bookings.length === 0 && (
         <div className="text-center py-10 text-gray-500 font-medium">
@@ -897,8 +906,34 @@ export default function ReservationsPage() {
           )}
         </div>
       )}
-      <div className="text-center py-10 text-gray-500 font-medium">
-        {mssg ? <>Cannot select same date. Reselect the date range.</> : null}
+      {mssg ? (
+        <div className="text-center py-10 text-gray-500 font-medium">
+          Cannot select same date. Reselect the date range
+        </div>
+      ) : null}
+      <div className="mt-4 flex items-center justify-between">
+        <div></div>
+        <div className="flex flex-column items-end gap-2">
+          <Button
+            className="bg-primaryGreen text-white hover:bg-brightGreen rounded-md"
+            onClick={() => {
+              setPage((prev) => Math.max(prev - 1, 1));
+            }}
+            disabled={page == 1}
+          >
+            Previous
+          </Button>
+          <Button
+            className="bg-primaryGreen text-white hover:bg-brightGreen rounded-md"
+            o
+            onClick={() => {
+              setPage((prev) => prev + 1);
+            }}
+            disabled={page * rowsPerPage >= count}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );

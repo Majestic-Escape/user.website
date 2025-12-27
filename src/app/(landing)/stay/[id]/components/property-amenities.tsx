@@ -25,6 +25,8 @@ import {
   CarTaxiFront,
   Snowflake,
   Briefcase,
+  Hourglass,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +39,7 @@ import {
 import { useState } from "react";
 
 interface PropertyAmenitiesProps {
+  manual: string;
   amenities: Array<string>;
   showAmenitiesDialog: boolean;
   setShowAmenitiesDialog: (show: boolean) => void;
@@ -46,6 +49,7 @@ interface PropertyAmenitiesProps {
 }
 
 export default function PropertyAmenities({
+  manual,
   amenities,
   showAmenitiesDialog,
   setShowAmenitiesDialog,
@@ -272,6 +276,25 @@ export default function PropertyAmenities({
         <h2 className="text-xl font-medium mb-6">What this place offers</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {manual == "instantBook" ? (
+            <div
+              key={"instant"}
+              title={"Host approval for booking is not required"}
+              className="flex items-center gap-4"
+            >
+              <Zap className="h-6 w-6 text-gray-600" />
+              <span>Instant booking</span>
+            </div>
+          ) : (
+            <div
+              key={"instant"}
+              title={"Host approval for booking is required"}
+              className="flex items-center gap-4"
+            >
+              <Hourglass className="h-6 w-6 text-gray-600" />
+              <span>Manual booking</span>
+            </div>
+          )}
           {matchedAmenities.slice(0, 8).map((amenity, index) => (
             <div key={index} className="flex items-center gap-4">
               <amenity.icon className="h-6 w-6 text-gray-600" />

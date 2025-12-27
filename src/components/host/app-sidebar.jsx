@@ -90,7 +90,7 @@ const data = {
       items: [],
     },
     {
-      title: "Payments",
+      title: "Add Bank",
       url: "/host/dashboard/bank-info",
       icon: DollarSign,
       items: [],

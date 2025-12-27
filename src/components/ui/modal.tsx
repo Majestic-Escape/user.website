@@ -118,7 +118,8 @@ export default function FilterModal({
     addAmenitiesList,
     addPropertiesList,
     setAddPropertyType,
-
+    activeTab,
+    setActiveTab,
     handleRoomChange,
   } = useAuth();
   const router = useRouter();
@@ -145,7 +146,7 @@ export default function FilterModal({
     window.addEventListener("resize", updateSize);
     return () => window.removeEventListener("resize", updateSize);
   }, []);
-  const [activeTab, setActiveTab] = useState("filters");
+  // const [activeTab, setActiveTab] = useState("filters");
   // interface DateRange {
   //   from?: Date;
   //   to?: Date;
@@ -806,7 +807,7 @@ export default function FilterModal({
   } else {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-2 md:p-4">
-        <div className="bg-white rounded-lg w-full max-w-lg max-h-[95vh] md:max-h-[90vh] flex flex-col shadow-xl">
+        <div className="bg-white rounded-lg w-full max-w-lg max-h-[65vh] md:max-h-[90vh] flex flex-col shadow-xl">
           {/* Header - Fixed at top */}
           <div className="flex justify-between items-center border-b px-4 py-3 sticky top-0 bg-white z-10 rounded-t-lg md:rounded-t-3xl">
             <div className="flex space-x-2">
@@ -874,10 +875,10 @@ export default function FilterModal({
                           onChange={(e) => setSearchTerm(e.target.value)}
                           className="border-0 border-b rounded-none focus-visible:ring-0"
                         />
-                        <CommandEmpty className="p-2 text-sm text-center">
+                        {/* <CommandEmpty className="p-2 text-sm text-center">
                           No destination found.
-                        </CommandEmpty>
-                        <CommandGroup className="max-h-60 overflow-y-auto">
+                        </CommandEmpty> */}
+                        {/* <CommandGroup className="max-h-60 overflow-y-auto">
                           {filteredDestinations.map((dest) => (
                             <button
                               key={dest.value}
@@ -901,7 +902,7 @@ export default function FilterModal({
                               </div>
                             </button>
                           ))}
-                        </CommandGroup>
+                        </CommandGroup> */}
                       </Command>
                     </PopoverContent>
                   </Popover>

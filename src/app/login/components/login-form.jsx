@@ -37,7 +37,7 @@ export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [isEditingEmail, setIsEditingEmail] = useState(false); // Update 1
-
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const router = useRouter();
 
   const handleEmailChange = (e) => {
@@ -155,6 +155,7 @@ export default function LoginForm() {
       if (!response.ok) {
         // Parse error response
         const errorData = await response.json();
+        console.log("errer", errorData, response.status);
         handleOtpError(errorData, response.status);
         return;
       }
@@ -173,7 +174,11 @@ export default function LoginForm() {
       localStorage.setItem("userId", JSON.stringify(data.userId));
       login({ email });
       toast.success("Welcome. You are now signed in.");
-      router.push("/stays");
+      setIsRedirecting(true);
+      setTimeout(() => {
+        router.push("/stays");
+      }, 800);
+      // router.push("/stays");
     } catch (error) {
       console.error("Network error while verifying OTP:", error);
       toast.error("Network error. Please check your internet connection.");
@@ -214,7 +219,9 @@ export default function LoginForm() {
       case 423:
         if (errorData.code === "ACCOUNT_LOCKED") {
           toast.error(
-            `Your account is locked. Try again after ${errorData.unlocksAt.remainingMinutes} minutes.`
+            `Your account is locked. Try again after ${
+              errorData.unlocksAt.remainingMinutes || 5
+            } minutes.`
           );
         }
         break;
@@ -222,7 +229,9 @@ export default function LoginForm() {
       case 423:
         if (errorData.code === "ACCOUNT_LOCKED") {
           toast.error(
-            `Your account is locked. Try again after ${errorData.unlocksAt.remainingMinutes} minutes.`
+            `Your account is locked. Try again after ${
+              errorData?.unlocksAt?.remainingMinutes || 5
+            } minutes.`
           );
         }
         break;
@@ -259,7 +268,16 @@ export default function LoginForm() {
     setOtp("");
     await handleRequestOtp("RESEND"); // Update 2
   };
-
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-white">
+        <Loader2 className="h-10 w-10 text-primaryGreen animate-spin mb-4" />
+        <p className="text-lg font-medium text-absoluteDark">
+          Welcome! Preparing your experience…
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="p-6 lg:p-10 flex flex-col justify-center items-start max-w-md mx-auto w-full">
       <div className="mb-8">
@@ -269,7 +287,7 @@ export default function LoginForm() {
 
         <TextReveal>
           <h2 className="text-xl font-bricolage md:text-2xl font-semibold text-absoluteDark mb-2">
-            Sign in to your user account
+            Sign in to your account
           </h2>
         </TextReveal>
 
@@ -277,7 +295,7 @@ export default function LoginForm() {
           <p className="text-stone text-sm">
             Don't have an account?{" "}
             <Link href="/register" className="text-primaryGreen underline">
-              Create user account
+              Create your account
             </Link>
           </p>
         </TextReveal>

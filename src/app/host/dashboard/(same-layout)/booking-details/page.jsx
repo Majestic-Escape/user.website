@@ -155,15 +155,13 @@ export default function Page() {
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 border rounded-xl p-4 shadow-lg">
               <div>
                 <Image
-                  src="/sf-loft.jpg"
-                  alt="Cozy SF Loft"
+                  src={fetchedData?.propertyId?.photos?.[0]}
+                  alt="Property Image"
                   width={600}
-                  height={400}
+                  height={800}
                   className="rounded-xl"
                 />
-                <h3 className="mt-4 text-lg font-medium">
-                  {fetchedData?.propertyId?.photos}
-                </h3>
+                <h3 className="mt-4 text-lg font-medium">{}</h3>
                 <p className="text-gray-600 text-sm">
                   {fetchedData?.propertyId?.placeType.charAt(0).toUpperCase() +
                     fetchedData?.propertyId?.placeType.slice(1)}{" "}
@@ -222,9 +220,9 @@ export default function Page() {
                     <p className="text-gray-500">{fetchedData?.infants}</p>
                   </div>
                 </div>
-                <button className="w-full border border-gray-300 py-2 rounded-lg">
+                {/* <button className="w-full border border-gray-300 py-2 rounded-lg">
                   Change reservation
-                </button>
+                </button> */}
                 <div>
                   <h4 className="font-medium text-gray-700">Email</h4>
                   <p className="text-gray-500">

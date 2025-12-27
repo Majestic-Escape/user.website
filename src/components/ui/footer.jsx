@@ -20,7 +20,7 @@ const footerData = {
     title: "For Host",
     links: [
       { label: "Host your property", href: "/hosting" },
-      { label: "Benefits", href: "/host/#benefits" },
+      { label: "Benefits", href: "/hosting/#features" },
       { label: "FAQ", href: "/host-faq" },
       // { label: "Rules for Goa", href: "/rules-for-goa" },
     ],
@@ -75,10 +75,10 @@ export default function Footer() {
             <div className="xl:grid xl:grid-cols-5 xl:gap-8">
               <div className="xl:col-span-1">
                 <Link href="/">
-                  <Image
+                  <img
                     src="/images/logo-footer.svg"
-                    width={165}
-                    height={88}
+                    width="165"
+                    height="88"
                     alt="Majestic Escape Logo"
                   />
                 </Link>

@@ -167,6 +167,8 @@ const AnalyticsPage = () => {
   const [propertySearch, setPropertySearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [currentProperty, setCurrentProperty] = useState("all");
+  const [start, setStart] = useState(0);
+  const [end, setEnd] = useState(10);
   const getDate = (item) => {
     const month = new Date(item).getMonth();
     const year = new Date(item).getFullYear();
@@ -864,7 +866,7 @@ const AnalyticsPage = () => {
                   className="text-white bg-primaryGreen hover:bg-brightGreen rounded-3xl"
                   onClick={() =>
                     onGetExporProduct(
-                      `Reevenue_Data_${arrayCheckinDate[0]}${arrayCheckinDate[1]}${arrayCheckinDate[2]}_${arrayCheckoutDate[0]}${arrayCheckoutDate[1]}${arrayCheckoutDate[2]}`,
+                      `Revenue_Data_${arrayCheckinDate[0]}${arrayCheckinDate[1]}${arrayCheckinDate[2]}_${arrayCheckoutDate[0]}${arrayCheckoutDate[1]}${arrayCheckoutDate[2]}`,
                       "RevenueHistoryExport"
                     )
                   }
@@ -902,7 +904,7 @@ const AnalyticsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bookings?.map((booking) => (
+              {bookings?.slice(start, end).map((booking) => (
                 <TableRow key={booking?._id}>
                   <TableCell>
                     <span title={booking?.propertyId?.title}>
@@ -957,6 +959,36 @@ const AnalyticsPage = () => {
               ))}
             </TableBody>
           </Table>
+          <div className="mt-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">
+                Showing {start + 1}–{Math.min(end, bookings?.length)} of{" "}
+                {bookings?.length}
+              </p>
+            </div>
+            <div className="flex flex-column items-end gap-2">
+              <Button
+                className="bg-primaryGreen text-white hover:bg-brightGreen rounded-md"
+                onClick={() => {
+                  setStart((prev) => prev - 10);
+                  setEnd((prev) => prev - 10);
+                }}
+                disabled={start == 0}
+              >
+                Previous
+              </Button>
+              <Button
+                className="bg-primaryGreen text-white hover:bg-brightGreen rounded-md"
+                onClick={() => {
+                  setStart((prev) => prev + 10);
+                  setEnd((prev) => prev + 10);
+                }}
+                disabled={end >= bookings?.length}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

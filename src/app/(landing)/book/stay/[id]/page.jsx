@@ -540,11 +540,17 @@ function BookPageContent() {
       console.error(err);
     }
   };
-  const updateBookingStatus = async (bookingId, host, manual, payment) => {
+  const updateBookingStatus = async (
+    bookingId,
+    // hostEmail = "",
+    manual,
+    payment
+  ) => {
     try {
       const userId = JSON.parse(localStorage.getItem("userId"));
       const getLocalData = await localStorage.getItem("token");
       const data = JSON.parse(getLocalData);
+
       const response = await fetch(`${API_URL}/booking/updateStatus`, {
         method: "POST",
         headers: {
@@ -553,7 +559,7 @@ function BookPageContent() {
         },
         body: JSON.stringify({
           bookingId: bookingId,
-          hostEmail: host,
+          // hostEmail: host,
           userId: userId,
           manual: manual,
           payment: payment,
@@ -792,7 +798,7 @@ function BookPageContent() {
               }
               const update = await updateBookingStatus(
                 booking?.data?._id,
-                hostEmail,
+                // hostEmail,
                 property.bookingType.manual,
                 verify?.data?._id
               );
@@ -819,7 +825,7 @@ function BookPageContent() {
               );
               await updateBookingStatus(
                 booking?.data?._id,
-                hostEmail,
+                // hostEmail,
                 property.bookingType.manual,
                 verify?.data?._id
               );
@@ -1292,16 +1298,28 @@ function BookPageContent() {
                   ? "You are banned from platform. Check your email"
                   : `Pay ₹${totals.total.toLocaleString("en-IN")}`}
               </Button>
-              {property.bookingType.manual ? (
-                <p className="text-sm text-center mt-4 text-gray-500">
-                  Payment does not confirm your booking. Please wait for a
-                  confirmation email from the Host.
-                </p>
-              ) : (
-                <p className="text-sm text-center mt-4 text-gray-500">
-                  Instant booking available.
-                </p>
-              )}
+              <div className="flex items-center justify-center px-4 mt-2 lg:mt-0">
+                {property.bookingType.manual ? (
+                  <p className="flex text-sm md:text-center vertical-align:middle md:pl-2 lg:pl-0 lg:mt-4 text-gray-500">
+                    {" "}
+                    <img
+                      src="/images/clock.png"
+                      alt="Info"
+                      className="h-5 pr-2 md:pr-2 lg:pr-0"
+                    />{" "}
+                    This booking requires host approval..
+                  </p>
+                ) : (
+                  <p className="flex text-sm md:text-center vertical-align:middle md:pl-2 lg:pl-0 lg:mt-4 text-gray-500">
+                    <img
+                      src="/images/flash.png"
+                      alt="Info"
+                      className="h-5 pr-2 md:pr-2 lg:pr-0"
+                    />{" "}
+                    Instant booking available. No host approval required.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 

@@ -1,48 +1,44 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { TextReveal } from '@/components/text-reveal'
+import { TextReveal } from "@/components/text-reveal";
 
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from "@/components/ui/card";
 
-import LoginForm from './components/login-form'
-import { CarouselSpacing } from '../../components/carousel-heading'
-
+import LoginForm from "./components/login-form";
+import { CarouselSpacing } from "../../components/carousel-heading";
 
 export default function LoginPage() {
-
-
   return (
     <div className="min-h-screen  grid grid-cols-1 lg:grid-cols-2 font-poppins">
-     <LoginForm/>
-      
+      <LoginForm />
+
       <div className="bg-gradient-to-tr from-primaryGreen to-brightGreen p-6 lg:p-10  flex-col hidden lg:flex">
-      <TextReveal>
-        <h1 className="text-2xl  font-bricolage lg:text-3xl font-medium text-white mb-12">
-          Sign in to your guest account<br />
-        </h1>
+        <TextReveal>
+          <h1 className="text-2xl  font-bricolage lg:text-3xl font-medium text-white mb-12">
+            Sign in to your account
+            <br />
+          </h1>
         </TextReveal>
 
         <Card className="bg-white p-6 mb-8">
           <CardContent className="p-0">
-          <TextReveal>
-            <h2 className="font-medium mb-4 bg-green-50 border border-green-500 px-6 py-1 inline-block rounded-3xl">Explore with Majestic Escape</h2>
+            <TextReveal>
+              <h2 className="font-medium mb-4 bg-green-50 border border-green-500 px-6 py-1 inline-block rounded-3xl">
+                Explore with Majestic Escape
+              </h2>
             </TextReveal>
             <TextReveal>
-
-            <h1 className="text-4xl font-bricolage">
-              Find your perfect getaway on Majestic Escape
-            </h1>
+              <h1 className="text-4xl font-bricolage">
+                Find your perfect getaway on Majestic Escape
+              </h1>
             </TextReveal>
           </CardContent>
         </Card>
 
-
-
         <div className="mt-auto overflow-hidden">
-        <CarouselSpacing/>
+          <CarouselSpacing />
         </div>
       </div>
     </div>
-  )
+  );
 }
-

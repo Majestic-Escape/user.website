@@ -20,7 +20,17 @@ import {
   CableCar,
   HandHelping,
 } from "lucide-react";
-export function MobileNavbar({ openModal }) {
+import FilterModal from "./ui/modal";
+import { useAuth } from "@/contexts/AuthContext";
+export function MobileNavbar() {
+  const {
+    modalFilter,
+    setModalFilter,
+    openModal,
+    closeModal,
+    toggleModal,
+    setActiveTab,
+  } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const [hideTabs, setHideTabs] = useState(false);
@@ -65,7 +75,11 @@ export function MobileNavbar({ openModal }) {
             <div className="flex-1 flex items-center">
               <Button
                 variant="outline"
-                onClick={() => setIsSearchOpen(true)}
+                onClick={() => {
+                  setModalFilter(true);
+                  setActiveTab("search");
+                  console.log("ada");
+                }}
                 className="w-full mr-3 py-5 rounded-3xl justify-start text-left font-normal"
               >
                 <Search className="mr-3 h-4 w-4" />
@@ -196,6 +210,7 @@ export function MobileNavbar({ openModal }) {
       {/* <div className="px-6 py-2 bg-white">
         <FilterSheet />
       </div> */}
+      {/* <FilterModal isOpen={modalFilter} onClose={closeModal} /> */}
     </div>
   );
 }

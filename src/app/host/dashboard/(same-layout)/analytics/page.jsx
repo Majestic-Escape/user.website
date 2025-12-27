@@ -5,6 +5,7 @@ import { addDays, subMonths, format, subDays } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import * as XLSX from "xlsx";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import {
   Table,
   TableBody,
@@ -40,8 +42,9 @@ import {
   Cell,
   Legend,
 } from "recharts";
-
-import { useEffect } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import { useEffect, useRef } from "react";
 
 // Mock data for revenue insights (extended for longer periods)
 const revenueData = {
@@ -152,6 +155,9 @@ const AnalyticsPage = () => {
     from: new Date(),
     to: new Date(),
   });
+  const printRef = useRef();
+  const [pdfMode, setPdfMode] = useState(false);
+  const [hideButton, setHideButton] = useState(false);
   const [property, setProperty] = useState();
   const [total, setTotal] = useState(0);
   const [status, setStatus] = useState("all");
@@ -159,6 +165,9 @@ const AnalyticsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [propertySearch, setPropertySearch] = useState("");
   const [currentProperty, setCurrentProperty] = useState("all");
+  const [start, setStart] = useState(0);
+  const [end, setEnd] = useState(10);
+  const [loading, setLoading] = useState(false);
   const getDate = (item) => {
     const month = new Date(item).getMonth();
     const year = new Date(item).getFullYear();
@@ -183,7 +192,7 @@ const AnalyticsPage = () => {
     if (data) {
       try {
         const response = await fetch(
-          `${API_URL}/booking/analytics-filter?search=${searchTerm}&status=${status}&from=${from}&to=${to}&title=${currentProperty}&hostId=${hostId}`,
+          `${API_URL}/booking/analytics-stats-filter?search=${searchTerm}&status=${status}&from=${from}&to=${to}&title=${currentProperty}&hostId=${hostId}`,
           {
             method: "GET",
             headers: {
@@ -446,8 +455,142 @@ const AnalyticsPage = () => {
     setTotal(add);
   }, [propertyPieData]);
 
+  function calculateAge(dobString) {
+    const dob = new Date(dobString);
+    const today = new Date();
+
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+
+    // Adjust age if the birthday hasn't occurred yet this year
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    return age;
+  }
+
+  const onGetExporProduct = async (title, worksheetname) => {
+    try {
+      setLoading(true);
+
+      if (!Array.isArray(bookings)) {
+        setLoading(false);
+        return;
+      }
+
+      const dataToExport = bookings.map((pro) => {
+        // ✅ Convert guest array → object
+        const guestData =
+          pro?.guestData?.adults?.reduce((acc, item, index) => {
+            acc[`guest${index + 1}_name`] = item.name;
+            acc[`guest${index + 1}_age`] = item.age;
+            return acc;
+          }, {}) || {};
+
+        return {
+          user_id: pro?.userId?._id,
+          booking_id: pro?._id,
+          property_title: pro?.propertyId?.title,
+          booked_by: `${pro?.userId?.firstName || ""} ${
+            pro?.userId?.lastName || ""
+          }`,
+          checkin: new Date(pro?.checkIn).toLocaleDateString(),
+          checkout: new Date(pro?.checkOut).toLocaleDateString(),
+          amount: pro?.price,
+          status: pro?.status,
+
+          // ✅ Spread dynamic guest fields
+          ...guestData,
+        };
+      });
+
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      XLSX.utils.book_append_sheet(workbook, worksheet, worksheetname);
+      XLSX.writeFile(workbook, `${title}.xlsx`);
+
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.error("Export Error:", error);
+    }
+  };
+
+  const exportCheckinDate = dateRange.from.toLocaleString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+  });
+  const arrayCheckinDate = exportCheckinDate.split("/");
+  const exportCheckoutDate = dateRange.to.toLocaleString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+  });
+  const arrayCheckoutDate = exportCheckoutDate.split("/");
+
+  const handleDownloadPdf = async () => {
+    const element = printRef.current;
+    if (!element) {
+      return;
+    }
+
+    element.classList.add("pdf-safe-select");
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: "#ffffff",
+      logging: false,
+      width: element.scrollWidth,
+      height: element.scrollHeight,
+      onclone: (clonedDoc) => {
+        // Fix select elements in the cloned document
+        const selectTriggers = clonedDoc.querySelectorAll("[data-state]");
+        selectTriggers.forEach((trigger) => {
+          const span = trigger.querySelector("span");
+          if (span) {
+            span.style.webkitLineClamp = "unset";
+            span.style.lineClamp = "unset";
+            span.style.overflow = "visible";
+            span.style.textOverflow = "unset";
+            span.style.whiteSpace = "nowrap";
+          }
+        });
+        const tables = clonedDoc.querySelectorAll("table");
+        tables.forEach((table) => {
+          table.style.overflow = "visible";
+          const tbody = table.querySelector("tbody");
+          if (tbody) {
+            tbody.style.overflow = "visible";
+          }
+        });
+      },
+    });
+
+    // Remove the class after capture
+
+    element.classList.remove("pdf-safe-select");
+    const data = canvas.toDataURL("image/png");
+
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "px",
+      format: "a4",
+    });
+
+    const imgProperties = pdf.getImageProperties(data);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const margin = 20;
+    const pdfHeight =
+      (imgProperties.height * (pdfWidth - margin * 2)) / imgProperties.width;
+    pdf.addImage(data, "PNG", margin, margin, pdfWidth - margin * 2, pdfHeight);
+    pdf.save("examplepdf.pdf");
+  };
   return (
-    <div className="container mx-auto space-y-6">
+    <div ref={printRef} className="container mx-auto space-y-6">
       <div className="flex justify-between">
         <div>
           <h1 className="text-2xl font-semibold font-bricolage text-absoluteDark mb-2">
@@ -458,10 +601,19 @@ const AnalyticsPage = () => {
             Track your key stats and analyze booking trends across properties.
           </p>
         </div>
-        <Button className="text-white bg-primaryGreen hover:bg-brightGreen rounded-3xl">
-          <Download className="mr-2 h-4 w-4" />
-          Export Analytics Report
-        </Button>
+        {hideButton ? null : (
+          <Button
+            className="text-white bg-primaryGreen hover:bg-brightGreen rounded-3xl"
+            onClick={async () => {
+              await setHideButton(true);
+              handleDownloadPdf();
+              setHideButton(false);
+            }}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export Report
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 md:space-x-4">
@@ -815,7 +967,27 @@ const AnalyticsPage = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Bookings</CardTitle>
+          <div className="flex justify-between items-center space-x-2 ">
+            <div>
+              <CardTitle>Recent Bookings</CardTitle>
+            </div>
+            <div>
+              {hideButton ? null : (
+                <Button
+                  className="text-white bg-primaryGreen hover:bg-brightGreen rounded-3xl"
+                  onClick={() =>
+                    onGetExporProduct(
+                      `Analytics_Data_${arrayCheckinDate[0]}${arrayCheckinDate[1]}${arrayCheckinDate[2]}_${arrayCheckoutDate[0]}${arrayCheckoutDate[1]}${arrayCheckoutDate[2]}`,
+                      "AnalyticsHistoryExport"
+                    )
+                  }
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export CSV
+                </Button>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-2 mb-4">
@@ -827,67 +999,118 @@ const AnalyticsPage = () => {
               className="max-w-sm"
             />
           </div>
-          <Table className="w-full">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Property</TableHead>
-                <TableHead>Guest</TableHead>
-                <TableHead>Adults</TableHead>
-                <TableHead>Children</TableHead>
-                <TableHead>Check-in</TableHead>
-                <TableHead>Check-out</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bookings?.map((booking) => (
-                <TableRow key={booking?._id}>
-                  <TableCell>
-                    <span title={booking?.propertyId?.title}>
-                      {checkLength(booking?.propertyId?.title)}
-                    </span>
-                  </TableCell>
-                  <TableCell>{booking?.guests}</TableCell>
-                  <TableCell>{booking?.adults}</TableCell>
-                  <TableCell>{booking?.children}</TableCell>
-
-                  <TableCell>
-                    {new Date(booking?.checkIn).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(booking?.checkOut).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    ₹{booking?.price?.toLocaleString("en-IN")}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        booking?.status === "pending"
-                          ? "outline"
-                          : booking?.status === "confirmed"
-                          ? "default"
-                          : booking?.status === "cancelled"
-                          ? "destructive"
-                          : "secondary"
-                      }
-                    >
-                      {booking?.status}
-                    </Badge>
-                  </TableCell>
+          <>
+            <Table className="w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Property</TableHead>
+                  <TableHead>Booked By</TableHead>
+                  <TableHead>Age</TableHead>
+                  <TableHead>Guest</TableHead>
+                  <TableHead>Adults</TableHead>
+                  <TableHead>Children</TableHead>
+                  <TableHead>Check-in</TableHead>
+                  <TableHead>Check-out</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {bookings?.slice(start, end).map((booking) => (
+                  <TableRow key={booking?._id}>
+                    <TableCell>
+                      <span title={booking?.propertyId?.title}>
+                        {checkLength(booking?.propertyId?.title)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        title={
+                          booking?.userId.firstName +
+                          " " +
+                          booking?.userId.lastName
+                        }
+                      >
+                        {checkLength(
+                          booking?.userId.firstName +
+                            " " +
+                            booking?.userId.lastName
+                        )}
+                      </span>
+                    </TableCell>
+                    <TableCell>{calculateAge(booking?.userId?.dob)}</TableCell>
+                    <TableCell>{booking?.guests}</TableCell>
+                    <TableCell>{booking?.adults}</TableCell>
+                    <TableCell>{booking?.children}</TableCell>
+
+                    <TableCell>
+                      {new Date(booking?.checkIn).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(booking?.checkOut).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      ₹{booking?.price?.toLocaleString("en-IN")}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          booking?.status === "pending"
+                            ? "outline"
+                            : booking?.status === "confirmed"
+                            ? "default"
+                            : booking?.status === "cancelled"
+                            ? "destructive"
+                            : "secondary"
+                        }
+                      >
+                        {booking?.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            <div className="mt-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">
+                  Showing {start + 1}–{Math.min(end, bookings?.length)} of{" "}
+                  {bookings?.length}
+                </p>
+              </div>
+              <div className="flex flex-column items-end gap-2">
+                <Button
+                  className="bg-primaryGreen text-white hover:bg-brightGreen rounded-md"
+                  onClick={() => {
+                    setStart((prev) => prev - 10);
+                    setEnd((prev) => prev - 10);
+                  }}
+                  disabled={start == 0}
+                >
+                  Previous
+                </Button>
+                <Button
+                  className="bg-primaryGreen text-white hover:bg-brightGreen rounded-md"
+                  onClick={() => {
+                    setStart((prev) => prev + 10);
+                    setEnd((prev) => prev + 10);
+                  }}
+                  disabled={end >= bookings?.length}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </>
         </CardContent>
       </Card>
     </div>
