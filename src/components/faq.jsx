@@ -28,7 +28,7 @@ const faqs = [
     question: "How do I search for properties on Majestic Escape?",
     answer: (
       <ol className="ml-4 list-decimal space-y-2">
-        <li>Enter your desired location in Goa</li>
+        <li>Enter your desired location</li>
         <li>Select your check-in and check-out dates</li>
         <li>Specify number of guests</li>
         <li>
