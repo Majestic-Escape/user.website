@@ -30,7 +30,7 @@ export default function About() {
       <header className="bg-offWhite shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
           <Heading text="About Majestic Escape" />
-          <SubHeading text="Your gateway to authentic Goan experiences" />
+          <SubHeading text="Your gateway to authentic local experiences" />
         </div>
       </header>
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -42,8 +42,7 @@ export default function About() {
               </CardHeader>
               <CardContent>
                 <p className="text-base text-stone">
-                  At Majestic Escape, we&apos;re passionate about making your
-                  Goan adventure unforgettable. Our platform connects travellers
+                  At Majestic Escape, we&apos;re passionate about making your adventure unforgettable. Our platform connects travellers
                   with unique, comfortable, and authentic accommodations across
                   stunning destinations. From cosy stays close to nature to
                   premium luxury villas, we offer something for every type of
