@@ -39,10 +39,10 @@ export default function BlogPage() {
   return (
     <div className="min-h-screen py-32 bg-white font-poppins px-4 sm:px-6 lg:px-8 mx-auto">
       <div className="container max-w-7xl mx-auto px-4">
-        <div className="mb-8">
+        <div className="mb-8 pt-8 md:pt-0">
           <Heading text={"Blogs"} />
           <SubHeading
-            text={"Discover Goa's Hidden Treasures and Local Insights"}
+            text={"Discover India's Hidden Treasures and Local Insights"}
           />
         </div>
         <div className="grid lg:grid-cols-2 lg:gap-y-16 gap-10">
