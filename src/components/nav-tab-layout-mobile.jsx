@@ -5,18 +5,18 @@ import { usePathname } from "next/navigation";
 import { Tabs, MobileTabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const tabs = [
-  { name: "Stays", id: "1", href: "/stays", icon: "/images/mobile/house1.png" },
+  { name: "Stays", id: "1", href: "/stays", icon: "/images/mobile/house.png" },
   {
     name: "Experiences",
     id: "2",
     href: "/experiences",
-    icon: "/images/mobile/experience1.png",
+    icon: "/images/mobile/experience.png",
   },
   {
     name: "Services",
     id: "3",
     href: "/services",
-    icon: "/images/mobile/service1.png",
+    icon: "/images/mobile/service.png",
   },
 ];
 
@@ -38,11 +38,11 @@ export default function MobileNavTabLayout({ hideTabs }) {
                 href={tab.href}
                 className="flex flex-col items-center  justify-center w-full pt-2 "
               >
-                {tab.id == 2 ? (
+                {/* {tab.id == 2 ? (
                   <img src={tab.icon} height="18" width="18" />
-                ) : (
-                  <img src={tab.icon} height="30" width="30" />
-                )}
+                ) : ( */}
+                <img src={tab.icon} height="30" width="30" />
+                {/* )} */}
                 {/* {tab.id == 1 ? (
                 <img src={tab.icon} height="30" width="30" />
               ) : null}
