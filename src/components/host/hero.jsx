@@ -3,9 +3,9 @@ import PrimaryLink from "@/components/primary-link";
 
 export default function Component({ user }) {
   return (
-    <section className="w-full  flex md:items-center items-start min-h-screen  bg-white pt-24 sm:py-16 ">
-      <div className="container max-w-7xl mx-auto px-4 md:px-6">
-        <div className="grid gap-6 gap-y-16 md:grid-cols-2 md:gap-12">
+    <section className="w-full   flex md:items-center items-start desktop:min-h-screen  bg-white mobile:pt-20 md:pt-32 sm:py-16 ">
+      <div className="container max-w-7xl mx-auto px-4  pt-20 md:pt-0 md:px-6">
+        <div className="grid gap-6 gap-y-16 justify-center desktop:grid-cols-2 desktop:gap-12">
           {/* Left Column */}
           <div className="flex flex-col  justify-center space-y-4 sm:space-y-6 text-center md:text-left">
             <h1 className="font-bricolage text-balance text-3xl text-absolute-dark sm:text-4xl  font-bold">

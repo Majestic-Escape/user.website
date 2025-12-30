@@ -82,7 +82,7 @@ export default function PartnerPage() {
     <div className="font-poppins min-h-screen bg-white">
       {/* Hero Section */}
       <section className="px-4 py-20 md:py-32 bg-lightGreen">
-        <div className="container mx-auto max-w-5xl text-center">
+        <div className="container mx-auto max-w-5xl pt-28 md:pt-20 text-center">
           <h1 className="text-4xl md:text-5xl font-bricolage lg:text-6xl font-bold tracking-tight text-absoluteDark mb-6">
             Become a Hospitality Partner
           </h1>

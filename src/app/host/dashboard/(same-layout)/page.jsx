@@ -85,7 +85,7 @@ export default function Dashboard() {
     );
   }
   return (
-    <div className="space-y-4 grid grid-cols-1">
+    <div className="space-y-4 pb-16 grid grid-cols-1">
       <div
         className={`grid grid-cols-1 gap-4 ${
           exist ? "md:grid-cols-2" : "md:grid-cols-2"

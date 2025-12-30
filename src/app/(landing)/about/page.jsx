@@ -26,9 +26,9 @@ const CardFooter = ({ children }) => (
 
 export default function About() {
   return (
-    <div className="font-poppins min-h-screen pt-24 bg-white">
+    <div className="font-poppins min-h-screen pt-20 bg-white">
       <header className="bg-offWhite shadow-sm">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto py-4  pt-20 md:pt-8 px-6 lg:px-8">
           <Heading text="About Majestic Escape" />
           <SubHeading text="Your gateway to authentic local experiences" />
         </div>
@@ -42,8 +42,9 @@ export default function About() {
               </CardHeader>
               <CardContent>
                 <p className="text-base text-stone">
-                  At Majestic Escape, we&apos;re passionate about making your adventure unforgettable. Our platform connects travellers
-                  with unique, comfortable, and authentic accommodations across
+                  At Majestic Escape, we&apos;re passionate about making your
+                  adventure unforgettable. Our platform connects travellers with
+                  unique, comfortable, and authentic accommodations across
                   stunning destinations. From cosy stays close to nature to
                   premium luxury villas, we offer something for every type of
                   traveller.
