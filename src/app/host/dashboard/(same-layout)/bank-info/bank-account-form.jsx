@@ -179,21 +179,25 @@ export function BankAccountForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 ">
       {/* Account Number */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="accountNumber">Account Number</Label>
-          <Input
-            id="accountNumber"
-            name="accountNumber"
-            value={accountNumber}
-            onChange={(e) => setAccountNumber(e.target.value)}
-            type="password"
-            required
-            minLength={9}
-            maxLength={18}
-          />
+          <div className="pb-6 lg:pb-0">
+            <Label htmlFor="accountNumber">Account Number</Label>
+          </div>
+          <div>
+            <Input
+              id="accountNumber"
+              name="accountNumber"
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              type="password"
+              required
+              minLength={9}
+              maxLength={18}
+            />
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="accountNumberRepeat">Re-enter Account Number</Label>
@@ -241,7 +245,9 @@ export function BankAccountForm() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="bankName">Bank Name</Label>
+          <div className="pb-6 md:pb-0">
+            <Label htmlFor="bankName">Bank Name</Label>
+          </div>
           <Input
             id="bankName"
             name="bankName"
