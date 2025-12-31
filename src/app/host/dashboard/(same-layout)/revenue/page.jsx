@@ -575,7 +575,7 @@ const AnalyticsPage = () => {
     console.log("jhdjhd", total);
   }
   return (
-    <div ref={printRef} className="container mx-auto space-y-6">
+    <div ref={printRef} className="container mb-16 mx-auto space-y-6">
       <div className="flex justify-between">
         <div>
           <h1 className="text-2xl font-semibold font-bricolage text-absoluteDark mb-2">
@@ -601,15 +601,15 @@ const AnalyticsPage = () => {
         )}
       </div>
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 md:space-x-4">
-        <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 md:space-y-0 ">
+        <div className="flex flex-col md:grid md:grid-cols-2 md:gap-2 desktop:grid-cols-4 desktop:flex-row space-y-4 md:space-y-0 w-full">
           {pdfMode ? (
             <div className="border border-black p-2">
               Period : {!days ? "Select" : days}
             </div>
           ) : (
             <Select onValueChange={handleDateRangeChange}>
-              <SelectTrigger className="w-[180px] bg-white ">
+              <SelectTrigger className="w-full bg-white ">
                 <SelectValue placeholder="Select time period" />
               </SelectTrigger>
               <SelectContent>
@@ -631,7 +631,7 @@ const AnalyticsPage = () => {
           )}
 
           {pdfMode ? (
-            <div className="border border-black p-2">
+            <div className="border border-black p-2 bg-white">
               Date :{" "}
               {dateRange?.from ? (
                 dateRange.to ? (
@@ -651,7 +651,7 @@ const AnalyticsPage = () => {
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
-                  className={`w-[280px] justify-start text-left font-normal ${
+                  className={`w-full justify-start text-left font-normal whitespace-normal break-words ${
                     !dateRange && "text-muted-foreground"
                   }`}
                 >
@@ -686,7 +686,7 @@ const AnalyticsPage = () => {
             <div className="border border-black p-2">Status : {status}</div>
           ) : (
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-[180px] bg-white">
+              <SelectTrigger className="w-full bg-white">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -706,7 +706,7 @@ const AnalyticsPage = () => {
             </div>
           ) : (
             <Select value={currentProperty} onValueChange={setCurrentProperty}>
-              <SelectTrigger className="w-[200px] bg-white">
+              <SelectTrigger className="w-full bg-white">
                 <SelectValue placeholder="Select Property" />
               </SelectTrigger>
               <SelectContent>

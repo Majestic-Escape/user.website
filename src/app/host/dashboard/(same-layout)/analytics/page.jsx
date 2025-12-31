@@ -157,6 +157,7 @@ const AnalyticsPage = () => {
   });
   const printRef = useRef();
   const [pdfMode, setPdfMode] = useState(false);
+  const [days, setDays] = useState("");
   const [hideButton, setHideButton] = useState(false);
   const [property, setProperty] = useState();
   const [total, setTotal] = useState(0);
@@ -590,7 +591,7 @@ const AnalyticsPage = () => {
     pdf.save("examplepdf.pdf");
   };
   return (
-    <div ref={printRef} className="container mx-auto space-y-6">
+    <div ref={printRef} className="container mb-16 mx-auto space-y-6">
       <div className="flex justify-between">
         <div>
           <h1 className="text-2xl font-semibold font-bricolage text-absoluteDark mb-2">
@@ -616,80 +617,106 @@ const AnalyticsPage = () => {
         )}
       </div>
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 md:space-x-4">
-        <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-          <Select onValueChange={handleDateRangeChange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select time period" />
-            </SelectTrigger>
-            <SelectContent>
-              {/* <SelectItem value="today">Today</SelectItem>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 md:space-y-0">
+        <div className="flex flex-col md:grid md:grid-cols-2 md:gap-2  desktop:grid-cols-4 desktop:flex-row space-y-4 md:space-y-0 w-full">
+          {pdfMode ? (
+            <div className="border border-black p-2">
+              Period : {!days ? "Select" : days}
+            </div>
+          ) : (
+            <Select onValueChange={handleDateRangeChange}>
+              <SelectTrigger className="w-full bg-white">
+                <SelectValue placeholder="Select time period" />
+              </SelectTrigger>
+              <SelectContent>
+                {/* <SelectItem value="today">Today</SelectItem>
               <SelectItem value="last7Days">Last 7 Days</SelectItem>
               <SelectItem value="thisMonth">This Month</SelectItem>
               <SelectItem value="3months">3 Months</SelectItem>
               <SelectItem value="6months">6 Months</SelectItem>
               <SelectItem value="1year">1 Year</SelectItem> */}
 
-              <SelectItem value="1d">Today</SelectItem>
-              <SelectItem value="1w">Last 7 days</SelectItem>
-              <SelectItem value="1m">This Month</SelectItem>
-              <SelectItem value="3m">Last 3 months</SelectItem>
-              <SelectItem value="6m">Last 6 months</SelectItem>
-              <SelectItem value="1y">Last 1 year</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={`w-[280px] justify-start text-left font-normal ${
-                  !dateRange && "text-muted-foreground"
-                }`}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateRange?.from ? (
-                  dateRange.to ? (
-                    <>
-                      {format(dateRange.from, "LLL dd, y")} -{" "}
-                      {format(dateRange.to, "LLL dd, y")}
-                    </>
-                  ) : (
-                    format(dateRange.from, "LLL dd, y")
-                  )
+                <SelectItem value="1d">Today</SelectItem>
+                <SelectItem value="1w">Last 7 days</SelectItem>
+                <SelectItem value="1m">This Month</SelectItem>
+                <SelectItem value="3m">Last 3 months</SelectItem>
+                <SelectItem value="6m">Last 6 months</SelectItem>
+                <SelectItem value="1y">Last 1 year</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+          {pdfMode ? (
+            <div className="border border-black p-2 bg-white">
+              Date :{" "}
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>
+                    {format(dateRange.from, "LLL dd, y")} -{" "}
+                    {format(dateRange.to, "LLL dd, y")}
+                  </>
                 ) : (
-                  <span>Pick a date range</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={dateRange?.from}
-                selected={dateRange}
-                onSelect={setDateRange}
-                numberOfMonths={2}
-              />
-            </PopoverContent>
-          </Popover>
-
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" selected>
-                All Status
-              </SelectItem>
-              <SelectItem value="confirmed">Confirmed</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
+                  format(dateRange.from, "LLL dd, y")
+                )
+              ) : (
+                <span>Pick a date range</span>
+              )}
+            </div>
+          ) : (
+            <Popover className="mr-24 ">
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={`w-full justify-start text-left font-normal ${
+                    !dateRange && "text-muted-foreground"
+                  }`}
+                >
+                  {/* <CalendarIcon className="mr-2 h-4 w-4" /> */}
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "LLL dd, y")} -{" "}
+                        {format(dateRange.to, "LLL dd, y")}
+                      </>
+                    ) : (
+                      format(dateRange.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+          {pdfMode ? (
+            <div className="border border-black p-2">Status : {status}</div>
+          ) : (
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-full bg-white">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" selected>
+                  All Status
+                </SelectItem>
+                <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
 
           <Select value={currentProperty} onValueChange={setCurrentProperty}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full bg-white">
               <SelectValue placeholder="Select Property" />
             </SelectTrigger>
             <SelectContent>
@@ -724,7 +751,7 @@ const AnalyticsPage = () => {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 ">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -965,7 +992,7 @@ const AnalyticsPage = () => {
         </Card>
       </div>
 
-      <Card>
+      <Card className="w-[470px]">
         <CardHeader>
           <div className="flex justify-between items-center space-x-2 ">
             <div>
@@ -1000,85 +1027,95 @@ const AnalyticsPage = () => {
             />
           </div>
           <>
-            <Table className="w-full">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Booked By</TableHead>
-                  <TableHead>Age</TableHead>
-                  <TableHead>Guest</TableHead>
-                  <TableHead>Adults</TableHead>
-                  <TableHead>Children</TableHead>
-                  <TableHead>Check-in</TableHead>
-                  <TableHead>Check-out</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bookings?.slice(start, end).map((booking) => (
-                  <TableRow key={booking?._id}>
-                    <TableCell>
-                      <span title={booking?.propertyId?.title}>
-                        {checkLength(booking?.propertyId?.title)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        title={
-                          booking?.userId.firstName +
-                          " " +
-                          booking?.userId.lastName
-                        }
-                      >
-                        {checkLength(
-                          booking?.userId.firstName +
+            <div className="overflow-x-auto w-full">
+              <Table className="w-full mb-8">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Booked By</TableHead>
+                    <TableHead>Age</TableHead>
+                    <TableHead>Guest</TableHead>
+                    <TableHead>Adults</TableHead>
+                    <TableHead>Children</TableHead>
+                    <TableHead>Check-in</TableHead>
+                    <TableHead>Check-out</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bookings?.slice(start, end).map((booking) => (
+                    <TableRow key={booking?._id}>
+                      <TableCell>
+                        <span title={booking?.propertyId?.title}>
+                          {checkLength(booking?.propertyId?.title)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          title={
+                            booking?.userId.firstName +
                             " " +
                             booking?.userId.lastName
-                        )}
-                      </span>
-                    </TableCell>
-                    <TableCell>{calculateAge(booking?.userId?.dob)}</TableCell>
-                    <TableCell>{booking?.guests}</TableCell>
-                    <TableCell>{booking?.adults}</TableCell>
-                    <TableCell>{booking?.children}</TableCell>
+                          }
+                        >
+                          {checkLength(
+                            booking?.userId.firstName +
+                              " " +
+                              booking?.userId.lastName
+                          )}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {calculateAge(booking?.userId?.dob)}
+                      </TableCell>
+                      <TableCell>{booking?.guests}</TableCell>
+                      <TableCell>{booking?.adults}</TableCell>
+                      <TableCell>{booking?.children}</TableCell>
 
-                    <TableCell>
-                      {new Date(booking?.checkIn).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(booking?.checkOut).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      ₹{booking?.price?.toLocaleString("en-IN")}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          booking?.status === "pending"
-                            ? "outline"
-                            : booking?.status === "confirmed"
-                            ? "default"
-                            : booking?.status === "cancelled"
-                            ? "destructive"
-                            : "secondary"
-                        }
-                      >
-                        {booking?.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      <TableCell>
+                        {new Date(booking?.checkIn).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          }
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(booking?.checkOut).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          }
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        ₹{booking?.price?.toLocaleString("en-IN")}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            booking?.status === "pending"
+                              ? "outline"
+                              : booking?.status === "confirmed"
+                              ? "default"
+                              : booking?.status === "cancelled"
+                              ? "destructive"
+                              : "secondary"
+                          }
+                        >
+                          {booking?.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
             <div className="mt-4 flex items-center justify-between">
               <div>
