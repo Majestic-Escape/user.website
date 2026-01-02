@@ -10,7 +10,7 @@ const tabs = [
     name: "Experiences",
     id: "2",
     href: "/experiences",
-    icon: "/images/mobile/boat2.png",
+    icon: "/images/mobile/compass.png",
   },
   {
     name: "Services",
