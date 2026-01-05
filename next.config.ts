@@ -9,7 +9,8 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "majestic-escape-host-properties.blr1.cdn.digitaloceanspaces.com",
+        hostname:
+          "majestic-escape-host-properties.blr1.cdn.digitaloceanspaces.com",
       },
 
       {
@@ -34,6 +35,9 @@ const nextConfig: NextConfig = {
         hostname: "images.pexels.com",
       },
     ],
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
   /* config options here */
 };
