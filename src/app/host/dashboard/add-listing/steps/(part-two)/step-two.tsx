@@ -112,8 +112,14 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
       }
       setPhotos(updatedPhotos);
       updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+
+      toast.error(
+        error?.response?.data?.error ||
+          error?.message ||
+          "Image upload failed. Please try again."
+      );
     } finally {
       setUploading(false);
     }
@@ -228,6 +234,9 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
             </Label>
             {photos.length < 5 && (
               <p className="text-red-500">Please upload at least 5 photos</p>
+            )}
+            {photos.length > 1 && (
+              <div>Drag and move the images to change the order.</div>
             )}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {photos.map((photo) => (

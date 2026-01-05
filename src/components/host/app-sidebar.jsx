@@ -14,6 +14,9 @@ import {
   PlusIcon,
   Receipt,
   StarIcon,
+  StickyNote,
+  ChartColumnIncreasing,
+  Landmark,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { NavMain } from "@/components/host/nav-main";
@@ -86,13 +89,19 @@ const data = {
     {
       title: "Analytics",
       url: "/host/dashboard/analytics",
-      icon: CheckCheck,
+      icon: ChartColumnIncreasing,
       items: [],
     },
     {
       title: "Add Bank",
       url: "/host/dashboard/bank-info",
-      icon: DollarSign,
+      icon: Landmark,
+      items: [],
+    },
+    {
+      title: "KYC Form",
+      url: "/host/dashboard/kyc",
+      icon: StickyNote,
       items: [],
     },
     // {

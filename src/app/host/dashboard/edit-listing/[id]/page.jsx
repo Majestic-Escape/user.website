@@ -115,11 +115,18 @@ export default function EditListing({ params }) {
     );
   };
 
-  const determineNewStatus = (isExiting, hasSignificantChanges) => {
+  const determineNewStatus = (
+    isExiting,
+    hasSignificantChanges,
+    isFinalSubmit = false
+  ) => {
     if (isExiting && initialStatus === "incomplete") {
       return "incomplete";
     }
     if (hasSignificantChanges) {
+      return "processing";
+    }
+    if (isFinalSubmit && initialStatus === "incomplete") {
       return "processing";
     }
     if (initialStatus === "active" || initialStatus === "processing") {
@@ -157,7 +164,7 @@ export default function EditListing({ params }) {
     const toastId = toast.loading("Updating your listing...");
     try {
       const hasSignificantChanges = checkForSignificantChanges();
-      const newStatus = determineNewStatus(false, hasSignificantChanges);
+      const newStatus = determineNewStatus(false, hasSignificantChanges, true);
       const submit = true;
 
       await propertyService.updateProperty(id, initialStatus, submit, {
