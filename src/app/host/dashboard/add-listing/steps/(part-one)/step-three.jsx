@@ -397,7 +397,7 @@ export function LocationForm({ updateFormData, formData }) {
   //   }
   // };
   const handleRegistrationInputChange = (e) => {
-    let value = e.target.value.toUpperCase().slice(0, 10);
+    let value = e.target.value.toUpperCase();
 
     const newAddress = { ...address, registrationNumber: value };
     setAddress(newAddress);
