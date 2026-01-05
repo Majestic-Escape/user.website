@@ -10,7 +10,7 @@ export default function BlogPost() {
 
         <div className="lg:col-span-2">
           <div className="py-8 lg:pe-8">
-            <div className="space-y-5 lg:space-y-8">
+            <div className="space-y-5 pt-8 md:pt-0 lg:space-y-8">
               <Link
                 className="inline-flex items-center gap-x-1.5 text-sm text-gray-600 decoration-2 hover:underline focus:outline-none focus:underline "
                 href="/blogs"

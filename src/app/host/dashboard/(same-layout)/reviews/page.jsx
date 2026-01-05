@@ -211,7 +211,7 @@ export default function ReviewsPage() {
     );
   };
   return (
-    <div className="space-y-4 grid grid-cols-1">
+    <div className="space-y-4 grid grid-cols-1 mb-16">
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -304,13 +304,13 @@ export default function ReviewsPage() {
           </Card>
         </div>
 
-        <Card>
+        <Card className="mb-16">
           <CardHeader>
             <CardTitle>Recent Reviews</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center mb-4">
-              <div className="flex grid w-full gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="flex grid w-full gap-4 md:grid-cols-2 desktop:grid-cols-4">
                 <Input
                   placeholder="Search reviews..."
                   className=""

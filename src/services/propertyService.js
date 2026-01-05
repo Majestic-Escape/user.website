@@ -62,9 +62,9 @@ export const propertyService = {
     }
   },
   createProperty: async (propertyData) => {
-    console.group("proper", propertyData);
+    // console.group("proper", propertyData);
     delete propertyData._id;
-    console.group("next", propertyData);
+    // console.group("next", propertyData);
     try {
       const response = await axios.post(
         `${API_BASE_URL}/properties/create-listing-property/`,
@@ -80,7 +80,7 @@ export const propertyService = {
 
   updateProperty: async (id, status, submit = false, propertyData) => {
     try {
-      console.group("back", propertyData);
+      // console.group("back", propertyData);
       const response = await axios.put(
         `${API_BASE_URL}/properties/update-listing-property/${id}?submit=${submit}&status=${status}`,
         propertyData

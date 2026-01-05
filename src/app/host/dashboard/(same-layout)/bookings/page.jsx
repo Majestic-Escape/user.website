@@ -539,102 +539,108 @@ export default function ReservationsPage() {
               : "cancel"
           }
         />
-        <div className="flex items-center space-x-4">
-          <Select className="bg-white" onValueChange={handleDateRangeChange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select date range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1d">Today</SelectItem>
-              <SelectItem value="1w">Next 7 days</SelectItem>
-              <SelectItem value="1m">Next 30 days</SelectItem>
-              <SelectItem value="3m">Last 3 months</SelectItem>
-              <SelectItem value="6m">Last 6 months</SelectItem>
-            </SelectContent>
-          </Select>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                id="date"
-                variant={"outline"}
-                className={cn(
-                  "w-[300px] justify-start text-left font-normal",
-                  !date && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date?.from ? (
-                  date.to ? (
-                    <>
-                      {format(date.from, "LLL dd, y")} -{" "}
-                      {format(date.to, "LLL dd, y")}
-                    </>
+        <div className="flex flex-col md:flex-row md:items-center gap-x-4 w-full ">
+          <div className="w-full pb-6 md:pb-0">
+            <Select className="bg-white" onValueChange={handleDateRangeChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select date range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1d">Today</SelectItem>
+                <SelectItem value="1w">Next 7 days</SelectItem>
+                <SelectItem value="1m">Next 30 days</SelectItem>
+                <SelectItem value="3m">Last 3 months</SelectItem>
+                <SelectItem value="6m">Last 6 months</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="date"
+                  variant={"outline"}
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date?.from ? (
+                    date.to ? (
+                      <>
+                        {format(date.from, "LLL dd, y")} -{" "}
+                        {format(date.to, "LLL dd, y")}
+                      </>
+                    ) : (
+                      format(date.from, "LLL dd, y")
+                    )
                   ) : (
-                    format(date.from, "LLL dd, y")
-                  )
-                ) : (
-                  <span>Pick a date</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={date?.from}
-                selected={date}
-                onSelect={(range) => {
-                  // if (
-                  //   range.to.toLocaleDateString() ==
-                  //   range.from.toLocaleDateString()
-                  // )
-                  //   toast.error("Select two dates for date range");
-                  if (!range?.from) {
-                    // 👇 fallback when user deselects
-                    toast.error("Cannot select date twice");
-                    return;
-                  }
-                  if (!range?.to) {
-                    toast.error("Select two dates for date range");
-                  }
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={date?.from}
+                  selected={date}
+                  onSelect={(range) => {
+                    // if (
+                    //   range.to.toLocaleDateString() ==
+                    //   range.from.toLocaleDateString()
+                    // )
+                    //   toast.error("Select two dates for date range");
+                    if (!range?.from) {
+                      // 👇 fallback when user deselects
+                      toast.error("Cannot select date twice");
+                      return;
+                    }
+                    if (!range?.to) {
+                      toast.error("Select two dates for date range");
+                    }
 
-                  // Normal value
-                  setDate(range);
-                }}
-                numberOfMonths={2}
-              />
-            </PopoverContent>
-          </Popover>
+                    // Normal value
+                    setDate(range);
+                  }}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </div>
 
-      <div className="flex space-x-4 mb-4">
+      <div className="md:flex md:space-x-4 mb-4">
         <div className="flex-1">
           <Label htmlFor="search" className="sr-only">
             Search reservations
           </Label>
           <Input
             id="search"
-            className="bg-white"
+            className="bg-white "
             placeholder="Search by guest name or property..."
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
           />
         </div>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all" selected>
-              All Status
-            </SelectItem>
-            <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="mt-6 md:mt-0">
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="w-full md:w-[180px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" selected>
+                All Status
+              </SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="pl-2 text-gray-500 text-xs font-medium-500">
         <>Note: If booking isn't visible try changing date from calendar</>

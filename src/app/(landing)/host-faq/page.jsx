@@ -91,7 +91,7 @@ export default function Component() {
     <section id="faqs" className="font-poppins min-h-screen py-32 bg-[#FAFAFA]">
       <div className="container max-w-7xl mx-auto px-4">
         <div className="grid gap-10 lg:grid-cols-[1fr,1fr]">
-          <div className="space-y-6">
+          <div className="space-y-6 pt-8 md:pt-0">
             <Heading text={"Frequently Asked Questions"} />
             <SubHeading
               text={

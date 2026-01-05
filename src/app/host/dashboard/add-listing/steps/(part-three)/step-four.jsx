@@ -66,14 +66,14 @@ export function SafetyDetails({ updateFormData, formData }) {
 
   const handleDialogClose = () => {
     if (activeDialog) {
-      if (tempDescription.trim().length < 10) {
-        toast.error("Please add at least 10 characters.");
-        return; // ❗ prevent closing
-      }
+      // if (tempDescription.trim().length < 10) {
+      //   toast.error("Please add at least 10 characters.");
+      //   return; // ❗ prevent closing
+      // }
 
       const updatedFeatures = {
         ...safetyFeatures,
-        [activeDialog]: { checked: true, description: tempDescription },
+        [activeDialog]: { checked: false, description: tempDescription },
       };
       setSafetyFeatures(updatedFeatures);
       updateFormData({ safetyFeatures: updatedFeatures });

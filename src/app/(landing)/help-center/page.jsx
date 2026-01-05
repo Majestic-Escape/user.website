@@ -19,7 +19,7 @@ import {
 // import { useRouter } from "next/navigation";
 export default function LocalRules() {
   return (
-    <div className="min-h-screen font-poppins pt-24">
+    <div className="min-h-screen font-poppins pt-20">
       {/* <header className="bg-offWhite shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-semibold font-bricolage text-absoluteDark">
@@ -33,8 +33,8 @@ export default function LocalRules() {
 
       <main>
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 py-6 sm:px-0">
-            <header className=" mb-6">
+          <div className="px-4 py-6  sm:px-0">
+            <header className=" pt-8 md:pt-0 mb-6">
               <Heading text="How can we help you?" />
 
               <SubHeading text="Find answers to your questions or contact our support team" />
