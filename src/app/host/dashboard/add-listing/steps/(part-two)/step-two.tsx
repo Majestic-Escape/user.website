@@ -237,8 +237,8 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
             )}
             {photos.length > 1 && (
               <div>
-                Drag and move the images to change the order. First image is set
-                as property profile.
+                Drag and move the images to change the order. The first image
+                will be set as property profile image.
               </div>
             )}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
