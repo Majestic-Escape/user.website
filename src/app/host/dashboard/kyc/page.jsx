@@ -188,13 +188,15 @@ export default function KYC() {
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("new form", formData);
   }
-  const handleNext = async () => {
+  const handleNext = async (skip) => {
     if (process.env.NEXT_PUBLIC_ENV === "dev") {
       console.log("enterd  next noew");
     }
-    if (steps[currentStep].requiresValidation) {
-      const isValid = await validateCurrentStep();
-      if (!isValid) return;
+    if (!skip) {
+      if (steps[currentStep].requiresValidation) {
+        const isValid = await validateCurrentStep();
+        if (!isValid) return;
+      }
     }
     if (process.env.NEXT_PUBLIC_ENV === "dev") {
       console.log("reached here");
@@ -323,7 +325,7 @@ export default function KYC() {
           <CurrentStepComponent
             updateFormData={updateFormData}
             formData={formData}
-            goNext={handleNext}
+            goNext={() => handleNext(true)}
           />
         </div>
       </main>
