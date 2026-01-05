@@ -185,9 +185,9 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
             onChange={handleChange}
             className="font-bricolage text-lg"
             placeholder="Enter your business pan number"
-            // onCopy={handleCopyPaste}
-            // onPaste={handleCopyPaste}
-            // onCut={handleCopyPaste}
+            onCopy={handleCopyPaste}
+            onPaste={handleCopyPaste}
+            onCut={handleCopyPaste}
           />
         </div>
         <div className="space-y-2">

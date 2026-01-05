@@ -115,6 +115,9 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
       "image/jpg",
       "image/png",
       "application/pdf",
+      "image/heic",
+      "image/heif",
+      "application/octet-stream",
     ];
 
     // Check file type

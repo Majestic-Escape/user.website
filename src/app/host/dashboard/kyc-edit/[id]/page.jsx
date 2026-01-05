@@ -79,6 +79,10 @@ export default function KycEdit({ params }) {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
+      if (formData.acceptedTerms.general == false) {
+        toast.error("Accept terms and condition");
+        return;
+      }
       toast("Submitting your kyc...");
 
       await kycService.updateProperty(id, {

@@ -213,6 +213,10 @@ export default function KYC() {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
+      if (formData.acceptedTerms.general == false) {
+        toast.error("Accept terms and condition");
+        return;
+      }
       toast("Submitting your kyc...");
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
         console.log("finally", formData?.hostId);
@@ -244,6 +248,7 @@ export default function KYC() {
         });
       }, 2100);
     } catch (error) {
+      console.error("this", error);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
