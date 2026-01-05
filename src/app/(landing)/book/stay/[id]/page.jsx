@@ -9,7 +9,6 @@ import {
   QueryClientProvider,
   useQuery,
 } from "@tanstack/react-query";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -1312,7 +1311,7 @@ function BookPageContent() {
                   </p>
                 ) : (
                   <p className="flex text-sm md:text-center vertical-align:middle md:pl-2 lg:pl-0 lg:mt-4 text-gray-500">
-                    <Image
+                    <img
                       src="/images/flash.png"
                       alt="Info"
                       className="h-5 pr-2 md:pr-2 lg:pr-0"
