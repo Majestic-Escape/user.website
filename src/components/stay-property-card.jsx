@@ -13,6 +13,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  CarouselApi,
 } from "@/components/ui/carousel";
 import { Heart, MapPin, Share } from "lucide-react";
 import { BookingPopup } from "@/components/booking-popup";
@@ -21,13 +22,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function StayCard({ property, includeTaxes }) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { isInWishlist, wishlists } = useWishlist();
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isWishlistDialogOpen, setIsWishlistDialogOpen] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [api, setApi] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const router = useRouter();
   const { user } = useAuth();
   const calculatePrice = (basePrice) => {
@@ -72,6 +74,19 @@ export default function StayCard({ property, includeTaxes }) {
   const handleWishlist = (e) => {
     setIsWishlistDialogOpen(true);
   };
+  useEffect(() => {
+    if (!api) return;
+
+    const onSelect = () => {
+      setCurrentImageIndex(api.selectedScrollSnap());
+    };
+
+    api.on("select", onSelect);
+
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -110,7 +125,7 @@ export default function StayCard({ property, includeTaxes }) {
         className="relative cursor-pointer"
         // Disable booking
       >
-        <Carousel className="w-full">
+        <Carousel className="w-full" setApi={setApi}>
           <CarouselContent>
             {property?.photos.map((image, idx) => (
               <CarouselItem key={idx}>
@@ -138,10 +153,12 @@ export default function StayCard({ property, includeTaxes }) {
               key={idx}
               onClick={(e) => {
                 e.stopPropagation();
-                setCurrentImageIndex(idx);
+                api?.scrollTo(idx);
               }}
-              className={`w-1.5 h-1.5 rounded-full ${
-                currentImageIndex === idx ? "bg-white" : "bg-white/50"
+              className={`w-1.5 h-1.5 rounded-full transition-all ${
+                currentImageIndex === idx
+                  ? "bg-white w-4"
+                  : "bg-white/50 hover:bg-white/70"
               }`}
             />
           ))}
