@@ -18,7 +18,7 @@ export default function Layout({ children }) {
       <div className="font-poppins">
         <div>
           <Navbar />
-          <MobileNavbar />
+          {/* <MobileNavbar /> Stay Page */}
           {/* {children} */}
           <main className={modalFilter ? "filter blur-sm" : ""}>
             {children}
