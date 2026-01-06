@@ -1,67 +1,110 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { ChevronLeft, ChevronRight, X } from "lucide-react"
-import Image from "next/image"
+import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import Image from "next/image";
 
 interface PhotoGalleryModalProps {
-  images: string[]
-  isOpen: boolean
-  onClose: () => void
+  images: string[];
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export default function PhotoGalleryModal({ images, isOpen, onClose }: PhotoGalleryModalProps) {
-  const [currentIndex, setCurrentIndex] = useState(0)
+export default function PhotoGalleryModal({
+  images,
+  isOpen,
+  onClose,
+}: PhotoGalleryModalProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   // Reset index when modal opens
+  // useEffect(() => {
+  //   if (isOpen) {
+  //     setCurrentIndex(0);
+  //     // Prevent scrolling when modal is open
+  //     document.body.style.overflow = "hidden";
+  //   } else {
+  //     document.body.style.overflow = "auto";
+  //   }
+
+  //   return () => {
+  //     document.body.style.overflow = "auto";
+  //   };
+  // }, [isOpen]);
   useEffect(() => {
     if (isOpen) {
-      setCurrentIndex(0)
-      // Prevent scrolling when modal is open
-      document.body.style.overflow = "hidden"
+      setCurrentIndex(0);
+
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.overflow = "hidden";
+
+      // Store scroll position for later restoration
+      document.body.dataset.scrollY = scrollY.toString();
     } else {
-      document.body.style.overflow = "auto"
+      // Restore scroll position
+      const scrollY = document.body.dataset.scrollY || "0";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "auto";
+
+      // Scroll back to original position
+      window.scrollTo(0, parseInt(scrollY, 10));
+
+      // Clean up
+      delete document.body.dataset.scrollY;
     }
 
     return () => {
-      document.body.style.overflow = "auto"
-    }
-  }, [isOpen])
-
+      // Cleanup on unmount
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "auto";
+      delete document.body.dataset.scrollY;
+    };
+  }, [isOpen]);
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return
+      if (!isOpen) return;
 
       if (e.key === "ArrowLeft") {
-        navigateToPrevious()
+        navigateToPrevious();
       } else if (e.key === "ArrowRight") {
-        navigateToNext()
+        navigateToNext();
       } else if (e.key === "Escape") {
-        onClose()
+        onClose();
       }
-    }
+    };
 
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [isOpen, currentIndex, images.length, onClose])
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, currentIndex, images.length, onClose]);
 
   const navigateToNext = () => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
-  }
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
 
   const navigateToPrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
-  }
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
 
   const navigateToImage = (index: number) => {
-    setCurrentIndex(index)
-  }
+    setCurrentIndex(index);
+  };
 
-  if (!isOpen || images.length === 0) return null
+  if (!isOpen || images.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center">
+    <div className="fixed inset-0  z-[9999] bg-black bg-opacity-90 flex items-center justify-center">
       <div className="w-full h-full max-w-[95vw] max-h-[95vh] flex flex-col bg-white">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
@@ -154,6 +197,5 @@ export default function PhotoGalleryModal({ images, isOpen, onClose }: PhotoGall
         </div>
       </div>
     </div>
-  )
+  );
 }
-

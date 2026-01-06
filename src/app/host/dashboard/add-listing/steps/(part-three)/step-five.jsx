@@ -98,8 +98,13 @@ export function SetRules({ updateFormData, formData }) {
                   value={newRule}
                   className="text-sm"
                   onChange={(e) => setNewRule(e.target.value)}
+                  maxLength={50}
                   placeholder="Enter a custom rule"
                 />
+                <div className="text-sm text-muted-foreground text-right">
+                  (max. 50 characters) {newRule.length}/{50}
+                </div>
+
                 <Button
                   className="w-32 bg-primaryGreen hover:bg-brightGreen h-10"
                   onClick={addCustomRule}
