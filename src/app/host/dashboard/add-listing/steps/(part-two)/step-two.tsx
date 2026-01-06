@@ -225,9 +225,15 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
                 />
 
                 <span className="pointer-events-none text-center">
-                  <span className="text-2xl">📷</span>
                   <p className="mt-2">
-                    {uploading ? "Uploading..." : "Click to upload photos"}
+                    {uploading ? (
+                      <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-current"></div>
+                    ) : (
+                      <div>
+                        <div className="text-2xl">📷</div>
+                        <div>"Click to upload photos"</div>
+                      </div>
+                    )}
                   </p>
                 </span>
               </div>

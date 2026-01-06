@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import Image from "next/image";
 
 // Simple Skeleton component (assuming it might be used elsewhere too)
@@ -213,7 +214,7 @@ export default function HostProfile({ propertyData }) {
                 <div className="flex justify-center">
                   {" "}
                   <MapPin className="w-4 h-4 text-[#4D7C3F] mr-1" />{" "}
-                  <p>{propertyData?.host?.address?.state || "Goa"}</p>
+                  <p>{propertyData?.host?.address?.state || "India"}</p>
                 </div>
 
                 {propertyData?.host?.isSuperhost && (
