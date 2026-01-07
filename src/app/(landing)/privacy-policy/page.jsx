@@ -27,11 +27,26 @@ export default function PrivacyPolicy() {
                       Information Collection
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      We collect information you provide directly to us, such as
-                      when you create an account, subscribe to our newsletter,
-                      or contact us for support.
+                      We collect information you provide when you create an
+                      account, subscribe to our newsletter, or contact us for
+                      support.
                     </dd>
                   </div>
+                  <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">
+                      Third party service
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      To verify host identity and GST details, our platform uses
+                      third-party verification services, including Digitap, a
+                      government-authorized data verification provider. By
+                      submitting your documents and GST information, you
+                      explicitly consent to the sharing of this data with such
+                      third-party services solely for verification and
+                      compliance purposes.
+                    </dd>
+                  </div>
+
                   <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Use of Information
@@ -59,8 +74,8 @@ export default function PrivacyPolicy() {
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                       We work hard to protect our users from unauthorized access
-                      to or unauthorized alteration, disclosure or destruction
-                      of information we hold.
+                      on our platform or unauthorized alteration, disclosure or
+                      destruction of information we hold.
                     </dd>
                   </div>
                   <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
