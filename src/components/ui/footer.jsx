@@ -32,7 +32,7 @@ const footerData = {
       { label: "Terms of Service", href: "/terms-of-service" },
       { label: "Cancellation Policy", href: "/cancellation-policy" },
       { label: "Refund Policy", href: "/refund-policy" },
-      { label: "Cookies Policy", href: "/cookies-policy" },
+      // { label: "Cookies Policy", href: "/cookies-policy" },
     ],
   },
   support: {

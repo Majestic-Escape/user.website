@@ -84,7 +84,9 @@ const FullCalendarPage = () => {
   const toIST = (date) => {
     return moment(date).tz("Asia/Kolkata").startOf("day");
   };
-
+  useEffect(() => {
+    setSyncPlatform("ical");
+  }, []);
   const todayIST = () => {
     return moment().tz("Asia/Kolkata").startOf("day");
   };
@@ -570,7 +572,7 @@ const FullCalendarPage = () => {
             </TabsList>
             <TabsContent value="import">
               <div className="space-y-4">
-                <Select onValueChange={setSyncPlatform}>
+                <Select value={syncPlatform} onValueChange={setSyncPlatform}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select platform to sync from" />
                   </SelectTrigger>
@@ -686,8 +688,8 @@ const FullCalendarPage = () => {
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="block">Block</TabsTrigger>
                 {/* <TabsTrigger value="reserve">Reserve</TabsTrigger> */}
-                <TabsTrigger value="offer">Offer</TabsTrigger>
-                <TabsTrigger value="pricing">Pricing</TabsTrigger>
+                {/* <TabsTrigger value="offer">Offer</TabsTrigger>
+                <TabsTrigger value="pricing">Pricing</TabsTrigger> */}
               </TabsList>
               <TabsContent value="block">
                 <div className="grid grid-cols-4 items-center gap-4">

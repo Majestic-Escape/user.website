@@ -31,20 +31,17 @@ export default function Component() {
     {
       question: "How do I create and verify my account?",
       answer:
-        "Creating an account is simple: sign up with your email or phone, verify your identity with a government ID, and complete your profile with a photo. This helps build trust in our community.",
+        "Creating an account is simple: sign up with your email and complete your profile with a photo. This helps build trust in our community.",
+      //or phone, verify your identity with a government ID, and complete your profile with a photo. This helps build trust in our community.
       categories: ["onboarding", "kyc"],
     },
     {
-      question: "How do I search for properties on Majestic Escape?",
+      question: "Where do I find new bookings for my properties?",
       answer: (
         <ol className="ml-4 list-decimal space-y-2">
-          <li>Enter your desired location</li>
-          <li>Select your check-in and check-out dates</li>
-          <li>Specify number of guests</li>
-          <li>
-            Use filters to narrow down by price range, amenities, or property
-            type
-          </li>
+          <li>Switch to hosting</li>
+          <li>Select bookings from left sidebar</li>
+          <li>Select date range and search to apply custom filter</li>
         </ol>
       ),
       categories: ["listing", "booking"],
@@ -57,27 +54,38 @@ export default function Component() {
     },
 
     {
-      question: "What is your cancellation policy?",
-      answer:
-        "Cancellation policies vary by property and are clearly displayed on each listing. Generally, we offer three types: Flexible (full refund 24hrs before check-in), Moderate (50% refund 5 days before), and Strict (50% refund 14 days before). Check the specific policy before booking.",
+      question: "How do I create a property?",
+      answer: (
+        <ol className="ml-4 list-decimal space-y-2">
+          <li>Switch to hosting</li>
+          <li>
+            Select Add listing from left sidebar to start property creation
+            process.
+          </li>
+          <li>
+            Once completed, select Listings from left side bar to check out all
+            the property created and their statuses.
+          </li>
+        </ol>
+      ),
       categories: ["booking", "cancellation"],
     },
     {
-      question: "How do I contact my host?",
+      question: "How do I contact my guest?",
       answer:
-        "Once your booking is confirmed, you can message your host directly through our platform's messaging system. We recommend discussing check-in details, directions, and any special requirements before arrival.",
+        "Once guest booking is confirmed, you can call or message them directly using contact details provided in your property booked email.",
       categories: ["support", "booking"],
     },
     {
       question: "Is my payment and personal information secure?",
       answer:
-        "Yes, we use bank-grade encryption to protect your data. Your payment information is never shared with hosts, and personal details are only shared after booking confirmation. We also offer secure authentication and regular security updates.",
+        "Yes, we use razorpay gateway to protect your payment data. Your payment information is never shared with hosts, and personal details are only shared after booking confirmation.",
       categories: ["security", "payments"],
     },
     {
-      question: "What should I do in case of an issue during my stay?",
+      question: "What should I do in case of an issue with guest?",
       answer:
-        "If you encounter any issues during your stay: 1) First contact your host through our platform, 2) If the host is unresponsive or the issue remains unresolved, contact our 24/7 customer support, 3) For emergencies, use the SOS button in the app to reach our emergency team.",
+        "If you encounter any issues with guest you can either contact them directly through contact details provided in booking email, or incase they are unresponsive or the issue remains unresolved, contact our 24/7 customer support.",
       categories: ["support", "security"],
     },
   ];
