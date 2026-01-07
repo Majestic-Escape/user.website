@@ -133,8 +133,8 @@ export default function BookingWidget({
   };
 
   const calculatePriceWithoutTax = (basePrice: number) => {
-    const serviceFee = Math.round((basePrice * 14) / 100);
-    const priceWithServiceFee = basePrice + serviceFee;
+    const serviceFee = calculateServicFee(pricePerNight * nightsCount);
+    const priceWithServiceFee = Number(basePrice) + Number(serviceFee);
 
     // Format number in Indian style
     return priceWithServiceFee.toLocaleString("en-IN");

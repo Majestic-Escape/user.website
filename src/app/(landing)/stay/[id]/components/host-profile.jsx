@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import Image from "next/image";
+import { useState } from "react";
 
 // Simple Skeleton component (assuming it might be used elsewhere too)
 export function Skeleton({ className, ...props }) {
@@ -117,6 +118,8 @@ export default function HostProfile({ propertyData }) {
   // if (isLoading) {
   //   return <HostProfileSkeleton />;
   // }
+  const [isExpanded, setIsExpanded] = useState(false);
+  const maxLength = 275;
 
   // if (error) {
   //   // You might want to pass the error object to display a more specific message
@@ -151,6 +154,29 @@ export default function HostProfile({ propertyData }) {
 
     return age;
   }
+  if (process.env.NEXT_PUBLIC_ENV === "dev") {
+    console.log("deepam", propertyData?.host);
+  }
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
+  const getTruncatedText = (text) => {
+    if (!text) return "";
+    if (isExpanded || text.length <= maxLength) {
+      return text;
+    }
+    // Find the last space within the maxLength to avoid cutting words
+    let truncated = text.slice(0, maxLength);
+    const lastSpaceIndex = truncated.lastIndexOf(" ");
+    if (lastSpaceIndex > maxLength * 0.8) {
+      // Only if we're close to a space
+      truncated = truncated.slice(0, lastSpaceIndex);
+    }
+    return truncated + "...";
+  };
+  const needsTruncation =
+    propertyData?.host?.about && propertyData.host.about.length > maxLength;
+
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("deepam", propertyData?.host);
   }
@@ -296,9 +322,17 @@ export default function HostProfile({ propertyData }) {
             {propertyData?.host?.about && (
               <div className=" items-start gap-3">
                 <p className="text-md font-bold pb-4">Bio</p>
-                <p className="text-md font-light">
-                  {propertyData?.host?.about}
+                <p className="text-md font-light whitespace-pre-line">
+                  {getTruncatedText(propertyData.host.about)}
                 </p>
+                {needsTruncation && (
+                  <button
+                    onClick={toggleExpand}
+                    className="text-[#4D7C3F] font-medium hover:text-[#3D6A2F] underline mt-2 focus:outline-none focus:ring-2 focus:ring-[#4D7C3F] focus:ring-opacity-50 rounded"
+                  >
+                    {isExpanded ? "Show less" : "Read more"}
+                  </button>
+                )}
               </div>
             )}
             {propertyData?.host?.languages &&
