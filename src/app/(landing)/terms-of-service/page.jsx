@@ -73,9 +73,9 @@ export default function TermsOfService() {
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                       Users may submit reviews, photos, and other content. By
-                      submitting content, you grant Majestic Escape a
-                      non-exclusive, worldwide, royalty-free license to use,
-                      reproduce, and display such content.
+                      doing so, you grant Majestic Escape a non-exclusive,
+                      worldwide, royalty-free license to use, reproduce, and
+                      display such content.
                     </dd>
                   </div>
                   <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
