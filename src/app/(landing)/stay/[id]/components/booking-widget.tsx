@@ -133,8 +133,8 @@ export default function BookingWidget({
   };
 
   const calculatePriceWithoutTax = (basePrice: number) => {
-    const serviceFee = calculateServicFee(pricePerNight * nightsCount);
-    const priceWithServiceFee = Number(basePrice) + Number(serviceFee);
+    const serviceFee = calculateServicFee(basePrice);
+    const priceWithServiceFee = Number(basePrice) + serviceFee;
 
     // Format number in Indian style
     return priceWithServiceFee.toLocaleString("en-IN");
@@ -142,10 +142,7 @@ export default function BookingWidget({
 
   const calculateServicFee = (basePrice: number) => {
     const serviceFee = Math.round((basePrice * 12) / 100);
-    // const priceWithServiceFee = basePrice + serviceFee;
-
-    // Format number in Indian style
-    return serviceFee.toLocaleString("en-IN");
+    return serviceFee;
   };
 
   const formatDate = (date: Date | undefined) => {
@@ -639,7 +636,7 @@ export default function BookingWidget({
                     Majestic Escape Service Fee
                   </div>
                   <div className="text-sm">
-                    ₹{calculateServicFee(pricePerNight * nightsCount)}
+                    ₹{calculateServicFee(pricePerNight * nightsCount).toLocaleString("en-IN")}
                   </div>
                 </div>
 
