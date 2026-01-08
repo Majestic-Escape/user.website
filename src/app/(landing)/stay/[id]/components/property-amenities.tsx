@@ -372,18 +372,20 @@ export default function PropertyAmenities({
       {rules.length != 0 && custom.length != 0 ? (
         <div className="border-b pb-6 mb-6">
           <h2 className="text-xl font-medium mb-6">Stay Rules</h2>
-          {rules.map((item) =>
-            item.includes("_") ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 ">
+            {rules.map((item) =>
+              item.includes("_") ? (
+                <div key={item} className="pb-4">
+                  • {removeHypen(item)}
+                </div>
+              ) : null
+            )}
+            {custom.map((item) => (
               <div key={item} className="pb-4">
                 • {removeHypen(item)}
               </div>
-            ) : null
-          )}
-          {custom.map((item) => (
-            <div key={item} className="pb-4">
-              • {removeHypen(item)}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       ) : rules.length != 0 ? (
         <div className="border-b pb-6 mb-6">

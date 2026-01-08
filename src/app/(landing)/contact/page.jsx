@@ -1,14 +1,16 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Mail, MapPin, Phone } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Mail, MapPin, Phone } from "lucide-react";
 
 export default function ContactPage() {
   return (
     <div className="container mx-auto px-4 py-32 max-w-6xl">
-      <h1 className="text-3xl md:text-4xl font-semibold font-bricolage text-center mb-6">Contact Us</h1>
+      <h1 className="text-3xl md:text-4xl font-semibold font-bricolage text-center mb-6">
+        Contact Us
+      </h1>
 
       <div className="grid md:grid-cols-2 gap-12">
         {/* Contact Information */}
@@ -35,7 +37,9 @@ export default function ContactPage() {
               <Mail className="h-6 w-6 text-primary mt-1" />
               <div>
                 <p className="font-medium">Email</p>
-                <p className="text-muted-foreground">info@majesticescape.in</p>
+                <p className="text-muted-foreground">
+                  support@majesticescape.in
+                </p>
               </div>
             </div>
           </div>
@@ -64,7 +68,12 @@ export default function ContactPage() {
               <label htmlFor="email" className="text-sm font-medium">
                 Email
               </label>
-              <Input id="email" type="email" placeholder="john.doe@example.com" required />
+              <Input
+                id="email"
+                type="email"
+                placeholder="john.doe@example.com"
+                required
+              />
             </div>
 
             <div className="space-y-2">
@@ -92,8 +101,6 @@ export default function ContactPage() {
           </form>
         </div>
       </div>
-
-     
     </div>
-  )
+  );
 }

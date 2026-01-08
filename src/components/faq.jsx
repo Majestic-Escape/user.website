@@ -50,16 +50,16 @@ const faqs = [
       "Cancellation policies vary by property and are clearly displayed on each listing. Generally, we offer three types: Flexible (full refund 24hrs before check-in), Moderate (50% refund 5 days before), and Strict (50% refund 14 days before). Check the specific policy before booking.",
     categories: ["booking", "cancellation"],
   },
-  {
-    question: "How do I contact my host?",
-    answer:
-      "Once your booking is confirmed, you can message your host directly through our platform's messaging system. We recommend discussing check-in details, directions, and any special requirements before arrival.",
-    categories: ["support", "booking"],
-  },
+  // {
+  //   question: "How do I contact my host?",
+  //   answer:
+  //     "Once your booking is confirmed, you can message your host directly through our platform's messaging system. We recommend discussing check-in details, directions, and any special requirements before arrival.",
+  //   categories: ["support", "booking"],
+  // },
   {
     question: "Is my payment and personal information secure?",
     answer:
-      "Yes, we use bank-grade encryption to protect your data. Your payment information is never shared with hosts, and personal details are only shared after booking confirmation. We also offer secure authentication and regular security updates.",
+      "Yes, all payments are processed through secure, payment providers. Your payment information is never shared with hosts, and personal details are only shared after booking confirmation.",
     categories: ["security", "payments"],
   },
   {

@@ -249,11 +249,11 @@ export default function PartnerPage() {
                         description:
                           "Partners must provide high-quality photos, accurate descriptions, and maintain up-to-date availability calendars.",
                       },
-                      {
-                        title: "Contract Duration",
-                        description:
-                          "Initial partnership agreement is for 12 months with automatic renewal option.",
-                      },
+                      // {
+                      //   title: "Contract Duration",
+                      //   description:
+                      //     "Initial partnership agreement is for 12 months with automatic renewal option.",
+                      // },
                     ].map((item, index) => (
                       <div key={index} className="flex items-start gap-4">
                         <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
@@ -320,7 +320,7 @@ export default function PartnerPage() {
               {
                 question: "How long does the application process take?",
                 answer:
-                  "The application process typically takes 2-3 weeks, depending on the completeness of your application and the current volume of applications we're processing.",
+                  "The application process typically takes 3-5 days, depending on the completeness of your application and the current volume of applications we're processing.",
               },
               {
                 question: "Can I list my property on other platforms?",
