@@ -49,13 +49,13 @@ export default function LocalRules() {
                     <div className="flex flex-col items-center text-center">
                       <MessageSquare className="h-8 w-8 text-stone mb-4" />
                       <h3 className="text-lg font-semibold text-absoluteDark mb-2">
-                        Whatsapp Chat
+                        WhatsApp Chat
                       </h3>
                       <p className="text-gray-600 mb-4">
                         Start a conversation with our support team right now.
                       </p>
                       <Link
-                        href="https://wa.me/918369995283"
+                        href="https://wa.me/917219666822"
                         target="_blank"
                         className="w-full bg-primaryGreen py-2 px-3 rounded-3xl text-sm hover:bg-brightGreen transition-colors text-white "
                       >
@@ -96,7 +96,7 @@ export default function LocalRules() {
                         Call us directly for immediate assistance.
                       </p>
                       <Link
-                        href="tel:918369995283"
+                        href="tel:7219666822"
                         target="_blank"
                         className="w-full bg-primaryGreen py-2 px-3 text-sm rounded-3xl hover:bg-brightGreen transition-colors text-white"
                       >

@@ -55,7 +55,7 @@ export default function CancellationPolicy() {
                       cancellation.The reservation is non-refundable.
                     </dd>
                   </div>
-                  <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  {/* <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Late Cancellations
                     </dt>
@@ -64,7 +64,7 @@ export default function CancellationPolicy() {
                       check-in time may be subject to a cancellation fee
                       equivalent to one night&apos;s stay.
                     </dd>
-                  </div>
+                  </div> */}
                   <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       No-Shows
