@@ -74,7 +74,7 @@ export default function CompanyDetails() {
                 <div>
                   <h3 className="font-medium">Contact Information</h3>
                   <p>Phone: +91 83699 95283</p>
-                  <p>Email: info@majesticescape.in</p>
+                  <p>Email: support@majesticescape.in</p>
                 </div>
                 <div>
                   <h3 className="font-medium">Website</h3>
@@ -265,7 +265,7 @@ export default function CompanyDetails() {
                     </div>
                     <div>
                       <p className="font-medium">Email</p>
-                      <p className="text-gray-600">info@majesticescape.in</p>
+                      <p className="text-gray-600">support@majesticescape.in</p>
                     </div>
                   </div>
                 </div>

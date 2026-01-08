@@ -97,8 +97,17 @@ export default function Footer() {
               <p className="text-sm text-stone">
                 &copy; {currentYear} Majestic Escape. All rights reserved
               </p>
+              <div>
+                <Image
+                  src="/icons/mail.png"
+                  width={24}
+                  height={24}
+                  alt="mail icon"
+                  className="h-7 w-7 hover:scale-105"
+                />
+              </div>
               <div className="flex space-x-6 mt-4 sm:mt-0">
-                <Link href="mailto:info@majesticescape.in" target="_blank">
+                <Link href="mailto:support@majesticescape.in" target="_blank">
                   <Image
                     src="/icons/mail.png"
                     width={24}

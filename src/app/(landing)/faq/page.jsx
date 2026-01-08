@@ -11,6 +11,7 @@ import {
 
 import Heading from "@/components/ui/heading";
 import SubHeading from "@/components/ui/sub-heading";
+import Link from "next/link";
 
 export default function Component() {
   const [activeCategory, setActiveCategory] = useState("all");
@@ -44,8 +45,8 @@ export default function Component() {
           <li>Select your check-in and check-out dates</li>
           <li>Specify number of guests</li>
           <li>
-            Use filters to narrow down by price range, amenities, or property
-            type
+            Furthurmore, you may use available filters to narrow down your
+            search by price range, amenities, or property type.
           </li>
         </ol>
       ),
@@ -69,22 +70,43 @@ export default function Component() {
         "Cancellation policies vary by property and are clearly displayed on each listing. Generally, we offer three types: Flexible (full refund 24hrs before check-in), Moderate (full refund 7 days before check-in), and Strict (no cancellation or refund). Check the specific policy before booking.",
       categories: ["booking", "cancellation"],
     },
-    {
-      question: "How do I contact my host?",
-      answer:
-        "Once your booking is confirmed, you can call or message using contact details provided in the confirmation email . We recommend discussing check-in details, directions, and any special requirements before arrival.",
-      categories: ["support", "booking"],
-    }, //message your host directly through our platform's messaging system
+    // {
+    //   question: "How do I contact my host?",
+    //   answer:
+    //     "Once your booking is confirmed, you can call or message using contact details provided in the confirmation email . We recommend discussing check-in details, directions, and any special requirements before arrival.",
+    //   categories: ["support", "booking"],
+    // }, //message your host directly through our platform's messaging system
     {
       question: "Is my payment and personal information secure?",
       answer:
-        "Yes, we use razorpay gateway for all the transaction. Your payment information is never shared with hosts, and personal details are only shared after booking confirmation.",
+        "Yes, all payments are processed through secure, payment providers. Your payment information is never shared with hosts, and personal details are only shared after booking confirmation.",
       categories: ["security", "payments"],
     }, //Yes, we use bank-grade encryption to protect your data. Your payment information is never shared with hosts, and personal details are only shared after booking confirmation. We also offer secure authentication and regular security updates.
     {
       question: "What should I do in case of an issue during my stay?",
-      answer:
-        "If you encounter any issues during your stay, either contact your host directly using contact details provided in your confirmation email or incase the host is unresponsive or the issue remains unresolved, contact our 24/7 customer support.",
+      answer: (
+        <>
+          If you encounter any issues during your stay, either contact your host
+          directly or in case the host is unresponsive or the issue remains
+          unresolved, contact our 24/7 customer support at{" "}
+          <Link
+            href="mailto:support@majesticescape.in"
+            target="_blank"
+            className="text-primaryGreen hover:text-brightGreen underline transition-colors"
+          >
+            support@majesticescape.in
+          </Link>{" "}
+          or call us at{" "}
+          <Link
+            href="tel:+917219666822"
+            target="_blank"
+            className="text-primaryGreen hover:text-brightGreen underline transition-colors"
+          >
+            +91-7219666822
+          </Link>
+          .
+        </>
+      ),
       categories: ["support", "security"],
     }, //our platform  3) For emergencies, use the SOS button in the app to reach our emergency team.
     {
