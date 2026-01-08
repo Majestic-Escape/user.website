@@ -59,7 +59,7 @@ export default function LocalRules() {
                         target="_blank"
                         className="w-full bg-primaryGreen py-2 px-3 rounded-3xl text-sm hover:bg-brightGreen transition-colors text-white "
                       >
-                        Chat on whatsapp
+                        Chat on WhatsApp
                       </Link>
                     </div>
                   </CardContent>

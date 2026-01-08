@@ -98,13 +98,13 @@ export default function Footer() {
                 &copy; {currentYear} Majestic Escape. All rights reserved
               </p>
               <div>
-                <Image
+                {/* <Image
                   src="/icons/mail.png"
                   width={24}
                   height={24}
                   alt="mail icon"
                   className="h-7 w-7 hover:scale-105"
-                />
+                /> */}
               </div>
               <div className="flex space-x-6 mt-4 sm:mt-0">
                 <Link href="mailto:support@majesticescape.in" target="_blank">
@@ -143,7 +143,7 @@ export default function Footer() {
                   />
                 </Link>
 
-                <Link href="https://wa.me/918369995283" target="_blank">
+                <Link href="https://wa.me/917219666822" target="_blank">
                   <Image
                     src="/icons/whatsapp.png"
                     width={24}
