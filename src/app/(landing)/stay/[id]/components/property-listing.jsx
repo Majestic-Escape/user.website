@@ -69,8 +69,8 @@ export default function PropertyListing({
   const manual = Object.keys(obj).filter((key) => obj[key]);
   return (
     <div className="max-w-7xl  mx-auto relative">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6 px-4 lg:px-0">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6 px-4 md:px-0">
+        <div className="md:col-span-2">
           <div className="border-b pb-6 mb-6">
             <div className="flex items-center gap-4 mt-6">
               {propertyDetails?.placeType[0].toUpperCase() +
@@ -139,7 +139,7 @@ export default function PropertyListing({
           /> */}
         </div>
 
-        <div className="lg:sticky lg:top-0 lg:right-0 lg:self-start">
+        <div className="md:sticky md:top-24 md:self-start">
           <BookingWidget
             propertyId={propertyDetails?._id}
             manual={manual}
