@@ -14,6 +14,7 @@ import {
 import type { DateRange } from "react-day-picker";
 import Link from "next/link";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 interface BookingWidgetProps {
   propertyId: string;
@@ -43,7 +44,7 @@ interface BookingWidgetProps {
   allowedGuests: number;
   loading: boolean;
 }
-
+import { X } from "lucide-react";
 export default function BookingWidget({
   propertyId,
   manual,
@@ -64,11 +65,13 @@ export default function BookingWidget({
   allowedGuests,
   loading,
 }: BookingWidgetProps) {
+  const { openPriceModal, setOpenPriceModal } = useAuth();
   const [totalPrice, setTotalPrice] = useState<number>(pricePerNight);
   const [nightsCount, setNightsCount] = useState<number>(1);
   const [calendarOpen, setCalendarOpen] = useState<boolean>(false);
   const [isAuth, setIsAuth] = useState<boolean>(false);
   const [isValid, setIsValid] = useState<boolean>(false);
+
   const guestsRef = useRef<HTMLDivElement | null>(null);
   const [matches, setMatches] = useState(false);
   useEffect(() => {
@@ -250,7 +253,13 @@ export default function BookingWidget({
     console.log("we have got this date", date?.from);
   }
   return (
-    <div className="border rounded-xl shadow-lg">
+    <div
+      className={
+        openPriceModal
+          ? "slide-up border rounded-xl shadow-lg"
+          : "hidden md:block border rounded-xl shadow-lg"
+      }
+    >
       <Card className="">
         <CardContent className="p-0">
           <div className="p-6">
@@ -259,7 +268,13 @@ export default function BookingWidget({
                 <span className="text-2xl font-semibold font-bricolage">
                   ₹{pricePerNight.toLocaleString("en-IN")}
                 </span>
-                <span className="text-gray-600"> night</span>
+                <span className="text-gray-600"> per night</span>
+              </div>
+              <div
+                onClick={() => setOpenPriceModal(false)}
+                className="md:hidden"
+              >
+                <X />
               </div>
             </div>
 
@@ -654,8 +669,8 @@ export default function BookingWidget({
                 </div>
 
                 <div className="mt-4 space-y-2">
-                  <div className="flex justify-between">
-                    <div className="underline text-sm">
+                  <div className="flex justify-between hidden md:block">
+                    <div className="underline text-sm ">
                       ₹{pricePerNight.toLocaleString("en-IN")} x {nightsCount}{" "}
                       night
                       {nightsCount !== 1 ? "s" : ""}

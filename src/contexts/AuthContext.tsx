@@ -32,6 +32,8 @@ type AuthContextType = {
   setRooms: React.Dispatch<React.SetStateAction<FilterRooms>>;
   showAllAmenities: boolean;
   setShowAllAmenities: React.Dispatch<React.SetStateAction<boolean>>;
+  openPriceModal: boolean;
+  setOpenPriceModal: React.Dispatch<React.SetStateAction<boolean>>;
   showAllProperties: boolean;
   setShowAllProperties: React.Dispatch<React.SetStateAction<boolean>>;
   addAmenities: string[];
@@ -74,6 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [bookingType, setBookingType] = useState("");
   const [petAllowed, setPetAllowed] = useState("");
   const [checkinType, setCheckinType] = useState("");
+  const [openPriceModal, setOpenPriceModal] = useState(false);
   const [activeTab, setActiveTab] = useState("filters");
   const { checkToken } = useCheckToken();
   const pathname = usePathname();
@@ -234,6 +237,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     handleRoomChange,
     activeTab,
     setActiveTab,
+    openPriceModal,
+    setOpenPriceModal,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
