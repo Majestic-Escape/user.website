@@ -70,7 +70,7 @@ export default function BookingWidget({
   const [isAuth, setIsAuth] = useState<boolean>(false);
   const [isValid, setIsValid] = useState<boolean>(false);
   const guestsRef = useRef<HTMLDivElement | null>(null);
-
+  const [matches, setMatches] = useState(false);
   useEffect(() => {
     if (date?.from && date?.to) {
       const nights = Math.ceil(
@@ -111,6 +111,21 @@ export default function BookingWidget({
   useEffect(() => {
     auth();
   }, []);
+
+  function useMediaQuery(query: string) {
+    useEffect(() => {
+      const media = window.matchMedia(query);
+      setMatches(media.matches);
+
+      const listener = () => setMatches(media.matches);
+      media.addEventListener("change", listener);
+
+      return () => media.removeEventListener("change", listener);
+    }, [query]);
+
+    return matches;
+  }
+  const isMobile = useMediaQuery("(max-width: 640px)");
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("logite", propertyImages[0]);
   }
@@ -481,7 +496,13 @@ export default function BookingWidget({
                 </div>
               </div>
 
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent
+                className="w-auto h-auto p-0 z-[10001]"
+                align="start"
+                side={isMobile ? "top" : "bottom"}
+                sideOffset={isMobile ? -120 : -70}
+                alignOffset={isMobile ? -140 : 0}
+              >
                 <div className="p-4 border-b">
                   <h3 className="text-base font-semibold">Select dates</h3>
                   <div className="text-sm text-gray-600 mt-1">
@@ -503,7 +524,7 @@ export default function BookingWidget({
                       defaultMonth={date?.from}
                       selected={activation ? date : undefined}
                       onSelect={onDateSelect}
-                      numberOfMonths={2}
+                      numberOfMonths={isMobile ? 1 : 2}
                       disabled={[
                         { before: new Date() }, // disable past dates
                         ...unavailableDates.map((d) => new Date(d)), // disable specific unavailable dates
@@ -516,7 +537,7 @@ export default function BookingWidget({
                       ]}
                       classNames={{
                         day_selected:
-                          "bg-black text-white hover:bg-black hover:text-white",
+                          "bg-black text-white hover:bg-black hover:text-white ",
                         day_range_middle:
                           "aria-selected:bg-gray-100 aria-selected:text-black",
                         day_range_end:
@@ -645,7 +666,7 @@ export default function BookingWidget({
                   </div>
 
                   <div className="flex justify-between">
-                    <div className="underline text-sm">
+                    {/* <div className="underline text-sm">
                       Majestic Escape Service Fee
                     </div>
                     <div className="text-sm">
@@ -653,14 +674,12 @@ export default function BookingWidget({
                       {calculateServicFee(
                         pricePerNight * nightsCount
                       ).toLocaleString("en-IN")}
-                    </div>
+                    </div> */}
                   </div>
 
                   <div className="flex justify-between pt-4 border-t ">
                     <div>Total before taxes</div>
-                    <div>
-                      ₹{calculatePriceWithoutTax(pricePerNight * nightsCount)}
-                    </div>
+                    <div>₹{totalPrice.toLocaleString("en-IN")}</div>
                   </div>
                 </div>
               </>

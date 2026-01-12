@@ -139,7 +139,7 @@ export default function PropertyListing({
           /> */}
         </div>
 
-        <div className="md:sticky md:top-24 md:self-start">
+        <div className="fixed bottom-0 z-[1000] w-[92vw] right-4 md:right-0 md:w-auto  md:sticky md:top-24 md:self-start">
           <BookingWidget
             propertyId={propertyDetails?._id}
             manual={manual}
