@@ -273,6 +273,14 @@ export default function SearcahFilter({
                 placeholder="Search destinations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  // Trigger search on Enter key
+                  if (e.key === "Enter") {
+                    e.preventDefault(); // Prevent default form behavior
+                    submit(); // Call your submit function
+                    setOpenDestination(false); // Close the popover
+                  }
+                }}
               />
               <CommandEmpty className="hidden">
                 No destination found.
