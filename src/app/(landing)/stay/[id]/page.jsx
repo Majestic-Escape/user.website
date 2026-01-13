@@ -1,9 +1,9 @@
 "use client";
-
+import "../../../booking.css";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useEffect, useState } from "react"; // Added useMemo and useEffect
-
+import Head from "next/head";
 // Import your components
 import ImageGallery from "./components/image-gallery";
 import PropertyListing from "./components/property-listing";
@@ -285,73 +285,84 @@ export default function PropertyPage() {
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("new prop", propertyData?.host);
   }
+
   // --- Render the Page Content ---
   return (
-    <main className="min-h-screen pt-[80px] md:pt-32 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Property Title */}
-        <h1 className="text-xl md:text-2xl font-bricolage font-semibold mb-4 md:mb-6">
-          {propertyData?.title || "Property Title"}
-        </h1>
+    <>
+      <Head>
+        <style>
+          {/* {`
+            body {
+              overflow-x: visible !important;
+            } `} */}
+        </style>
+      </Head>
+      <main className="min-h-screen pt-[80px] md:pt-32 bg-white booking-widget">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Property Title */}
+          <h1 className="text-xl md:text-2xl font-bricolage font-semibold mb-4 md:mb-6">
+            {propertyData?.title || "Property Title"}
+          </h1>
 
-        {/* Image Gallery */}
-        {/* Pass isPropertyLoading here as images depend on property data */}
-        <ImageGallery
-          images={propertyData?.photos || []}
-          isLoading={isPropertyLoading}
-        />
+          {/* Image Gallery */}
+          {/* Pass isPropertyLoading here as images depend on property data */}
+          <ImageGallery
+            images={propertyData?.photos || []}
+            isLoading={isPropertyLoading}
+          />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mt-0 md:mt-8">
-          {" "}
-          {/* Added grid layout */}
-          {/* Left Column (Listing Details) */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mt-0 md:mt-8">
             {" "}
-            {/* Takes 2/3 width on large screens */}
-            {/* Property Listing Details */}
-            {/* Pass isPropertyLoading if PropertyListing needs it */}
-            <PropertyListing
-              propertyDetails={propertyData}
-              isLoading={isPropertyLoading}
-              unavailableDates={unavailableDates}
-              loading={loading}
+            {/* Added grid layout */}
+            {/* Left Column (Listing Details) */}
+            <div className="lg:col-span-2 space-y-8">
+              {" "}
+              {/* Takes 2/3 width on large screens */}
+              {/* Property Listing Details */}
+              {/* Pass isPropertyLoading if PropertyListing needs it */}
+              <PropertyListing
+                propertyDetails={propertyData}
+                isLoading={isPropertyLoading}
+                unavailableDates={unavailableDates}
+                loading={loading}
+              />
+              {/* Review Section */}
+              {/* Pass relevant review data and potentially property ID */}
+              <ReviewSection
+                reviews={reviewData}
+                property={propertyData}
+                isLoading={isReviewLoading}
+                error={isReviewError}
+                handleNext={handleNext}
+                handleBack={handlePrevious}
+                prev={prev}
+                next={next}
+              />
+            </div>
+          </div>
+
+          {/* Sections below the main grid */}
+          <div className="mt-12 space-y-12">
+            {" "}
+            {/* Add spacing */}
+            {/* Location Map */}
+            <Location
+              locationInfo={locationInfo}
+              isLoading={isPropertyLoading} // Map depends on property location data
             />
-            {/* Review Section */}
-            {/* Pass relevant review data and potentially property ID */}
-            <ReviewSection
-              reviews={reviewData}
-              property={propertyData}
-              isLoading={isReviewLoading}
-              error={isReviewError}
-              handleNext={handleNext}
-              handleBack={handlePrevious}
-              prev={prev}
-              next={next}
+            {/* Host Profile */}
+            {/* Pass data/loading/error states from the *host* query */}
+            <HostProfile
+              propertyData={propertyData}
+              // isLoading={isPropertyLoading}
+              // error={propertyError}
             />
+            {/* Things To Know */}
+            {/* Pass isPropertyLoading if ThingsToKnow depends on it */}
+            {/* <ThingsToKnow thingsToKnow={propertyData?.thingsToKnow || {}} isLoading={isPropertyLoading} /> */}
           </div>
         </div>
-
-        {/* Sections below the main grid */}
-        <div className="mt-12 space-y-12">
-          {" "}
-          {/* Add spacing */}
-          {/* Location Map */}
-          <Location
-            locationInfo={locationInfo}
-            isLoading={isPropertyLoading} // Map depends on property location data
-          />
-          {/* Host Profile */}
-          {/* Pass data/loading/error states from the *host* query */}
-          <HostProfile
-            propertyData={propertyData}
-            // isLoading={isPropertyLoading}
-            // error={propertyError}
-          />
-          {/* Things To Know */}
-          {/* Pass isPropertyLoading if ThingsToKnow depends on it */}
-          {/* <ThingsToKnow thingsToKnow={propertyData?.thingsToKnow || {}} isLoading={isPropertyLoading} /> */}
-        </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

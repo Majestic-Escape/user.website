@@ -14,6 +14,7 @@ import {
   validateSafetyDetails,
   validateSetRules,
   validateCancellationSettings,
+  validatePropertyTiming,
 } from "./validate";
 import { StepOneIntro } from "./(part-one)/intro";
 import { PropertyType } from "./(part-one)/step-one";
@@ -28,6 +29,7 @@ import { AmenitiesSelector } from "./(part-two)/step-one";
 import { AddPhotos } from "./(part-two)/step-two";
 import { ListingDetails } from "./(part-two)/step-three";
 import { CancellationSettings } from "./(part-two)/step-four";
+import { PropertyTiming } from "./(part-two)/step-five";
 import Onboarding from "./Onboarding";
 
 import { StepThreeIntro } from "./(part-three)/intro";
@@ -103,16 +105,22 @@ export const steps = [
     validate: validateAddPhotos,
   },
   {
-    title: "Step 2",
+    title: "Step 3",
     component: ListingDetails,
     requiresValidation: true,
     validate: validateListingDetails,
   },
   {
-    title: "Step 3",
+    title: "Step 4",
     component: CancellationSettings,
     requiresValidation: true,
     validate: validateCancellationSettings,
+  },
+  {
+    title: "Step 5",
+    component: PropertyTiming,
+    requiresValidation: true,
+    validate: validatePropertyTiming,
   },
   {
     title: "Step 3 Intro",
@@ -226,6 +234,12 @@ export const editSteps = [
     component: CancellationSettings,
     requiresValidation: true,
     validate: validateCancellationSettings,
+  },
+  {
+    title: "Step 5",
+    component: PropertyTiming,
+    requiresValidation: true,
+    validate: validatePropertyTiming,
   },
   // {
   //   title: "Step 3 Intro",

@@ -1,0 +1,9 @@
+html,
+body {
+  font-family: "poppins", system-ui, sans-serif;
+  background: white;
+  color: black;
+  overflow-x: visible !important;
+  font-size: 15px;
+  scroll-behavior: smooth;
+}

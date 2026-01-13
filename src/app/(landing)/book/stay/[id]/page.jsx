@@ -182,6 +182,7 @@ function BookPageContent() {
     adults: [],
     children: [],
   });
+  const [showPriceBreakdown, setShowPriceBreakdown] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   // Fetch property data using TanStack Query
   const {
@@ -219,10 +220,10 @@ function BookPageContent() {
     const subtotal = nightlyRate * nightsCount;
     const serviceFee = Math.round(subtotal * 0.12); // 12% service fee like Airbnb
     let taxes;
-    if (subtotal <= 7500) {
-      taxes = Math.round(subtotal * 0.12) + Math.round(serviceFee * 0.18); // 12% GST in India
-    } else if (subtotal > 7500) {
-      taxes = Math.round(subtotal * 0.18) + Math.round(serviceFee * 0.18); // 18% GST in India
+    if (nightlyRate <= 7500) {
+      taxes = Math.round(subtotal * 0.05) + Math.round(serviceFee); // 12% GST in India
+    } else if (nightlyRate > 7500) {
+      taxes = Math.round(subtotal * 0.18) + Math.round(serviceFee); // 18% GST in India
     }
 
     return {
@@ -231,7 +232,8 @@ function BookPageContent() {
       cleaningFee,
       serviceFee,
       taxes,
-      total: subtotal + cleaningFee + serviceFee + taxes,
+      nightlytax: taxes - serviceFee,
+      total: subtotal + cleaningFee + taxes,
     };
   };
 
@@ -1354,7 +1356,7 @@ function BookPageContent() {
                 </h3>
                 <div className="space-y-4">
                   <div className="flex justify-between">
-                    <span className="underline">
+                    <span className="">
                       ₹{propertyPrice.toLocaleString("en-IN")} x {totals.nights}{" "}
                       night
                       {totals.nights > 1 ? "s" : ""}
@@ -1362,28 +1364,85 @@ function BookPageContent() {
                     <span>₹{totals.subtotal.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="hidden justify-between">
-                    <span className="underline">Cleaning fee</span>
+                    <span className="">Cleaning fee</span>
                     <span>₹{totals.cleaningFee.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="underline">
-                      Majestic Escape service fee
-                    </span>
-                    <span>₹{totals.serviceFee.toLocaleString("en-IN")}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="underline">Taxes</span>
+                    <span className="">Taxes</span>
                     <span>₹{totals.taxes.toLocaleString("en-IN")}</span>
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="border-t pt-4">
-                <div className="flex justify-between w-full font-semibold text-lg">
-                  <span>Total (INR)</span>
-                  <span>₹{totals.total.toLocaleString("en-IN")}</span>
-                </div>
+                <>
+                  <div className="flex justify-between w-full font-semibold text-lg">
+                    <div>Total (INR)</div>
+                    <div>₹{totals.total.toLocaleString("en-IN")}</div>
+                  </div>
+                </>
               </CardFooter>
+              <div className="pl-6 pb-8">
+                <span
+                  className="underline cursor-pointer"
+                  onClick={() => setShowPriceBreakdown(true)}
+                >
+                  Price Breakdown
+                </span>
+                {/* <span>₹{totals.taxes.toLocaleString("en-IN")}</span> */}
+              </div>
             </Card>
+            {showPriceBreakdown && (
+              <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
+                <div className="bg-white rounded-2xl w-full max-w-md mx-4 shadow-xl">
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-6 py-4 border-b">
+                    <h2 className="text-lg font-semibold">Price breakdown</h2>
+                    <button
+                      onClick={() => setShowPriceBreakdown(false)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Content */}
+                  <div className="px-6 py-4 space-y-4 text-sm">
+                    <div className="flex justify-between">
+                      <span>
+                        {totals.nights} night{totals.nights > 1 ? "s" : ""} ·{" "}
+                        {date.from.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}{" "}
+                        –{" "}
+                        {date.to.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                      <span>₹{totals.subtotal.toLocaleString("en-IN")}</span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span>Service fee</span>
+                      <span>₹{totals.serviceFee.toLocaleString("en-IN")}</span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="underline cursor-pointer">Taxes</span>
+                      <span>₹{totals.nightlytax.toLocaleString("en-IN")}</span>
+                    </div>
+
+                    <hr />
+
+                    <div className="flex justify-between font-semibold text-base">
+                      <span>Total (INR)</span>
+                      <span>₹{totals.total.toLocaleString("en-IN")}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="mt-6 p-4 border rounded-xl">
               <h3 className="font-semibold mb-4">

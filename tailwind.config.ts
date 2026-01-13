@@ -16,6 +16,7 @@ export default {
         mtab: { min: "800px", max: "900px" }, // 800–900px
         midtab: { min: "1000px", max: "1199px" }, // 1000–1199px
         desktop: { min: "1200px" }, // ≥1200px
+        bdesktop: { min: "1920px" },
       },
       fontFamily: {
         bricolage: ["var(--font-bricolage)"],
@@ -104,6 +105,28 @@ export default {
           },
           to: {
             height: "0",
+          },
+        },
+        "slide-up": {
+          from: {
+            transform: "translateY(100%)",
+            opacity: "0",
+          },
+          to: {
+            transform: "translateY(0)",
+            opacity: "1",
+          },
+        },
+
+        /* 🔥 SLIDE DOWN (bottom sheet close) */
+        "slide-down": {
+          from: {
+            transform: "translateY(0)",
+            opacity: "1",
+          },
+          to: {
+            transform: "translateY(100%)",
+            opacity: "0",
           },
         },
       },
