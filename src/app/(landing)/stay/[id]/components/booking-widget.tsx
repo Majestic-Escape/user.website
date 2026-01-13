@@ -670,7 +670,7 @@ export default function BookingWidget({
 
                 <div className="mt-4 space-y-2">
                   <div className="flex justify-between ">
-                    <div className="underline text-sm ">
+                    <div className=" text-sm ">
                       ₹{pricePerNight.toLocaleString("en-IN")} x {nightsCount}{" "}
                       night
                       {nightsCount !== 1 ? "s" : ""}

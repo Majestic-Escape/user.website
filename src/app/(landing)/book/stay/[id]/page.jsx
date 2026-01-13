@@ -1356,7 +1356,7 @@ function BookPageContent() {
                 </h3>
                 <div className="space-y-4">
                   <div className="flex justify-between">
-                    <span className="underline">
+                    <span className="">
                       ₹{propertyPrice.toLocaleString("en-IN")} x {totals.nights}{" "}
                       night
                       {totals.nights > 1 ? "s" : ""}
@@ -1364,11 +1364,11 @@ function BookPageContent() {
                     <span>₹{totals.subtotal.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="hidden justify-between">
-                    <span className="underline">Cleaning fee</span>
+                    <span className="">Cleaning fee</span>
                     <span>₹{totals.cleaningFee.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="underline">Taxes</span>
+                    <span className="">Taxes</span>
                     <span>₹{totals.taxes.toLocaleString("en-IN")}</span>
                   </div>
                 </div>

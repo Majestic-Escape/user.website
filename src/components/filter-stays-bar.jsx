@@ -177,12 +177,12 @@ export default function FilterStaysBar({
   };
 
   return (
-    <div className="flex max-w-[1400px] xl:max-w-[1000px] max-lg:mx-auto  flex-row items-start lg:items-center justify-between  gap-4 lg:gap-0">
+    <div className="flex max-w-[1400px] xl:max-w-[1000px] bdesktop:max-w-[1920px] max-lg:mx-auto  flex-row items-start lg:items-center justify-between  gap-4 lg:gap-0 lg:pl-8">
       <div className="w-full md:w-auto relative flex gap-x-6 px-8">
         <div
           ref={scrollContainerRef}
           // className="flex space-x-8  md:space-x-8 flex-shrink-0 overflow-x-hidden   px-2 py-2  max-w-full md:max-w-[70vw] lg:[65vw] "
-          className="hidden md:block desktop:overflow-x-hidden md:filter-scroll md:flex space-x-6 md:space-x-8 flex-shrink-0 overflow-x-auto px-2 py-2 max-w-full md:max-w-[70vw]"
+          className="hidden md:block desktop:overflow-x-hidden md:filter-scroll md:flex space-x-6 md:space-x-8 flex-shrink-0 overflow-x-auto px-2 py-2 max-w-full md:max-w-[70vw] bdesktop:w-[20vw]"
         >
           {/* property-filter */}
           {propertyTypes.map((type, index) => (
