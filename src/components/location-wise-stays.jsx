@@ -220,42 +220,68 @@ const LocationWisestays = () => {
 
     // Desktop view: Carousel
     return (
-      <div className="relative">
-        <div className="overflow-hidden">
-          <div
-            className="flex transition-transform duration-300 ease-in-out"
-            style={{
-              transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
-            }}
-          >
-            {destinations.map((destination, index) => (
-              <div key={destination.id} className="w-1/6 flex-shrink-0">
-                <LocationCard
-                  name={destination.name}
-                  staysNearby={destination.staysNearby}
-                  image={destination.image}
-                  countData={countData}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
+      <div className="relative mt-8">
+        {/* LEFT CHEVRON */}
         {showLeftArrow && (
           <button
             onClick={handlePrev}
-            className="absolute left-0 top-[100px] -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition-colors z-10"
-            aria-label="Previous"
+            className="
+        absolute
+        -left-8
+       top-[90px]
+        z-10
+        h-10 w-10
+        rounded-full
+        bg-white
+        border
+        shadow
+        flex items-center justify-center
+        hover:scale-105
+        transition
+      "
           >
             <ChevronLeft className="w-6 h-6 text-gray-600" />
           </button>
         )}
 
+        {/* CAROUSEL (UNCHANGED WIDTH & POSITION) */}
+        <div className="overflow-hidden">
+          <div
+            className="flex transition-transform duration-300 ease-in-out px-2"
+            style={{
+              transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
+            }}
+          >
+            {visibleDestinations.map((destination) => (
+              <div
+                key={destination.id}
+                className="flex-shrink-0 "
+                style={{ width: `${100 / itemsPerView}%` }}
+              >
+                <LocationCard {...destination} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* RIGHT CHEVRON */}
         {showRightArrow && (
           <button
             onClick={handleNext}
-            className="absolute right-0 top-[100px] -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition-colors z-10"
-            aria-label="Next"
+            className="
+        absolute
+        -right-6
+       top-[90px]
+        z-10
+        h-10 w-10
+        rounded-full
+        bg-white
+        border
+        shadow
+        flex items-center justify-center
+        hover:scale-105
+        transition
+      "
           >
             <ChevronRight className="w-6 h-6 text-gray-600" />
           </button>
