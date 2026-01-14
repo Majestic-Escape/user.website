@@ -398,14 +398,14 @@ export function HostListingsTable({ userEmail }) {
                   Edit listing
                 </DropdownMenuItem>
 
-                <DropdownMenuItem
+                {/* <DropdownMenuItem
                   onClick={() => {
                     setSelectedListing(listing);
                     setModalOpen(true);
                   }}
                 >
                   Add Time
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 {listing.status == "active" ? (
                   <>
                     <DropdownMenuItem

@@ -39,9 +39,9 @@ export default function MobileNavTabLayout({ hideTabs }) {
                 className="flex flex-col items-center  justify-center w-full pt-2 "
               >
                 {tab.id == 2 ? (
-                  <img src={tab.icon} height="30" width="30" />
+                  <img src={tab.icon} height="50" width="50" />
                 ) : (
-                  <img src={tab.icon} height="30" width="30" />
+                  <img src={tab.icon} height="50" width="50" />
                 )}
                 {/* {tab.id == 1 ? (
                 <img src={tab.icon} height="30" width="30" />

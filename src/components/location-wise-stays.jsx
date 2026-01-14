@@ -8,84 +8,128 @@ import { ChevronRight, ChevronLeft } from "lucide-react";
 import SubHeading from "@/components/ui/sub-heading";
 import Heading from "@/components/ui/heading";
 import Link from "next/link";
-
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const destinations = [
   {
     id: 1,
-    name: "Baga",
+    name: "Panjim",
     staysNearby: 19,
-    image: "/images/spots/Baga.jpg?height=200&width=300",
+    image: "/images/spots/panjim.png?height=200&width=300",
     //"/images/spots/baga.png?height=200&width=300",
   },
   {
     id: 2,
-    name: "Varanasi",
+    name: "Ujjain",
     staysNearby: 10,
-    image: "/images/spots/Varanasi.jpg?height=200&width=300",
+    image: "/images/spots/ujjain.jpg?height=200&width=300",
   },
   {
     id: 3,
-    name: "Chennai",
+    name: "Nashik",
     staysNearby: 6,
-    image: "/images/spots/chennai.jpg?height=200&width=300",
+    image: "/images/spots/nashik.jpg?height=200&width=300",
   },
   {
     id: 4,
-    name: "Udaipur",
+    name: "Mapusa",
     staysNearby: 8,
-    image: "/images/spots/Udaipur.jpg?height=200&width=300",
+    image: "/images/spots/margao.jpg?height=200&width=300",
   },
   {
     id: 5,
-    name: "Kochi",
+    name: "Margao",
     staysNearby: 15,
-    image: "/images/spots/Kochi.jpg?height=200&width=300",
+    image: "/images/spots/mapusa.jpg?height=200&width=300",
   },
   {
     id: 6,
-    name: "Agra",
+    name: "Lucknow",
     staysNearby: 15,
-    image: "/images/spots/Agra.jpg?height=200&width=300",
+    image: "/images/spots/lucknow.jpg?height=200&width=300",
   },
   {
     id: 7,
-    name: "Candolim",
+    name: "Varanasi",
     staysNearby: 32,
-    image: "/images/spots/Candolim.jpg?height=200&width=300",
+    image: "/images/spots/Varanasi.jpg?height=200&width=300",
+  },
+  {
+    id: 8,
+    name: "Ayodhya",
+    staysNearby: 32,
+    image: "/images/spots/ayodhya.jpg?height=200&width=300",
+  },
+  {
+    id: 9,
+    name: "Kutch",
+    staysNearby: 32,
+    image: "/images/spots/kutch.jpg?height=200&width=300",
   },
 ];
 
-const LocationCard = ({ name, staysNearby, image }) => (
-  <div className="w-full flex-shrink-0 px-2 mb-4">
-    <Link
-      href={`/filter?propertyType=${""}&location=${
-        name ? name : ""
-      }&from=${""}&to=${""}&adults=${""}&senior=${""}&children=${""}&infants=${""}`}
-    >
-      <div className="flex flex-col overflow-hidden ">
-        <img
-          src={image}
-          alt={name}
-          className=" h-[100px] md:h-[200px] w-auto object-cover rounded-lg"
-        />
-        <h3 className="mt-2 text-sm leading-tight font-semibold text-graphite whitespace-nowrap overflow-hidden text-ellipsis">
-          {name}
-        </h3>
-        <p className="text-sm text-stone text-gray pt-2">
-          <span className="font-bold text-brightGreen">{staysNearby}</span>{" "}
-          Stays Nearby
-        </p>
-      </div>
-    </Link>
-  </div>
-);
+const LocationCard = ({ name, staysNearby, image, countData }) => {
+  const actualStaysNearby = countData?.filter(
+    (item) => item?.city?.toLowerCase() == name?.toLowerCase()
+  );
+  return (
+    <div className="w-full flex-shrink-0 px-2 mb-4">
+      <Link
+        href={`/filter?propertyType=${""}&location=${
+          name ? name : ""
+        }&from=${""}&to=${""}&adults=${""}&senior=${""}&children=${""}&infants=${""}`}
+      >
+        <div className="flex flex-col overflow-hidden ">
+          <img
+            src={image}
+            alt={name}
+            className=" h-[100px] md:h-[200px] w-auto object-cover rounded-lg"
+          />
+          <h3 className="mt-2 text-sm leading-tight font-semibold text-graphite whitespace-nowrap overflow-hidden text-ellipsis">
+            {name}
+          </h3>
+          <p className="text-sm text-stone text-gray pt-2">
+            <span className="font-bold text-brightGreen">
+              {actualStaysNearby?.[0]?.count}
+            </span>{" "}
+            Stays Nearby
+          </p>
+        </div>
+      </Link>
+    </div>
+  );
+};
 
 const LocationWisestays = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1024
   );
-
+  const [countData, setCountData] = useState();
+  const fetchCount = async (cities) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/properties/countstays?city=${cities}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!response.ok) {
+        return;
+      }
+      const result = await response.json();
+      setCountData(result.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  useEffect(() => {
+    const cities = [];
+    destinations.forEach((item) => cities.push(item.name));
+    fetchCount(cities);
+  }, []);
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
@@ -102,8 +146,12 @@ const LocationWisestays = () => {
   };
 
   const itemsPerView = getItemsPerView();
-  const maxIndex = destinations.length - itemsPerView;
-
+  // const maxIndex = destinations.length - itemsPerView;
+  const maxIndex = Math.max(0, destinations.length - itemsPerView);
+  const visibleDestinations = destinations.slice(
+    currentIndex,
+    currentIndex + itemsPerView
+  );
   const handleNext = () => {
     setCurrentIndex((prev) => Math.min(prev + itemsPerView, maxIndex));
   };
@@ -116,18 +164,14 @@ const LocationWisestays = () => {
   const showRightArrow = currentIndex < maxIndex;
 
   const renderDestinations = () => {
-    if (windowWidth < 1024) {
-      // Mobile and Tablet view: Grid layout
+    if (windowWidth < 768) {
       return (
-        <div
-          className={`grid gap-4 ${
-            windowWidth >= 768 ? "grid-cols-4" : "grid-cols-2"
-          }`}
-        >
-          {destinations.map((destination) => (
+        <div className="grid grid-cols-2 gap-4">
+          {visibleDestinations.map((destination) => (
             <LocationCard
               key={destination.id}
               name={destination.name}
+              countData={countData}
               staysNearby={destination.staysNearby}
               image={destination.image}
             />
@@ -135,44 +179,109 @@ const LocationWisestays = () => {
         </div>
       );
     }
+    if (windowWidth < 1024) {
+      if (windowWidth < 1024) {
+        // Tablet view: Grid layout with 4 columns
+        return (
+          <div className="grid grid-cols-4 gap-4">
+            {visibleDestinations.map((destination) => (
+              <LocationCard
+                key={destination.id}
+                name={destination.name}
+                countData={countData}
+                staysNearby={destination.staysNearby}
+                image={destination.image}
+              />
+            ))}
+          </div>
+        );
+      }
+      // Mobile and Tablet view: Grid layout
+      // return (
+      //   <div
+      //     className={`grid gap-4 ${
+      //       windowWidth >= 768 ? "grid-cols-4" : "grid-cols-2"
+      //     }`}
+      //   >
+      //     {destinations.map((destination, index) => (
+      //       <div key={destination.id} className="w-1/6 flex-shrink-0">
+      //         <LocationCard
+      //           key={destination.id}
+      //           name={destination.name}
+      //           staysNearby={destination.staysNearby}
+      //           image={destination.image}
+      //           countData={countData}
+      //         />
+      //       </div>
+      //     ))}
+      //   </div>
+      // );
+    }
 
     // Desktop view: Carousel
     return (
-      <div className="relative">
-        <div className="overflow-hidden">
-          <div
-            className="flex transition-transform duration-300 ease-in-out"
-            style={{
-              transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
-            }}
-          >
-            {destinations.map((destination, index) => (
-              <div key={destination.id} className="w-1/6 flex-shrink-0">
-                <LocationCard
-                  name={destination.name}
-                  staysNearby={destination.staysNearby}
-                  image={destination.image}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
+      <div className="relative mt-8">
+        {/* LEFT CHEVRON */}
         {showLeftArrow && (
           <button
             onClick={handlePrev}
-            className="absolute left-0 top-[100px] -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition-colors z-10"
-            aria-label="Previous"
+            className="
+        absolute
+        -left-8
+       top-[90px]
+        z-10
+        h-10 w-10
+        rounded-full
+        bg-white
+        border
+        shadow
+        flex items-center justify-center
+        hover:scale-105
+        transition
+      "
           >
             <ChevronLeft className="w-6 h-6 text-gray-600" />
           </button>
         )}
 
+        {/* CAROUSEL (UNCHANGED WIDTH & POSITION) */}
+        <div className="overflow-hidden">
+          <div
+            className="flex transition-transform duration-300 ease-in-out px-2"
+            style={{
+              transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
+            }}
+          >
+            {visibleDestinations.map((destination) => (
+              <div
+                key={destination.id}
+                className="flex-shrink-0 "
+                style={{ width: `${100 / itemsPerView}%` }}
+              >
+                <LocationCard {...destination} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* RIGHT CHEVRON */}
         {showRightArrow && (
           <button
             onClick={handleNext}
-            className="absolute right-0 top-[100px] -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition-colors z-10"
-            aria-label="Next"
+            className="
+        absolute
+        -right-6
+       top-[90px]
+        z-10
+        h-10 w-10
+        rounded-full
+        bg-white
+        border
+        shadow
+        flex items-center justify-center
+        hover:scale-105
+        transition
+      "
           >
             <ChevronRight className="w-6 h-6 text-gray-600" />
           </button>
