@@ -166,11 +166,11 @@ export default function StayCard({ property, includeTaxes }) {
       </div>
       <div className="mt-1 sm:mt-2 cursor-pointer">
         <div className="flex items-center justify-between mb-1">
-          <div>
-            <h3 className=" mt-1 font-medium  text-graphite">
-              {property?.title.length > 30
-                ? property?.title.substring(0, 30) + "..."
-                : property?.title}
+          <div className="w-full">
+            <h3 className=" mt-1 font-medium  text-graphite w-full overflow-hidden">
+              <span className="block truncate text-ellipsis whitespace-nowrap">
+                {property?.title}
+              </span>
             </h3>
             <p className="text-sm mb-0.5 flex justify-start gap-x-1 items-center text-stone">
               <MapPin className="w-4 h-auto  inline-block mr-1 align-middle hover:text-stone text-stone" />
