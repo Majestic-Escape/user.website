@@ -152,7 +152,7 @@ export default function Navbar() {
                 onClose={() => setIsWishlistOpen(false)}
               />
               <Link
-                className="text-base text-absoluteDark font-medium hover:text-brightGreen hover:transition-colors hover:underline"
+                className="text-base md:hidden lg:block text-absoluteDark font-medium hover:text-brightGreen hover:transition-colors hover:underline"
                 href="/login"
               >
                 Become a Host
