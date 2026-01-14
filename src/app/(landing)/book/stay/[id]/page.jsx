@@ -183,6 +183,7 @@ function BookPageContent() {
     children: [],
   });
   const [showPriceBreakdown, setShowPriceBreakdown] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [formErrors, setFormErrors] = useState({});
   // Fetch property data using TanStack Query
   const {
@@ -197,6 +198,47 @@ function BookPageContent() {
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("property", property);
   }
+
+  useEffect(() => {
+    if (showGuestModal) {
+      setCurrentIndex(0);
+
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.overflow = "hidden";
+
+      // Store scroll position for later restoration
+      document.body.dataset.scrollY = scrollY.toString();
+    } else {
+      // Restore scroll position
+      const scrollY = document.body.dataset.scrollY || "0";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "auto";
+
+      // Scroll back to original position
+      window.scrollTo(0, parseInt(scrollY, 10));
+
+      // Clean up
+      delete document.body.dataset.scrollY;
+    }
+
+    return () => {
+      // Cleanup on unmount
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "auto";
+      delete document.body.dataset.scrollY;
+    };
+  }, [showGuestModal]);
   const calculateTotal = () => {
     if (!property)
       return {
@@ -1342,12 +1384,12 @@ function BookPageContent() {
                     {property?.address?.city || "Goa"}
                   </p>
                   <CardTitle className="text-lg">{propertyTitle}</CardTitle>
-                  <div className="flex items-center mt-2">
+                  {/* <div className="flex items-center mt-2">
                     <Star className="h-4 w-4 fill-current text-black mr-1" />
                     <span className="text-sm">
                       {propertyRating} · {propertyReviews} reviews
                     </span>
-                  </div>
+                  </div> */}
                 </div>
               </CardHeader>
               <CardContent className="border-t pt-6">

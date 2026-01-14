@@ -76,7 +76,9 @@ export default function PropertyListing({
               {propertyDetails?.placeType[0].toUpperCase() +
                 propertyDetails?.placeType.slice(1)}{" "}
               {propertyDetails?.propertyType[0].toUpperCase() +
-                propertyDetails?.propertyType.slice(1)}
+                propertyDetails?.propertyType.slice(1)}{" "}
+              in {propertyDetails?.address?.city},{" "}
+              {propertyDetails?.address?.state}
             </div>
             <div className="flex items-center gap-4 mt-6">
               {propertyDetails?.guests} Guests | {propertyDetails?.beds} Beds |{" "}

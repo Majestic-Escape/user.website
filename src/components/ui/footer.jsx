@@ -97,14 +97,21 @@ export default function Footer() {
               <p className="text-sm text-stone">
                 &copy; {currentYear} Majestic Escape. All rights reserved
               </p>
-              <div>
-                {/* <Image
-                  src="/icons/mail.png"
-                  width={24}
-                  height={24}
+              <div className="flex mt-6 mb-4 gap-8">
+                <Image
+                  src="/images/govt/goa-tourism.png"
+                  width={100}
+                  height={100}
                   alt="mail icon"
-                  className="h-7 w-7 hover:scale-105"
-                /> */}
+                  className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
+                />
+                <Image
+                  src="/images/govt/goa-forest-dept.png"
+                  width={100}
+                  height={100}
+                  alt="mail icon"
+                  className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
+                />
               </div>
               <div className="flex space-x-6 mt-4 sm:mt-0">
                 <Link href="mailto:support@majesticescape.in" target="_blank">
