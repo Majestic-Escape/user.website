@@ -32,6 +32,7 @@ import { toast } from "sonner";
 //   }
 // }
 import { useAuth } from "@/contexts/AuthContext";
+import { createPortal } from "react-dom";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Function to fetch property data
@@ -198,9 +199,66 @@ function BookPageContent() {
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("property", property);
   }
+  useEffect(() => {
+    if (showPriceBreakdown) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+  }, [showPriceBreakdown]);
+  function PriceBreakdownModal({ onClose, totals, date }) {
+    if (typeof window === "undefined") return null;
+
+    return createPortal(
+      <div className="fixed inset-0 z-[1200] bg-black/50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl w-full max-w-md mx-4 shadow-xl">
+          <div className="flex items-center justify-between px-6 py-4 border-b">
+            <h2 className="text-lg font-semibold">Price breakdown</h2>
+            <button onClick={onClose}>✕</button>
+          </div>
+
+          <div className="px-6 py-4 space-y-4 text-sm">
+            <div className="flex justify-between">
+              <span>
+                {totals.nights} night ·{" "}
+                {date.from.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })}{" "}
+                –{" "}
+                {date.to.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+              <span>₹{totals.subtotal.toLocaleString("en-IN")}</span>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Service fee</span>
+              <span>₹{totals.serviceFee.toLocaleString("en-IN")}</span>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Taxes</span>
+              <span>₹{totals.nightlytax.toLocaleString("en-IN")}</span>
+            </div>
+
+            <hr />
+
+            <div className="flex justify-between font-semibold">
+              <span>Total (INR)</span>
+              <span>₹{totals.total.toLocaleString("en-IN")}</span>
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  }
 
   useEffect(() => {
-    if (showGuestModal) {
+    if (showGuestModal || showPriceBreakdown) {
       setCurrentIndex(0);
 
       // Save current scroll position
@@ -238,7 +296,7 @@ function BookPageContent() {
       document.body.style.overflow = "auto";
       delete document.body.dataset.scrollY;
     };
-  }, [showGuestModal]);
+  }, [showGuestModal, showPriceBreakdown]);
   const calculateTotal = () => {
     if (!property)
       return {
@@ -1107,7 +1165,7 @@ function BookPageContent() {
             </div>
             {showGuestModal && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className=" bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                   <div className="flex justify-between items-center p-6 border-b">
                     {guestSaving ? (
                       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -1434,56 +1492,11 @@ function BookPageContent() {
               </div>
             </Card>
             {showPriceBreakdown && (
-              <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
-                <div className="bg-white rounded-2xl w-full max-w-md mx-4 shadow-xl">
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-6 py-4 border-b">
-                    <h2 className="text-lg font-semibold">Price breakdown</h2>
-                    <button
-                      onClick={() => setShowPriceBreakdown(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Content */}
-                  <div className="px-6 py-4 space-y-4 text-sm">
-                    <div className="flex justify-between">
-                      <span>
-                        {totals.nights} night{totals.nights > 1 ? "s" : ""} ·{" "}
-                        {date.from.toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}{" "}
-                        –{" "}
-                        {date.to.toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                      <span>₹{totals.subtotal.toLocaleString("en-IN")}</span>
-                    </div>
-
-                    <div className="flex justify-between">
-                      <span>Service fee</span>
-                      <span>₹{totals.serviceFee.toLocaleString("en-IN")}</span>
-                    </div>
-
-                    <div className="flex justify-between">
-                      <span className="underline cursor-pointer">Taxes</span>
-                      <span>₹{totals.nightlytax.toLocaleString("en-IN")}</span>
-                    </div>
-
-                    <hr />
-
-                    <div className="flex justify-between font-semibold text-base">
-                      <span>Total (INR)</span>
-                      <span>₹{totals.total.toLocaleString("en-IN")}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <PriceBreakdownModal
+                totals={totals}
+                date={date}
+                onClose={() => setShowPriceBreakdown(false)}
+              />
             )}
 
             <div className="mt-6 p-4 border rounded-xl">

@@ -17,11 +17,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Search, Minus, Plus, HomeIcon, SlidersHorizontal } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 // import { CustomCommandInput } from "./ui/custom-command-input";
 import { toast } from "sonner";
 import FilterStaysBar from "./filter-stays-bar";
 import FilterModal from "./ui/modal";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SearchFilterProps {
   isScrolled: boolean;
@@ -50,7 +51,7 @@ const safeParseDate = (
   // Check if the date is valid
   return isNaN(date.getTime()) ? undefined : date;
 };
-export default function SearcahFilter({
+export default function SearchFilter({
   isScrolled,
   fromDate,
   toDate,
@@ -62,6 +63,34 @@ export default function SearcahFilter({
   baby,
   property,
 }: SearchFilterProps) {
+  const {
+    priceRange,
+    setPriceRange,
+    rooms,
+    showAllAmenities,
+    setShowAllAmenities,
+    showAllProperties,
+    setShowAllProperties,
+    addAmenities,
+    setResetClicked,
+    addPlaceType,
+    setAddPlaceType,
+    addPropertyType,
+    bookingType,
+    setBookingType,
+    petAllowed,
+    setPetAllowed,
+    checkinType,
+    setCheckinType,
+    clearAllFilters,
+    addAmenitiesList,
+    addPropertiesList,
+    setAddPropertyType,
+    activeTab,
+    setActiveTab,
+    handleRoomChange,
+  } = useAuth();
+
   const [destination, setDestination] = React.useState("");
   const [searchTerm, setSearchTerm] = React.useState(active ? location : "");
   const [dateRange, setDateRange] = React.useState<{
@@ -82,8 +111,11 @@ export default function SearcahFilter({
     children: Number(active ? child : 0),
     infants: Number(active ? baby : 0),
   });
-
+  const newAmenities = addAmenities.map((x) =>
+    x.toLowerCase().replaceAll(" ", "_")
+  );
   const router = useRouter();
+  const pathname = usePathname();
   const handleGuestChange = (
     type: keyof Guests,
     operation: "increment" | "decrement"
@@ -98,7 +130,28 @@ export default function SearcahFilter({
   };
   // Track hydration
   const [hydrated, setHydrated] = React.useState(false);
-
+  React.useEffect(() => {
+    if (pathname == "/") {
+      sessionStorage.setItem(
+        "searchFilters",
+        JSON.stringify({
+          dateRange: {
+            from: null,
+            to: null,
+          },
+          searchTerm: "",
+          guests: {
+            adults: 0,
+            children: 0,
+            infants: 0,
+          },
+        })
+      );
+      setSearchTerm("");
+      setGuests({ adults: 0, children: 0, infants: 0 });
+      setDateRange({ from: undefined, to: undefined });
+    }
+  }, []);
   // Load from localStorage on mount
   React.useEffect(() => {
     // const reset = sessionStorage.getItem("reset");
@@ -213,16 +266,42 @@ export default function SearcahFilter({
   };
 
   const submit = () => {
+    const saved = sessionStorage.getItem("searchFilters");
+
+    if (saved) {
+      const parsed = JSON.parse(saved);
+
+      if (parsed.dateRange) {
+        setDateRange({
+          from: parsed.dateRange.from
+            ? new Date(parsed.dateRange.from)
+            : undefined,
+          to: parsed.dateRange.to ? new Date(parsed.dateRange.to) : undefined,
+        });
+      }
+      if (parsed.searchTerm) setSearchTerm(parsed.searchTerm);
+      if (parsed.guests) setGuests(parsed.guests);
+    }
     router.push(
-      `/filter?propertyType=${selectProperty ? selectProperty : ""}&location=${
-        searchTerm ? searchTerm : ""
-      }&from=${dateRange.from ? dateRange.from?.toLocaleDateString() : ""}&to=${
-        dateRange?.to ? dateRange?.to?.toLocaleDateString() : ""
-      }&adults=${totalAdults ? totalAdults : ""}&senior=${
-        guests?.adults ? guests?.adults : ""
-      }&children=${guests?.children ? guests?.children : ""}&infants=${
-        guests?.infants ? guests?.infants : ""
-      }`
+      `/filter?propertyType=${
+        addPropertyType ? addPropertyType : ""
+      }&location=${searchTerm ? searchTerm : ""}&from=${
+        dateRange?.from ? dateRange?.from.toLocaleDateString() : ""
+      }&to=${dateRange?.to ? dateRange?.to.toLocaleDateString() : ""}&adults=${
+        totalGuests ? totalGuests : ""
+      }&senior=${guests.adults ? guests.adults : ""}&children=${
+        guests.children ? guests.children : ""
+      }&infants=${guests.infants ? guests.infants : ""}&priceMin=${
+        priceRange[0] || ""
+      }&priceMax=${priceRange[1] || ""}&placeType=${
+        addPlaceType ? addPlaceType.replaceAll(" ", "_") : ""
+      }&amenities=${addAmenities.length !== 0 ? newAmenities : ""}&bedrooms=${
+        rooms?.bedrooms || ""
+      }&beds=${rooms?.beds || ""}&bathrooms=${
+        rooms?.bathrooms || ""
+      }&bookingType=${bookingType || ""}&checkinType=${
+        checkinType || ""
+      }&pets=${petAllowed || ""}`
     );
   };
   return (
@@ -256,10 +335,11 @@ export default function SearcahFilter({
                     isScrolled ? "hidden" : "inline-block"
                   } text-muted-foreground font-normal`}
                 >
-                  {destination
+                  {searchTerm ? searchTerm : "Search destinations"}
+                  {/* {destination
                     ? filteredDestinations.find((d) => d.value === destination)
                         ?.label || "Search destinations"
-                    : "Search destinations"}
+                    : "Search destinations"} */}
                 </span>
               </div>
             </Button>
@@ -497,7 +577,10 @@ export default function SearcahFilter({
         <Button
           size="icon"
           className="h-12 w-12 absolute right-2 shrink-0 bg-primaryGreen hover:bg-brightGreen text-white rounded-full transition-all duration-200 ease-in-out"
-          onClick={() => submit()}
+          onClick={() => {
+            setResetClicked(false);
+            submit();
+          }}
         >
           <Search className="h-6 w-6" />
           <span className="sr-only">Search</span>

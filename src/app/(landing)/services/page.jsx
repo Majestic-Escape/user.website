@@ -49,7 +49,7 @@ const services = [
 
 export default function Services() {
   return (
-    <div className="w-screen py-16">
+    <div className="w-screen pt-2 pb-16">
       <MobileNavbar />
       {/* <MainTab /> */}
 

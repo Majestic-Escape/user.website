@@ -67,7 +67,8 @@ export default function FilterProperties({
     <>
       <header className="pt-24">
         <SheetProvider>
-          <SearchFilter
+          {/* <div className="fixed pt-6 top-16 z-40 bg-white shadow-sm"> */}
+          {/* <SearchFilter
             className="relative -z-10"
             fromDate={from}
             toDate={to}
@@ -78,7 +79,8 @@ export default function FilterProperties({
             child={child}
             baby={infants}
             property={property}
-          />
+          /> */}
+          {/* </div> */}
           <MobileNavbar />
         </SheetProvider>
       </header>

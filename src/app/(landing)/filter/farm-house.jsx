@@ -116,17 +116,19 @@ export default function FarmHouse() {
           {modalFilter && (
             <div className="fixed inset-0 bg-black bg-opacity-40 z-40"></div>
           )}
-          <FilterProperties
-            properties={data}
-            from={from}
-            to={to}
-            guests={guests}
-            location={location}
-            senior={senior}
-            child={child}
-            infants={infants}
-            property={property}
-          />
+          <div className="px-8">
+            <FilterProperties
+              properties={data}
+              from={from}
+              to={to}
+              guests={guests}
+              location={location}
+              senior={senior}
+              child={child}
+              infants={infants}
+              property={property}
+            />
+          </div>
           {pagination && pagination.totalPages > 1 && (
             <div className="flex justify-center mt-8 gap-2 flex-wrap mb-24">
               <button
@@ -165,12 +167,12 @@ export default function FarmHouse() {
               </button>
             </div>
           )}
-          <FilterModal
+          {/* <FilterModal
             isOpen={modalFilter}
             onClose={closeModal}
             propertySelected={property}
             page={true}
-          />
+          /> Double filter modal one behind the other*/}
         </>
       )}
     </div>

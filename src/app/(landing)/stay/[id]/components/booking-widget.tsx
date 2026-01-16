@@ -1,5 +1,5 @@
 "use client";
-
+import "../../../../booking.css";
 import { useState, useEffect, useRef } from "react";
 import { eachDayOfInterval, format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -45,6 +45,7 @@ interface BookingWidgetProps {
   loading: boolean;
 }
 import { X } from "lucide-react";
+import { createPortal } from "react-dom";
 export default function BookingWidget({
   propertyId,
   manual,
@@ -71,9 +72,85 @@ export default function BookingWidget({
   const [calendarOpen, setCalendarOpen] = useState<boolean>(false);
   const [isAuth, setIsAuth] = useState<boolean>(false);
   const [isValid, setIsValid] = useState<boolean>(false);
-
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
   const guestsRef = useRef<HTMLDivElement | null>(null);
   const [matches, setMatches] = useState(false);
+  const scrollPosRef = useRef(0);
+  const modalRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleModalChange = () => {
+      if (openPriceModal) {
+        setCurrentIndex(0);
+
+        // Save scroll position
+        scrollPosRef.current = window.scrollY;
+        const overlay = document.createElement("div");
+        overlay.id = "modal-overlay";
+        overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 9998;
+      pointer-events: auto;
+      cursor: default;
+    `;
+        document.body.appendChild(overlay);
+        // Freeze background
+        document.body.style.position = "fixed";
+        document.body.style.top = `-${scrollPosRef.current}px`;
+        document.body.style.width = "100%";
+        document.body.style.overflow = "hidden";
+      } else {
+        // Get the saved scroll position
+        const overlay = document.getElementById("modal-overlay");
+        if (overlay) {
+          overlay.remove();
+        }
+        const savedScrollPos = scrollPosRef.current;
+
+        // Unlock body
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        document.body.style.overflow = "";
+
+        // Force reflow before restoring scroll
+        document.body.offsetHeight; // Trigger reflow
+
+        // Restore scroll position
+        window.scrollTo({
+          top: savedScrollPos,
+          behavior: "instant", // Use 'instant' to avoid smooth scrolling
+        });
+      }
+    };
+
+    // Execute with a tiny delay to ensure proper timing
+    setTimeout(handleModalChange, 0);
+
+    return () => {
+      // Cleanup on unmount
+      if (openPriceModal) {
+        const overlay = document.getElementById("modal-overlay");
+        if (overlay) {
+          overlay.remove();
+        }
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        document.body.style.overflow = "";
+
+        window.scrollTo({
+          top: scrollPosRef.current,
+          behavior: "instant",
+        });
+      }
+    };
+  }, [openPriceModal]);
   useEffect(() => {
     if (date?.from && date?.to) {
       const nights = Math.ceil(
@@ -83,7 +160,21 @@ export default function BookingWidget({
       setTotalPrice(pricePerNight * nights);
     }
   }, [date, pricePerNight]);
+  useEffect(() => {
+    if (!openPriceModal) return;
 
+    function handleOutsideClick(e: MouseEvent) {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        setOpenPriceModal(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [openPriceModal, setOpenPriceModal]);
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -252,66 +343,87 @@ export default function BookingWidget({
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("we have got this date", date?.from);
   }
-  return (
+  function getModalRoot() {
+    let root = document.getElementById("modal-root");
+    if (!root) {
+      root = document.createElement("div");
+      root.id = "modal-root";
+      document.body.appendChild(root);
+    }
+    return root;
+  }
+  if (openPriceModal) {
+    return createPortal(
+      <div
+        id="modal"
+        ref={modalRef}
+        className={
+          openPriceModal
+            ? "fixed inset-x-0 bottom-0 z-[1001] bg-white rounded-t-xl shadow-xl"
+            : "hidden md:block"
+        }
+      >
+        {/* return (
     <div
+      id="modal"
       className={
         openPriceModal
-          ? "slide-up border rounded-xl shadow-lg"
+          ? "slide-up border rounded-xl shadow-lg isolate z-[9999]"
           : "hidden md:block border rounded-xl shadow-lg"
       }
-    >
-      <Card className="">
-        <CardContent className="p-0">
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <span className="text-2xl font-semibold font-bricolage">
-                  ₹{pricePerNight.toLocaleString("en-IN")}
-                </span>
-                <span className="text-gray-600"> per night</span>
-              </div>
-              <div
-                onClick={() => setOpenPriceModal(false)}
-                className="md:hidden"
-              >
-                <X />
-              </div>
-            </div>
-
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <div className="border border-gray-300 rounded-lg mb-4">
-                <div className="grid grid-cols-2 divide-x divide-gray-300">
-                  <PopoverTrigger asChild>
-                    <div className="p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-tl-lg">
-                      <div className="text-xs font-semibold uppercase">
-                        CHECK-IN
-                      </div>
-                      <div className="mt-1 text-base">
-                        {activation
-                          ? date?.from
-                            ? formatDate(date.from)
-                            : "Add date"
-                          : "Add Date"}
-                      </div>
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverTrigger asChild>
-                    <div className="p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-tr-lg">
-                      <div className="text-xs font-semibold uppercase">
-                        CHECK-OUT
-                      </div>
-                      <div className="mt-1 text-base">
-                        {activation
-                          ? date?.to
-                            ? formatDate(date.to)
-                            : "Add date"
-                          : "Add date"}
-                      </div>
-                    </div>
-                  </PopoverTrigger>
+    > */}
+        <Card className="">
+          <CardContent className="p-0">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <span className="text-2xl font-semibold font-bricolage">
+                    ₹{pricePerNight.toLocaleString("en-IN")}
+                  </span>
+                  <span className="text-gray-600"> per night</span>
                 </div>
+                <div
+                  onClick={() => setOpenPriceModal(false)}
+                  className="md:hidden"
+                >
+                  <X />
+                </div>
+              </div>
 
-                {/* <div
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <div className="border border-gray-300 rounded-lg mb-4">
+                  <div className="grid grid-cols-2 divide-x divide-gray-300">
+                    <PopoverTrigger asChild>
+                      <div className="p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-tl-lg">
+                        <div className="text-xs font-semibold uppercase">
+                          CHECK-IN
+                        </div>
+                        <div className="mt-1 text-base">
+                          {activation
+                            ? date?.from
+                              ? formatDate(date.from)
+                              : "Add date"
+                            : "Add Date"}
+                        </div>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverTrigger asChild>
+                      <div className="p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-tr-lg">
+                        <div className="text-xs font-semibold uppercase">
+                          CHECK-OUT
+                        </div>
+                        <div className="mt-1 text-base">
+                          {activation
+                            ? date?.to
+                              ? formatDate(date.to)
+                              : "Add date"
+                            : "Add date"}
+                        </div>
+                      </div>
+                    </PopoverTrigger>
+                  </div>
+
+                  {/* <div
                 className="border-t border-gray-300 p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-b-lg flex justify-between items-center"
                 onClick={toggleGuestsDropdown}
               >
@@ -327,141 +439,147 @@ export default function BookingWidget({
                   )}
                 </div>
               </div> */}
-                <div ref={guestsRef} className="relative">
-                  <div
-                    className="border-t border-gray-300 p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-b-lg flex justify-between items-center"
-                    onClick={toggleGuestsDropdown}
-                  >
-                    <div>
-                      <div className="text-xs font-semibold uppercase">
-                        GUESTS
+                  <div ref={guestsRef} className="relative">
+                    <div
+                      className="border-t border-gray-300 p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-b-lg flex justify-between items-center"
+                      onClick={toggleGuestsDropdown}
+                    >
+                      <div>
+                        <div className="text-xs font-semibold uppercase">
+                          GUESTS
+                        </div>
+                        <div className="mt-1 text-base">{getGuestsText()}</div>
                       </div>
-                      <div className="mt-1 text-base">{getGuestsText()}</div>
+                      {showGuestsDropdown ? (
+                        <ChevronUp size={18} />
+                      ) : (
+                        <ChevronDown size={18} />
+                      )}
                     </div>
-                    {showGuestsDropdown ? (
-                      <ChevronUp size={18} />
-                    ) : (
-                      <ChevronDown size={18} />
-                    )}
-                  </div>
 
-                  {showGuestsDropdown && (
-                    <div className="absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-4 left-0 right-0 mt-2">
-                      <div className="">
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <div className="font-medium">Adults</div>
-                              <div className="text-sm text-gray-600">
-                                Age 18+
+                    {showGuestsDropdown && (
+                      <div className="absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-4 left-0 right-0 mt-2">
+                        <div className="">
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium">Adults</div>
+                                <div className="text-sm text-gray-600">
+                                  Age 18+
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8 rounded-full"
-                                onClick={() =>
-                                  onGuestChange("adults", guests.adults - 1)
-                                }
-                                disabled={guests.adults <= 1}
-                              >
-                                -
-                              </Button>
-                              <span className="w-6 text-center">
-                                {guests.adults}
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8 rounded-full"
-                                onClick={() =>
-                                  onGuestChange("adults", guests.adults + 1)
-                                }
-                                disabled={getTotalGuests() >= allowedGuests}
-                              >
-                                +
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <div className="font-medium">Children</div>
-                              <div className="text-sm text-gray-600">
-                                Ages 2-12
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8 rounded-full"
-                                onClick={() =>
-                                  onGuestChange("children", guests.children - 1)
-                                }
-                                disabled={guests.children <= 0}
-                              >
-                                -
-                              </Button>
-                              <span className="w-6 text-center">
-                                {guests.children}
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8 rounded-full"
-                                onClick={() =>
-                                  onGuestChange("children", guests.children + 1)
-                                }
-                                disabled={getTotalGuests() >= allowedGuests}
-                              >
-                                +
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <div className="font-medium">Infants</div>
-                              <div className="text-sm text-gray-600">
-                                Under 2
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8 rounded-full"
-                                onClick={() =>
-                                  onGuestChange("infants", guests.infants - 1)
-                                }
-                                disabled={guests.infants <= 0}
-                              >
-                                -
-                              </Button>
-                              <span className="w-6 text-center">
-                                {guests.infants}
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8 rounded-full"
-                                onClick={() => {
-                                  if (guests.infants < 5) {
-                                    onGuestChange(
-                                      "infants",
-                                      guests.infants + 1
-                                    );
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() =>
+                                    onGuestChange("adults", guests.adults - 1)
                                   }
-                                }}
-                              >
-                                +
-                              </Button>
+                                  disabled={guests.adults <= 1}
+                                >
+                                  -
+                                </Button>
+                                <span className="w-6 text-center">
+                                  {guests.adults}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() =>
+                                    onGuestChange("adults", guests.adults + 1)
+                                  }
+                                  disabled={getTotalGuests() >= allowedGuests}
+                                >
+                                  +
+                                </Button>
+                              </div>
                             </div>
-                          </div>
 
-                          {/* <div className="flex justify-between items-center">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium">Children</div>
+                                <div className="text-sm text-gray-600">
+                                  Ages 2-12
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() =>
+                                    onGuestChange(
+                                      "children",
+                                      guests.children - 1
+                                    )
+                                  }
+                                  disabled={guests.children <= 0}
+                                >
+                                  -
+                                </Button>
+                                <span className="w-6 text-center">
+                                  {guests.children}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() =>
+                                    onGuestChange(
+                                      "children",
+                                      guests.children + 1
+                                    )
+                                  }
+                                  disabled={getTotalGuests() >= allowedGuests}
+                                >
+                                  +
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium">Infants</div>
+                                <div className="text-sm text-gray-600">
+                                  Under 2
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() =>
+                                    onGuestChange("infants", guests.infants - 1)
+                                  }
+                                  disabled={guests.infants <= 0}
+                                >
+                                  -
+                                </Button>
+                                <span className="w-6 text-center">
+                                  {guests.infants}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() => {
+                                    if (guests.infants < 5) {
+                                      onGuestChange(
+                                        "infants",
+                                        guests.infants + 1
+                                      );
+                                    }
+                                  }}
+                                >
+                                  +
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* <div className="flex justify-between items-center">
                   <div>
                     <div className="font-medium">Pets</div>
                     <div className="text-sm text-gray-600">
@@ -490,198 +608,198 @@ export default function BookingWidget({
                   </div>
                 </div> */}
 
-                          <div className="text-sm text-gray-600 pt-2 border-t">
-                            {/* This place has a maximum of 2 guests, not including infants.
+                            <div className="text-sm text-gray-600 pt-2 border-t">
+                              {/* This place has a maximum of 2 guests, not including infants.
                   Pets aren't allowed. */}
-                          </div>
+                            </div>
 
-                          <div className="flex justify-end">
-                            <Button
-                              variant="default"
-                              className="bg-primaryGreen hover:brightGreen"
-                              onClick={toggleGuestsDropdown}
-                            >
-                              Close
-                            </Button>
+                            <div className="flex justify-end">
+                              <Button
+                                variant="default"
+                                className="bg-primaryGreen hover:brightGreen"
+                                onClick={toggleGuestsDropdown}
+                              >
+                                Close
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <PopoverContent
-                className="w-auto h-auto p-0 z-[10001]"
-                align="start"
-                side={isMobile ? "top" : "bottom"}
-                sideOffset={isMobile ? -120 : -70}
-                alignOffset={isMobile ? -140 : 0}
-              >
-                <div className="p-4 border-b">
-                  <h3 className="text-base font-semibold">Select dates</h3>
-                  <div className="text-sm text-gray-600 mt-1">
-                    Add your travel dates for exact pricing
+                    )}
                   </div>
                 </div>
-                <div className="p-4">
-                  {loading ? (
-                    // ---- LOADING SPINNER UI ----
-                    <div className="flex flex-col items-center justify-center h-full w-full">
-                      <div className="h-8 w-8 border-4 border-gray-300 border-t-black rounded-full animate-spin"></div>
-                      <p className="text-sm mt-2 text-gray-600">
-                        Loading dates...
-                      </p>
-                    </div>
-                  ) : (
-                    <Calendar
-                      mode="range"
-                      defaultMonth={date?.from}
-                      selected={activation ? date : undefined}
-                      onSelect={onDateSelect}
-                      numberOfMonths={isMobile ? 1 : 2}
-                      disabled={[
-                        { before: new Date() }, // disable past dates
-                        ...unavailableDates.map((d) => new Date(d)), // disable specific unavailable dates
-                        // ...(date?.from
-                        //   ? [
-                        //       (d: Date) =>
-                        //         d.toDateString() === date.from!.toDateString(),
-                        //     ]
-                        //   : []),
-                      ]}
-                      classNames={{
-                        day_selected:
-                          "bg-black text-white hover:bg-black hover:text-white ",
-                        day_range_middle:
-                          "aria-selected:bg-gray-100 aria-selected:text-black",
-                        day_range_end:
-                          "bg-black text-white hover:bg-black hover:text-white",
-                        day_range_start:
-                          "bg-black text-white hover:bg-black hover:text-white",
-                      }}
-                    />
-                  )}
-                </div>
-                <div className="p-4 flex justify-between border-t">
-                  <Button
-                    variant="ghost"
-                    onClick={() => onDateSelect(undefined)}
-                  >
-                    Clear dates
-                  </Button>
-                  <Button
-                    className="bg-primaryGreen hover:bg-brightGreen text-white"
-                    onClick={() => setCalendarOpen(false)}
-                  >
-                    Close
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
 
-            <div onClick={() => createReserveRecord()}>
-              {isAuth || isValid ? (
-                activation ? (
-                  date?.from && date?.to ? (
-                    hasDateOverlap() ? (
-                      <Button
-                        className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
-                        onClick={() =>
-                          toast.error(
-                            "Selected date overlaps with other bookings"
-                          )
-                        }
-                      >
-                        Reserve
-                      </Button>
-                    ) : formatRevDate(new Date(date?.from)) ==
-                      formatRevDate(new Date(date?.to)) ? (
-                      <Button
-                        className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
-                        onClick={() =>
-                          toast.error(
-                            "Checkin and Checkout date cannot be same"
-                          )
-                        }
-                      >
-                        Reserve
-                      </Button>
+                <PopoverContent
+                  className="w-auto h-auto p-0 z-[10001]"
+                  align="start"
+                  side={isMobile ? "top" : "bottom"}
+                  sideOffset={isMobile ? -120 : -70}
+                  alignOffset={isMobile ? -140 : 0}
+                >
+                  <div className="p-4 border-b">
+                    <h3 className="text-base font-semibold">Select dates</h3>
+                    <div className="text-sm text-gray-600 mt-1">
+                      Add your travel dates for exact pricing
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    {loading ? (
+                      // ---- LOADING SPINNER UI ----
+                      <div className="flex flex-col items-center justify-center h-full w-full">
+                        <div className="h-8 w-8 border-4 border-gray-300 border-t-black rounded-full animate-spin"></div>
+                        <p className="text-sm mt-2 text-gray-600">
+                          Loading dates...
+                        </p>
+                      </div>
                     ) : (
-                      <Link
-                        href={{
-                          pathname: `/book/stay/${propertyId}`,
-                          query: {
-                            checkin: date?.from
-                              ? format(date.from, "yyyy-MM-dd")
-                              : undefined,
-                            checkout: date?.to
-                              ? format(date.to, "yyyy-MM-dd")
-                              : undefined,
-                            guests: getTotalGuests(),
-                            nights: nightsCount,
-                            adults: guests.adults,
-                            children: guests.children,
-                            infants: guests.infants,
-                            checkinTime: checkinTime,
-                            checkoutTime: checkoutTime,
-                            propertyImage: filename,
-                          },
+                      <Calendar
+                        mode="range"
+                        defaultMonth={date?.from}
+                        selected={activation ? date : undefined}
+                        onSelect={onDateSelect}
+                        numberOfMonths={isMobile ? 1 : 2}
+                        disabled={[
+                          { before: new Date() }, // disable past dates
+                          ...unavailableDates.map((d) => new Date(d)), // disable specific unavailable dates
+                          // ...(date?.from
+                          //   ? [
+                          //       (d: Date) =>
+                          //         d.toDateString() === date.from!.toDateString(),
+                          //     ]
+                          //   : []),
+                        ]}
+                        classNames={{
+                          day_selected:
+                            "bg-black text-white hover:bg-black hover:text-white ",
+                          day_range_middle:
+                            "aria-selected:bg-gray-100 aria-selected:text-black",
+                          day_range_end:
+                            "bg-black text-white hover:bg-black hover:text-white",
+                          day_range_start:
+                            "bg-black text-white hover:bg-black hover:text-white",
                         }}
+                      />
+                    )}
+                  </div>
+                  <div className="p-4 flex justify-between border-t">
+                    <Button
+                      variant="ghost"
+                      onClick={() => onDateSelect(undefined)}
+                    >
+                      Clear dates
+                    </Button>
+                    <Button
+                      className="bg-primaryGreen hover:bg-brightGreen text-white"
+                      onClick={() => setCalendarOpen(false)}
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <div onClick={() => createReserveRecord()}>
+                {isAuth || isValid ? (
+                  activation ? (
+                    date?.from && date?.to ? (
+                      hasDateOverlap() ? (
+                        <Button
+                          className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+                          onClick={() =>
+                            toast.error(
+                              "Selected date overlaps with other bookings"
+                            )
+                          }
+                        >
+                          Reserve
+                        </Button>
+                      ) : formatRevDate(new Date(date?.from)) ==
+                        formatRevDate(new Date(date?.to)) ? (
+                        <Button
+                          className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+                          onClick={() =>
+                            toast.error(
+                              "Checkin and Checkout date cannot be same"
+                            )
+                          }
+                        >
+                          Reserve
+                        </Button>
+                      ) : (
+                        <Link
+                          href={{
+                            pathname: `/book/stay/${propertyId}`,
+                            query: {
+                              checkin: date?.from
+                                ? format(date.from, "yyyy-MM-dd")
+                                : undefined,
+                              checkout: date?.to
+                                ? format(date.to, "yyyy-MM-dd")
+                                : undefined,
+                              guests: getTotalGuests(),
+                              nights: nightsCount,
+                              adults: guests.adults,
+                              children: guests.children,
+                              infants: guests.infants,
+                              checkinTime: checkinTime,
+                              checkoutTime: checkoutTime,
+                              propertyImage: filename,
+                            },
+                          }}
+                          className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+                        >
+                          Reserve
+                        </Link>
+                      )
+                    ) : (
+                      <Button
                         className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+                        onClick={() => {
+                          toast.error("Select both dates");
+                        }}
                       >
-                        Reserve
-                      </Link>
+                        {"Check availability"}
+                      </Button>
                     )
                   ) : (
                     <Button
                       className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
                       onClick={() => {
-                        toast.error("Select both dates");
+                        toast.error("Select dates");
                       }}
                     >
-                      {"Check availability"}
+                      Check availability
                     </Button>
                   )
                 ) : (
                   <Button
                     className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
-                    onClick={() => {
-                      toast.error("Select dates");
-                    }}
+                    // onClick={() => toast.error("Check if you are logged in")}
                   >
                     Check availability
                   </Button>
-                )
-              ) : (
-                <Button
-                  className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
-                  // onClick={() => toast.error("Check if you are logged in")}
-                >
-                  Check availability
-                </Button>
-              )}
-            </div>
-            {(date?.from || date?.to) && (
-              <>
-                <div className="text-center text-sm text-gray-600 mt-2">
-                  You won't be charged yet
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  <div className="flex justify-between ">
-                    <div className=" text-sm ">
-                      ₹{pricePerNight.toLocaleString("en-IN")} x {nightsCount}{" "}
-                      night
-                      {nightsCount !== 1 ? "s" : ""}
-                    </div>
-                    <div className="text-sm">
-                      ₹{totalPrice.toLocaleString("en-IN")}
-                    </div>
+                )}
+              </div>
+              {(date?.from || date?.to) && (
+                <>
+                  <div className="text-center text-sm text-gray-600 mt-2">
+                    You won't be charged yet
                   </div>
 
-                  <div className="flex justify-between">
-                    {/* <div className="underline text-sm">
+                  <div className="mt-4 space-y-2">
+                    <div className="flex justify-between ">
+                      <div className=" text-sm ">
+                        ₹{pricePerNight.toLocaleString("en-IN")} x {nightsCount}{" "}
+                        night
+                        {nightsCount !== 1 ? "s" : ""}
+                      </div>
+                      <div className="text-sm">
+                        ₹{totalPrice.toLocaleString("en-IN")}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between">
+                      {/* <div className="underline text-sm">
                       Majestic Escape Service Fee
                     </div>
                     <div className="text-sm">
@@ -690,25 +808,500 @@ export default function BookingWidget({
                         pricePerNight * nightsCount
                       ).toLocaleString("en-IN")}
                     </div> */}
+                    </div>
+
+                    <div className="flex justify-between pt-4 border-t ">
+                      <div>Total before taxes</div>
+                      <div>₹{totalPrice.toLocaleString("en-IN")}</div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className=" justify-center hidden p-4 border-t">
+              <Button
+                variant="ghost"
+                className="text-sm flex items-center gap-1"
+              >
+                <Flag className="h-4 w-4" />
+                Report this listing
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>,
+      getModalRoot()
+    );
+  } else {
+    return (
+      <div
+        id="modal"
+        className={
+          openPriceModal
+            ? "slide-up border rounded-xl shadow-lg isolate z-[9999]"
+            : "hidden md:block border rounded-xl shadow-lg"
+        }
+      >
+        <Card className="">
+          <CardContent className="p-0">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <span className="text-2xl font-semibold font-bricolage">
+                    ₹{pricePerNight.toLocaleString("en-IN")}
+                  </span>
+                  <span className="text-gray-600"> per night</span>
+                </div>
+                <div
+                  onClick={() => setOpenPriceModal(false)}
+                  className="md:hidden"
+                >
+                  <X />
+                </div>
+              </div>
+
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <div className="border border-gray-300 rounded-lg mb-4">
+                  <div className="grid grid-cols-2 divide-x divide-gray-300">
+                    <PopoverTrigger asChild>
+                      <div className="p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-tl-lg">
+                        <div className="text-xs font-semibold uppercase">
+                          CHECK-IN
+                        </div>
+                        <div className="mt-1 text-base">
+                          {activation
+                            ? date?.from
+                              ? formatDate(date.from)
+                              : "Add date"
+                            : "Add Date"}
+                        </div>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverTrigger asChild>
+                      <div className="p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-tr-lg">
+                        <div className="text-xs font-semibold uppercase">
+                          CHECK-OUT
+                        </div>
+                        <div className="mt-1 text-base">
+                          {activation
+                            ? date?.to
+                              ? formatDate(date.to)
+                              : "Add date"
+                            : "Add date"}
+                        </div>
+                      </div>
+                    </PopoverTrigger>
                   </div>
 
-                  <div className="flex justify-between pt-4 border-t ">
-                    <div>Total before taxes</div>
-                    <div>₹{totalPrice.toLocaleString("en-IN")}</div>
+                  {/* <div
+                className="border-t border-gray-300 p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-b-lg flex justify-between items-center"
+                onClick={toggleGuestsDropdown}
+              >
+                <div>
+                  <div className="text-xs font-semibold uppercase">GUESTS</div>
+                  <div className="mt-1 text-base">{getGuestsText()}</div>
+                </div>
+                <div>
+                  {showGuestsDropdown ? (
+                    <ChevronUp size={18} />
+                  ) : (
+                    <ChevronDown size={18} />
+                  )}
+                </div>
+              </div> */}
+                  <div ref={guestsRef} className="relative">
+                    <div
+                      className="border-t border-gray-300 p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-b-lg flex justify-between items-center"
+                      onClick={toggleGuestsDropdown}
+                    >
+                      <div>
+                        <div className="text-xs font-semibold uppercase">
+                          GUESTS
+                        </div>
+                        <div className="mt-1 text-base">{getGuestsText()}</div>
+                      </div>
+                      {showGuestsDropdown ? (
+                        <ChevronUp size={18} />
+                      ) : (
+                        <ChevronDown size={18} />
+                      )}
+                    </div>
+
+                    {showGuestsDropdown && (
+                      <div className="absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-4 left-0 right-0 mt-2">
+                        <div className="">
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium">Adults</div>
+                                <div className="text-sm text-gray-600">
+                                  Age 18+
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() =>
+                                    onGuestChange("adults", guests.adults - 1)
+                                  }
+                                  disabled={guests.adults <= 1}
+                                >
+                                  -
+                                </Button>
+                                <span className="w-6 text-center">
+                                  {guests.adults}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() =>
+                                    onGuestChange("adults", guests.adults + 1)
+                                  }
+                                  disabled={getTotalGuests() >= allowedGuests}
+                                >
+                                  +
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium">Children</div>
+                                <div className="text-sm text-gray-600">
+                                  Ages 2-12
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() =>
+                                    onGuestChange(
+                                      "children",
+                                      guests.children - 1
+                                    )
+                                  }
+                                  disabled={guests.children <= 0}
+                                >
+                                  -
+                                </Button>
+                                <span className="w-6 text-center">
+                                  {guests.children}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() =>
+                                    onGuestChange(
+                                      "children",
+                                      guests.children + 1
+                                    )
+                                  }
+                                  disabled={getTotalGuests() >= allowedGuests}
+                                >
+                                  +
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium">Infants</div>
+                                <div className="text-sm text-gray-600">
+                                  Under 2
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() =>
+                                    onGuestChange("infants", guests.infants - 1)
+                                  }
+                                  disabled={guests.infants <= 0}
+                                >
+                                  -
+                                </Button>
+                                <span className="w-6 text-center">
+                                  {guests.infants}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() => {
+                                    if (guests.infants < 5) {
+                                      onGuestChange(
+                                        "infants",
+                                        guests.infants + 1
+                                      );
+                                    }
+                                  }}
+                                >
+                                  +
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-medium">Pets</div>
+                    <div className="text-sm text-gray-600">
+                      Bringing a service animal?
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => onGuestChange("pets", guests.pets - 1)}
+                      disabled={guests.pets <= 0}
+                    >
+                      -
+                    </Button>
+                    <span className="w-6 text-center">{guests.pets}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => onGuestChange("pets", guests.pets + 1)}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div> */}
+
+                            <div className="text-sm text-gray-600 pt-2 border-t">
+                              {/* This place has a maximum of 2 guests, not including infants.
+                  Pets aren't allowed. */}
+                            </div>
+
+                            <div className="flex justify-end">
+                              <Button
+                                variant="default"
+                                className="bg-primaryGreen hover:brightGreen"
+                                onClick={toggleGuestsDropdown}
+                              >
+                                Close
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </>
-            )}
-          </div>
 
-          <div className=" justify-center hidden p-4 border-t">
-            <Button variant="ghost" className="text-sm flex items-center gap-1">
-              <Flag className="h-4 w-4" />
-              Report this listing
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+                <PopoverContent
+                  className="w-auto h-auto p-0 z-[10001]"
+                  align="start"
+                  side={isMobile ? "top" : "bottom"}
+                  sideOffset={isMobile ? -120 : -70}
+                  alignOffset={isMobile ? -140 : 0}
+                >
+                  <div className="p-4 border-b">
+                    <h3 className="text-base font-semibold">Select dates</h3>
+                    <div className="text-sm text-gray-600 mt-1">
+                      Add your travel dates for exact pricing
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    {loading ? (
+                      // ---- LOADING SPINNER UI ----
+                      <div className="flex flex-col items-center justify-center h-full w-full">
+                        <div className="h-8 w-8 border-4 border-gray-300 border-t-black rounded-full animate-spin"></div>
+                        <p className="text-sm mt-2 text-gray-600">
+                          Loading dates...
+                        </p>
+                      </div>
+                    ) : (
+                      <Calendar
+                        mode="range"
+                        defaultMonth={date?.from}
+                        selected={activation ? date : undefined}
+                        onSelect={onDateSelect}
+                        numberOfMonths={isMobile ? 1 : 2}
+                        disabled={[
+                          { before: new Date() }, // disable past dates
+                          ...unavailableDates.map((d) => new Date(d)), // disable specific unavailable dates
+                          // ...(date?.from
+                          //   ? [
+                          //       (d: Date) =>
+                          //         d.toDateString() === date.from!.toDateString(),
+                          //     ]
+                          //   : []),
+                        ]}
+                        classNames={{
+                          day_selected:
+                            "bg-black text-white hover:bg-black hover:text-white ",
+                          day_range_middle:
+                            "aria-selected:bg-gray-100 aria-selected:text-black",
+                          day_range_end:
+                            "bg-black text-white hover:bg-black hover:text-white",
+                          day_range_start:
+                            "bg-black text-white hover:bg-black hover:text-white",
+                        }}
+                      />
+                    )}
+                  </div>
+                  <div className="p-4 flex justify-between border-t">
+                    <Button
+                      variant="ghost"
+                      onClick={() => onDateSelect(undefined)}
+                    >
+                      Clear dates
+                    </Button>
+                    <Button
+                      className="bg-primaryGreen hover:bg-brightGreen text-white"
+                      onClick={() => setCalendarOpen(false)}
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <div onClick={() => createReserveRecord()}>
+                {isAuth || isValid ? (
+                  activation ? (
+                    date?.from && date?.to ? (
+                      hasDateOverlap() ? (
+                        <Button
+                          className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+                          onClick={() =>
+                            toast.error(
+                              "Selected date overlaps with other bookings"
+                            )
+                          }
+                        >
+                          Reserve
+                        </Button>
+                      ) : formatRevDate(new Date(date?.from)) ==
+                        formatRevDate(new Date(date?.to)) ? (
+                        <Button
+                          className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+                          onClick={() =>
+                            toast.error(
+                              "Checkin and Checkout date cannot be same"
+                            )
+                          }
+                        >
+                          Reserve
+                        </Button>
+                      ) : (
+                        <Link
+                          href={{
+                            pathname: `/book/stay/${propertyId}`,
+                            query: {
+                              checkin: date?.from
+                                ? format(date.from, "yyyy-MM-dd")
+                                : undefined,
+                              checkout: date?.to
+                                ? format(date.to, "yyyy-MM-dd")
+                                : undefined,
+                              guests: getTotalGuests(),
+                              nights: nightsCount,
+                              adults: guests.adults,
+                              children: guests.children,
+                              infants: guests.infants,
+                              checkinTime: checkinTime,
+                              checkoutTime: checkoutTime,
+                              propertyImage: filename,
+                            },
+                          }}
+                          className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+                        >
+                          Reserve
+                        </Link>
+                      )
+                    ) : (
+                      <Button
+                        className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+                        onClick={() => {
+                          toast.error("Select both dates");
+                        }}
+                      >
+                        {"Check availability"}
+                      </Button>
+                    )
+                  ) : (
+                    <Button
+                      className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+                      onClick={() => {
+                        toast.error("Select dates");
+                      }}
+                    >
+                      Check availability
+                    </Button>
+                  )
+                ) : (
+                  <Button
+                    className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+                    // onClick={() => toast.error("Check if you are logged in")}
+                  >
+                    Check availability
+                  </Button>
+                )}
+              </div>
+              {(date?.from || date?.to) && (
+                <>
+                  <div className="text-center text-sm text-gray-600 mt-2">
+                    You won't be charged yet
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    <div className="flex justify-between ">
+                      <div className=" text-sm ">
+                        ₹{pricePerNight.toLocaleString("en-IN")} x {nightsCount}{" "}
+                        night
+                        {nightsCount !== 1 ? "s" : ""}
+                      </div>
+                      <div className="text-sm">
+                        ₹{totalPrice.toLocaleString("en-IN")}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between">
+                      {/* <div className="underline text-sm">
+                      Majestic Escape Service Fee
+                    </div>
+                    <div className="text-sm">
+                      ₹
+                      {calculateServicFee(
+                        pricePerNight * nightsCount
+                      ).toLocaleString("en-IN")}
+                    </div> */}
+                    </div>
+
+                    <div className="flex justify-between pt-4 border-t ">
+                      <div>Total before taxes</div>
+                      <div>₹{totalPrice.toLocaleString("en-IN")}</div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className=" justify-center hidden p-4 border-t">
+              <Button
+                variant="ghost"
+                className="text-sm flex items-center gap-1"
+              >
+                <Flag className="h-4 w-4" />
+                Report this listing
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 }

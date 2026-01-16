@@ -34,6 +34,8 @@ type AuthContextType = {
   setShowAllAmenities: React.Dispatch<React.SetStateAction<boolean>>;
   openPriceModal: boolean;
   setOpenPriceModal: React.Dispatch<React.SetStateAction<boolean>>;
+  resetClicked: boolean;
+  setResetClicked: React.Dispatch<React.SetStateAction<boolean>>;
   showAllProperties: boolean;
   setShowAllProperties: React.Dispatch<React.SetStateAction<boolean>>;
   addAmenities: string[];
@@ -64,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [modalFilter, setModalFilter] = useState<boolean>(false);
-
+  const [resetClicked, setResetClicked] = useState<boolean>(false);
   // Add all filter states from modal
   const [priceRange, setPriceRange] = useState([501, 83000]);
   const [rooms, setRooms] = useState({ bedrooms: 0, beds: 0, bathrooms: 0 });
@@ -84,6 +86,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const verify = async () => {
       await checkToken();
+      if (pathname == "/") {
+        clearAllFilters();
+      }
     };
     verify();
   }, [pathname]);
@@ -95,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     // Load saved filters from localStorage if needed
-    const savedFilters = localStorage.getItem("filterState");
+    const savedFilters = sessionStorage.getItem("filterState");
     if (savedFilters) {
       const filters = JSON.parse(savedFilters);
       // Set all filter states from saved data
@@ -140,7 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setCheckinType("");
     setAddPropertyType("");
     setAddPlaceType("");
-    localStorage.removeItem("filterState");
+    sessionStorage.removeItem("filterState");
   };
 
   const addAmenitiesList = (value: string) => {
@@ -187,7 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       petAllowed,
       checkinType,
     };
-    localStorage.setItem("filterState", JSON.stringify(filterState));
+    sessionStorage.setItem("filterState", JSON.stringify(filterState));
   }, [
     priceRange,
     rooms,
@@ -239,6 +244,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setActiveTab,
     openPriceModal,
     setOpenPriceModal,
+    resetClicked,
+    setResetClicked,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

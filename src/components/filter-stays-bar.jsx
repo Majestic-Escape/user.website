@@ -136,12 +136,13 @@ export default function FilterStaysBar({
   const [selectedType, setSelectedType] = useState(null);
   const [mainFilter, setMainFilter] = useState(false);
   const [sideFilter, setSideFilter] = useState(false);
-  const { modalFilter, setModalFilter } = useAuth();
+  const { modalFilter, setModalFilter, resetClicked, setResetClicked } =
+    useAuth();
 
   const pathname = usePathname();
-
+  const { clearAllFilters } = useAuth();
   const showFilterIcon = pathname == "/";
-  console.log("paath", pathname, showFilterIcon);
+  // console.log("paath", pathname, showFilterIcon);
   const router = useRouter();
   const checkScroll = () => {
     if (scrollContainerRef.current) {
@@ -270,7 +271,7 @@ export default function FilterStaysBar({
           <span className=" tab:hidden">Filter</span>
         </button>
 
-        {!showFilterIcon ? (
+        {!showFilterIcon && !resetClicked ? (
           <button
             className=" py-2.5 px-4 ring-1 ring-lightGray text-absoluteDark rounded-full hover:ring-absoluteDark transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2"
             onClick={() => {
@@ -290,24 +291,16 @@ export default function FilterStaysBar({
                 })
               );
               // sessionStorage.setItem("reset", "true");
-              localStorage.setItem("modalFilterReset", "true");
-              localStorage.setItem(
-                "filterState",
-                JSON.stringify({
-                  addAmenities: [],
-                  addPlaceType: "",
-                  addPropertyType: "",
-                  bookingType: "",
-                  checkinType: "",
-                  petAllowed: "",
-                  priceRange: [501, 83000],
-                  rooms: { bedrooms: 0, beds: 0, bathrooms: 0 },
-                })
-              );
-
+              sessionStorage.setItem("modalFilterReset", "true");
+              clearAllFilters();
+              sessionStorage.setItem("modalFilterReset", "false");
+              setResetClicked(true);
               router.push(
-                `/filter?propertyType=${""}&location=${""}&from=${""}&to=${""}&adults=${""}&senior=${""}&children=${""}&infants=${""}`
+                `/filter?propertyType=${""}&location=${""}&from=${""}&to=${""}&adults=${""}&senior=${""}&children=${""}&infants=${""}&priceMin=${""}&priceMax=${""}&placeType=${""}&amenities=${""}&bedrooms=${""}&beds=${""}&bathrooms=${""}&bookingType=${""}&checkinType=${""}&pets=${""}`
               );
+              // router.push(
+              //   `/filter?propertyType=${""}&location=${""}&from=${""}&to=${""}&adults=${""}&senior=${""}&children=${""}&infants=${""}`
+              // );
             }}
           >
             <SearchX className="w-4 h-4" />
