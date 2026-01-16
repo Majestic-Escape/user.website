@@ -1,6 +1,7 @@
 "use client";
 
-import Navbar from "@/components/ui/navbar";
+import Navbar from "@/components/ui/nav-stays";
+import Oldbar from "@/components/ui/navbar";
 import FooterWrapper from "@/components/footer-wrapper";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -18,10 +19,54 @@ export default function Layout({ children }) {
     useAuth();
   const [matches, setMatches] = useState(false);
   const pathname = usePathname();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  useEffect(() => {
+    if (modalFilter) {
+      setCurrentIndex(0);
 
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.overflow = "hidden";
+
+      // Store scroll position for later restoration
+      document.body.dataset.scrollY = scrollY.toString();
+    } else {
+      // Restore scroll position
+      const scrollY = document.body.dataset.scrollY || "0";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "auto";
+
+      // Scroll back to original position
+      window.scrollTo(0, parseInt(scrollY, 10));
+
+      // Clean up
+      delete document.body.dataset.scrollY;
+    }
+
+    return () => {
+      // Cleanup on unmount
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "auto";
+      delete document.body.dataset.scrollY;
+    };
+  }, [modalFilter]);
   // Check if current path is a stay detail page
   const isStayDetailPage =
     pathname.startsWith("/stay/") && pathname !== "/stay";
+
+  const mainPage = pathname == "/";
+  const isFilter = pathname.startsWith("/filter");
+
   function useMediaQuery(query) {
     useEffect(() => {
       const media = window.matchMedia(query);
@@ -35,12 +80,22 @@ export default function Layout({ children }) {
 
     return matches;
   }
+
   const isMobile = useMediaQuery("(max-width: 640px)");
   return (
     <QueryClientProvider client={queryClient}>
       <div className="font-poppins">
         <div>
-          <Navbar />
+          {isStayDetailPage || mainPage || isFilter ? (
+            !isMobile ? (
+              <Navbar />
+            ) : (
+              <Oldbar />
+            )
+          ) : (
+            <Oldbar />
+          )}
+
           {/* <MobileNavbar /> Stay Page */}
           {/* {children} */}
           <main className={modalFilter ? "filter blur-sm" : ""}>
