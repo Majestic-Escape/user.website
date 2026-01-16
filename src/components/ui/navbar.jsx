@@ -11,7 +11,7 @@ import { UserDropdownMenu } from "@/components/user-dropdown-menu";
 
 import { Heart, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function Navbar() {
   const { staysWishlist, experiencesWishlist, wishlists } = useWishlist();
@@ -33,10 +33,19 @@ export default function Navbar() {
       (sum, folder) => sum + folder.items.length,
       0
     );
-
+  const pathname = usePathname();
+  const isSearchVisible =
+    pathname === "/experiences" || pathname === "/services";
+  //hidden md:block
   return (
-    <header className="fixed left-0 right-0 w-screen bg-white  z-50  font-poppins border-b px-4 md:px-6 ">
-      <div className="container max-w-[1400px] flex h-12 md:h-[76px] w-full items-center mx-auto">
+    <header
+      className={
+        isSearchVisible
+          ? "hidden md:block w-screen bg-white  z-[1002]  font-poppins border-b px-4 md:px-6 "
+          : "fixed top-0 left-0 right-0 w-screen bg-white  z-[1002]  font-poppins border-b px-4 md:px-6 "
+      }
+    >
+      <div className=" container max-w-[1400px] flex  h-12 md:h-[76px] w-full items-center mx-auto">
         <div></div>{" "}
         <Link className="flex items-center gap-2 text-[#3B5D2D]" href="/">
           {/* <Image
@@ -118,7 +127,7 @@ export default function Navbar() {
               )}
             </Link> */}
 
-            <UserDropdownMenu />
+            <UserDropdownMenu className="" />
           </nav>
         ) : (
           <nav className=" ml-auto hidden md:flex items-center gap-4 sm:gap-6">
@@ -126,12 +135,12 @@ export default function Navbar() {
               isOpen={isWishlistOpen}
               onClose={() => setIsWishlistOpen(false)}
             /> */}
-            <Link
+            {/* <Link
               className="text-base text-absoluteDark font-medium hover:text-brightGreen hover:transition-colors hover:underline"
               href="/login"
             >
-              Become a Host
-            </Link>
+              Become a Host On filter page
+            </Link> */}
             <Link
               href="/login"
               className="bg-primaryGreen font-medium hover:bg-brightGreen px-6 text-base rounded-3xl text-white py-1.5"
