@@ -11,7 +11,7 @@ import { Heart, MessageSquare } from "lucide-react";
 import SearchFilter from "../search-filter";
 import FilterStaysBar from "../filter-stays-bar";
 import WishlistPopup from "../wishlist-popup";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { UserDropdownMenu } from "@/components/user-dropdown-menu";
 export default function Navbar() {
@@ -22,6 +22,11 @@ export default function Navbar() {
   const [propertyType, setPropertyType] = useState("");
   const router = useRouter();
 
+  const pathname = usePathname();
+  const isStayDetailPage =
+    pathname.startsWith("/stay/") && pathname !== "/stay";
+  const mainPage = pathname == "/";
+  const filter = pathname.startsWith("/stay/");
   const { user, logout } = useAuth();
 
   const switchToHosting = () => {
@@ -52,7 +57,7 @@ export default function Navbar() {
         isScrolled ? "pt-2  h-20" : "pt-3"
       }`}
     >
-      <header className="px-4  md:px-6">
+      <header className="px-4  md:px-6 z-[2000]">
         <div className="container max-w-[1400px] flex h-12 md:h-16 w-full items-center mx-auto">
           <div></div>{" "}
           <Link className="flex items-center gap-2 text-[#3B5D2D]" href="/">
@@ -167,6 +172,7 @@ export default function Navbar() {
           )}
         </div>
         {/* <div className={`transition-all duration-300 ${isScrolled ? 'opacity-100 -translate-y-full' : 'opacity-100 translate-y-0 '}`}> */}
+
         <SearchFilter isScrolled={isScrolled} propertyType={propertyType} />
       </header>
       {/* <div

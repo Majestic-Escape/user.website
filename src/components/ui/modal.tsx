@@ -99,6 +99,7 @@ export default function FilterModal({
   const {
     priceRange,
     setPriceRange,
+    setResetClicked,
     rooms,
     showAllAmenities,
     setShowAllAmenities,
@@ -124,7 +125,7 @@ export default function FilterModal({
   } = useAuth();
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
-
+  const [matches, setMatches] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   type FilterRooms = {
     bedrooms: number;
@@ -132,10 +133,10 @@ export default function FilterModal({
     bathrooms: number;
   };
   useEffect(() => {
-    const reset = localStorage.getItem("modalFilterReset");
+    const reset = sessionStorage.getItem("modalFilterReset");
     if (reset == "true") {
       clearAllFilters();
-      localStorage.setItem("modalFilterReset", "false");
+      sessionStorage.setItem("modalFilterReset", "false");
     }
   }, []);
   useEffect(() => {
@@ -179,9 +180,26 @@ export default function FilterModal({
 
   const min = 501;
   const max = 83000;
+  function useMediaQuery(query: string) {
+    useEffect(() => {
+      const media = window.matchMedia(query);
+      setMatches(media.matches);
 
+      const listener = () => setMatches(media.matches);
+      media.addEventListener("change", listener);
+
+      return () => media.removeEventListener("change", listener);
+    }, [query]);
+
+    return matches;
+  }
+
+  const mobile = useMediaQuery("(max-width: 640px)");
   useEffect(() => {
-    const saved = sessionStorage.getItem("mobileFilters");
+    const saved = mobile
+      ? sessionStorage.getItem("mobileFilters")
+      : sessionStorage.getItem("searchFilters");
+    console.log("ssssssss", saved);
     if (saved) {
       const parsed = JSON.parse(saved);
 
@@ -196,25 +214,27 @@ export default function FilterModal({
       if (parsed.searchTerm) setSearchTerm(parsed.searchTerm);
       if (parsed.guests) setGuests(parsed.guests);
     }
-    setHydrated(true); // mark as hydrated after first load
-  }, []);
+
+    // setHydrated(true); // mark as hydrated after first load
+  }, [mobile, isOpen]);
 
   // Save to localStorage ONLY after hydration
-  useEffect(() => {
-    if (!hydrated) return; // skip first run until state is restored
+  // useEffect(() => {
+  //   if (!hydrated) return; // skip first run until state is restored
+  //   const filterData = {
+  //     dateRange: {
+  //       from: dateRange?.from ? dateRange.from.toISOString() : null,
+  //       to: dateRange?.to ? dateRange.to.toISOString() : null,
+  //     },
+  //     searchTerm,
+  //     guests,
+  //   };
 
-    sessionStorage.setItem(
-      "mobileFilters",
-      JSON.stringify({
-        dateRange: {
-          from: dateRange?.from ? dateRange.from.toISOString() : null,
-          to: dateRange?.to ? dateRange.to.toISOString() : null,
-        },
-        searchTerm,
-        guests,
-      })
-    );
-  }, [dateRange, searchTerm, guests, hydrated]);
+  //   // Save to both keys to ensure compatibility
+  //   mobile
+  //     ? sessionStorage.setItem("mobileFilters", JSON.stringify(filterData))
+  //     : sessionStorage.setItem("searchFilters", JSON.stringify(filterData));
+  // }, [dateRange, searchTerm, guests, hydrated, mobile]);
   //Guest change
   const handleGuestChange = (
     type: keyof Guests,
@@ -490,12 +510,36 @@ export default function FilterModal({
   const newAmenities = addAmenities.map((x) =>
     x.toLowerCase().replaceAll(" ", "_")
   );
-
+  const submit = () => {
+    router.push(
+      `/filter?propertyType=${
+        addPropertyType ? addPropertyType : ""
+      }&location=${searchTerm ? searchTerm : ""}&from=${
+        dateRange?.from ? dateRange?.from.toLocaleDateString() : ""
+      }&to=${dateRange?.to ? dateRange?.to.toLocaleDateString() : ""}&adults=${
+        totalGuests ? totalGuests : ""
+      }&senior=${guests.adults ? guests.adults : ""}&children=${
+        guests.children ? guests.children : ""
+      }&infants=${guests.infants ? guests.infants : ""}&priceMin=${
+        priceRange[0] || ""
+      }&priceMax=${priceRange[1] || ""}&placeType=${
+        addPlaceType ? addPlaceType.replaceAll(" ", "_") : ""
+      }&amenities=${addAmenities.length !== 0 ? newAmenities : ""}&bedrooms=${
+        rooms?.bedrooms || ""
+      }&beds=${rooms?.beds || ""}&bathrooms=${
+        rooms?.bathrooms || ""
+      }&bookingType=${bookingType || ""}&checkinType=${
+        checkinType || ""
+      }&pets=${petAllowed}`
+    );
+  };
   const small = ["tablet", "mobile"];
   if (!isMobile) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] flex flex-col shadow-xl">
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[1003]">
+        {" "}
+        {/*Pc modal filter page make appear above*/}
+        <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] flex flex-col shadow-xl ">
           {/* Header - Fixed at top */}
           <div className="flex justify-between items-center border-b px-4 py-3 sticky top-0 bg-white z-10 rounded-t-3xl">
             <h2 className="text-lg font-semibold">Filters</h2>
@@ -777,28 +821,53 @@ export default function FilterModal({
 
             <button
               onClick={() => {
+                // router.push(
+                //   `/filter?propertyType=${
+                //     addPropertyType ? addPropertyType : ""
+                //   }&location=${""}&from=${""}&to=${""}&adults=${""}&senior=${""}&children=${""}&infants=${""}&priceMin=${
+                //     priceRange[0] ? priceRange[0] : ""
+                //   }&priceMax=${priceRange[1] ? priceRange[1] : ""}&placeType=${
+                //     addPlaceType ? addPlaceType.replaceAll(" ", "_") : ""
+                //   }&amenities=${
+                //     addAmenities.length != 0 ? newAmenities : ""
+                //   }&bedrooms=${rooms?.bedrooms ? rooms?.bedrooms : ""}&beds=${
+                //     rooms?.beds ? rooms?.beds : ""
+                //   }&bathrooms=${
+                //     rooms?.bathrooms ? rooms?.bathrooms : ""
+                //   }&bookingType=${bookingType ? bookingType : ""}&checkinType=${
+                //     checkinType ? checkinType : ""
+                //   }&pets=${petAllowed}`
+                // );
+                setResetClicked(false);
+                console.log("searchTerm", searchTerm, guests);
                 router.push(
                   `/filter?propertyType=${
                     addPropertyType ? addPropertyType : ""
-                  }&location=${""}&from=${""}&to=${""}&adults=${""}&senior=${""}&children=${""}&infants=${""}&priceMin=${
-                    priceRange[0] ? priceRange[0] : ""
-                  }&priceMax=${priceRange[1] ? priceRange[1] : ""}&placeType=${
+                  }&location=${searchTerm ? searchTerm : ""}&from=${
+                    dateRange?.from ? dateRange?.from.toLocaleDateString() : ""
+                  }&to=${
+                    dateRange?.to ? dateRange?.to.toLocaleDateString() : ""
+                  }&adults=${totalGuests ? totalGuests : ""}&senior=${
+                    guests.adults ? guests.adults : ""
+                  }&children=${
+                    guests.children ? guests.children : ""
+                  }&infants=${guests.infants ? guests.infants : ""}&priceMin=${
+                    priceRange[0] || ""
+                  }&priceMax=${priceRange[1] || ""}&placeType=${
                     addPlaceType ? addPlaceType.replaceAll(" ", "_") : ""
                   }&amenities=${
-                    addAmenities.length != 0 ? newAmenities : ""
-                  }&bedrooms=${rooms?.bedrooms ? rooms?.bedrooms : ""}&beds=${
-                    rooms?.beds ? rooms?.beds : ""
-                  }&bathrooms=${
-                    rooms?.bathrooms ? rooms?.bathrooms : ""
-                  }&bookingType=${bookingType ? bookingType : ""}&checkinType=${
-                    checkinType ? checkinType : ""
-                  }&pets=${petAllowed}`
+                    addAmenities.length !== 0 ? newAmenities : ""
+                  }&bedrooms=${rooms?.bedrooms || ""}&beds=${
+                    rooms?.beds || ""
+                  }&bathrooms=${rooms?.bathrooms || ""}&bookingType=${
+                    bookingType || ""
+                  }&checkinType=${checkinType || ""}&pets=${petAllowed || ""}`
                 );
                 onClose();
               }}
               className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
             >
-              Show results
+              Show new
             </button>
           </div>
         </div>
@@ -806,7 +875,7 @@ export default function FilterModal({
     );
   } else {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-2 md:p-4">
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[1003] p-2 md:p-4">
         <div className="bg-white rounded-lg w-full max-w-lg max-h-[65vh] md:max-h-[90vh] flex flex-col shadow-xl">
           {/* Header - Fixed at top */}
           <div className="flex justify-between items-center border-b px-4 py-3 sticky top-0 bg-white z-10 rounded-t-lg md:rounded-t-3xl">
@@ -855,11 +924,12 @@ export default function FilterModal({
                         <HomeIcon className="mr-2 h-4 w-4" />
                         <div className="flex flex-col justify-start items-start">
                           <span className="text-sm">
-                            {destination
+                            {/* {destination
                               ? filteredDestinations.find(
                                   (d) => d.value === destination
                                 )?.label
-                              : "Anywhere"}
+                              : "Anywhere"} */}
+                            {searchTerm ? searchTerm : "Search destinations"}
                           </span>
                         </div>
                       </Button>
@@ -873,6 +943,14 @@ export default function FilterModal({
                           placeholder="Search destinations..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
+                          onKeyDown={(e) => {
+                            // Trigger search on Enter key
+                            if (e.key === "Enter") {
+                              e.preventDefault(); // Prevent default form behavior
+                              submit(); // Call your submit function
+                              onClose(); // Close the popover
+                            }
+                          }}
                           className="border-0 border-b rounded-none focus-visible:ring-0"
                         />
                         {/* <CommandEmpty className="p-2 text-sm text-center">
@@ -1354,7 +1432,7 @@ export default function FilterModal({
                     rooms?.beds || ""
                   }&bathrooms=${rooms?.bathrooms || ""}&bookingType=${
                     bookingType || ""
-                  }&checkinType=${checkinType || ""}&pets=${petAllowed}`
+                  }&checkinType=${checkinType || ""}&pets=${petAllowed || ""}`
                 );
                 onClose();
               }}

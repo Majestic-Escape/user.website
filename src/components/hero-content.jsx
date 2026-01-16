@@ -7,7 +7,7 @@ export function HeroContent() {
   return (
     <>
       <div className="w-full md:pt-12 mx-auto text-center md:text-center midtab:text-center lg:text-left max-w-[600px] lg:pr-8 align  lg:mb-0">
-        <TextReveal>
+        {/* <TextReveal>
           <h2 className="text-sm font-medium mb-4 text-primaryGreen inline-block rounded-2xl bg-green-50 ring-1 ring-green-300 px-2.5 py-1">
             {" "}
             Memories you will never forget
@@ -47,7 +47,7 @@ export function HeroContent() {
           >
             Book your stay
           </Link>
-        </TextReveal>
+        </TextReveal> */}
       </div>
     </>
   );

@@ -297,7 +297,7 @@ export default function PropertyPage() {
             } `} */}
         </style>
       </Head>
-      <main className="min-h-screen pt-[80px] md:pt-32 bg-white booking-widget">
+      <main className="min-h-screen pt-[80px] md:pt-72 bg-white booking-widget">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Property Title */}
           <h1 className="text-xl md:text-2xl font-bricolage font-semibold mb-4 md:mb-6">

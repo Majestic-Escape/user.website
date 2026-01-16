@@ -406,17 +406,17 @@ export function HostListingsTable({ userEmail }) {
                 >
                   Add Time
                 </DropdownMenuItem> */}
+                <DropdownMenuItem
+                  onClick={() => {
+                    router.push(
+                      `/host/dashboard/calendar?propertyId=${listing._id}`
+                    );
+                  }}
+                >
+                  Calendar
+                </DropdownMenuItem>
                 {listing.status == "active" ? (
                   <>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        router.push(
-                          `/host/dashboard/calendar?propertyId=${listing._id}`
-                        );
-                      }}
-                    >
-                      Calendar
-                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => handleDelistClick(listing)}
                     >

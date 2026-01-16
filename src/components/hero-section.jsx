@@ -3,7 +3,7 @@ import { HeroContent } from "@/components/hero-content";
 import ChatSimulator from "@/components/chat-simulator";
 import confetti from "canvas-confetti";
 import { useEffect } from "react";
-
+import Image from "next/image";
 export default function HeroSection() {
   const successConfetti = () => {
     const duration = 5 * 1000;
@@ -45,14 +45,38 @@ export default function HeroSection() {
   // }, [])
 
   return (
-    <div className="mobile:pt-[140px] mobile:pb-10 tab:pt-[170px] tab:pb-5 midtab:pt-[210px] midtab:pb-10 relative border-b border-b-gray-100 bg-white flex justify-center w-full min-h-screen font-poppins md:pt-48 md:pb-0 px-2 sm:px-6 overflow-hidden pt-24 sm:pt-24 pb-8">
-      <div className="tab:min-h-[calc(100vh-80px)] tab:flex tab:items-center tab:justify-center desktop:pb-0 smtab:mt-[50px] mtab:mt-[10px] midtab:mt-5 w-full max-w-6xl mx-auto py-5 relative z-10">
-        <main className="mobile:flex-col tab:flex tab:flex-col tab:items-center midtab:flex-col midtab:items-center midtab:gap-8 desktop:flex-row container w-full flex flex-col justify-between items-center md:items-start font-poppins">
-          {/* hero-root hero-inner outer-mid-tab-margin hero-margin hero-main */}
-          <HeroContent />
-          <ChatSimulator />
-        </main>
+    <div className="pt-32 md:pt-48 w-screen -mx-[calc((100vw-100%)/2)] overflow-hidden">
+      <div className="w-full">
+        {/* <img src={"/images/govt/kuno_web.png"}/> */}
+        <Image
+          src="/images/govt/kuno_web_1.png"
+          alt="Full width image"
+          width={1920} // Set your image dimensions
+          height={1080}
+          className="-pt-2 md:pt-12 lg:-pt-2 w-full h-auto object-contain"
+          sizes="100vw"
+          priority
+        />
+        {/* <ChatSimulator /> */}
       </div>
     </div>
+    // <div className="mobile:pt-[140px] mobile:pb-10 tab:pt-[170px] tab:pb-5 midtab:pt-[210px] midtab:pb-10 relative border-b border-b-gray-100 bg-white justify-center w-full min-h-screen font-poppins md:pt-48 md:pb-0 px-2 sm:px-6 overflow-hidden pt-24 sm:pt-24 pb-8">
+    //   <div className="tab:min-h-[calc(100vh-80px)] tab:items-center tab:justify-center desktop:pb-0 smtab:mt-[50px] mtab:mt-[10px] midtab:mt-5 w-full max-w-6xl mx-auto py-5 relative z-10">
+    //     <main className="tab:items-center  flex flex-end midtab:items-center midtab:gap-8  container w-full  justify-between items-center md:items-start font-poppins">
+    //       {/* hero-root hero-inner outer-mid-tab-margin hero-margin hero-main */}
+    //       {/* <HeroContent />
+    //       <ChatSimulator /> */}
+    //       <Image
+    //         src="/images/govt/kuno_web.png"
+    //         alt="Full width image"
+    //         width={1920} // Set your image dimensions
+    //         height={1080}
+    //         className="w-full h-auto object-contain"
+    //         sizes="100vw"
+    //         priority
+    //       />
+    //     </main>
+    //   </div>
+    // </div>
   );
 }

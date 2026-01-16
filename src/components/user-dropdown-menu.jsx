@@ -6,6 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,75 +43,78 @@ export function UserDropdownMenu() {
             <span className="sr-only">Toggle user menu</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          className={cn(
-            "w-56",
-            "absolute right-0 mt-2",
-            "overflow-hidden",
-            "origin-top-right"
-          )}
-          sideOffset={5}
-        >
-          <DropdownMenuItem asChild>
-            <Link className="py-2" href="/account/personal-info">
-              Account
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            {/* <Link className="py-2" href="/notifications">
+        <DropdownMenuPortal>
+          <DropdownMenuContent
+            align="end"
+            className={cn(
+              "w-56",
+              "z-[1100]",
+              "absolute right-0 mt-2",
+              "overflow-hidden",
+              "origin-top-right"
+            )}
+            sideOffset={5}
+          >
+            <DropdownMenuItem asChild>
+              <Link className="py-2" href="/account/personal-info">
+                Account
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              {/* <Link className="py-2" href="/notifications">
               Notifications
             </Link> */}
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link className="py-2" href="/manage-bookings">
-              Bookings
-            </Link>
-          </DropdownMenuItem>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link className="py-2" href="/manage-bookings">
+                Bookings
+              </Link>
+            </DropdownMenuItem>
 
-          {/* <hr /> */}
+            {/* <hr /> */}
 
-          <DropdownMenuItem className="lg:hidden" asChild>
-            <Link href="/host/dashboard" className=" py-2">
-              Switch to Hosting
-            </Link>
-            {/* <Link
+            <DropdownMenuItem className="lg:hidden" asChild>
+              <Link href="/host/dashboard" className=" py-2">
+                Switch to Hosting
+              </Link>
+              {/* <Link
               className="py-2"
               href="/host/dashboard/add-listing"
               rel="noopener noreferrer"
             >
               Host your Property
             </Link> */}
-          </DropdownMenuItem>
+            </DropdownMenuItem>
 
-          <DropdownMenuItem asChild>
-            {/* <Link
+            <DropdownMenuItem asChild>
+              {/* <Link
               className="py-2"
               href="/host/dashboard"
               rel="noopener noreferrer"
             >
               Manage Experiences
             </Link> */}
-          </DropdownMenuItem>
+            </DropdownMenuItem>
 
-          <hr />
-          <DropdownMenuItem asChild>
-            <Link className="py-2" href="/faq">
-              FAQ
-            </Link>
-          </DropdownMenuItem>
+            <hr />
+            <DropdownMenuItem asChild>
+              <Link className="py-2" href="/faq">
+                FAQ
+              </Link>
+            </DropdownMenuItem>
 
-          <DropdownMenuItem asChild>
-            <Link className="py-2" href="/help-center">
-              Help Center
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <button onClick={handleLogout} className="py-2 w-full">
-              Logout
-            </button>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
+            <DropdownMenuItem asChild>
+              <Link className="py-2" href="/help-center">
+                Help Center
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <button onClick={handleLogout} className="py-2 w-full">
+                Logout
+              </button>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenuPortal>
       </DropdownMenu>
     </div>
   );

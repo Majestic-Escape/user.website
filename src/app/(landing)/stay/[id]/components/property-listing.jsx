@@ -28,9 +28,8 @@ export default function PropertyListing({
     from: new Date(),
     to: addDays(new Date(), 1),
   });
-
   const [guests, setGuests] = useState({
-    adults: 2,
+    adults: Math.min(propertyDetails.guests, 2),
     children: 0,
     infants: 0,
     pets: 0,
@@ -141,7 +140,7 @@ export default function PropertyListing({
           /> */}
         </div>
 
-        <div className="fixed bottom-0 z-[1000] w-[92vw] right-4 md:right-0 md:w-auto  md:sticky md:top-24 md:self-start">
+        <div className="fixed bottom-0 z-[10] w-[92vw] right-4 md:right-0 md:w-auto  md:sticky md:top-48 md:self-start">
           <BookingWidget
             propertyId={propertyDetails?._id}
             manual={manual}

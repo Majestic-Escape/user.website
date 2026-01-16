@@ -11,7 +11,8 @@ export default function Component() {
   return (
     <div>
       <MobileNavbar />
-      <main className="pt-16">
+      <main>
+        {/*className="pt-16"*/}
         <ExpHero />
         <Hero />
       </main>
