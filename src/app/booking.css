@@ -7,3 +7,6 @@ body {
   font-size: 15px;
   scroll-behavior: smooth;
 }
+#modal {
+  z-index: 20001;
+}
