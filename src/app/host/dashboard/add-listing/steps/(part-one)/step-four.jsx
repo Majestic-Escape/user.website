@@ -86,7 +86,7 @@ export function DescribeYourPlace({ updateFormData, formData }) {
       {/* max-w-4xl mx-auto p-6 */}
       <TextReveal>
         <h3 className="text-xl md:text-2xl font-bricolage text-absoluteDark font-semibold">
-          Let's begin with the fundamentals
+          Let's begin with the basics
         </h3>
       </TextReveal>
       <TextReveal>
