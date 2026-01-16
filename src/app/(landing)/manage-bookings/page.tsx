@@ -272,11 +272,13 @@ const ManageBookings: React.FC = () => {
       const checkIn = new Date(booking.checkIn);
       const checkOut = new Date(booking.checkOut);
 
-      const isUpcoming =
-        checkIn.toLocaleDateString() > new Date().toLocaleDateString();
+      // const isUpcoming =
+      //   checkIn.toLocaleDateString() > new Date().toLocaleDateString();
 
-      const isPast =
-        checkIn.toLocaleDateString() <= new Date().toLocaleDateString();
+      // const isPast =
+      //   checkIn.toLocaleDateString() <= new Date().toLocaleDateString();
+      const isUpcoming = checkIn.getTime() > new Date().getTime();
+      const isPast = checkIn.getTime() <= new Date().getTime();
       const isConfirmed = booking?.status === "confirmed";
       const isCancelled = booking?.status === "cancelled";
       const isRejected = booking?.status === "rejected";
@@ -854,7 +856,11 @@ const ManageBookings: React.FC = () => {
                     {}
                     <div className="space-y-2">
                       <h3 className="font-medium">
-                        {booking?.propertyId?.title}
+                        <span title={booking?.propertyId?.title}>
+                          {booking?.propertyId?.title?.length > 32
+                            ? `${booking?.propertyId?.title.slice(0, 32)} ...`
+                            : booking?.propertyId?.title}
+                        </span>
                       </h3>
                       <p className="text-sm text-muted-foreground">
                         Located at {booking?.propertyId?.address?.city},{" "}
