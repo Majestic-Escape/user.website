@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BookingWidget from "./booking-widget";
 import PropertyHighlights from "./property-highlights";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
+import { useAuth } from "@/contexts/AuthContext";
 import PropertyDescription from "./property-description";
 import PropertyAmenities from "./property-amenities";
 import PropertySleepingArrangements from "./property-sleeping-arrangements";
@@ -47,7 +47,17 @@ export default function PropertyListing({
       setShowCalendar(false);
     }
   };
+  const {
+    modalCheckDate,
+    setModalCheckDate,
+    modalMobilePrice,
+    setModalMobilePrice,
+    setPerNightPrice,
+  } = useAuth();
 
+  setModalCheckDate(date);
+
+  setPerNightPrice(propertyDetails?.basePrice);
   const handleGuestChange = (type, value) => {
     setGuests((prev) => ({
       ...prev,
