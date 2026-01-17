@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export function PriceNavigation() {
   const {
@@ -40,6 +41,17 @@ export function PriceNavigation() {
     bookingQuery,
     setBookingQuery,
   } = useAuth();
+  const [isAuth, setIsAuth] = useState<boolean>(false);
+  const auth = async () => {
+    const getLocalData = await localStorage.getItem("token");
+    const data = getLocalData ? JSON.parse(getLocalData) : null;
+    if (data) {
+      setIsAuth(true);
+    }
+  };
+  useEffect(() => {
+    auth();
+  }, []);
 
   function formatDateRange(from?: Date, to?: Date) {
     if (!from || !to) return "";
@@ -94,21 +106,32 @@ export function PriceNavigation() {
             {formatDateRange(modalCheckDate?.from, modalCheckDate?.to)}
           </div>
         </div>
-        <Link
-          href={{
-            pathname: `/book/stay/${bookingQuery?.propertyId}`,
-            query: bookingQuery,
-          }}
-        >
+        {isAuth ? (
+          <Link
+            href={{
+              pathname: `/book/stay/${bookingQuery?.propertyId}`,
+              query: bookingQuery,
+            }}
+          >
+            <Button
+              className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+              // onClick={() => {
+              //   setOpenPriceModal(true);
+              // }}
+            >
+              Reserve
+            </Button>
+          </Link>
+        ) : (
           <Button
             className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
-            // onClick={() => {
-            //   setOpenPriceModal(true);
-            // }}
+            onClick={() => {
+              toast.error("You need to signup or login to reserve");
+            }}
           >
             Reserve
           </Button>
-        </Link>
+        )}
       </div>
     </div>
   );
