@@ -66,7 +66,7 @@ export default function BookingWidget({
   allowedGuests,
   loading,
 }: BookingWidgetProps) {
-  const { openPriceModal, setOpenPriceModal } = useAuth();
+  const { openPriceModal, setOpenPriceModal, setBookingQuery } = useAuth();
   const [totalPrice, setTotalPrice] = useState<number>(pricePerNight);
   const [nightsCount, setNightsCount] = useState<number>(1);
   const [calendarOpen, setCalendarOpen] = useState<boolean>(false);
@@ -267,7 +267,11 @@ export default function BookingWidget({
   const getTotalGuests = () => {
     return guests.adults + guests.children;
   };
-
+  useEffect(() => {
+    if (!openPriceModal) {
+      setCalendarOpen(false);
+    }
+  }, [openPriceModal]);
   const getGuestsText = () => {
     const totalGuests = getTotalGuests();
     return `${totalGuests} guest${totalGuests !== 1 ? "s" : ""}`;
@@ -343,6 +347,35 @@ export default function BookingWidget({
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("we have got this date", date?.from);
   }
+  useEffect(() => {
+    if (!propertyId) return;
+
+    setBookingQuery({
+      propertyId,
+      checkin: date?.from ? format(date.from, "yyyy-MM-dd") : undefined,
+      checkout: date?.to ? format(date.to, "yyyy-MM-dd") : undefined,
+      guests: getTotalGuests(),
+      nights: nightsCount,
+      adults: guests.adults,
+      children: guests.children,
+      infants: guests.infants,
+      checkinTime,
+      checkoutTime,
+      propertyImage: filename,
+    });
+  }, [
+    propertyId,
+    date?.from,
+    date?.to,
+    nightsCount,
+    guests.adults,
+    guests.children,
+    guests.infants,
+    checkinTime,
+    checkoutTime,
+    filename,
+  ]);
+
   function getModalRoot() {
     let root = document.getElementById("modal-root");
     if (!root) {
@@ -632,6 +665,7 @@ export default function BookingWidget({
                 <PopoverContent
                   className="w-auto h-auto p-0 z-[10001]"
                   align="start"
+                  container={modalRef.current}
                   side={isMobile ? "top" : "bottom"}
                   sideOffset={isMobile ? -120 : -70}
                   alignOffset={isMobile ? -140 : 0}
@@ -1101,7 +1135,7 @@ export default function BookingWidget({
                 </div>
 
                 <PopoverContent
-                  className="w-auto h-auto p-0 z-[10001]"
+                  className="w-auto h-auto p-0 z-[1000001]"
                   align="start"
                   side={isMobile ? "top" : "bottom"}
                   sideOffset={isMobile ? -120 : -70}
@@ -1200,6 +1234,7 @@ export default function BookingWidget({
                         <Link
                           href={{
                             pathname: `/book/stay/${propertyId}`,
+
                             query: {
                               checkin: date?.from
                                 ? format(date.from, "yyyy-MM-dd")

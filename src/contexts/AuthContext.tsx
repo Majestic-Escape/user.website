@@ -14,7 +14,19 @@ type FilterRooms = {
   beds: number;
   bathrooms: number;
 };
-
+type BookingQuery = {
+  propertyId?: string;
+  checkin?: string;
+  checkout?: string;
+  guests?: number;
+  nights?: number;
+  adults?: number;
+  children?: number;
+  infants?: number;
+  checkinTime?: string;
+  checkoutTime?: string;
+  propertyImage?: string;
+};
 type AuthContextType = {
   user: User | null;
   login: (user: User) => void;
@@ -24,6 +36,22 @@ type AuthContextType = {
   openModal: () => void;
   closeModal: () => void;
   toggleModal: () => void;
+  modalCheckDate: {
+    from: Date | undefined;
+    to: Date | undefined;
+  };
+  setModalCheckDate: React.Dispatch<
+    React.SetStateAction<{
+      from: Date | undefined;
+      to: Date | undefined;
+    }>
+  >;
+  modalMobilePrice: number;
+  setModalMobilePrice: React.Dispatch<React.SetStateAction<number>>;
+  perNightPrice: string;
+  setPerNightPrice: React.Dispatch<React.SetStateAction<string>>;
+  bookingQuery: BookingQuery | null;
+  setBookingQuery: React.Dispatch<React.SetStateAction<BookingQuery | null>>;
 
   // Filter states
   priceRange: number[];
@@ -64,6 +92,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const [bookingQuery, setBookingQuery] = useState<BookingQuery | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [modalFilter, setModalFilter] = useState<boolean>(false);
   const [resetClicked, setResetClicked] = useState<boolean>(false);
@@ -81,6 +110,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [openPriceModal, setOpenPriceModal] = useState(false);
   const [activeTab, setActiveTab] = useState("filters");
   const { checkToken } = useCheckToken();
+  const [modalCheckDate, setModalCheckDate] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({
+    from: undefined,
+    to: undefined,
+  });
+  const [perNightPrice, setPerNightPrice] = useState<string>("");
+  const [modalMobilePrice, setModalMobilePrice] = useState<number>(
+    Number(perNightPrice)
+  );
   const pathname = usePathname();
 
   useEffect(() => {
@@ -246,6 +286,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setOpenPriceModal,
     resetClicked,
     setResetClicked,
+
+    modalCheckDate,
+    setModalCheckDate,
+    modalMobilePrice,
+    setModalMobilePrice,
+
+    perNightPrice,
+    setPerNightPrice,
+
+    bookingQuery,
+    setBookingQuery,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

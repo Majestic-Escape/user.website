@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -29,8 +29,50 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function PriceNavigation() {
-  const { openPriceModal, setOpenPriceModal } = useAuth();
+  const {
+    openPriceModal,
+    setOpenPriceModal,
+    perNightPrice,
+    setPerNightPrice,
+    modalCheckDate,
+    setModalMobilePrice,
+    modalMobilePrice,
+    bookingQuery,
+    setBookingQuery,
+  } = useAuth();
 
+  function formatDateRange(from?: Date, to?: Date) {
+    if (!from || !to) return "";
+
+    const options: Intl.DateTimeFormatOptions = {
+      day: "numeric",
+      month: "short",
+    };
+
+    return `${from.toLocaleDateString(
+      "en-IN",
+      options
+    )} – ${to.toLocaleDateString("en-IN", options)}`;
+  }
+  const nights =
+    modalCheckDate?.from && modalCheckDate?.to
+      ? Math.ceil(
+          (modalCheckDate.to.getTime() - modalCheckDate.from.getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      : 0;
+
+  useEffect(() => {
+    if (modalCheckDate?.from && modalCheckDate?.to) {
+      const nights = Math.ceil(
+        (modalCheckDate.to.getTime() - modalCheckDate.from.getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+      const perNight = Number(perNightPrice);
+      const total = perNight * nights;
+      setModalMobilePrice(total);
+    }
+  }, []);
   return (
     <div className="md:hidden  font-poppins fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200">
       <div className="grid h-full max-w-lg grid-cols-2 mx-auto px-4 py-2 items-center">
@@ -40,16 +82,33 @@ export function PriceNavigation() {
             setOpenPriceModal(true);
           }}
         >
-          Select Dates
+          <div className="text-base font-semibold text-gray-900">
+            ₹
+            {nights == 1
+              ? perNightPrice
+              : (nights * Number(perNightPrice))?.toLocaleString("en-IN")}
+          </div>
+
+          <div className="text-xs text-gray-600 underline">
+            {nights} night{nights > 1 ? "s" : ""} ·{" "}
+            {formatDateRange(modalCheckDate?.from, modalCheckDate?.to)}
+          </div>
         </div>
-        <Button
-          className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
-          onClick={() => {
-            setOpenPriceModal(true);
+        <Link
+          href={{
+            pathname: `/book/stay/${bookingQuery?.propertyId}`,
+            query: bookingQuery,
           }}
         >
-          Reserve
-        </Button>
+          <Button
+            className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+            // onClick={() => {
+            //   setOpenPriceModal(true);
+            // }}
+          >
+            Reserve
+          </Button>
+        </Link>
       </div>
     </div>
   );
