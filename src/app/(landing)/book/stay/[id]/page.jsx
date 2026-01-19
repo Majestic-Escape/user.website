@@ -454,7 +454,9 @@ function BookPageContent() {
       if (!adult.name.trim())
         errors[`adult-name-${index}`] = "Name is required";
       if (adult.age < 18)
-        errors[`adult-age-${index}`] = "Age must be 18 or above";
+        errors[`adult-age-${index}`] = "Age must be 18 and above";
+      if (adult.age > 130)
+        errors[`adult-age-${index}`] = "Age cannot be more than 130";
     });
 
     guestData.children.forEach((child, index) => {
@@ -1275,6 +1277,7 @@ function BookPageContent() {
                             <input
                               type="number"
                               min="18"
+                              max="130"
                               value={adult.age}
                               onChange={(e) =>
                                 updateGuestData(
