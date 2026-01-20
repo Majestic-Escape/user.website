@@ -38,7 +38,7 @@ export default function Navbar() {
     experiencesWishlist.length +
     Object.values(wishlists.folders).reduce(
       (sum, folder) => sum + folder.items.length,
-      0
+      0,
     );
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function Navbar() {
           </Link>
           <div></div>
           <div
-            className={`inline-block z-50 absolute   right-[50%] translate-x-1/2 
+            className={`inline-block z-50 absolute  mb-4 right-[50%] translate-x-1/2 
             transition-all duration-300 ${
               isScrolled
                 ? "opacity-0 hidden md:hidden"

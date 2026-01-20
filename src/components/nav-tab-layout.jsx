@@ -30,7 +30,7 @@ export default function NavTabLayout() {
           <TabsTrigger key={tab.id} value={tab.href} className="py-2" asChild>
             <Link href={tab.href}>
               {" "}
-              <img src={tab.icon} height="50" width="50" />
+              <img src={tab.icon} height="60" width="60" />
               <span
                 className={`text-absoluteDark text-base font-medium 'text-absoluteDark'
               `}
