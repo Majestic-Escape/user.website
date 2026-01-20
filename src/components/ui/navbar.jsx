@@ -31,7 +31,7 @@ export default function Navbar() {
     experiencesWishlist.length +
     Object.values(wishlists.folders).reduce(
       (sum, folder) => sum + folder.items.length,
-      0
+      0,
     );
   const pathname = usePathname();
   const isSearchVisible =
