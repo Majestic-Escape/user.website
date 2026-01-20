@@ -80,7 +80,7 @@ export function MobileNavbar() {
                   setActiveTab("search");
                   console.log("ada");
                 }}
-                className="w-full mr-3 py-5 rounded-3xl justify-start text-left font-normal"
+                className="w-full mr-3 py-6 rounded-3xl justify-start text-left font-normal"
               >
                 <Search className="mr-3 h-4 w-4" />
                 Start your search
@@ -105,6 +105,8 @@ export function MobileNavbar() {
           onClose={() => setIsSearchOpen(false)}
         />
         <MobileNavTabLayout hideTabs={hideTabs} />
+        {/* <div className="pb-2" />
+        <hr /> */}
         {/* ⭐ CATEGORY TABS (Homes | Experiences | Services) */}
         {/* <div
           className={`w-full justify-center overflow-x-auto flex items-center gap-8 px-6 pb-2 border-t border-gray-200
