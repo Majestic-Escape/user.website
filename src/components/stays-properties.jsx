@@ -99,10 +99,10 @@ export default function StaysProperties() {
     <div className="font-poppins flex justify-center w-full bg-white">
       <div className="w-full max-w-[1760px]">
         <div className="mx-auto px-4 sm:px-6 lg:px-[72px] py-8 sm:py-16 lg:py-[128px] font-poppins bg-white text-absoluteDark">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl text-absoluteDark font-bricolage font-semibold mb-2">
+          <h2 className="text-3xl sm:text-2xl lg:text-4xl text-absoluteDark font-bricolage font-semibold mb-2">
             Discover Our Finest Stays
           </h2>
-          <p className="text-sm sm:text-base text-stone mb-4 sm:mb-8">
+          <p className="text-xl sm:text-base text-stone mb-4 sm:mb-8">
             Explore through featured properties available on Majestic Escape
           </p>
 
