@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -40,6 +41,22 @@ export default function LoginForm() {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    const handleResize = () => {
+      const keyboardHeight = window.visualViewport.height - window.innerHeight;
+      if (keyboardHeight > 0) {
+        // Show your button/menu
+        document.body.style.paddingBottom = `${keyboardHeight}px`;
+      } else {
+        // Hide it
+        document.body.style.paddingBottom = "0";
+      }
+    };
+
+    window.visualViewport.addEventListener("resize", handleResize);
+    return () =>
+      window.visualViewport.removeEventListener("resize", handleResize);
+  }, []);
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
   };
@@ -56,8 +73,8 @@ export default function LoginForm() {
             ...acc,
             [curr.path[0]]: curr.message,
           }),
-          {}
-        )
+          {},
+        ),
       );
       return false;
     }
@@ -93,7 +110,7 @@ export default function LoginForm() {
             break;
           case "ACCOUNT_LOCKED":
             toast.error(
-              "Your account is locked due to multiple failed attempts"
+              "Your account is locked due to multiple failed attempts",
             );
             break;
           case "INVALID_OTP":
@@ -194,7 +211,7 @@ export default function LoginForm() {
           toast.error("OTP is required. Please enter the OTP.");
         } else if (errorData.code === "INVALID_OTP") {
           toast.error(
-            `Invalid OTP. ${errorData.otpAttempts.remainingAttempts} attempts remaining.`
+            `Invalid OTP. ${errorData.otpAttempts.remainingAttempts} attempts remaining.`,
           );
         }
         break;
@@ -221,7 +238,7 @@ export default function LoginForm() {
           toast.error(
             `Your account is locked. Try again after ${
               errorData.unlocksAt.remainingMinutes || 5
-            } minutes.`
+            } minutes.`,
           );
         }
         break;
@@ -231,7 +248,7 @@ export default function LoginForm() {
           toast.error(
             `Your account is locked. Try again after ${
               errorData?.unlocksAt?.remainingMinutes || 5
-            } minutes.`
+            } minutes.`,
           );
         }
         break;
