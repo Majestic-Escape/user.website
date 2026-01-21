@@ -127,11 +127,13 @@ export default function FilterModal({
   const [hydrated, setHydrated] = useState(false);
   const [matches, setMatches] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
   type FilterRooms = {
     bedrooms: number;
     beds: number;
     bathrooms: number;
   };
+
   useEffect(() => {
     const reset = sessionStorage.getItem("modalFilterReset");
     if (reset == "true") {
@@ -163,7 +165,46 @@ export default function FilterModal({
     children: number;
     infants: number;
   };
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentIndex(0);
 
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.overflow = "hidden";
+
+      // Store scroll position for later restoration
+      document.body.dataset.scrollY = scrollY.toString();
+    } else {
+      // Restore scroll position
+      const scrollY = document.body.dataset.scrollY || "0";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "auto";
+
+      // Scroll back to original position
+      window.scrollTo(0, parseInt(scrollY, 10));
+
+      // Clean up
+      delete document.body.dataset.scrollY;
+    }
+
+    return () => {
+      // Cleanup on unmount
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "auto";
+      delete document.body.dataset.scrollY;
+    };
+  }, [isOpen]);
   // Search state
   const [destination, setDestination] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -199,7 +240,7 @@ export default function FilterModal({
     const saved = mobile
       ? sessionStorage.getItem("mobileFilters")
       : sessionStorage.getItem("searchFilters");
-    console.log("ssssssss", saved);
+    // console.log("ssssssss", saved);
     if (saved) {
       const parsed = JSON.parse(saved);
 
@@ -238,7 +279,7 @@ export default function FilterModal({
   //Guest change
   const handleGuestChange = (
     type: keyof Guests,
-    operation: "increment" | "decrement"
+    operation: "increment" | "decrement",
   ) => {
     setGuests((prev) => ({
       ...prev,
@@ -302,7 +343,7 @@ export default function FilterModal({
   const filteredDestinations = destinations.filter(
     (dest) =>
       dest.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dest.description.toLowerCase().includes(searchTerm.toLowerCase())
+      dest.description.toLowerCase().includes(searchTerm.toLowerCase()),
   );
   const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Math.max(Number(e.target.value), priceRange[0] + 1000);
@@ -508,7 +549,7 @@ export default function FilterModal({
     console.log("pri", addPropertyType);
   }
   const newAmenities = addAmenities.map((x) =>
-    x.toLowerCase().replaceAll(" ", "_")
+    x.toLowerCase().replaceAll(" ", "_"),
   );
   const submit = () => {
     router.push(
@@ -530,7 +571,7 @@ export default function FilterModal({
         rooms?.bathrooms || ""
       }&bookingType=${bookingType || ""}&checkinType=${
         checkinType || ""
-      }&pets=${petAllowed}`
+      }&pets=${petAllowed}`,
     );
   };
   const small = ["tablet", "mobile"];
@@ -673,7 +714,7 @@ export default function FilterModal({
                       </button>
                     </div>
                   </div>
-                )
+                ),
               )}
             </div>
 
@@ -861,7 +902,7 @@ export default function FilterModal({
                     rooms?.beds || ""
                   }&bathrooms=${rooms?.bathrooms || ""}&bookingType=${
                     bookingType || ""
-                  }&checkinType=${checkinType || ""}&pets=${petAllowed || ""}`
+                  }&checkinType=${checkinType || ""}&pets=${petAllowed || ""}`,
                 );
                 onClose();
               }}
@@ -1003,7 +1044,7 @@ export default function FilterModal({
                           <span className="text-sm">
                             {dateRange?.from && dateRange?.to
                               ? `${formatDate(dateRange.from)} - ${formatDate(
-                                  dateRange.to
+                                  dateRange.to,
                                 )}`
                               : "Check in - Check out"}
                           </span>
@@ -1071,8 +1112,8 @@ export default function FilterModal({
                                 {type === "adults"
                                   ? "Ages 13 or above"
                                   : type === "children"
-                                  ? "Ages 2-12"
-                                  : "Under 2"}
+                                    ? "Ages 2-12"
+                                    : "Under 2"}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -1300,7 +1341,7 @@ export default function FilterModal({
                       }
                       onClick={() => {
                         setBookingType(
-                          bookingType === "instant" ? "" : "instant"
+                          bookingType === "instant" ? "" : "instant",
                         );
                       }}
                     >
@@ -1315,7 +1356,9 @@ export default function FilterModal({
                       }
                       onClick={() => {
                         setCheckinType(
-                          checkinType === "self-check-in" ? "" : "self-check-in"
+                          checkinType === "self-check-in"
+                            ? ""
+                            : "self-check-in",
                         );
                       }}
                     >
@@ -1330,7 +1373,7 @@ export default function FilterModal({
                       }
                       onClick={() => {
                         setPetAllowed(
-                          petAllowed === "no_pets" ? "" : "no_pets"
+                          petAllowed === "no_pets" ? "" : "no_pets",
                         );
                       }}
                     >
@@ -1356,7 +1399,7 @@ export default function FilterModal({
                           setAddPropertyType(
                             addPropertyType === property.route
                               ? ""
-                              : property.route
+                              : property.route,
                           );
                         }}
                       >
@@ -1402,7 +1445,7 @@ export default function FilterModal({
                     },
                     searchTerm,
                     guests,
-                  })
+                  }),
                 );
               }}
             >
@@ -1432,7 +1475,7 @@ export default function FilterModal({
                     rooms?.beds || ""
                   }&bathrooms=${rooms?.bathrooms || ""}&bookingType=${
                     bookingType || ""
-                  }&checkinType=${checkinType || ""}&pets=${petAllowed || ""}`
+                  }&checkinType=${checkinType || ""}&pets=${petAllowed || ""}`,
                 );
                 onClose();
               }}
