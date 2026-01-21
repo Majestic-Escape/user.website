@@ -49,6 +49,8 @@ export function PriceNavigation() {
       setIsAuth(true);
     }
   };
+  const router = useRouter();
+  const pathname = usePathname();
   useEffect(() => {
     auth();
   }, []);
@@ -63,14 +65,14 @@ export function PriceNavigation() {
 
     return `${from.toLocaleDateString(
       "en-IN",
-      options
+      options,
     )} – ${to.toLocaleDateString("en-IN", options)}`;
   }
   const nights =
     modalCheckDate?.from && modalCheckDate?.to
       ? Math.ceil(
           (modalCheckDate.to.getTime() - modalCheckDate.from.getTime()) /
-            (1000 * 60 * 60 * 24)
+            (1000 * 60 * 60 * 24),
         )
       : 0;
 
@@ -78,7 +80,7 @@ export function PriceNavigation() {
     if (modalCheckDate?.from && modalCheckDate?.to) {
       const nights = Math.ceil(
         (modalCheckDate.to.getTime() - modalCheckDate.from.getTime()) /
-          (1000 * 60 * 60 * 24)
+          (1000 * 60 * 60 * 24),
       );
       const perNight = Number(perNightPrice);
       const total = perNight * nights;
@@ -86,7 +88,7 @@ export function PriceNavigation() {
     }
   }, []);
   return (
-    <div className="md:hidden  font-poppins fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200">
+    <div className="md:hidden  font-poppins fixed bottom-0 left-0 z-50 w-full h-24 bg-white border-t border-gray-200">
       <div className="grid h-full max-w-lg grid-cols-2 mx-auto px-4 py-2 items-center">
         <div
           className=" underline"
@@ -94,14 +96,14 @@ export function PriceNavigation() {
             setOpenPriceModal(true);
           }}
         >
-          <div className="text-base font-semibold text-gray-900">
+          <div className="text-xl font-semibold text-gray-900">
             ₹
             {nights == 1
               ? perNightPrice
               : (nights * Number(perNightPrice))?.toLocaleString("en-IN")}
           </div>
 
-          <div className="text-xs text-gray-600 underline">
+          <div className="text-base text-gray-600 underline">
             {nights} night{nights > 1 ? "s" : ""} ·{" "}
             {formatDateRange(modalCheckDate?.from, modalCheckDate?.to)}
           </div>
@@ -114,7 +116,7 @@ export function PriceNavigation() {
             }}
           >
             <Button
-              className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+              className="w-full flex justify-center items-center text-center py-8 px-2 bg-primaryGreen text-2xl font-bricolage hover:bg-brightGreen text-white h-10 rounded-[42px] font-medium"
               // onClick={() => {
               //   setOpenPriceModal(true);
               // }}
@@ -124,9 +126,12 @@ export function PriceNavigation() {
           </Link>
         ) : (
           <Button
-            className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
+            className="w-full flex justify-center items-center text-center py-8 px-2 bg-primaryGreen text-2xl font-bricolage hover:bg-brightGreen text-white h-10 rounded-[42px] font-medium"
             onClick={() => {
-              toast.error("You need to signup or login to reserve");
+              const returnUrl = encodeURIComponent(pathname);
+              router.push(`/login?returnUrl=${returnUrl}`);
+              return;
+              // toast.error("You need to signup or login to reserve");
             }}
           >
             Reserve
