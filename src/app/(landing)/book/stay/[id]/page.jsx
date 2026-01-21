@@ -55,10 +55,10 @@ const fetchProperty = async (id) => {
         console.error(
           "Failed to fetch property:",
           response.status,
-          await response.text()
+          await response.text(),
         );
         throw new Error(
-          `Failed to fetch property data (status: ${response.status})`
+          `Failed to fetch property data (status: ${response.status})`,
         );
       }
       const result = await response.json();
@@ -77,7 +77,7 @@ function GuestModal({ onClose, children }) {
         {children}
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 // Create a BookPageContent component that uses React Query
@@ -132,7 +132,7 @@ function BookPageContent() {
               "Content-Type": "application/json",
               Authorization: `Bearer ${data}`,
             },
-          }
+          },
         );
         // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 
@@ -150,10 +150,10 @@ function BookPageContent() {
           console.error(
             "Failed to fetch property:",
             response.status,
-            await response.text()
+            await response.text(),
           );
           throw new Error(
-            `Failed to fetch property data (status: ${response.status})`
+            `Failed to fetch property data (status: ${response.status})`,
           );
         }
         const result = await response.json();
@@ -264,7 +264,7 @@ function BookPageContent() {
           </div>
         </div>
       </div>,
-      document.body
+      document.body,
     );
   }
 
@@ -308,6 +308,30 @@ function BookPageContent() {
       delete document.body.dataset.scrollY;
     };
   }, [showGuestModal, showPriceBreakdown]);
+
+  const lockBodyScroll = () => {
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+    document.body.dataset.scrollY = scrollY.toString();
+  };
+
+  const unlockBodyScroll = () => {
+    const scrollY = document.body.dataset.scrollY || "0";
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    document.body.style.overflow = "";
+    window.scrollTo(0, parseInt(scrollY, 10));
+    delete document.body.dataset.scrollY;
+  };
+
   const calculateTotal = () => {
     if (!property)
       return {
@@ -326,7 +350,7 @@ function BookPageContent() {
       nights && Number(nights) > 0
         ? Number(nights)
         : Math.ceil(
-            (date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24)
+            (date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24),
           );
     const subtotal = nightlyRate * nightsCount;
     const serviceFee = Math.round(subtotal * 0.12); // 12% service fee like Airbnb
@@ -380,7 +404,7 @@ function BookPageContent() {
       (_, index) => ({
         name: index === 0 ? `${firstName} ${lastName}`.trim() : "",
         age: index === 0 ? dob : 18,
-      })
+      }),
     );
 
     const initialChildren = Array.from({ length: parseInt(children) }, () => ({
@@ -553,7 +577,7 @@ function BookPageContent() {
     cancel,
     guestData,
     subTotal,
-    policy
+    policy,
   ) => {
     try {
       const userId = JSON.parse(localStorage.getItem("userId"));
@@ -659,7 +683,7 @@ function BookPageContent() {
     bookingId,
     // hostEmail = "",
     manual,
-    payment
+    payment,
   ) => {
     try {
       const userId = JSON.parse(localStorage.getItem("userId"));
@@ -810,7 +834,7 @@ function BookPageContent() {
       const propertyTitle = await property.title;
 
       const found = Object.entries(property?.cancellationType).find(
-        ([key, value]) => value === true
+        ([key, value]) => value === true,
       );
       const extract = JSON.stringify(found);
       const parsed = JSON.parse(extract);
@@ -825,7 +849,7 @@ function BookPageContent() {
         cancel,
         guestData,
         totals.subtotal,
-        found[0]
+        found[0],
       );
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
         console.log("green lan", booking);
@@ -838,7 +862,7 @@ function BookPageContent() {
       const order_id = await createPaymentOrder(
         booking?.data?._id,
         totals?.total * 100,
-        property?._id
+        property?._id,
       );
       if (!order_id?.data?.id) {
         toast.error("Unable to initiate payment. Please try again.");
@@ -900,7 +924,7 @@ function BookPageContent() {
             order_id?.data?.id, //orderid from server
             response.razorpay_payment_id,
             response.razorpay_signature,
-            response.method
+            response.method,
           );
 
           const hostEmail = await property.hostEmail;
@@ -915,7 +939,7 @@ function BookPageContent() {
                 booking?.data?._id,
                 // hostEmail,
                 property.bookingType.manual,
-                verify?.data?._id
+                verify?.data?._id,
               );
 
               // await createPayout(
@@ -936,13 +960,13 @@ function BookPageContent() {
               }
               const confirm = await updateConfirmStatus(
                 booking?.data?._id,
-                property?.title
+                property?.title,
               );
               await updateBookingStatus(
                 booking?.data?._id,
                 // hostEmail,
                 property.bookingType.manual,
-                verify?.data?._id
+                verify?.data?._id,
               );
               // await createPayout(
               //   booking?.data?._id,
@@ -969,6 +993,7 @@ function BookPageContent() {
         },
         modal: {
           ondismiss: async () => {
+            unlockBodyScroll();
             if (process.env.NEXT_PUBLIC_ENV === "dev") {
               console.log("its closed no");
             }
@@ -981,7 +1006,7 @@ function BookPageContent() {
           checkOut: date.to.toISOString(),
         },
       };
-
+      lockBodyScroll();
       const rzp = new window.Razorpay(options);
 
       rzp.on("payment.failed", (response) => {
@@ -997,12 +1022,12 @@ function BookPageContent() {
   async function fetchDates() {
     try {
       const response = await axios.get(
-        `${API_URL}/booking/check-dates/${propertyId}`
+        `${API_URL}/booking/check-dates/${propertyId}`,
       );
 
       if (response.status != 200) {
         throw new Error(
-          `Failed to fetch host data (status: ${response.status})`
+          `Failed to fetch host data (status: ${response.status})`,
         );
       }
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
@@ -1067,7 +1092,7 @@ function BookPageContent() {
     "No pets",
   ];
   const found = Object.entries(property?.cancellationType).find(
-    ([key, value]) => value === true
+    ([key, value]) => value === true,
   );
 
   const propertyCheckIn = property?.checkInTime || "2:00 PM";
@@ -1248,7 +1273,7 @@ function BookPageContent() {
                                   "adults",
                                   index,
                                   "name",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className={`w-full p-2 border rounded ${
@@ -1287,7 +1312,7 @@ function BookPageContent() {
                                   // parseInt(e.target.value) || 13
                                   e.target.value === ""
                                     ? ""
-                                    : parseInt(e.target.value, 10)
+                                    : parseInt(e.target.value, 10),
                                 )
                               }
                               className={`w-full p-2 border rounded ${
@@ -1331,7 +1356,7 @@ function BookPageContent() {
                                   "children",
                                   index,
                                   "name",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className={`w-full p-2 border rounded ${
@@ -1364,7 +1389,7 @@ function BookPageContent() {
                                   // parseInt(e.target.value) || 2
                                   e.target.value === ""
                                     ? ""
-                                    : parseInt(e.target.value, 10)
+                                    : parseInt(e.target.value, 10),
                                 )
                               }
                               className={`w-full p-2 border rounded ${
