@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/input-otp";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
@@ -40,7 +40,10 @@ export default function LoginForm() {
   const [isEditingEmail, setIsEditingEmail] = useState(false); // Update 1
   const [isRedirecting, setIsRedirecting] = useState(false);
   const router = useRouter();
-
+  const params = useSearchParams();
+  const returnUrl = params.get("returnUrl");
+  console.log("nnic", returnUrl);
+  const decodedReturnUrl = returnUrl ? decodeURIComponent(returnUrl) : "/";
   useEffect(() => {
     const handleResize = () => {
       const keyboardHeight = window.visualViewport.height - window.innerHeight;
@@ -193,7 +196,8 @@ export default function LoginForm() {
       toast.success("Welcome. You are now signed in.");
       setIsRedirecting(true);
       setTimeout(() => {
-        router.push("/stays");
+        router.push(decodedReturnUrl);
+        // router.push("/stays");
       }, 800);
       // router.push("/stays");
     } catch (error) {

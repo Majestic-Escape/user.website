@@ -36,7 +36,7 @@ interface BookingWidgetProps {
   onDateSelect: (range: DateRange | undefined) => void;
   onGuestChange: (
     type: "adults" | "children" | "infants" | "pets",
-    value: number
+    value: number,
   ) => void;
   toggleCalendar: () => void;
   toggleGuestsDropdown: () => void;
@@ -46,6 +46,7 @@ interface BookingWidgetProps {
 }
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
+import { usePathname, useRouter } from "next/navigation";
 export default function BookingWidget({
   propertyId,
   manual,
@@ -77,7 +78,8 @@ export default function BookingWidget({
   const [matches, setMatches] = useState(false);
   const scrollPosRef = useRef(0);
   const modalRef = useRef<HTMLDivElement | null>(null);
-
+  const router = useRouter();
+  const pathname = usePathname();
   useEffect(() => {
     const handleModalChange = () => {
       if (openPriceModal) {
@@ -154,7 +156,7 @@ export default function BookingWidget({
   useEffect(() => {
     if (date?.from && date?.to) {
       const nights = Math.ceil(
-        (date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24)
+        (date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24),
       );
       setNightsCount(nights);
       setTotalPrice(pricePerNight * nights);
@@ -287,7 +289,10 @@ export default function BookingWidget({
         console.log("this is user log", userId);
       }
       if (!data) {
-        toast.error("You need to signup or login to reserve.");
+        // toast.error("You need to signup or login to reserve.");
+        const returnUrl = encodeURIComponent(pathname);
+        console.log("uul", pathname);
+        router.push(`/login?returnUrl=${returnUrl}`);
         return;
       }
 
@@ -545,7 +550,7 @@ export default function BookingWidget({
                                   onClick={() =>
                                     onGuestChange(
                                       "children",
-                                      guests.children - 1
+                                      guests.children - 1,
                                     )
                                   }
                                   disabled={guests.children <= 0}
@@ -562,7 +567,7 @@ export default function BookingWidget({
                                   onClick={() =>
                                     onGuestChange(
                                       "children",
-                                      guests.children + 1
+                                      guests.children + 1,
                                     )
                                   }
                                   disabled={getTotalGuests() >= allowedGuests}
@@ -602,7 +607,7 @@ export default function BookingWidget({
                                     if (guests.infants < 5) {
                                       onGuestChange(
                                         "infants",
-                                        guests.infants + 1
+                                        guests.infants + 1,
                                       );
                                     }
                                   }}
@@ -741,7 +746,7 @@ export default function BookingWidget({
                           className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
                           onClick={() =>
                             toast.error(
-                              "Selected date overlaps with other bookings"
+                              "Selected date overlaps with other bookings",
                             )
                           }
                         >
@@ -753,7 +758,7 @@ export default function BookingWidget({
                           className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
                           onClick={() =>
                             toast.error(
-                              "Checkin and Checkout date cannot be same"
+                              "Checkin and Checkout date cannot be same",
                             )
                           }
                         >
@@ -865,7 +870,7 @@ export default function BookingWidget({
           </CardContent>
         </Card>
       </div>,
-      getModalRoot()
+      getModalRoot(),
     );
   } else {
     return (
@@ -1017,7 +1022,7 @@ export default function BookingWidget({
                                   onClick={() =>
                                     onGuestChange(
                                       "children",
-                                      guests.children - 1
+                                      guests.children - 1,
                                     )
                                   }
                                   disabled={guests.children <= 0}
@@ -1034,7 +1039,7 @@ export default function BookingWidget({
                                   onClick={() =>
                                     onGuestChange(
                                       "children",
-                                      guests.children + 1
+                                      guests.children + 1,
                                     )
                                   }
                                   disabled={getTotalGuests() >= allowedGuests}
@@ -1074,7 +1079,7 @@ export default function BookingWidget({
                                     if (guests.infants < 5) {
                                       onGuestChange(
                                         "infants",
-                                        guests.infants + 1
+                                        guests.infants + 1,
                                       );
                                     }
                                   }}
@@ -1212,7 +1217,7 @@ export default function BookingWidget({
                           className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
                           onClick={() =>
                             toast.error(
-                              "Selected date overlaps with other bookings"
+                              "Selected date overlaps with other bookings",
                             )
                           }
                         >
@@ -1224,7 +1229,7 @@ export default function BookingWidget({
                           className="w-full flex justify-center items-center text-center py-3 px bg-primaryGreen text-base font-bricolage hover:bg-brightGreen text-white h-10 rounded-lg font-medium"
                           onClick={() =>
                             toast.error(
-                              "Checkin and Checkout date cannot be same"
+                              "Checkin and Checkout date cannot be same",
                             )
                           }
                         >
