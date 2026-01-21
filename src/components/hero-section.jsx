@@ -48,12 +48,30 @@ export default function HeroSection() {
     <div className="pt-32 md:pt-48 w-screen -mx-[calc((100vw-100%)/2)] overflow-hidden">
       <div className="w-full">
         {/* <img src={"/images/govt/kuno_web.png"}/> */}
-        <Image
+        {/* <Image
           src="/images/govt/kuno_web_1.png"
           alt="Full width image"
           width={1920} // Set your image dimensions
           height={1080}
-          className="-pt-2 md:pt-12 lg:-pt-2 w-full h-auto object-contain"
+          className="-pt-2 md:pt-12 lg:-pt-2 w-full pt-2 h-auto object-contain"
+          sizes="100vw"
+          priority
+        /> */}
+        <Image
+          src="/images/hero/KUNO-WEB-DESKTOP-1.png"
+          alt="Full width image"
+          width={1920} // Set your image dimensions
+          height={1080}
+          className="hidden md:block -pt-2 md:pt-8 lg:-pt-2 w-full h-auto object-contain"
+          sizes="100vw"
+          priority
+        />
+        <Image
+          src="/images/hero/KUNO-MBL-FIN.png"
+          alt="Full width image"
+          width={1920} // Set your image dimensions
+          height={1920}
+          className="block md:hidden pt-6 w-full h-auto object-contain"
           sizes="100vw"
           priority
         />

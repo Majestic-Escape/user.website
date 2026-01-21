@@ -55,10 +55,10 @@ const fetchProperty = async (id) => {
         console.error(
           "Failed to fetch property:",
           response.status,
-          await response.text()
+          await response.text(),
         );
         throw new Error(
-          `Failed to fetch property data (status: ${response.status})`
+          `Failed to fetch property data (status: ${response.status})`,
         );
       }
       const result = await response.json();
@@ -68,7 +68,18 @@ const fetchProperty = async (id) => {
     console.error(err);
   }
 };
+function GuestModal({ onClose, children }) {
+  if (typeof window === "undefined") return null;
 
+  return createPortal(
+    <div className="fixed inset-0 z-[1200] bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
+}
 // Create a BookPageContent component that uses React Query
 function BookPageContent() {
   const router = useRouter();
@@ -121,7 +132,7 @@ function BookPageContent() {
               "Content-Type": "application/json",
               Authorization: `Bearer ${data}`,
             },
-          }
+          },
         );
         // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
 
@@ -139,10 +150,10 @@ function BookPageContent() {
           console.error(
             "Failed to fetch property:",
             response.status,
-            await response.text()
+            await response.text(),
           );
           throw new Error(
-            `Failed to fetch property data (status: ${response.status})`
+            `Failed to fetch property data (status: ${response.status})`,
           );
         }
         const result = await response.json();
@@ -253,233 +264,10 @@ function BookPageContent() {
           </div>
         </div>
       </div>,
-      document.body
+      document.body,
     );
   }
-  function GuestModal({ onClose, children }) {
-    if (typeof window === "undefined") return null;
 
-    return createPortal(
-      <div className="fixed inset-0 z-[1200] bg-black/50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center p-6 border-b">
-            {guestSaving ? (
-              <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="min-h-screen flex items-center justify-center">
-                    <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
-                  </div>
-                  <p className="text-white text-sm">Saving guest details...</p>
-                </div>
-              </div>
-            ) : (
-              <>
-                <h2 className="text-xl font-semibold">Guest Information</h2>
-                <button
-                  onClick={() => setShowGuestModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </>
-            )}
-          </div>
-
-          <div className="p-6">
-            {/* Adults section */}
-            <p className=" pb-6 flex">
-              <p className="text-red-500 pr-2">Note: </p> Enter names as per
-              government ID
-            </p>
-            {guestData.adults.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-4">Adults ({adults})</h3>
-                {guestData.adults.map((adult, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
-                  >
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        {index === 0
-                          ? "Primary Guest Name"
-                          : `Adult ${index + 1} Name`}
-                      </label>
-                      <input
-                        type="text"
-                        value={adult.name}
-                        onChange={(e) =>
-                          updateGuestData(
-                            "adults",
-                            index,
-                            "name",
-                            e.target.value
-                          )
-                        }
-                        className={`w-full p-2 border rounded ${
-                          formErrors[`adult-name-${index}`]
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                        placeholder="Full name"
-                        readOnly={index === 0} // Make first adult name read-only
-                      />
-                      {index === 0 && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          User Name cannot be edited
-                        </p>
-                      )}
-                      {formErrors[`adult-name-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {formErrors[`adult-name-${index}`]}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Age
-                      </label>
-                      <input
-                        type="number"
-                        min="18"
-                        value={adult.age}
-                        onChange={(e) =>
-                          updateGuestData(
-                            "adults",
-                            index,
-                            "age",
-                            // parseInt(e.target.value) || 13
-                            e.target.value === ""
-                              ? ""
-                              : parseInt(e.target.value, 10)
-                          )
-                        }
-                        className={`w-full p-2 border rounded ${
-                          formErrors[`adult-age-${index}`]
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                        readOnly={index === 0}
-                      />
-                      {formErrors[`adult-age-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {formErrors[`adult-age-${index}`]}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Children section */}
-            {guestData.children.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-4">
-                  Children ({children})
-                </h3>
-                {guestData.children.map((child, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
-                  >
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Child {index + 1} Name
-                      </label>
-                      <input
-                        type="text"
-                        value={child.name}
-                        onChange={(e) =>
-                          updateGuestData(
-                            "children",
-                            index,
-                            "name",
-                            e.target.value
-                          )
-                        }
-                        className={`w-full p-2 border rounded ${
-                          formErrors[`child-name-${index}`]
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                        placeholder="Full name"
-                      />
-                      {formErrors[`child-name-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {formErrors[`child-name-${index}`]}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Age
-                      </label>
-                      <input
-                        type="number"
-                        min="3"
-                        max="17"
-                        value={child.age}
-                        onChange={(e) =>
-                          updateGuestData(
-                            "children",
-                            index,
-                            "age",
-                            // parseInt(e.target.value) || 2
-                            e.target.value === ""
-                              ? ""
-                              : parseInt(e.target.value, 10)
-                          )
-                        }
-                        className={`w-full p-2 border rounded ${
-                          formErrors[`child-age-${index}`]
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                      />
-                      {formErrors[`child-age-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {formErrors[`child-age-${index}`]}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-end p-6 border-t">
-            <button
-              onClick={() => setShowGuestModal(false)}
-              className="mr-4 px-4 py-2 text-gray-600 hover:text-gray-800"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleConfirmGuestInfo}
-              className="px-6 py-2 bg-primaryGreen text-white rounded hover:bg-brightGreen"
-            >
-              Confirm
-            </button>
-          </div>
-        </div>
-      </div>,
-      document.body
-    );
-  }
   useEffect(() => {
     if (showGuestModal || showPriceBreakdown) {
       setCurrentIndex(0);
@@ -520,6 +308,15 @@ function BookPageContent() {
       delete document.body.dataset.scrollY;
     };
   }, [showGuestModal, showPriceBreakdown]);
+
+  const lockForRazorpay = () => {
+    document.body.classList.add("razorpay-lock");
+  };
+
+  const unlockForRazorpay = () => {
+    document.body.classList.remove("razorpay-lock");
+  };
+
   const calculateTotal = () => {
     if (!property)
       return {
@@ -538,7 +335,7 @@ function BookPageContent() {
       nights && Number(nights) > 0
         ? Number(nights)
         : Math.ceil(
-            (date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24)
+            (date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24),
           );
     const subtotal = nightlyRate * nightsCount;
     const serviceFee = Math.round(subtotal * 0.12); // 12% service fee like Airbnb
@@ -592,7 +389,7 @@ function BookPageContent() {
       (_, index) => ({
         name: index === 0 ? `${firstName} ${lastName}`.trim() : "",
         age: index === 0 ? dob : 18,
-      })
+      }),
     );
 
     const initialChildren = Array.from({ length: parseInt(children) }, () => ({
@@ -666,7 +463,9 @@ function BookPageContent() {
       if (!adult.name.trim())
         errors[`adult-name-${index}`] = "Name is required";
       if (adult.age < 18)
-        errors[`adult-age-${index}`] = "Age must be 18 or above";
+        errors[`adult-age-${index}`] = "Age must be 18 and above";
+      if (adult.age > 130)
+        errors[`adult-age-${index}`] = "Age cannot be more than 130";
     });
 
     guestData.children.forEach((child, index) => {
@@ -763,7 +562,7 @@ function BookPageContent() {
     cancel,
     guestData,
     subTotal,
-    policy
+    policy,
   ) => {
     try {
       const userId = JSON.parse(localStorage.getItem("userId"));
@@ -869,7 +668,7 @@ function BookPageContent() {
     bookingId,
     // hostEmail = "",
     manual,
-    payment
+    payment,
   ) => {
     try {
       const userId = JSON.parse(localStorage.getItem("userId"));
@@ -1020,7 +819,7 @@ function BookPageContent() {
       const propertyTitle = await property.title;
 
       const found = Object.entries(property?.cancellationType).find(
-        ([key, value]) => value === true
+        ([key, value]) => value === true,
       );
       const extract = JSON.stringify(found);
       const parsed = JSON.parse(extract);
@@ -1035,7 +834,7 @@ function BookPageContent() {
         cancel,
         guestData,
         totals.subtotal,
-        found[0]
+        found[0],
       );
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
         console.log("green lan", booking);
@@ -1048,7 +847,7 @@ function BookPageContent() {
       const order_id = await createPaymentOrder(
         booking?.data?._id,
         totals?.total * 100,
-        property?._id
+        property?._id,
       );
       if (!order_id?.data?.id) {
         toast.error("Unable to initiate payment. Please try again.");
@@ -1110,7 +909,7 @@ function BookPageContent() {
             order_id?.data?.id, //orderid from server
             response.razorpay_payment_id,
             response.razorpay_signature,
-            response.method
+            response.method,
           );
 
           const hostEmail = await property.hostEmail;
@@ -1125,7 +924,7 @@ function BookPageContent() {
                 booking?.data?._id,
                 // hostEmail,
                 property.bookingType.manual,
-                verify?.data?._id
+                verify?.data?._id,
               );
 
               // await createPayout(
@@ -1146,13 +945,13 @@ function BookPageContent() {
               }
               const confirm = await updateConfirmStatus(
                 booking?.data?._id,
-                property?.title
+                property?.title,
               );
               await updateBookingStatus(
                 booking?.data?._id,
                 // hostEmail,
                 property.bookingType.manual,
-                verify?.data?._id
+                verify?.data?._id,
               );
               // await createPayout(
               //   booking?.data?._id,
@@ -1179,6 +978,11 @@ function BookPageContent() {
         },
         modal: {
           ondismiss: async () => {
+            unlockForRazorpay();
+            document.body.classList.remove("modal-lock");
+            document.body.style.position = "";
+            document.body.style.top = "";
+            document.body.style.overflow = "";
             if (process.env.NEXT_PUBLIC_ENV === "dev") {
               console.log("its closed no");
             }
@@ -1191,8 +995,9 @@ function BookPageContent() {
           checkOut: date.to.toISOString(),
         },
       };
-
+      lockForRazorpay();
       const rzp = new window.Razorpay(options);
+      console.log("rzp", rzp);
 
       rzp.on("payment.failed", (response) => {
         console.error("Payment failed:", response.error);
@@ -1207,12 +1012,12 @@ function BookPageContent() {
   async function fetchDates() {
     try {
       const response = await axios.get(
-        `${API_URL}/booking/check-dates/${propertyId}`
+        `${API_URL}/booking/check-dates/${propertyId}`,
       );
 
       if (response.status != 200) {
         throw new Error(
-          `Failed to fetch host data (status: ${response.status})`
+          `Failed to fetch host data (status: ${response.status})`,
         );
       }
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
@@ -1277,7 +1082,7 @@ function BookPageContent() {
     "No pets",
   ];
   const found = Object.entries(property?.cancellationType).find(
-    ([key, value]) => value === true
+    ([key, value]) => value === true,
   );
 
   const propertyCheckIn = property?.checkInTime || "2:00 PM";
@@ -1388,7 +1193,227 @@ function BookPageContent() {
             </div>
             {showGuestModal && (
               <GuestModal onClose={() => setShowGuestModal(false)}>
-                {/* existing modal content */}
+                <div className="flex justify-between items-center p-6 border-b">
+                  {guestSaving ? (
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="min-h-screen flex items-center justify-center">
+                          <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
+                        </div>
+                        <p className="text-white text-sm">
+                          Saving guest details...
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <h2 className="text-xl font-semibold">
+                        Guest Information
+                      </h2>
+                      <button
+                        onClick={() => setShowGuestModal(false)}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <svg
+                          className="w-6 h-6"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                <div className="p-6">
+                  {/* Adults section */}
+                  <span className=" pb-6 flex">
+                    <span className="text-red-500 pr-2">Note: </span> Enter
+                    names as per government ID
+                  </span>
+                  {guestData.adults.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-lg font-medium mb-4">
+                        Adults ({adults})
+                      </h3>
+                      {guestData.adults.map((adult, index) => (
+                        <div
+                          // key={index}
+                          key={`adult-${index}`}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
+                        >
+                          <div>
+                            <label className="block text-sm font-medium mb-1">
+                              {index === 0
+                                ? "Primary Guest Name"
+                                : `Adult ${index + 1} Name`}
+                            </label>
+                            <input
+                              type="text"
+                              value={adult.name}
+                              onChange={(e) =>
+                                updateGuestData(
+                                  "adults",
+                                  index,
+                                  "name",
+                                  e.target.value,
+                                )
+                              }
+                              className={`w-full p-2 border rounded ${
+                                formErrors[`adult-name-${index}`]
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              }`}
+                              placeholder="Full name"
+                              readOnly={index === 0} // Make first adult name read-only
+                            />
+                            {index === 0 && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                User Name cannot be edited
+                              </p>
+                            )}
+                            {formErrors[`adult-name-${index}`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {formErrors[`adult-name-${index}`]}
+                              </p>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">
+                              Age
+                            </label>
+                            <input
+                              type="number"
+                              min="18"
+                              max="130"
+                              value={adult.age}
+                              onChange={(e) =>
+                                updateGuestData(
+                                  "adults",
+                                  index,
+                                  "age",
+                                  // parseInt(e.target.value) || 13
+                                  e.target.value === ""
+                                    ? ""
+                                    : parseInt(e.target.value, 10),
+                                )
+                              }
+                              className={`w-full p-2 border rounded ${
+                                formErrors[`adult-age-${index}`]
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              }`}
+                              readOnly={index === 0}
+                            />
+                            {formErrors[`adult-age-${index}`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {formErrors[`adult-age-${index}`]}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Children section */}
+                  {guestData.children.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-lg font-medium mb-4">
+                        Children ({children})
+                      </h3>
+                      {guestData.children.map((child, index) => (
+                        <div
+                          key={index}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
+                        >
+                          <div>
+                            <label className="block text-sm font-medium mb-1">
+                              Child {index + 1} Name
+                            </label>
+                            <input
+                              type="text"
+                              value={child.name}
+                              onChange={(e) =>
+                                updateGuestData(
+                                  "children",
+                                  index,
+                                  "name",
+                                  e.target.value,
+                                )
+                              }
+                              className={`w-full p-2 border rounded ${
+                                formErrors[`child-name-${index}`]
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              }`}
+                              placeholder="Full name"
+                            />
+                            {formErrors[`child-name-${index}`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {formErrors[`child-name-${index}`]}
+                              </p>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">
+                              Age
+                            </label>
+                            <input
+                              type="number"
+                              min="3"
+                              max="17"
+                              value={child.age}
+                              onChange={(e) =>
+                                updateGuestData(
+                                  "children",
+                                  index,
+                                  "age",
+                                  // parseInt(e.target.value) || 2
+                                  e.target.value === ""
+                                    ? ""
+                                    : parseInt(e.target.value, 10),
+                                )
+                              }
+                              className={`w-full p-2 border rounded ${
+                                formErrors[`child-age-${index}`]
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              }`}
+                            />
+                            {formErrors[`child-age-${index}`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {formErrors[`child-age-${index}`]}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end p-6 border-t">
+                  <button
+                    onClick={() => setShowGuestModal(false)}
+                    className="mr-4 px-4 py-2 text-gray-600 hover:text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmGuestInfo}
+                    className="px-6 py-2 bg-primaryGreen text-white rounded hover:bg-brightGreen"
+                  >
+                    Confirm
+                  </button>
+                </div>
               </GuestModal>
             )}
             {/* {showGuestModal && (

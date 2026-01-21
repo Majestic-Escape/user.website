@@ -93,27 +93,193 @@ export default function Footer() {
             </div>
             <hr className="mt-12" />
 
-            <div className="flex flex-col sm:flex-row justify-between items-center py-8">
+            <div className="md:hidden desktop:block flex desktop:flex flex-col sm:flex-row justify-between items-center py-8">
               <p className="text-sm text-stone">
                 &copy; {currentYear} Majestic Escape. All rights reserved
               </p>
               <div className="flex mt-6 mb-4 gap-8">
-                <Image
-                  src="/images/govt/goa-tourism.png"
-                  width={100}
-                  height={100}
-                  alt="mail icon"
-                  className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
-                />
-                <Image
-                  src="/images/govt/goa-forest-dept.png"
-                  width={100}
-                  height={100}
-                  alt="mail icon"
-                  className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
-                />
+                <div>
+                  <div className="">
+                    <div className="hidden desktop:block desktop:flex items-center  pt-38">
+                      {" "}
+                      <Image
+                        src="/images/govt/goa-tourism.png"
+                        width={100}
+                        height={100}
+                        alt="mail icon"
+                        className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
+                      />
+                      <Image
+                        src="/images/govt/nidhi.png"
+                        width={100}
+                        height={100}
+                        alt="mail icon"
+                        className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
+                      />{" "}
+                      <Image
+                        src="/images/govt/evoke.png"
+                        width={150}
+                        height={150}
+                        alt="mail icon"
+                        className=""
+                      />
+                      <Image
+                        src="/images/govt/goa-forest-dept.png"
+                        width={100}
+                        height={100}
+                        alt="mail icon"
+                        className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
+                      />
+                      <Image
+                        src="/images/govt/rann_utsav.png"
+                        width={150}
+                        height={150}
+                        alt="mail icon"
+                        className=""
+                      />
+                    </div>
+                  </div>
+                  <div className="flex md:flex-start desktop:hidden md:items-center pt-38">
+                    <Image
+                      src="/images/govt/goa-forest-dept.png"
+                      width={100}
+                      height={100}
+                      alt="mail icon"
+                      className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
+                    />{" "}
+                    <Image
+                      src="/images/govt/goa-tourism.png"
+                      width={100}
+                      height={100}
+                      alt="mail icon"
+                      className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
+                    />
+                    <Image
+                      src="/images/govt/nidhi.png"
+                      width={100}
+                      height={100}
+                      alt="mail icon"
+                      className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
+                    />{" "}
+                  </div>
+                  <div className="desktop:hidden flex justify-center">
+                    {" "}
+                    <Image
+                      src="/images/govt/rann_utsav.png"
+                      width={100}
+                      height={100}
+                      alt="mail icon"
+                      className=""
+                    />
+                    <Image
+                      src="/images/govt/evoke.png"
+                      width={100}
+                      height={100}
+                      alt="mail icon"
+                      className=""
+                    />{" "}
+                  </div>
+                  <div className="flex justify-center"> </div>
+                </div>
               </div>
-              <div className="flex space-x-6 mt-4 sm:mt-0">
+              <div className="md:hidden desktop:block flex desktop:flex space-x-6 mt-4 sm:mt-0">
+                <Link href="mailto:support@majesticescape.in" target="_blank">
+                  <Image
+                    src="/icons/mail.png"
+                    width={24}
+                    height={24}
+                    alt="mail icon"
+                    className="h-7 w-7 hover:scale-105"
+                  />
+                </Link>
+
+                <Link
+                  href="https://www.instagram.com/themajesticescape"
+                  target="_blank"
+                >
+                  <Image
+                    src="/icons/instagram.png"
+                    width={24}
+                    height={24}
+                    alt="instagram icon"
+                    className="h-7 w-7 hover:scale-105"
+                  />
+                </Link>
+
+                <Link
+                  href="https://www.facebook.com/profile.php?id=61567800352990"
+                  target="_blank"
+                >
+                  <Image
+                    src="/icons/facebook.png"
+                    width={24}
+                    height={24}
+                    alt="facebook icon"
+                    className="h-7 w-7 hover:scale-105"
+                  />
+                </Link>
+
+                <Link href="https://wa.me/917219666822" target="_blank">
+                  <Image
+                    src="/icons/whatsapp.png"
+                    width={24}
+                    height={24}
+                    alt="whatsapp icon"
+                    className="h-7 w-7 hover:scale-105"
+                  />
+                </Link>
+              </div>
+            </div>
+            <div className="hidden md:block desktop:hidden md:flex md:flex-col md:justify-between md:items-center py-8">
+              <p className="text-sm text-stone">
+                &copy; {currentYear} Majestic Escape. All rights reserved
+              </p>
+              <div className="flex  mb-4 gap-8">
+                <div>
+                  <div className="">
+                    <div className="flex items-center  pt-38">
+                      <Image
+                        src="/images/govt/goa-tourism.png"
+                        width={100}
+                        height={100}
+                        alt="mail icon"
+                        className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 hover:scale-105"
+                      />{" "}
+                      <Image
+                        src="/images/govt/nidhi.png"
+                        width={100}
+                        height={100}
+                        alt="mail icon"
+                        className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 hover:scale-105"
+                      />{" "}
+                      <Image
+                        src="/images/govt/evoke.png"
+                        width={150}
+                        height={150}
+                        alt="mail icon"
+                        className="md:mx-2"
+                      />
+                      <Image
+                        src="/images/govt/goa-forest-dept.png"
+                        width={100}
+                        height={100}
+                        alt="mail icon"
+                        className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 hover:scale-105"
+                      />
+                      <Image
+                        src="/images/govt/rann_utsav.png"
+                        width={150}
+                        height={150}
+                        alt="mail icon"
+                        className="md:mx-2"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-center"> </div>
+                </div>
+              </div>
+              <div className="flex desktop:flex space-x-6 mt-4 sm:mt-0">
                 <Link href="mailto:support@majesticescape.in" target="_blank">
                   <Image
                     src="/icons/mail.png"

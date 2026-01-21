@@ -17,9 +17,10 @@ import {
 } from "@/components/ui/input-otp";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -39,7 +40,26 @@ export default function LoginForm() {
   const [isEditingEmail, setIsEditingEmail] = useState(false); // Update 1
   const [isRedirecting, setIsRedirecting] = useState(false);
   const router = useRouter();
+  const params = useSearchParams();
+  const returnUrl = params.get("returnUrl");
+  console.log("nnic", returnUrl);
+  const decodedReturnUrl = returnUrl ? decodeURIComponent(returnUrl) : "/";
+  useEffect(() => {
+    const handleResize = () => {
+      const keyboardHeight = window.visualViewport.height - window.innerHeight;
+      if (keyboardHeight > 0) {
+        // Show your button/menu
+        document.body.style.paddingBottom = `${keyboardHeight}px`;
+      } else {
+        // Hide it
+        document.body.style.paddingBottom = "0";
+      }
+    };
 
+    window.visualViewport.addEventListener("resize", handleResize);
+    return () =>
+      window.visualViewport.removeEventListener("resize", handleResize);
+  }, []);
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
   };
@@ -56,8 +76,8 @@ export default function LoginForm() {
             ...acc,
             [curr.path[0]]: curr.message,
           }),
-          {}
-        )
+          {},
+        ),
       );
       return false;
     }
@@ -93,7 +113,7 @@ export default function LoginForm() {
             break;
           case "ACCOUNT_LOCKED":
             toast.error(
-              "Your account is locked due to multiple failed attempts"
+              "Your account is locked due to multiple failed attempts",
             );
             break;
           case "INVALID_OTP":
@@ -176,7 +196,8 @@ export default function LoginForm() {
       toast.success("Welcome. You are now signed in.");
       setIsRedirecting(true);
       setTimeout(() => {
-        router.push("/stays");
+        router.push(decodedReturnUrl);
+        // router.push("/stays");
       }, 800);
       // router.push("/stays");
     } catch (error) {
@@ -194,7 +215,7 @@ export default function LoginForm() {
           toast.error("OTP is required. Please enter the OTP.");
         } else if (errorData.code === "INVALID_OTP") {
           toast.error(
-            `Invalid OTP. ${errorData.otpAttempts.remainingAttempts} attempts remaining.`
+            `Invalid OTP. ${errorData.otpAttempts.remainingAttempts} attempts remaining.`,
           );
         }
         break;
@@ -221,7 +242,7 @@ export default function LoginForm() {
           toast.error(
             `Your account is locked. Try again after ${
               errorData.unlocksAt.remainingMinutes || 5
-            } minutes.`
+            } minutes.`,
           );
         }
         break;
@@ -231,7 +252,7 @@ export default function LoginForm() {
           toast.error(
             `Your account is locked. Try again after ${
               errorData?.unlocksAt?.remainingMinutes || 5
-            } minutes.`
+            } minutes.`,
           );
         }
         break;
