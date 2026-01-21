@@ -102,40 +102,48 @@ export default function Footer() {
                   <div className="">
                     <div className="hidden desktop:block desktop:flex items-center  pt-38">
                       {" "}
-                      <Image
-                        src="/images/govt/goa-tourism.png"
-                        width={100}
-                        height={100}
-                        alt="mail icon"
-                        className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
-                      />
-                      <Image
-                        src="/images/govt/nidhi.png"
-                        width={100}
-                        height={100}
-                        alt="mail icon"
-                        className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
-                      />{" "}
-                      <Image
-                        src="/images/govt/evoke.png"
-                        width={150}
-                        height={150}
-                        alt="mail icon"
-                        className=""
-                      />
-                      <Image
-                        src="/images/govt/goa-forest-dept.png"
-                        width={100}
-                        height={100}
-                        alt="mail icon"
-                        className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
-                      />
+                      <Link href={"https://goa-tourism.com/"}>
+                        <Image
+                          src="/images/govt/goa-tourism.png"
+                          width={100}
+                          height={100}
+                          alt="mail icon"
+                          className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 hover:scale-105"
+                        />
+                      </Link>
+                      <Link href={"https://nidhi.tourism.gov.in/"}>
+                        <Image
+                          src="/images/govt/nidhi.png"
+                          width={100}
+                          height={100}
+                          alt="mail icon"
+                          className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 hover:scale-105"
+                        />
+                      </Link>{" "}
+                      <Link href={"https://evokeexperiences.in/"}>
+                        <Image
+                          src="/images/govt/evoke.png"
+                          width={150}
+                          height={150}
+                          alt="mail icon"
+                          className="lg:pl-1 hover:scale-105"
+                        />
+                      </Link>
+                      <Link href={"https://forest.goa.gov.in/"}>
+                        <Image
+                          src="/images/govt/goa-forest-dept.png"
+                          width={100}
+                          height={100}
+                          alt="mail icon"
+                          className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 hover:scale-105"
+                        />
+                      </Link>
                       <Image
                         src="/images/govt/rann_utsav.png"
                         width={150}
                         height={150}
                         alt="mail icon"
-                        className=""
+                        className="lg:pl-1 lg:pr-1"
                       />
                     </div>
                   </div>
