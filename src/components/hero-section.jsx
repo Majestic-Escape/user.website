@@ -62,7 +62,7 @@ export default function HeroSection() {
           alt="Full width image"
           width={1920} // Set your image dimensions
           height={1080}
-          className="hidden md:block -pt-2 md:pt-12 lg:-pt-2 w-full h-auto object-contain"
+          className="hidden md:block -pt-2 md:pt-8 lg:-pt-2 w-full h-auto object-contain"
           sizes="100vw"
           priority
         />
