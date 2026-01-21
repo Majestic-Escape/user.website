@@ -19,6 +19,7 @@ export default function Layout({ children }) {
     useAuth();
   const [matches, setMatches] = useState(false);
   const pathname = usePathname();
+
   const [currentIndex, setCurrentIndex] = useState(0);
   useEffect(() => {
     if (modalFilter) {
@@ -89,20 +90,17 @@ export default function Layout({ children }) {
           {isStayDetailPage || mainPage || isFilter ? (
             !isMobile ? (
               <Navbar />
-            ) : (
-              <Oldbar />
-            )
+            ) : null
           ) : (
             <Oldbar />
           )}
-
+          {isStayDetailPage && isMobile ? <MobileNavbar /> : null}
           {/* <MobileNavbar /> Stay Page */}
           {/* {children} */}
           <main className={modalFilter ? "filter blur-sm" : ""}>
             {children}
           </main>
           <FilterModal isOpen={modalFilter} onClose={closeModal} />
-
           <FooterWrapper />
           {!isStayDetailPage ? (
             <BottomNavigation />

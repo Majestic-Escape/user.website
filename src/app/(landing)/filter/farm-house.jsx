@@ -73,7 +73,7 @@ export default function FarmHouse() {
               page: currentPage,
               limit: LIMIT,
             },
-          }
+          },
         );
 
         if (process.env.NEXT_PUBLIC_ENV === "dev") {
@@ -116,7 +116,7 @@ export default function FarmHouse() {
           {modalFilter && (
             <div className="fixed inset-0 bg-black bg-opacity-40 z-40"></div>
           )}
-          <div className="px-8">
+          <div className="px-2">
             <FilterProperties
               properties={data}
               from={from}
@@ -141,7 +141,7 @@ export default function FarmHouse() {
 
               {Array.from(
                 { length: pagination.totalPages },
-                (_, i) => i + 1
+                (_, i) => i + 1,
               ).map((page) => (
                 <button
                   key={page}
