@@ -122,7 +122,10 @@
     padding-left: 52;
   }
 }
-
+body.razorpay-lock {
+  overflow: hidden !important;
+  touch-action: none;
+}
 @layer base {
   :root {
     --background: 0 0% 100%;
