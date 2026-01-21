@@ -291,7 +291,6 @@ export default function BookingWidget({
       if (!data) {
         // toast.error("You need to signup or login to reserve.");
         const returnUrl = encodeURIComponent(pathname);
-        console.log("uul", pathname);
         router.push(`/login?returnUrl=${returnUrl}`);
         return;
       }
