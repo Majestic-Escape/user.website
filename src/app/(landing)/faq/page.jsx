@@ -123,7 +123,10 @@ export default function Component() {
       : faqs.filter((faq) => faq.categories.includes(activeCategory));
 
   return (
-    <section id="faqs" className="font-poppins min-h-screen py-32 bg-[#FAFAFA]">
+    <section
+      id="faqs"
+      className="font-poppins min-h-screen py-16 md:py-32 bg-[#FAFAFA]"
+    >
       <div className="container max-w-7xl mx-auto px-4">
         <div className="grid gap-10 lg:grid-cols-[1fr,1fr]">
           <div className="space-y-6 pt-8 md:pt-0">

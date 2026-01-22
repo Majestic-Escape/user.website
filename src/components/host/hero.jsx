@@ -3,14 +3,21 @@ import PrimaryLink from "@/components/primary-link";
 
 export default function Component({ user }) {
   return (
-    <section className="w-full   flex md:items-center items-start desktop:min-h-screen  bg-white mobile:pt-20 md:pt-32 sm:py-16 ">
+    <section className="w-full   flex md:items-center items-start desktop:min-h-screen  bg-white mobile:pt-8 md:pt-32 sm:py-16 ">
       <div className="container max-w-7xl mx-auto px-4  pt-20 md:pt-0 md:px-6">
         <div className="grid gap-6 gap-y-16 justify-center desktop:grid-cols-2 desktop:gap-12">
           {/* Left Column */}
           <div className="flex flex-col  justify-center space-y-4 sm:space-y-6 text-center md:text-left">
-            <h1 className="font-bricolage text-balance text-3xl text-absolute-dark sm:text-4xl  font-bold">
+            <h1 className="md:hidden desktop:block font-bricolage text-balance text-3xl text-absolute-dark sm:text-4xl  font-bold">
               Host your <span className="text-primary">Majestic&nbsp;</span>
               <br className="hidden sm:inline" />
+              Stay Now!&nbsp;
+              <br className="hidden sm:inline" />
+              {/* <span className="text-primary">Goan</span> platform */}
+            </h1>
+            <h1 className="hidden md:block desktop:hidden font-bricolage text-balance text-3xl text-absolute-dark sm:text-4xl  font-bold">
+              Host your <span className="text-primary">Majestic&nbsp;</span>
+              {/* <br className="hidden sm:inline" /> */}
               Stay Now!&nbsp;
               <br className="hidden sm:inline" />
               {/* <span className="text-primary">Goan</span> platform */}
