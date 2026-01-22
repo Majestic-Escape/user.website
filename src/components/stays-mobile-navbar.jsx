@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import FilterModal from "./ui/modal";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePathname } from "next/navigation";
 export function MobileNavbar() {
   const {
     modalFilter,
@@ -35,7 +36,9 @@ export function MobileNavbar() {
 
   const [hideTabs, setHideTabs] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
-
+  const pathname = usePathname();
+  const isStayDetailPage =
+    pathname.startsWith("/stay/") && pathname !== "/stay";
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -54,6 +57,7 @@ export function MobileNavbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
+
   return (
     <div className="md:hidden fixed w-screen top-0 left-0 right-0 z-50 bg-white">
       <div className="bg-white">
@@ -104,7 +108,7 @@ export function MobileNavbar() {
           isOpen={isSearchOpen}
           onClose={() => setIsSearchOpen(false)}
         />
-        <MobileNavTabLayout hideTabs={hideTabs} />
+        {isStayDetailPage ? null : <MobileNavTabLayout hideTabs={hideTabs} />}
         {/* <div className="pb-2" />
         <hr /> */}
         {/* ⭐ CATEGORY TABS (Homes | Experiences | Services) */}
