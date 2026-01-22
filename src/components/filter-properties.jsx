@@ -90,7 +90,7 @@ export default function FilterProperties({
             <div className="mx-auto px-2 lg:px-[72px] py-8 sm:py-16 lg:py-[60px] font-poppins bg-white text-absoluteDark">
               <h2
                 className="text-3xl font-bricolage sm:text-4xl md:text-[42px] font-semibold mb-2 text-absoluteDark 
-             pt-8 sm:pt-10 md:pt-0"
+             mt-40 sm:pt-10 md:pt-0"
               >
                 Discover Our Finest Stays
               </h2>
