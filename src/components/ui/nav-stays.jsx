@@ -27,7 +27,7 @@ export default function Navbar() {
     pathname.startsWith("/stay/") && pathname !== "/stay";
   const mainPage = pathname == "/";
   const filter = pathname.startsWith("/stay/");
-  const { user, logout } = useAuth();
+  const { user, logout, returnUrl } = useAuth();
 
   const switchToHosting = () => {
     router.push("/host/dashboard");
@@ -57,8 +57,8 @@ export default function Navbar() {
         isScrolled ? "pt-2  h-20" : "pt-3"
       }`}
     >
-      <header className="px-4  md:px-6 z-[2000]">
-        <div className="container max-w-[1400px] flex h-12 md:h-16 w-full items-center mx-auto">
+      <header className="px-4  md:px-6 z-[2000] md:pb-4 desktop:pb-4">
+        <div className="container max-w-[1400px] flex h-12 md:h-16 w-full items-center mx-auto ">
           <div></div>{" "}
           <Link className="flex items-center gap-2 text-[#3B5D2D]" href="/">
             {/* <Image
@@ -163,7 +163,10 @@ export default function Navbar() {
                 Become a Host
               </Link>
               <Link
-                href="/login"
+                href={{
+                  pathname: "/login",
+                  query: returnUrl,
+                }}
                 className="bg-primaryGreen font-medium hover:bg-brightGreen px-6 text-base rounded-3xl text-white py-1.5"
               >
                 Login

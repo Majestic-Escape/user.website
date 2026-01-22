@@ -26,7 +26,7 @@ const CardFooter = ({ children }) => (
 
 export default function About() {
   return (
-    <div className="font-poppins min-h-screen pt-20 bg-white">
+    <div className="font-poppins min-h-screen pt-2 md:pt-20 bg-white">
       <header className="bg-offWhite shadow-sm">
         <div className="max-w-7xl mx-auto py-4  pt-20 md:pt-8 px-6 lg:px-8">
           <Heading text="About Majestic Escape" />

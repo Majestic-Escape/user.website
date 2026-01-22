@@ -1,6 +1,6 @@
 export default function TermsOfService() {
   return (
-    <div className="font-poppins min-h-screen pt-20">
+    <div className="font-poppins min-h-screen pt-0 md:pt-20">
       <header className="bg-offWhite pt-16 md:pt-0 shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold text-absoluteDark font-bricolage">

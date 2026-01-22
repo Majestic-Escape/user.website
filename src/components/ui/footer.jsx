@@ -100,29 +100,57 @@ export default function Footer() {
               <div className="flex mt-6 mb-4 gap-8">
                 <div>
                   <div className="">
+                    {/*Desktop*/}{" "}
                     <div className="hidden desktop:block desktop:flex items-center  pt-38">
                       {" "}
+                      <Link href={"https://evokeexperiences.in/"}>
+                        <Image
+                          src="/images/govt/evoke.png"
+                          width={150}
+                          height={150}
+                          alt="mail icon"
+                          className="lg:pl-1 hover:scale-105"
+                        />
+                      </Link>
+                      <Link href={"https://nidhi.tourism.gov.in/"}>
+                        <Image
+                          src="/images/govt/nidhi.png"
+                          width={100}
+                          height={100}
+                          alt="mail icon"
+                          className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 hover:scale-105"
+                        />
+                      </Link>{" "}
+                      <Link href={"https://goa-tourism.com/"}>
+                        <Image
+                          src="/images/govt/goa-tourism.png"
+                          width={100}
+                          height={100}
+                          alt="mail icon"
+                          className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 hover:scale-105"
+                        />
+                      </Link>
+                      <Link href={"https://forest.goa.gov.in/"}>
+                        <Image
+                          src="/images/govt/goa-forest-dept.png"
+                          width={100}
+                          height={100}
+                          alt="mail icon"
+                          className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 hover:scale-105"
+                        />
+                      </Link>
                       <Image
-                        src="/images/govt/goa-tourism.png"
-                        width={100}
-                        height={100}
-                        alt="mail icon"
-                        className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
-                      />
-                      <Image
-                        src="/images/govt/nidhi.png"
-                        width={100}
-                        height={100}
-                        alt="mail icon"
-                        className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
-                      />{" "}
-                      <Image
-                        src="/images/govt/evoke.png"
+                        src="/images/govt/rann_utsav.png"
                         width={150}
                         height={150}
                         alt="mail icon"
-                        className=""
+                        className="lg:pl-1 lg:pr-1"
                       />
+                    </div>
+                  </div>
+                  {/*Mobile*/}
+                  <div className="flex md:flex-start desktop:hidden md:items-center pt-38 ">
+                    <Link href={"https://forest.goa.gov.in/"}>
                       <Image
                         src="/images/govt/goa-forest-dept.png"
                         width={100}
@@ -130,37 +158,25 @@ export default function Footer() {
                         alt="mail icon"
                         className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
                       />
+                    </Link>{" "}
+                    <Link href={"https://goa-tourism.com/"}>
                       <Image
-                        src="/images/govt/rann_utsav.png"
-                        width={150}
-                        height={150}
+                        src="/images/govt/goa-tourism.png"
+                        width={100}
+                        height={100}
                         alt="mail icon"
-                        className=""
+                        className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
                       />
-                    </div>
-                  </div>
-                  <div className="flex md:flex-start desktop:hidden md:items-center pt-38">
-                    <Image
-                      src="/images/govt/goa-forest-dept.png"
-                      width={100}
-                      height={100}
-                      alt="mail icon"
-                      className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
-                    />{" "}
-                    <Image
-                      src="/images/govt/goa-tourism.png"
-                      width={100}
-                      height={100}
-                      alt="mail icon"
-                      className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
-                    />
-                    <Image
-                      src="/images/govt/nidhi.png"
-                      width={100}
-                      height={100}
-                      alt="mail icon"
-                      className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
-                    />{" "}
+                    </Link>
+                    <Link href={"https://nidhi.tourism.gov.in/"}>
+                      <Image
+                        src="/images/govt/nidhi.png"
+                        width={100}
+                        height={100}
+                        alt="mail icon"
+                        className="h-16 w-16 lg:h-24 lg:w-24 hover:scale-105"
+                      />
+                    </Link>{" "}
                   </div>
                   <div className="desktop:hidden flex justify-center">
                     {" "}
@@ -171,18 +187,21 @@ export default function Footer() {
                       alt="mail icon"
                       className=""
                     />
-                    <Image
-                      src="/images/govt/evoke.png"
-                      width={100}
-                      height={100}
-                      alt="mail icon"
-                      className=""
-                    />{" "}
+                    <Link href={"https://evokeexperiences.in/"}>
+                      <Image
+                        src="/images/govt/evoke.png"
+                        width={100}
+                        height={100}
+                        alt="mail icon"
+                        className=""
+                      />
+                    </Link>{" "}
                   </div>
                   <div className="flex justify-center"> </div>
                 </div>
               </div>
-              <div className="md:hidden desktop:block flex desktop:flex space-x-6 mt-4 sm:mt-0">
+              {/*Desktop*/}{" "}
+              <div className="md:hidden desktop:block flex desktop:flex space-x-6 mt-4 sm:my-16 mb-16 md:pb-0">
                 <Link href="mailto:support@majesticescape.in" target="_blank">
                   <Image
                     src="/icons/mail.png"
@@ -238,34 +257,42 @@ export default function Footer() {
                 <div>
                   <div className="">
                     <div className="flex items-center  pt-38">
-                      <Image
-                        src="/images/govt/goa-tourism.png"
-                        width={100}
-                        height={100}
-                        alt="mail icon"
-                        className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 hover:scale-105"
-                      />{" "}
-                      <Image
-                        src="/images/govt/nidhi.png"
-                        width={100}
-                        height={100}
-                        alt="mail icon"
-                        className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 hover:scale-105"
-                      />{" "}
-                      <Image
-                        src="/images/govt/evoke.png"
-                        width={150}
-                        height={150}
-                        alt="mail icon"
-                        className="md:mx-2"
-                      />
-                      <Image
-                        src="/images/govt/goa-forest-dept.png"
-                        width={100}
-                        height={100}
-                        alt="mail icon"
-                        className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 hover:scale-105"
-                      />
+                      <Link href={"https://goa-tourism.com/"}>
+                        <Image
+                          src="/images/govt/goa-tourism.png"
+                          width={100}
+                          height={100}
+                          alt="mail icon"
+                          className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 hover:scale-105"
+                        />
+                      </Link>{" "}
+                      <Link href={"https://nidhi.tourism.gov.in/"}>
+                        <Image
+                          src="/images/govt/nidhi.png"
+                          width={100}
+                          height={100}
+                          alt="mail icon"
+                          className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 hover:scale-105"
+                        />
+                      </Link>{" "}
+                      <Link href={"https://evokeexperiences.in/"}>
+                        <Image
+                          src="/images/govt/evoke.png"
+                          width={150}
+                          height={150}
+                          alt="mail icon"
+                          className="md:mx-2"
+                        />
+                      </Link>
+                      <Link href={"https://forest.goa.gov.in/"}>
+                        <Image
+                          src="/images/govt/goa-forest-dept.png"
+                          width={100}
+                          height={100}
+                          alt="mail icon"
+                          className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 hover:scale-105"
+                        />
+                      </Link>
                       <Image
                         src="/images/govt/rann_utsav.png"
                         width={150}

@@ -48,7 +48,7 @@ export function UserDropdownMenu() {
             "w-56",
             "absolute right-0 mt-2",
             "overflow-hidden",
-            "origin-top-right"
+            "origin-top-right",
           )}
           sideOffset={5}
         >
@@ -57,14 +57,14 @@ export function UserDropdownMenu() {
               Account
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
+          {/* <DropdownMenuItem asChild>
             <Link className="py-2" href="/notifications">
               Notifications
             </Link>
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
           <DropdownMenuItem asChild>
-            <Link className="py-2" href="/manage-bookings">
-              Bookings
+            <Link className="py-2" href="/host/dashboard/bookings">
+              Bookings Recieved
             </Link>
           </DropdownMenuItem>
 
@@ -72,15 +72,15 @@ export function UserDropdownMenu() {
           <DropdownMenuItem asChild>
             <Link
               className="py-2"
-              href="/host/dashboard/listings"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/host/dashboard/add-listing"
+              // target="_blank"
+              // rel="noopener noreferrer"
             >
               Host your Property
             </Link>
           </DropdownMenuItem>
 
-          <DropdownMenuItem asChild>
+          {/* <DropdownMenuItem asChild>
             <Link
               className="py-2"
               href="/host/dashboard"
@@ -89,11 +89,11 @@ export function UserDropdownMenu() {
             >
               Manage Experiences
             </Link>
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
 
           <hr />
           <DropdownMenuItem asChild>
-            <Link className="py-2" href="/faq">
+            <Link className="py-2" href="/host-faq">
               FAQ
             </Link>
           </DropdownMenuItem>

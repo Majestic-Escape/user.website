@@ -289,7 +289,7 @@ function BookPageContent() {
       document.body.style.top = "";
       document.body.style.left = "";
       document.body.style.right = "";
-      document.body.style.overflow = "auto";
+      document.body.style.overflow = "";
 
       // Scroll back to original position
       window.scrollTo(0, parseInt(scrollY, 10));
@@ -304,7 +304,7 @@ function BookPageContent() {
       document.body.style.top = "";
       document.body.style.left = "";
       document.body.style.right = "";
-      document.body.style.overflow = "auto";
+      document.body.style.overflow = "";
       delete document.body.dataset.scrollY;
     };
   }, [showGuestModal, showPriceBreakdown]);

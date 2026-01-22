@@ -96,13 +96,13 @@ export function ExpHero() {
   }, []);
 
   return (
-    <section className="relative h-[500px] md:h-[80vh] w-full overflow-hidden">
+    <section className="relative mt-24 md:mt-0 h-[500px] md:h-[80vh] w-full overflow-hidden">
       {/* Video Background */}
 
       <div className="absolute inset-0 z-0">
         <div
           id="yt-player"
-          className="absolute
+          className="absolute 
         top-1/2 left-1/2
         w-[320%] h-[280%] md:h-[200%] md:w-[280%] lg:h-[160%]
         -translate-x-1/2 -translate-y-1/2

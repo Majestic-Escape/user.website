@@ -26,24 +26,25 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
     formData?.photos?.map((url: string) => ({
       id: crypto.randomUUID(),
       url,
-    })) || []
+    })) || [],
   );
   const [draggedPhoto, setDraggedPhoto] = useState<Photo | null>(null);
   const draggedNodeRef = useRef<HTMLDivElement | null>(null);
   const [uploading, setUploading] = useState(false); // Optional: Show loading state
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("Enter photo upload function");
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
+    console.log("check if photo files are present");
     const filesArray = Array.from(files);
     const MAX_FILES = 20;
 
     const totalFilesAfterUpload = photos.length + filesArray.length;
-
+    console.log("Check if image upload is greater than max 20");
     if (totalFilesAfterUpload > MAX_FILES) {
       toast.error(
-        `You can upload a maximum of ${MAX_FILES} images. You already have ${photos.length}.`
+        `You can upload a maximum of ${MAX_FILES} images. You already have ${photos.length}.`,
       );
       return;
     }
@@ -55,6 +56,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
       "image/webp",
       "image/gif",
     ];
+    console.log("Check if any image upload is greater than 5mb");
     if (files.length > 0 && Array.from(files).some((f) => f.size > MAX_SIZE)) {
       toast.error("One or more selected files exceed 5MB");
       return;
@@ -64,11 +66,11 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
       return;
     }
     const validFiles: File[] = [];
-
+    console.log("Check image file type");
     for (const file of Array.from(files)) {
       if (!ALLOWED_TYPES.includes(file.type)) {
         toast.error(
-          `Invalid file type: ${file.name}. Only JPG, PNG, WEBP, GIF allowed.`
+          `Invalid file type: ${file.name}. Only JPG, PNG, WEBP, GIF allowed.`,
         );
         continue;
       }
@@ -85,7 +87,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
 
     setUploading(true);
     const formData = new FormData();
-
+    console.log("Push images in array");
     validFiles.forEach((file) => {
       formData.append("images", file);
     });
@@ -97,10 +99,11 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
     // });
 
     try {
+      console.log("Make backend call");
       const res = await axios.post(`${API_URL}/uploads/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
+      console.log("Fetch data from backend");
       const newPhotos = res.data.urls.map((url: string) => ({
         id: crypto.randomUUID(),
         url,
@@ -110,6 +113,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
         console.log("we are reaching", updatedPhotos);
       }
+      console.log("Update the form");
       setPhotos(updatedPhotos);
       updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
     } catch (error: any) {
@@ -118,7 +122,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
       toast.error(
         error?.response?.data?.error ||
           error?.message ||
-          "Image upload failed. Please try again."
+          "Image upload failed. Please try again.",
       );
     } finally {
       setUploading(false);
@@ -141,7 +145,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
   };
   const handleDragStart = (
     e: React.DragEvent<HTMLDivElement>,
-    photo: Photo
+    photo: Photo,
   ) => {
     setDraggedPhoto(photo);
     draggedNodeRef.current = e.target as HTMLDivElement;
@@ -167,10 +171,10 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
         setPhotos((prevPhotos) => {
           const newPhotos = [...prevPhotos];
           const draggedIndex = newPhotos.findIndex(
-            (photo) => photo.id === draggedPhoto.id
+            (photo) => photo.id === draggedPhoto.id,
           );
           const targetIndex = newPhotos.findIndex(
-            (photo) => photo.id === targetPhoto.id
+            (photo) => photo.id === targetPhoto.id,
           );
           newPhotos.splice(draggedIndex, 1);
           newPhotos.splice(targetIndex, 0, draggedPhoto);
@@ -178,7 +182,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
         });
       }
     },
-    [draggedPhoto]
+    [draggedPhoto],
   );
 
   const handleDragEnd = useCallback(() => {
