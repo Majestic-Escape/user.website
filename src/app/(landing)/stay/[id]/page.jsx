@@ -27,10 +27,10 @@ const fetchProperty = async (id) => {
     console.error(
       "Failed to fetch property:",
       response.status,
-      await response.text()
+      await response.text(),
     );
     throw new Error(
-      `Failed to fetch property data (status: ${response.status})`
+      `Failed to fetch property data (status: ${response.status})`,
     );
   }
   const result = await response.json();
@@ -72,13 +72,13 @@ const fetchReview = async (propertyId, limit, skip) => {
   }
 
   const response = await fetch(
-    `${API_URL}/review/${propertyId}?limit=${limit}&skip=${skip}`
+    `${API_URL}/review/${propertyId}?limit=${limit}&skip=${skip}`,
   );
   if (!response.ok) {
     console.error(
       "Failed to fetch host:",
       response.status,
-      await response.text()
+      await response.text(),
     );
     throw new Error(`Failed to fetch host data (status: ${response.status})`);
   }
@@ -127,12 +127,12 @@ export default function PropertyPage() {
       setLoading(true);
       try {
         const response = await axios.get(
-          `${API_URL}/booking/check-dates/${propertyId}`
+          `${API_URL}/booking/check-dates/${propertyId}`,
         );
 
         if (response.status != 200) {
           throw new Error(
-            `Failed to fetch host data (status: ${response.status})`
+            `Failed to fetch host data (status: ${response.status})`,
           );
         }
         if (process.env.NEXT_PUBLIC_ENV === "dev") {
@@ -172,8 +172,8 @@ export default function PropertyPage() {
         ? hostId._id.toString()
         : JSON.stringify(hostId) // Less ideal fallback
       : typeof hostId === "string"
-      ? hostId
-      : String(hostId);
+        ? hostId
+        : String(hostId);
   }, [hostId]); // Recalculate only if hostId changes
 
   // --- Query 2: Fetch Host Data ---
@@ -297,7 +297,7 @@ export default function PropertyPage() {
             } `} */}
         </style>
       </Head>
-      <main className="min-h-screen pt-[80px] md:pt-72 bg-white booking-widget">
+      <main className="min-h-screen pt-[80px] md:pt-48 desktop:pt-56 bg-white booking-widget">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Property Title */}
           <h1 className="text-xl md:text-2xl font-bricolage font-semibold mb-4 md:mb-6">
