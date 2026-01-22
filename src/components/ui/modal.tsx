@@ -1052,7 +1052,7 @@ export default function FilterModal({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
-                      className="bg-white mt-2 font-poppins w-auto p-0"
+                      className="bg-white mt-2 font-poppins w-auto p-0 z-[9999]"
                       align="start"
                     >
                       <Calendar
@@ -1089,7 +1089,7 @@ export default function FilterModal({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
-                      className="w-full max-w-xs p-4"
+                      className="w-full max-w-xs p-4 z-[9999]"
                       align="start"
                     >
                       <div className="space-y-4">
