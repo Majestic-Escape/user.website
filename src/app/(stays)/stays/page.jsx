@@ -6,7 +6,7 @@ import StaysProperties from "@/components/stays-properties";
 
 export default function Stays() {
   return (
-    <main className="py-32 md:pt-36">
+    <main className="pt-40 pb-16 md:pt-56 desktop:pt-64">
       <StaysProperties />
       <LocationWiseStays />
       {/* <SpotWiseStays /> */}
