@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -32,77 +32,87 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
   const draggedNodeRef = useRef<HTMLDivElement | null>(null);
   const [uploading, setUploading] = useState(false); // Optional: Show loading state
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("Enter photo upload function");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
+  const resetFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+  const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    console.log("check if photo files are present");
-    const filesArray = Array.from(files);
-    const MAX_FILES = 20;
 
+    const filesArray = Array.from(files);
+
+    // Validate new files
+    const MAX_FILES = 20;
     const totalFilesAfterUpload = photos.length + filesArray.length;
-    console.log("Check if image upload is greater than max 20");
+
     if (totalFilesAfterUpload > MAX_FILES) {
       toast.error(
-        `You can upload a maximum of ${MAX_FILES} images. You already have ${photos.length}.`,
+        ` You already have ${photos.length}. You can add only ${MAX_FILES - photos.length} more.`,
       );
+      resetFileInput();
       return;
     }
-
+    //You can upload a maximum of ${MAX_FILES} images.
     const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
     const ALLOWED_TYPES = [
+      "image/jpg",
       "image/jpeg",
       "image/png",
       "image/webp",
-      "image/gif",
+      "image/heic",
+      "image/heif",
+      "application/octet-stream",
     ];
-    console.log("Check if any image upload is greater than 5mb");
-    if (files.length > 0 && Array.from(files).some((f) => f.size > MAX_SIZE)) {
-      toast.error("One or more selected files exceed 5MB");
-      return;
-    }
-    if (files.length > 20) {
-      toast.error("Max 20 files can be uploaded");
-      return;
-    }
+
     const validFiles: File[] = [];
-    console.log("Check image file type");
-    for (const file of Array.from(files)) {
+    const invalidFiles: string[] = [];
+
+    filesArray.forEach((file) => {
       if (!ALLOWED_TYPES.includes(file.type)) {
-        toast.error(
-          `Invalid file type: ${file.name}. Only JPG, PNG, WEBP, GIF allowed.`,
-        );
-        continue;
+        invalidFiles.push(`${file.name} (invalid type)`);
+      } else if (file.size > MAX_SIZE) {
+        invalidFiles.push(`${file.name} (too large)`);
+      } else {
+        validFiles.push(file);
       }
+    });
 
-      if (file.size > MAX_SIZE) {
-        toast.error(`File too large: ${file.name}. Max size is 5MB.`);
-        continue;
-      }
-
-      validFiles.push(file);
+    if (invalidFiles.length > 0) {
+      toast.error(
+        ` ${invalidFiles.slice(0, 3).join(", ")}${invalidFiles.length > 3 ? "..." : ""}`,
+      );
     }
 
-    if (validFiles.length === 0) return;
+    if (validFiles.length === 0) {
+      resetFileInput();
+      return;
+    }
+
+    // Process the valid files
+    handlePhotoUpload(validFiles);
+  };
+
+  const handlePhotoUpload = async (files: File[]) => {
+    console.log(`Uploading ${files.length} files`);
 
     setUploading(true);
     const formData = new FormData();
-    console.log("Push images in array");
-    validFiles.forEach((file) => {
+
+    files.forEach((file) => {
       formData.append("images", file);
     });
 
-    // setUploading(true);
-    // const formData = new FormData();
-    // Array.from(files).forEach((file) => {
-    //   formData.append("images", file); // Match backend field name
-    // });
-
     try {
-      console.log("Make backend call");
+      console.log("Making backend call");
       const res = await axios.post(`${API_URL}/uploads/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
       console.log("Fetch data from backend");
       const newPhotos = res.data.urls.map((url: string) => ({
         id: crypto.randomUUID(),
@@ -111,14 +121,18 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
       const updatedPhotos = [...photos, ...newPhotos];
 
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
-        console.log("we are reaching", updatedPhotos);
+        console.log("Updated photos:", updatedPhotos);
       }
+
       console.log("Update the form");
       setPhotos(updatedPhotos);
       updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
-    } catch (error: any) {
-      console.error(error);
 
+      toast.success(
+        `Successfully uploaded ${files.length} image${files.length > 1 ? "s" : ""}`,
+      );
+    } catch (error: any) {
+      console.error("Upload error:", error);
       toast.error(
         error?.response?.data?.error ||
           error?.message ||
@@ -126,8 +140,105 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
       );
     } finally {
       setUploading(false);
+      resetFileInput();
     }
   };
+  // const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   console.log("Enter photo upload function");
+  //   const files = e.target.files;
+  //   if (!files || files.length === 0) return;
+  //   console.log("check if photo files are present");
+  //   const filesArray = Array.from(files);
+  //   const MAX_FILES = 20;
+
+  //   const totalFilesAfterUpload = photos.length + filesArray.length;
+  //   console.log("Check if image upload is greater than max 20");
+  //   if (totalFilesAfterUpload > MAX_FILES) {
+  //     toast.error(
+  //       `You can upload a maximum of ${MAX_FILES} images. You already have ${photos.length}.`,
+  //     );
+  //     return;
+  //   }
+
+  //   const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+  //   const ALLOWED_TYPES = [
+  //     "image/jpeg",
+  //     "image/png",
+  //     "image/webp",
+  //     "image/gif",
+  //   ];
+  //   console.log("Check if any image upload is greater than 5mb");
+  //   if (files.length > 0 && Array.from(files).some((f) => f.size > MAX_SIZE)) {
+  //     toast.error("One or more selected files exceed 5MB");
+  //     return;
+  //   }
+  //   if (files.length > 20) {
+  //     toast.error("Max 20 files can be uploaded");
+  //     return;
+  //   }
+  //   const validFiles: File[] = [];
+  //   console.log("Check image file type");
+  //   for (const file of Array.from(files)) {
+  //     if (!ALLOWED_TYPES.includes(file.type)) {
+  //       toast.error(
+  //         `Invalid file type: ${file.name}. Only JPG, PNG, WEBP, GIF allowed.`,
+  //       );
+  //       continue;
+  //     }
+
+  //     if (file.size > MAX_SIZE) {
+  //       toast.error(`File too large: ${file.name}. Max size is 5MB.`);
+  //       continue;
+  //     }
+
+  //     validFiles.push(file);
+  //   }
+
+  //   if (validFiles.length === 0) return;
+
+  //   setUploading(true);
+  //   const formData = new FormData();
+  //   console.log("Push images in array");
+  //   validFiles.forEach((file) => {
+  //     formData.append("images", file);
+  //   });
+
+  //   // setUploading(true);
+  //   // const formData = new FormData();
+  //   // Array.from(files).forEach((file) => {
+  //   //   formData.append("images", file); // Match backend field name
+  //   // });
+
+  //   try {
+  //     console.log("Make backend call");
+  //     const res = await axios.post(`${API_URL}/uploads/`, formData, {
+  //       headers: { "Content-Type": "multipart/form-data" },
+  //     });
+  //     console.log("Fetch data from backend");
+  //     const newPhotos = res.data.urls.map((url: string) => ({
+  //       id: crypto.randomUUID(),
+  //       url,
+  //     }));
+  //     const updatedPhotos = [...photos, ...newPhotos];
+
+  //     if (process.env.NEXT_PUBLIC_ENV === "dev") {
+  //       console.log("we are reaching", updatedPhotos);
+  //     }
+  //     console.log("Update the form");
+  //     setPhotos(updatedPhotos);
+  //     updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
+  //   } catch (error: any) {
+  //     console.error(error);
+
+  //     toast.error(
+  //       error?.response?.data?.error ||
+  //         error?.message ||
+  //         "Image upload failed. Please try again.",
+  //     );
+  //   } finally {
+  //     setUploading(false);
+  //   }
+  // };
 
   // const removePhoto = (id: string) => {
   //   const updatedPhotos = photos.filter((photo) => photo.id !== id);
@@ -193,6 +304,28 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
     updateFormData({ photos: photos.map((photo) => photo.url) });
   }, [photos, updateFormData]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Show message when Ctrl key is pressed
+      if (e.ctrlKey && fileInputRef.current) {
+        // toast.info("Hold Ctrl and click to select multiple images");
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (!e.ctrlKey) {
+        toast.dismiss();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
   return (
     <div className=" max-w-4xl mx-auto p-6 md:space-y-8 md:max-w-3xl md:py-4">
       <TextReveal>
@@ -222,10 +355,14 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
                   id="photos"
                   type="file"
                   accept="image/*"
+                  ref={fileInputRef}
                   multiple
-                  onChange={handlePhotoUpload}
+                  onChange={handleFileSelection}
                   className="absolute inset-0 opacity-0 cursor-pointer"
                   style={{ zIndex: 10 }}
+                  onClick={(e) => {
+                    (e.target as HTMLInputElement).value = "";
+                  }}
                 />
 
                 <span className="pointer-events-none text-center">
