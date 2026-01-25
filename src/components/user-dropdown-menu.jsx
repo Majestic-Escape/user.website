@@ -61,6 +61,11 @@ export function UserDropdownMenu() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
+              <Link className="py-2" href="/messages">
+                Messages
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
               {/* <Link className="py-2" href="/notifications">
               Notifications
             </Link> */}
