@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter, useParams } from "next/navigation";
-import { io } from "socket.io-client";
+import { socketManager } from "@/lib/socket";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -155,14 +155,21 @@ export default function ContactHostPage() {
           setConversationId(data.data.id || data.data._id);
         }
 
-        const socket = io(chatUrl, {
-          auth: { token },
-          reconnection: true,
-        });
+        const socket = socketManager.getSocket(token);
+        if (!socket) return;
 
-        socket.on("connect", () => setConnected(true));
-        socket.on("disconnect", () => setConnected(false));
-        socket.on("error", (err) => setError(err.message));
+        const handleConnect = () => setConnected(true);
+        const handleDisconnect = () => setConnected(false);
+        const handleError = (err) => setError(err.message);
+
+        socket.on("connect", handleConnect);
+        socket.on("disconnect", handleDisconnect);
+        socket.on("error", handleError);
+
+        // Set initial connection status
+        if (socket.connected) {
+          setConnected(true);
+        }
 
         socketRef.current = socket;
       } catch (err) {
@@ -177,7 +184,10 @@ export default function ContactHostPage() {
 
     return () => {
       if (socketRef.current) {
-        socketRef.current.disconnect();
+        socketRef.current.off("connect");
+        socketRef.current.off("disconnect");
+        socketRef.current.off("error");
+        socketManager.releaseSocket();
       }
     };
   }, [token, userId, hostId, propertyId, chatUrl, router]);

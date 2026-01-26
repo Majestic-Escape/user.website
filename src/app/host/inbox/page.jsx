@@ -21,8 +21,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { io } from "socket.io-client";
 import Image from "next/image";
+import { socketManager } from "@/lib/socket";
 import MobileChatContainer from "@/components/mobile-chat-container";
 import MobileChatInput from "@/components/mobile-chat-input";
 
@@ -189,50 +189,42 @@ export default function HostInboxPage() {
     }
   }, [isMobileView, selectedConversation]);
 
-  // Initialize socket connection
+  // Initialize socket connection using singleton manager
   useEffect(() => {
     if (!tokenRef.current || !currentUserId) return;
 
-    const socket = io(CHAT_URL, {
-      auth: { token: tokenRef.current },
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
-    });
+    const socket = socketManager.getSocket(tokenRef.current);
+    if (!socket) return;
 
     socketRef.current = socket;
 
-    socket.on("connect", () => {
+    const handleConnect = () => {
       console.log("[HostInbox] Socket connected");
       setConnectionStatus("connected");
+      // Join all conversation rooms
       conversationsRef.current.forEach((conv) => {
-        socket.emit("conversation:join", { conversationId: conv.id });
+        socketManager.joinRoom(conv.id);
       });
-    });
+    };
 
-    socket.on("disconnect", () => {
+    const handleDisconnect = () => {
       console.log("[HostInbox] Socket disconnected");
       setConnectionStatus("disconnected");
-    });
+    };
 
-    socket.on("connect_error", (error) => {
+    const handleConnectError = (error) => {
       setConnectionStatus("error");
       console.error("[HostInbox] Socket connection error:", error);
-    });
+    };
 
-    socket.on("message:new", (data) => {
+    const handleNewMessage = (data) => {
       const { message, conversationId } = data;
-      console.log("[HostInbox] Received message:new event:", conversationId);
 
       const isHostConversation = conversationsRef.current.some(
         (conv) => conv.id === conversationId
       );
       
-      if (!isHostConversation) {
-        console.log("[HostInbox] Ignoring message - not a host conversation");
-        return;
-      }
+      if (!isHostConversation) return;
 
       if (selectedConversationRef.current?.id === conversationId) {
         setMessages((prev) => {
@@ -276,9 +268,9 @@ export default function HostInboxPage() {
           return timeB - timeA;
         });
       });
-    });
+    };
 
-    socket.on("message:read", (data) => {
+    const handleMessageRead = (data) => {
       const { conversationId, messageIds, userId, timestamp } = data;
       if (selectedConversationRef.current?.id === conversationId) {
         setMessages((prev) =>
@@ -292,36 +284,36 @@ export default function HostInboxPage() {
           )
         );
       }
-    });
+    };
+
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("message:new", handleNewMessage);
+    socket.on("message:read", handleMessageRead);
+
+    // Set initial connection status
+    if (socket.connected) {
+      setConnectionStatus("connected");
+    }
 
     return () => {
-      socket.disconnect();
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("message:new", handleNewMessage);
+      socket.off("message:read", handleMessageRead);
+      socketManager.releaseSocket();
     };
   }, [currentUserId]);
 
   // Join conversation rooms when conversations list updates
   useEffect(() => {
     if (conversations.length === 0) return;
-    
-    const socket = socketRef.current;
-    if (!socket) return;
 
-    const joinAllRooms = () => {
-      console.log("[HostInbox] Joining all conversation rooms:", conversations.length);
-      conversations.forEach((conv) => {
-        socket.emit("conversation:join", { conversationId: conv.id });
-      });
-    };
-
-    if (socket.connected) {
-      joinAllRooms();
-    }
-
-    socket.on("connect", joinAllRooms);
-    
-    return () => {
-      socket.off("connect", joinAllRooms);
-    };
+    conversations.forEach((conv) => {
+      socketManager.joinRoom(conv.id);
+    });
   }, [conversations]);
 
   // Load conversations - FILTER FOR HOST ROLE ONLY

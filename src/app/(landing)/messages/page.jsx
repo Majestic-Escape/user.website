@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { io } from "socket.io-client";
+import { socketManager } from "@/lib/socket";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -464,15 +464,10 @@ export default function MessagesPage() {
           });
         }
 
-        const socket = io(chatUrl, {
-          auth: { token },
-          reconnection: true,
-          reconnectionDelay: 1000,
-          reconnectionDelayMax: 5000,
-          reconnectionAttempts: 5,
-        });
+        const socket = socketManager.getSocket(token);
+        if (!socket) return;
 
-        socket.on("connect", () => {
+        const handleConnect = () => {
           setConnected(true);
           const guestConvs = (data.data || []).filter((conv) => {
             const participant = conv.participants.find(
@@ -481,54 +476,55 @@ export default function MessagesPage() {
             return participant && participant.role === "guest";
           });
           guestConvs.forEach(conv => {
-            socket.emit("conversation:join", { conversationId: conv.id });
+            socketManager.joinRoom(conv.id);
           });
-        });
-        socket.on("disconnect", () => setConnected(false));
+        };
+
+        const handleDisconnect = () => setConnected(false);
         
-        socket.on("message:new", (data) => {
+        const handleNewMessage = (msgData) => {
           const currentConversation = selectedConversationRef.current;
           
           // Only process messages for guest conversations
           const isGuestConversation = conversationsRef.current.some(
-            (conv) => conv.id === data.conversationId
+            (conv) => conv.id === msgData.conversationId
           );
           
           if (!isGuestConversation) return;
           
-          if (currentConversation && data.conversationId === currentConversation.id) {
+          if (currentConversation && msgData.conversationId === currentConversation.id) {
             setMessages(prev => {
               // Check if message already exists by id OR by clientMessageId (for optimistic updates)
               const existingIndex = prev.findIndex(m => 
-                m.id === data.message.id || 
-                (data.message.clientMessageId && m.id === data.message.clientMessageId)
+                m.id === msgData.message.id || 
+                (msgData.message.clientMessageId && m.id === msgData.message.clientMessageId)
               );
               
               if (existingIndex !== -1) {
                 // Replace optimistic message with server message
                 const updated = [...prev];
-                updated[existingIndex] = data.message;
+                updated[existingIndex] = msgData.message;
                 return updated;
               }
-              return [...prev, data.message];
+              return [...prev, msgData.message];
             });
           }
           
           setConversations(prev => {
             const updated = prev.map(conv => {
-              if (conv.id === data.conversationId) {
+              if (conv.id === msgData.conversationId) {
                 return {
                   ...conv,
                   lastMessage: {
-                    content: data.message.content?.text || '',
-                    senderId: data.message.senderId,
-                    sentAt: data.message.createdAt,
+                    content: msgData.message.content?.text || '',
+                    senderId: msgData.message.senderId,
+                    sentAt: msgData.message.createdAt,
                   },
                   unreadCount: {
                     ...conv.unreadCount,
-                    [userId]: currentConversation?.id === data.conversationId
+                    [userId]: currentConversation?.id === msgData.conversationId
                       ? 0
-                      : (conv.unreadCount?.[userId] || 0) + (data.message.senderId !== userId ? 1 : 0),
+                      : (conv.unreadCount?.[userId] || 0) + (msgData.message.senderId !== userId ? 1 : 0),
                   },
                 };
               }
@@ -541,11 +537,11 @@ export default function MessagesPage() {
               return timeB - timeA;
             });
           });
-        });
+        };
 
         // Listen for read receipts
-        socket.on("message:read", (data) => {
-          const { conversationId, messageIds, usrId, timestamp } = data;
+        const handleMessageRead = (readData) => {
+          const { conversationId, messageIds, usrId, timestamp } = readData;
           if (selectedConversationRef.current?.id === conversationId) {
             setMessages((prev) =>
               prev.map((msg) =>
@@ -558,7 +554,17 @@ export default function MessagesPage() {
               )
             );
           }
-        });
+        };
+
+        socket.on("connect", handleConnect);
+        socket.on("disconnect", handleDisconnect);
+        socket.on("message:new", handleNewMessage);
+        socket.on("message:read", handleMessageRead);
+
+        // Set initial connection status
+        if (socket.connected) {
+          setConnected(true);
+        }
 
         socketRef.current = socket;
       } catch (err) {
@@ -572,7 +578,11 @@ export default function MessagesPage() {
 
     return () => {
       if (socketRef.current) {
-        socketRef.current.disconnect();
+        socketRef.current.off("connect");
+        socketRef.current.off("disconnect");
+        socketRef.current.off("message:new");
+        socketRef.current.off("message:read");
+        socketManager.releaseSocket();
       }
     };
   }, [token, userId, chatUrl]);

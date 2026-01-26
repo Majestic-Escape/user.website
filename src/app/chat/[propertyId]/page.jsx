@@ -19,8 +19,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { io } from "socket.io-client";
 import Image from "next/image";
+import { socketManager } from "@/lib/socket";
 import ProtectedRoute from "@/components/protected-route";
 import MobileChatContainer from "@/components/mobile-chat-container";
 import MobileChatInput from "@/components/mobile-chat-input";
@@ -69,6 +69,7 @@ export default function ChatPage({ params }) {
   const chatContainerRef = useRef(null);
   const desktopInputRef = useRef(null);
   const shouldRefocusDesktopRef = useRef(false);
+  const conversationIdRef = useRef(null);
   const [isMobileView, setIsMobileView] = useState(false);
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -245,71 +246,54 @@ export default function ChatPage({ params }) {
 
   // Ref to track conversationId in socket callbacks (avoids stale closures)
   const conversationIdRef = useRef(null);
-  const hasJoinedRoomRef = useRef(false);
 
   // Keep ref in sync with state
   useEffect(() => {
     conversationIdRef.current = conversationId;
-    // Reset joined flag when conversation changes
-    if (conversationId) {
-      hasJoinedRoomRef.current = false;
-    }
   }, [conversationId]);
 
-  // Initialize socket connection - STABLE, doesn't depend on conversationId
+  // Initialize socket connection using singleton manager
   useEffect(() => {
     if (!token) return;
 
-    const socket = io(CHAT_URL, {
-      auth: { token },
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
-    });
+    const socket = socketManager.getSocket(token);
+    if (!socket) return;
 
     socketRef.current = socket;
 
-    socket.on("connect", () => {
+    const handleConnect = () => {
       console.log("[Chat] Socket connected, socket id:", socket.id);
       setConnectionStatus("connected");
-      // Join conversation room if we have one and haven't joined yet
-      if (conversationIdRef.current && !hasJoinedRoomRef.current) {
-        console.log("[Chat] Joining room on connect:", conversationIdRef.current);
-        socket.emit("conversation:join", { conversationId: conversationIdRef.current });
-        hasJoinedRoomRef.current = true;
+      // Join conversation room if we have one
+      if (conversationIdRef.current) {
+        socketManager.joinRoom(conversationIdRef.current);
       }
-    });
+    };
 
-    socket.on("disconnect", () => {
+    const handleDisconnect = () => {
       console.log("[Chat] Socket disconnected");
       setConnectionStatus("disconnected");
-      hasJoinedRoomRef.current = false;
-    });
+    };
 
-    socket.on("connect_error", (err) => {
+    const handleConnectError = (err) => {
       console.error("[Chat] Socket connection error:", err);
       setConnectionStatus("error");
-    });
+    };
 
-    // Listen for server errors (e.g., failed to join room)
-    socket.on("error", (err) => {
+    const handleError = (err) => {
       console.error("[Chat] Server error:", err);
-    });
+    };
 
-    // Listen for new messages - uses ref to avoid stale closures
-    socket.on("message:new", (data) => {
-      console.log("[Chat] Received message:new event:", data.conversationId, "current:", conversationIdRef.current);
+    const handleNewMessage = (data) => {
       if (data.conversationId === conversationIdRef.current) {
         setMessages((prev) => {
           if (prev.some((m) => m.id === data.message.id)) return prev;
           return [...prev, data.message];
         });
       }
-    });
+    };
 
-    // Listen for read receipts
-    socket.on("message:read", (data) => {
+    const handleMessageRead = (data) => {
       if (data.conversationId === conversationIdRef.current) {
         setMessages((prev) =>
           prev.map((msg) =>
@@ -322,64 +306,45 @@ export default function ChatPage({ params }) {
           )
         );
       }
-    });
-
-    return () => {
-      if (conversationIdRef.current) {
-        socket.emit("conversation:leave", { conversationId: conversationIdRef.current });
-      }
-      socket.disconnect();
-    };
-  }, [token]); // Only depends on token, not conversationId
-
-  // Join conversation room when BOTH socket is connected AND conversationId is available
-  useEffect(() => {
-    if (!conversationId) {
-      console.log("[Chat] No conversationId yet, waiting...");
-      return;
-    }
-    
-    const socket = socketRef.current;
-    if (!socket) {
-      console.log("[Chat] No socket yet, waiting...");
-      return;
-    }
-
-    // Function to join the room
-    const joinRoom = () => {
-      if (hasJoinedRoomRef.current) {
-        console.log("[Chat] Already joined room, skipping:", conversationId);
-        return;
-      }
-      console.log("[Chat] Emitting conversation:join for:", conversationId, "socket connected:", socket.connected);
-      socket.emit("conversation:join", { conversationId });
-      hasJoinedRoomRef.current = true;
     };
 
-    // Join immediately if connected
-    if (socket.connected) {
-      joinRoom();
-    } else {
-      console.log("[Chat] Socket not connected yet, will join on connect");
-    }
-
-    // Also join on reconnect
-    const handleConnect = () => {
-      console.log("[Chat] Socket connected, joining room now");
-      hasJoinedRoomRef.current = false;
-      joinRoom();
-    };
     socket.on("connect", handleConnect);
-    
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("error", handleError);
+    socket.on("message:new", handleNewMessage);
+    socket.on("message:read", handleMessageRead);
+
+    // Set initial connection status
+    if (socket.connected) {
+      setConnectionStatus("connected");
+    }
+
     return () => {
       socket.off("connect", handleConnect);
-      if (socket.connected && hasJoinedRoomRef.current) {
-        console.log("[Chat] Leaving conversation room:", conversationId);
-        socket.emit("conversation:leave", { conversationId });
-        hasJoinedRoomRef.current = false;
+      socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("error", handleError);
+      socket.off("message:new", handleNewMessage);
+      socket.off("message:read", handleMessageRead);
+      
+      if (conversationIdRef.current) {
+        socketManager.leaveRoom(conversationIdRef.current);
       }
+      socketManager.releaseSocket();
     };
-  }, [conversationId, connectionStatus]); // Also depend on connectionStatus to re-run when socket connects
+  }, [token]);
+
+  // Join conversation room when conversationId is available
+  useEffect(() => {
+    if (!conversationId || !socketRef.current) return;
+
+    socketManager.joinRoom(conversationId);
+
+    return () => {
+      socketManager.leaveRoom(conversationId);
+    };
+  }, [conversationId]);
 
   // Load messages
   useEffect(() => {
