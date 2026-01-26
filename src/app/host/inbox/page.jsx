@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { io } from "socket.io-client";
 import Image from "next/image";
+import MobileChatContainer from "@/components/mobile-chat-container";
+import MobileChatInput from "@/components/mobile-chat-input";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
@@ -41,10 +43,36 @@ export default function HostInboxPage() {
   const [propertyDetails, setPropertyDetails] = useState({});
   const [participantDetails, setParticipantDetails] = useState({});
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
   const socketRef = useRef(null);
   const chatContainerRef = useRef(null);
   const tokenRef = useRef(null);
+  const desktopInputRef = useRef(null);
+  const shouldRefocusRef = useRef(false);
+
+  // Refocus desktop input after message is sent
+  useEffect(() => {
+    if (shouldRefocusRef.current && newMessage === "" && !isMobileView) {
+      const input = desktopInputRef.current;
+      if (input) {
+        requestAnimationFrame(() => {
+          input.focus();
+        });
+      }
+      shouldRefocusRef.current = false;
+    }
+  }, [newMessage, isMobileView]);
+
+  // Auto-focus desktop input when conversation is selected
+  useEffect(() => {
+    if (!isMobileView && selectedConversation && !isLoadingMessages && desktopInputRef.current) {
+      setTimeout(() => {
+        desktopInputRef.current?.focus();
+      }, 100);
+    }
+  }, [selectedConversation?.id, isLoadingMessages, isMobileView]);
 
   // Get token and user ID on mount
   useEffect(() => {
@@ -74,7 +102,94 @@ export default function HostInboxPage() {
     conversationsRef.current = conversations;
   }, [conversations]);
 
-  // Initialize socket connection - STABLE, doesn't depend on selectedConversation
+  // Detect mobile view
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+      setIsMobileView(isMobile);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Keyboard detection for auto-toggling property info
+  const isManualToggleRef = useRef(false);
+  const lastKeyboardStateRef = useRef(false);
+
+  // Handle keyboard state change from MobileChatContainer
+  const handleKeyboardChange = useCallback((isOpen) => {
+    const keyboardStateChanged = lastKeyboardStateRef.current !== isOpen;
+    lastKeyboardStateRef.current = isOpen;
+    
+    // Only auto-toggle if keyboard state actually changed and not a manual toggle
+    if (keyboardStateChanged && !isManualToggleRef.current) {
+      if (isOpen) {
+        // Keyboard opened - auto-collapse
+        setShowPropertyInfo(false);
+      } else {
+        // Keyboard closed - auto-expand
+        setShowPropertyInfo(true);
+      }
+    }
+    // Always reset manual toggle flag when keyboard state changes
+    // This allows auto-toggle to work again after the next keyboard change
+    if (keyboardStateChanged) {
+      isManualToggleRef.current = false;
+    }
+  }, []);
+
+  // Handle manual toggle of property info
+  const handleTogglePropertyInfo = useCallback(() => {
+    isManualToggleRef.current = true;
+    setShowPropertyInfo(prev => !prev);
+  }, []);
+
+  // Reset dropdown to expanded when conversation changes
+  useEffect(() => {
+    if (selectedConversation) {
+      setShowPropertyInfo(true);
+      setShowScrollToBottom(false);
+      isManualToggleRef.current = false;
+      lastKeyboardStateRef.current = false;
+    }
+  }, [selectedConversation?.id]);
+
+  // Scroll detection for showing scroll-to-bottom button
+  const handleScroll = useCallback(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    // Show button if user is more than 100px from bottom
+    setShowScrollToBottom(distanceFromBottom > 100);
+  }, []);
+
+  // Scroll to bottom function
+  const scrollToBottom = useCallback(() => {
+    const container = chatContainerRef.current;
+    if (container) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
+
+  // Hide bottom navigation when chat is selected on mobile
+  useEffect(() => {
+    if (isMobileView && selectedConversation) {
+      const bottomNav = document.querySelector('nav.fixed.bottom-0');
+      if (bottomNav) bottomNav.style.display = 'none';
+      
+      return () => {
+        if (bottomNav) bottomNav.style.display = '';
+      };
+    }
+  }, [isMobileView, selectedConversation]);
+
+  // Initialize socket connection
   useEffect(() => {
     if (!tokenRef.current || !currentUserId) return;
 
@@ -91,7 +206,6 @@ export default function HostInboxPage() {
     socket.on("connect", () => {
       console.log("[HostInbox] Socket connected");
       setConnectionStatus("connected");
-      // Join all conversation rooms on connect for real-time updates
       conversationsRef.current.forEach((conv) => {
         socket.emit("conversation:join", { conversationId: conv.id });
       });
@@ -107,13 +221,10 @@ export default function HostInboxPage() {
       console.error("[HostInbox] Socket connection error:", error);
     });
 
-    // Listen for new messages - uses refs to avoid stale closures
     socket.on("message:new", (data) => {
       const { message, conversationId } = data;
       console.log("[HostInbox] Received message:new event:", conversationId);
 
-      // Only process messages for conversations where user is HOST
-      // Check if this conversation is in our filtered list
       const isHostConversation = conversationsRef.current.some(
         (conv) => conv.id === conversationId
       );
@@ -123,17 +234,14 @@ export default function HostInboxPage() {
         return;
       }
 
-      // Update messages if viewing this conversation
       if (selectedConversationRef.current?.id === conversationId) {
         setMessages((prev) => {
-          // Check if message already exists by id OR by clientMessageId (for optimistic updates)
           const existingIndex = prev.findIndex(m => 
             m.id === message.id || 
             (message.clientMessageId && m.id === message.clientMessageId)
           );
           
           if (existingIndex !== -1) {
-            // Replace optimistic message with server message
             const updated = [...prev];
             updated[existingIndex] = message;
             return updated;
@@ -142,7 +250,6 @@ export default function HostInboxPage() {
         });
       }
 
-      // Update conversation list - move to top and update last message
       setConversations((prev) => {
         const updated = prev.map((conv) =>
           conv.id === conversationId
@@ -163,7 +270,6 @@ export default function HostInboxPage() {
               }
             : conv
         );
-        // Sort by last message time (most recent first)
         return updated.sort((a, b) => {
           const timeA = a.lastMessage?.sentAt ? new Date(a.lastMessage.sentAt) : new Date(0);
           const timeB = b.lastMessage?.sentAt ? new Date(b.lastMessage.sentAt) : new Date(0);
@@ -172,7 +278,6 @@ export default function HostInboxPage() {
       });
     });
 
-    // Listen for read receipts
     socket.on("message:read", (data) => {
       const { conversationId, messageIds, userId, timestamp } = data;
       if (selectedConversationRef.current?.id === conversationId) {
@@ -192,16 +297,15 @@ export default function HostInboxPage() {
     return () => {
       socket.disconnect();
     };
-  }, [currentUserId]); // Only depends on currentUserId, not selectedConversation
+  }, [currentUserId]);
 
-  // Join conversation rooms when conversations list updates or socket reconnects
+  // Join conversation rooms when conversations list updates
   useEffect(() => {
     if (conversations.length === 0) return;
     
     const socket = socketRef.current;
     if (!socket) return;
 
-    // Function to join all rooms
     const joinAllRooms = () => {
       console.log("[HostInbox] Joining all conversation rooms:", conversations.length);
       conversations.forEach((conv) => {
@@ -209,12 +313,10 @@ export default function HostInboxPage() {
       });
     };
 
-    // Join immediately if connected
     if (socket.connected) {
       joinAllRooms();
     }
 
-    // Also join on reconnect
     socket.on("connect", joinAllRooms);
     
     return () => {
@@ -240,7 +342,6 @@ export default function HostInboxPage() {
         const data = await response.json();
         console.log("[HostInbox] Raw conversations response:", data);
         if (data.success) {
-          // FILTER: Only show conversations where current user is the HOST
           const hostConversations = (data.data || []).filter((conv) => {
             const participant = conv.participants.find(
               (p) => p.userId === currentUserId
@@ -248,7 +349,6 @@ export default function HostInboxPage() {
             return participant && participant.role === "host";
           });
 
-          // Sort by last message time (most recent first)
           const sortedConversations = hostConversations.sort((a, b) => {
             const timeA = a.lastMessage?.sentAt ? new Date(a.lastMessage.sentAt) : new Date(0);
             const timeB = b.lastMessage?.sentAt ? new Date(b.lastMessage.sentAt) : new Date(0);
@@ -256,8 +356,6 @@ export default function HostInboxPage() {
           });
 
           console.log("[HostInbox] Filtered host conversations:", sortedConversations);
-          console.log("[HostInbox] PropertyIds in conversations:", sortedConversations.map(c => c.propertyId));
-          
           setConversations(sortedConversations);
           fetchConversationDetails(sortedConversations);
         }
@@ -274,64 +372,43 @@ export default function HostInboxPage() {
   // Fetch property and participant details
   const fetchConversationDetails = async (convs) => {
     const propertyIds = [...new Set(convs.map((c) => c.propertyId))];
-    console.log("[HostInbox] Fetching details for propertyIds:", propertyIds);
-    
     const guestIds = convs
       .flatMap((c) => c.participants.filter((p) => p.role === "guest"))
       .map((p) => p.userId);
     const uniqueGuestIds = [...new Set(guestIds)];
 
-    // Fetch property details
     for (const propertyId of propertyIds) {
       try {
-        // Route is /properties/:id (plural)
         const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/properties/${propertyId}`;
-        console.log("[HostInbox] Fetching property from:", url);
         const res = await fetch(url);
-        console.log("[HostInbox] Property response status:", res.status);
         if (res.ok) {
           const data = await res.json();
-          console.log("[HostInbox] Property API response for", propertyId, ":", data);
-          // Handle different response formats: { data: property } or { property: property } or direct property
           const property = data.data || data.property || data;
-          console.log("[HostInbox] Extracted property:", property?.title, property);
           if (property && (property.title || property.name || property._id)) {
             setPropertyDetails((prev) => ({
               ...prev,
               [propertyId]: property,
             }));
           }
-        } else {
-          console.log("[HostInbox] Property fetch failed:", res.status, await res.text());
         }
       } catch (e) {
         console.error("[HostInbox] Error fetching property:", propertyId, e);
       }
     }
 
-    // Fetch guest details
-    console.log("[HostInbox] Fetching guest details for IDs:", uniqueGuestIds);
     for (const guestId of uniqueGuestIds) {
       try {
-        // Correct endpoint is /api/v1/guests/info/:userId
         const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/guests/info/${guestId}`;
-        console.log("[HostInbox] Fetching guest from:", url);
         const res = await fetch(url);
-        console.log("[HostInbox] Guest fetch response for", guestId, "status:", res.status);
         if (res.ok) {
           const data = await res.json();
-          console.log("[HostInbox] Guest data for", guestId, ":", JSON.stringify(data));
           const userData = data.user || data.guest || data.data || data;
-          console.log("[HostInbox] Extracted user data:", userData?.firstName, userData?.lastName);
           if (userData) {
             setParticipantDetails((prev) => ({
               ...prev,
               [guestId]: userData,
             }));
           }
-        } else {
-          const errorText = await res.text();
-          console.log("[HostInbox] Guest fetch failed:", res.status, errorText);
         }
       } catch (e) {
         console.error("[HostInbox] Error fetching guest:", guestId, e);
@@ -360,7 +437,6 @@ export default function HostInboxPage() {
         const data = await response.json();
         if (data.success && data.data) {
           const loadedMessages = data.data.data || data.data;
-          // Reverse messages so oldest are first (newest at bottom)
           const messagesArray = Array.isArray(loadedMessages) ? loadedMessages : [];
           setMessages(messagesArray.reverse());
         }
@@ -374,11 +450,10 @@ export default function HostInboxPage() {
     loadMessages();
   }, [selectedConversation?.id]);
 
-  // Auto-scroll to bottom on new messages - prevent flickering
+  // Auto-scroll to bottom on new messages
   const prevMessagesLengthRef = useRef(0);
   useEffect(() => {
     if (chatContainerRef.current && messages.length > 0) {
-      // Use requestAnimationFrame to prevent flickering
       requestAnimationFrame(() => {
         if (chatContainerRef.current) {
           chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -388,20 +463,18 @@ export default function HostInboxPage() {
     }
   }, [messages.length]);
 
-  // Reset on conversation change
   useEffect(() => {
     prevMessagesLengthRef.current = 0;
   }, [selectedConversation?.id]);
 
-  // Track messages we've already marked as read to prevent infinite loops
+  // Track messages we've already marked as read
   const markedAsReadRef = useRef(new Set());
 
-  // Reset marked as read when conversation changes
   useEffect(() => {
     markedAsReadRef.current = new Set();
   }, [selectedConversation?.id]);
 
-  // Mark messages as read - only once per message
+  // Mark messages as read
   useEffect(() => {
     if (!selectedConversation || !messages.length || !socketRef.current || !socketRef.current.connected)
       return;
@@ -411,12 +484,11 @@ export default function HostInboxPage() {
         (m) =>
           m.senderId !== currentUserId &&
           !m.readBy?.some((r) => r.userId === currentUserId) &&
-          !markedAsReadRef.current.has(m.id) // Don't re-mark messages we've already sent read receipt for
+          !markedAsReadRef.current.has(m.id)
       )
       .map((m) => m.id);
 
     if (unreadMessageIds.length > 0) {
-      // Mark these as "sent read receipt" immediately to prevent re-sending
       unreadMessageIds.forEach(id => markedAsReadRef.current.add(id));
 
       socketRef.current.emit("message:read", {
@@ -424,7 +496,6 @@ export default function HostInboxPage() {
         messageIds: unreadMessageIds,
       });
 
-      // Update local unread count
       setConversations((prev) =>
         prev.map((conv) =>
           conv.id === selectedConversation.id
@@ -461,7 +532,18 @@ export default function HostInboxPage() {
         }
       );
 
+      // Mark that we should refocus after message is cleared
+      if (!isMobileView) {
+        shouldRefocusRef.current = true;
+      }
       setNewMessage("");
+      
+      // Direct focus for desktop - more reliable than useEffect
+      if (!isMobileView && desktopInputRef.current) {
+        setTimeout(() => {
+          desktopInputRef.current?.focus();
+        }, 0);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
@@ -476,7 +558,7 @@ export default function HostInboxPage() {
     }
   };
 
-  // Get the GUEST participant (the person who sent the inquiry)
+  // Helper functions
   const getGuestParticipant = (conversation) => {
     const guest = conversation.participants.find((p) => p.role === "guest");
     return guest || null;
@@ -485,10 +567,7 @@ export default function HostInboxPage() {
   const getGuestName = (conversation) => {
     const guest = getGuestParticipant(conversation);
     if (guest) {
-      // Only show first name
       if (guest.firstName) return guest.firstName;
-      
-      // Fallback to fetched participant details
       const fetchedGuest = participantDetails[guest.userId];
       if (fetchedGuest) {
         return fetchedGuest.firstName || fetchedGuest.name?.split(' ')[0] || fetchedGuest.email?.split("@")[0] || "Guest";
@@ -498,7 +577,6 @@ export default function HostInboxPage() {
   };
 
   const getGuestFirstName = (conversation) => {
-    // Same as getGuestName now - only first name
     return getGuestName(conversation);
   };
 
@@ -518,7 +596,6 @@ export default function HostInboxPage() {
 
   const getPropertyImage = (conversation) => {
     const property = propertyDetails[conversation.propertyId];
-    // Handle both 'photos' (ListingProperty) and 'images' (Property) field names
     const images = property?.photos || property?.images;
     return images?.[0] || property?.image || null;
   };
@@ -529,7 +606,6 @@ export default function HostInboxPage() {
 
   const getPropertyLocation = (property) => {
     if (!property) return "";
-    // Handle both direct fields and nested address object
     const city = property.address?.city || property.city;
     const state = property.address?.state || property.state;
     const parts = [city, state].filter(Boolean);
@@ -538,13 +614,11 @@ export default function HostInboxPage() {
 
   const getPropertyPrice = (property) => {
     if (!property) return null;
-    // Handle both 'basePrice' (ListingProperty) and 'price.base' (Property)
     return property.basePrice || property.price?.base || null;
   };
 
   const getPropertyType = (property) => {
     if (!property) return null;
-    // Handle both 'propertyType' and 'type' field names
     return property.propertyType || property.type || null;
   };
 
@@ -590,11 +664,18 @@ export default function HostInboxPage() {
     if (!date) return "";
     const d = new Date(date);
     const now = new Date();
-    const diff = now - d;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    // Compare calendar days, not time difference
+    const messageDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffTime = today - messageDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    if (days === 0) return "Today";
-    if (days === 1) return "Yesterday";
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) {
+      return d.toLocaleDateString([], { weekday: "long" });
+    }
     return d.toLocaleDateString([], {
       weekday: "long",
       month: "short",
@@ -610,422 +691,387 @@ export default function HostInboxPage() {
     return groups;
   }, {});
 
-  return (
-    <div className="h-[calc(100vh-64px-64px)] md:h-[calc(100vh-64px)] w-full bg-white font-poppins flex overflow-hidden">
-      {/* Conversation List - Hidden on mobile when chat is selected */}
-      <div
-        className={`${
-          selectedConversation ? "hidden md:flex" : "flex"
-        } flex-col w-full md:w-[380px] border-r overflow-hidden`}
-      >
-        {/* Header */}
-        <div className="p-4 border-b">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bricolage font-semibold">Guest Inquiries</h2>
-            {connectionStatus !== "connected" && (
-              <Badge variant="outline" className="text-orange-500 border-orange-500">
-                <WifiOff className="w-3 h-3 mr-1" />
-                {connectionStatus === "error" ? "Error" : "Offline"}
-              </Badge>
-            )}
-          </div>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search conversations..."
-              className="pl-8 bg-gray-50 border-none rounded-lg focus-visible:ring-2 focus-visible:ring-brightGreen/30 text-sm focus-visible:ring-offset-0"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="p-2 border-b">
-          <div className="flex gap-1 px-2">
-            <Button
-              variant={activeFilter === "all" ? "default" : "ghost"}
-              size="sm"
-              className={`rounded-full px-4 text-sm font-medium ${
-                activeFilter === "all"
-                  ? "bg-primaryGreen text-white hover:bg-primaryGreen/90"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-              onClick={() => setActiveFilter("all")}
-            >
-              All
-            </Button>
-            <Button
-              variant={activeFilter === "unread" ? "default" : "ghost"}
-              size="sm"
-              className={`rounded-full px-4 text-sm font-medium ${
-                activeFilter === "unread"
-                  ? "bg-primaryGreen text-white hover:bg-primaryGreen/90"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-              onClick={() => setActiveFilter("unread")}
-            >
-              Unread
-            </Button>
-          </div>
-        </div>
-
-        {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-32">
-              <Loader2 className="w-6 h-6 animate-spin text-primaryGreen" />
-            </div>
-          ) : filteredConversations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 px-4">
-              <MessageCircle className="w-12 h-12 text-gray-300 mb-4" />
-              <p className="text-gray-500 text-center">
-                {searchQuery
-                  ? "No conversations found"
-                  : "No guest inquiries yet. When guests message you about your properties, they'll appear here."}
-              </p>
-            </div>
-          ) : (
-            <div className="p-2 space-y-2">
-              {filteredConversations.map((conv) => {
-                const unreadCount = conv.unreadCount[currentUserId] || 0;
-                const guest = getGuestParticipant(conv);
-                const propertyImage = getPropertyImage(conv);
-                const property = getPropertyDetails(conv);
-
-                return (
-                  <Card
-                    key={conv.id}
-                    className={`p-3 cursor-pointer border-none shadow-none rounded-xl transition-colors ${
-                      selectedConversation?.id === conv.id
-                        ? "bg-lightGreen/40"
-                        : "bg-gray-50 hover:bg-lightGreen/20"
-                    }`}
-                    onClick={() => setSelectedConversation(conv)}
-                  >
-                    <div className="flex gap-3">
-                      <Avatar className="h-12 w-12 flex-shrink-0">
-                        <AvatarImage src={getGuestAvatar(conv)} />
-                        <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
-                          {getGuestName(conv)
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start">
-                          <span className="font-medium text-sm truncate">
-                            {getGuestName(conv)}
-                          </span>
-                          <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                            {formatTime(conv.lastMessage?.sentAt)}
-                          </span>
-                        </div>
-                        {/* Property Context Badge */}
-                        <div className="flex items-center gap-1.5 mt-1">
-                          {propertyImage ? (
-                            <div className="relative h-5 w-5 rounded overflow-hidden flex-shrink-0">
-                              <Image
-                                src={propertyImage}
-                                alt=""
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <Home className="h-4 w-4 text-primaryGreen flex-shrink-0" />
-                          )}
-                          <p className="text-xs text-primaryGreen font-medium truncate">
-                            {getPropertyName(conv)}
-                          </p>
-                        </div>
-                        {(property?.address?.city || property?.address?.state || property?.city) && (
-                          <p className="text-[11px] text-gray-400 truncate flex items-center gap-1 mt-0.5">
-                            <MapPin className="h-3 w-3" />
-                            {getPropertyLocation(property)}
-                          </p>
-                        )}
-                        <p className="text-sm text-gray-600 truncate mt-1">
-                          {conv.lastMessage?.content || "No messages yet"}
-                        </p>
-                      </div>
-                      {unreadCount > 0 && (
-                        <div className="flex items-center">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primaryGreen text-white text-xs">
-                            {unreadCount}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
+  // Render conversation list component
+  const renderConversationList = () => (
+    <div className={`${selectedConversation ? "hidden md:flex" : "flex"} flex-col w-full md:w-[380px] border-r overflow-hidden`}>
+      {/* Header */}
+      <div className="p-4 border-b">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bricolage font-semibold">Guest Inquiries</h2>
+          {connectionStatus !== "connected" && (
+            <Badge variant="outline" className="text-orange-500 border-orange-500">
+              <WifiOff className="w-3 h-3 mr-1" />
+              {connectionStatus === "error" ? "Error" : "Offline"}
+            </Badge>
           )}
+        </div>
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search conversations..."
+            className="pl-8 bg-gray-50 border-none rounded-lg focus-visible:ring-2 focus-visible:ring-brightGreen/30 text-sm focus-visible:ring-offset-0"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
 
-      {/* Chat Area */}
-      {selectedConversation ? (
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
-          {/* Chat Header - Fixed */}
-          <div className="border-b bg-white flex-shrink-0">
-            {/* Guest Info Row */}
-            <div className="flex items-center gap-3 p-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden flex-shrink-0"
-                onClick={() => setSelectedConversation(null)}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <Avatar className="h-10 w-10 flex-shrink-0">
-                <AvatarImage src={getGuestAvatar(selectedConversation)} />
-                <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
-                  {getGuestName(selectedConversation)
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold truncate">
-                  {getGuestName(selectedConversation)}
-                </h3>
-                <p className="text-sm text-gray-500">Property Enquiry · Guest</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-500 hover:text-gray-700 flex-shrink-0"
-                onClick={() => setShowPropertyInfo(!showPropertyInfo)}
-              >
-                {showPropertyInfo ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            
-            {/* Property Context Card - Collapsible */}
-            {showPropertyInfo && (
-              <div className="px-4 pb-4">
-                {(() => {
-                  const property = getPropertyDetails(selectedConversation);
-                  const propertyImage = getPropertyImage(selectedConversation);
-                  
-                  return (
-                    <div className="bg-lightGreen/30 rounded-xl p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Home className="h-4 w-4 text-primaryGreen" />
-                        <span className="text-xs font-medium text-primaryGreen uppercase tracking-wide">
-                          Inquiry About
+      {/* Filters */}
+      <div className="p-2 border-b">
+        <div className="flex gap-1 px-2">
+          <Button
+            variant={activeFilter === "all" ? "default" : "ghost"}
+            size="sm"
+            className={`rounded-full px-4 text-sm font-medium ${
+              activeFilter === "all"
+                ? "bg-primaryGreen text-white hover:bg-primaryGreen/90"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+            onClick={() => setActiveFilter("all")}
+          >
+            All
+          </Button>
+          <Button
+            variant={activeFilter === "unread" ? "default" : "ghost"}
+            size="sm"
+            className={`rounded-full px-4 text-sm font-medium ${
+              activeFilter === "unread"
+                ? "bg-primaryGreen text-white hover:bg-primaryGreen/90"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+            onClick={() => setActiveFilter("unread")}
+          >
+            Unread
+          </Button>
+        </div>
+      </div>
+
+      {/* Conversation List */}
+      <div className="flex-1 overflow-y-auto">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="w-6 h-6 animate-spin text-primaryGreen" />
+          </div>
+        ) : filteredConversations.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 px-4">
+            <MessageCircle className="w-12 h-12 text-gray-300 mb-4" />
+            <p className="text-gray-500 text-center">
+              {searchQuery
+                ? "No conversations found"
+                : "No guest inquiries yet. When guests message you about your properties, they'll appear here."}
+            </p>
+          </div>
+        ) : (
+          <div className="p-2 space-y-2">
+            {filteredConversations.map((conv) => {
+              const unreadCount = conv.unreadCount[currentUserId] || 0;
+              const propertyImage = getPropertyImage(conv);
+              const property = getPropertyDetails(conv);
+
+              return (
+                <Card
+                  key={conv.id}
+                  className={`p-3 cursor-pointer border-none shadow-none rounded-xl transition-colors ${
+                    selectedConversation?.id === conv.id
+                      ? "bg-lightGreen/40"
+                      : "bg-gray-50 hover:bg-lightGreen/20"
+                  }`}
+                  onClick={() => setSelectedConversation(conv)}
+                >
+                  <div className="flex gap-3">
+                    <Avatar className="h-12 w-12 flex-shrink-0">
+                      <AvatarImage src={getGuestAvatar(conv)} />
+                      <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
+                        {getGuestName(conv).split(" ").map((n) => n[0]).join("").toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start">
+                        <span className="font-medium text-sm truncate">{getGuestName(conv)}</span>
+                        <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                          {formatTime(conv.lastMessage?.sentAt)}
                         </span>
                       </div>
-                      <div className="flex gap-3">
-                        {/* Property Image */}
-                        <div className="relative h-16 w-20 md:h-20 md:w-28 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
-                          {propertyImage ? (
-                            <Image
-                              src={propertyImage}
-                              alt={getPropertyName(selectedConversation)}
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center h-full">
-                              <Home className="h-6 w-6 text-gray-400" />
-                            </div>
-                          )}
-                        </div>
-                        
-                        {/* Property Details */}
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-sm md:text-base truncate text-gray-900">
-                            {getPropertyName(selectedConversation)}
-                          </h4>
-                          {getPropertyType(property) && (
-                            <p className="text-xs text-gray-600 mt-0.5">
-                              {getPropertyType(property)}
-                            </p>
-                          )}
-                          {(property?.address?.city || property?.address?.state) && (
-                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                              <MapPin className="h-3 w-3" />
-                              {getPropertyLocation(property)}
-                            </p>
-                          )}
-                          {getPropertyPrice(property) && (
-                            <p className="text-xs font-medium text-primaryGreen mt-1">
-                              ₹{getPropertyPrice(property).toLocaleString()}/night
-                            </p>
-                          )}
-                        </div>
-                        
-                        {/* View Property Link */}
-                        <a
-                          href={`/stay/${selectedConversation.propertyId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-shrink-0 self-center"
-                        >
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs border-primaryGreen text-primaryGreen hover:bg-primaryGreen hover:text-white"
-                          >
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            <span className="hidden sm:inline">View</span>
-                          </Button>
-                        </a>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {propertyImage ? (
+                          <div className="relative h-5 w-5 rounded overflow-hidden flex-shrink-0">
+                            <Image src={propertyImage} alt="" fill className="object-cover" />
+                          </div>
+                        ) : (
+                          <Home className="h-4 w-4 text-primaryGreen flex-shrink-0" />
+                        )}
+                        <p className="text-xs text-primaryGreen font-medium truncate">{getPropertyName(conv)}</p>
                       </div>
+                      {(property?.address?.city || property?.address?.state || property?.city) && (
+                        <p className="text-[11px] text-gray-400 truncate flex items-center gap-1 mt-0.5">
+                          <MapPin className="h-3 w-3" />
+                          {getPropertyLocation(property)}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-600 truncate mt-1">
+                        {conv.lastMessage?.content || "No messages yet"}
+                      </p>
+                    </div>
+                    {unreadCount > 0 && (
+                      <div className="flex items-center">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primaryGreen text-white text-xs">
+                          {unreadCount}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Render chat header component
+  const renderChatHeader = () => (
+    <div className="border-b bg-white flex-shrink-0">
+      <div className="flex items-center gap-3 p-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden flex-shrink-0"
+          onClick={() => setSelectedConversation(null)}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <Avatar className="h-10 w-10 flex-shrink-0">
+          <AvatarImage src={getGuestAvatar(selectedConversation)} />
+          <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
+            {getGuestName(selectedConversation).split(" ").map((n) => n[0]).join("").toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold truncate">{getGuestName(selectedConversation)}</h3>
+          <p className="text-sm text-gray-500">Property Enquiry · Guest</p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-gray-500 hover:text-gray-700 flex-shrink-0"
+          onMouseDown={(e) => {
+            // Prevent default to avoid stealing focus from input (keeps keyboard open)
+            e.preventDefault();
+          }}
+          onClick={handleTogglePropertyInfo}
+        >
+          {showPropertyInfo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
+      </div>
+      
+      {showPropertyInfo && (
+        <div className="px-4 pb-4">
+          {(() => {
+            const property = getPropertyDetails(selectedConversation);
+            const propertyImage = getPropertyImage(selectedConversation);
+            
+            return (
+              <div className="bg-lightGreen/30 rounded-xl p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Home className="h-4 w-4 text-primaryGreen" />
+                  <span className="text-xs font-medium text-primaryGreen uppercase tracking-wide">Inquiry About</span>
+                </div>
+                <div className="flex gap-3">
+                  <div className="relative h-16 w-20 md:h-20 md:w-28 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
+                    {propertyImage ? (
+                      <Image src={propertyImage} alt={getPropertyName(selectedConversation)} fill className="object-cover" />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <Home className="h-6 w-6 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-sm md:text-base truncate text-gray-900">{getPropertyName(selectedConversation)}</h4>
+                    {getPropertyType(property) && <p className="text-xs text-gray-600 mt-0.5">{getPropertyType(property)}</p>}
+                    {(property?.address?.city || property?.address?.state) && (
+                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                        <MapPin className="h-3 w-3" />
+                        {getPropertyLocation(property)}
+                      </p>
+                    )}
+                    {getPropertyPrice(property) && (
+                      <p className="text-xs font-medium text-primaryGreen mt-1">₹{getPropertyPrice(property).toLocaleString()}/night</p>
+                    )}
+                  </div>
+                  <a href={`/stay/${selectedConversation.propertyId}`} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 self-center">
+                    <Button variant="outline" size="sm" className="text-xs border-primaryGreen text-primaryGreen hover:bg-primaryGreen hover:text-white">
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      <span className="hidden sm:inline">View</span>
+                    </Button>
+                  </a>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+    </div>
+  );
+
+  // Render messages component
+  const renderMessages = (isMobile = false) => {
+    const allOwnMessages = messages.filter(m => m.senderId === currentUserId);
+    const latestReadOwnMessageId = allOwnMessages
+      .filter(m => (m.readBy || []).some(r => r.userId !== m.senderId))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]?.id;
+
+    return (
+      <div className="relative flex-1 flex flex-col min-h-0">
+        <div
+          ref={chatContainerRef}
+          data-chat-messages={isMobile ? "true" : undefined}
+          data-chat-container={isMobile ? "true" : undefined}
+          className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+          onScroll={handleScroll}
+          style={isMobile ? { 
+            overscrollBehavior: "contain",
+            minHeight: 0,
+            WebkitOverflowScrolling: "touch",
+          } : { minHeight: 0 }}
+        >
+          {isLoadingMessages ? (
+            <div className="flex items-center justify-center h-32">
+              <Loader2 className="w-6 h-6 animate-spin text-primaryGreen" />
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full">
+              <MessageCircle className="w-12 h-12 text-gray-300 mb-4" />
+              <p className="text-gray-500">No messages yet. Start the conversation!</p>
+            </div>
+          ) : (
+            Object.entries(groupedMessages).map(([date, dateMessages]) => (
+              <div key={date}>
+                <div className="flex justify-center my-4">
+                  <span className="text-xs text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm">{date}</span>
+                </div>
+                {dateMessages.map((message, index) => {
+                  const isOwn = message.senderId === currentUserId;
+                  const isLatestReadMessage = message.id === latestReadOwnMessageId;
+                  const prevMessage = index > 0 ? dateMessages[index - 1] : null;
+                  const showSenderInfo = !isOwn && (!prevMessage || prevMessage.senderId !== message.senderId);
+                  const guestFirstName = getGuestFirstName(selectedConversation);
+
+                  return (
+                    <div key={message.id} className={`flex flex-col mb-2 ${isOwn ? "items-end" : "items-start"}`}>
+                      {isOwn && <span className="text-[11px] text-gray-400 mb-1 mr-1">{formatMessageTime(message.createdAt)}</span>}
+                      {showSenderInfo && (
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[11px] text-gray-500">{guestFirstName} · Guest {formatMessageTime(message.createdAt)}</span>
+                        </div>
+                      )}
+                      <div className={`flex ${isOwn ? "justify-end" : "justify-start"} w-full`}>
+                        <div
+                          className={`inline-block ${isOwn ? "bg-primaryGreen text-white" : "bg-white shadow-sm border border-gray-100"} rounded-2xl px-4 py-2`}
+                          style={{ maxWidth: '75%' }}
+                        >
+                          <p className="text-sm whitespace-pre-wrap break-words">{message.content.text}</p>
+                        </div>
+                      </div>
+                      {isOwn && isLatestReadMessage && (
+                        <p className="text-[11px] text-gray-400 mt-1 mr-1">Read by {guestFirstName}</p>
+                      )}
                     </div>
                   );
-                })()}
+                })}
               </div>
-            )}
-          </div>
-
-          {/* Messages - Scrollable */}
-          <div
-            ref={chatContainerRef}
-            className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+            ))
+          )}
+        </div>
+        
+        {/* Scroll to bottom button */}
+        {showScrollToBottom && isMobile && (
+          <button
+            onClick={scrollToBottom}
+            className="absolute bottom-4 right-4 bg-white shadow-lg rounded-full p-2 border border-gray-200 hover:bg-gray-50 transition-all z-10"
+            aria-label="Scroll to bottom"
           >
-            {isLoadingMessages ? (
-              <div className="flex items-center justify-center h-32">
-                <Loader2 className="w-6 h-6 animate-spin text-primaryGreen" />
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full">
-                <MessageCircle className="w-12 h-12 text-gray-300 mb-4" />
-                <p className="text-gray-500">
-                  No messages yet. Start the conversation!
-                </p>
-              </div>
-            ) : (
-              (() => {
-                // Find the latest own message that has been read by the other person
-                const allOwnMessages = messages.filter(m => m.senderId === currentUserId);
-                const latestReadOwnMessageId = allOwnMessages
-                  .filter(m => (m.readBy || []).some(r => r.userId !== m.senderId))
-                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]?.id;
-                
-                return Object.entries(groupedMessages).map(([date, dateMessages]) => (
-                <div key={date}>
-                  <div className="flex justify-center my-4">
-                    <span className="text-xs text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm">
-                      {date}
-                    </span>
-                  </div>
-                  {dateMessages.map((message, index) => {
-                    const isOwn = message.senderId === currentUserId;
-                    // Only show "Read by" for the latest read message from current user
-                    const isLatestReadMessage = message.id === latestReadOwnMessageId;
-                    
-                    // Check if we should show sender info (first message or different sender from previous)
-                    const prevMessage = index > 0 ? dateMessages[index - 1] : null;
-                    const showSenderInfo = !isOwn && (!prevMessage || prevMessage.senderId !== message.senderId);
-                    
-                    // Get guest name for display
-                    const guestFirstName = getGuestFirstName(selectedConversation);
+            <ChevronDown className="h-5 w-5 text-gray-600" />
+          </button>
+        )}
+      </div>
+    );
+  };
 
-                    return (
-                      <div
-                        key={message.id}
-                        className={`flex flex-col mb-2 ${isOwn ? "items-end" : "items-start"}`}
-                      >
-                        {/* Time shown above for own messages */}
-                        {isOwn && (
-                          <span className="text-[11px] text-gray-400 mb-1 mr-1">
-                            {formatMessageTime(message.createdAt)}
-                          </span>
-                        )}
-                        
-                        {/* Sender info for received messages (guest) */}
-                        {showSenderInfo && (
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[11px] text-gray-500">
-                              {guestFirstName} · Guest {formatMessageTime(message.createdAt)}
-                            </span>
-                          </div>
-                        )}
-                        
-                        <div className={`flex ${isOwn ? "justify-end" : "justify-start"} w-full`}>
-                          <div
-                            className={`inline-block ${
-                              isOwn
-                                ? "bg-primaryGreen text-white"
-                                : "bg-white shadow-sm border border-gray-100"
-                            } rounded-2xl px-4 py-2`}
-                            style={{ maxWidth: '75%' }}
-                          >
-                            <p className="text-sm whitespace-pre-wrap break-words">
-                              {message.content.text}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {/* Read by indicator - only for latest read message */}
-                        {isOwn && isLatestReadMessage && (
-                          <p className="text-[11px] text-gray-400 mt-1 mr-1">
-                            Read by {guestFirstName}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ));
-              })()
-            )}
-          </div>
+  // Render desktop input
+  const renderDesktopInput = () => (
+    <div className="p-4 border-t bg-white flex-shrink-0">
+      <div className="flex items-center gap-2">
+        <Input
+          ref={desktopInputRef}
+          placeholder="Type a message..."
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={isSending || connectionStatus !== "connected"}
+          className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
+        />
+        <Button
+          size="icon"
+          className="rounded-full bg-primaryGreen hover:bg-brightGreen"
+          onClick={handleSendMessage}
+          onMouseDown={(e) => e.preventDefault()}
+          disabled={!newMessage.trim() || isSending || connectionStatus !== "connected"}
+        >
+          {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+        </Button>
+      </div>
+    </div>
+  );
 
-          {/* Message Input - Fixed at bottom */}
-          <div className="p-4 border-t bg-white flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <Input
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={isSending || connectionStatus !== "connected"}
-                className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
-              />
-              <Button
-                size="icon"
-                className="rounded-full bg-primaryGreen hover:bg-brightGreen"
-                onClick={handleSendMessage}
-                disabled={
-                  !newMessage.trim() ||
-                  isSending ||
-                  connectionStatus !== "connected"
-                }
-              >
-                {isSending ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Send className="h-5 w-5" />
-                )}
-              </Button>
-            </div>
-          </div>
+  // Render empty state for desktop
+  const renderEmptyState = () => (
+    <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-gray-50">
+      <div className="rounded-full bg-lightGreen/50 p-6 mb-4">
+        <MessageCircle className="h-12 w-12 text-primaryGreen" />
+      </div>
+      <h2 className="text-xl font-semibold mb-2">Guest Inquiries</h2>
+      <p className="text-gray-500 text-center max-w-sm">
+        Select a conversation to view and respond to guest inquiries about your properties
+      </p>
+    </div>
+  );
+
+  // Main render - Mobile vs Desktop
+  if (isMobileView && selectedConversation) {
+    // Mobile chat view with optimized keyboard handling
+    return (
+      <MobileChatContainer onKeyboardChange={handleKeyboardChange}>
+        {renderChatHeader()}
+        {renderMessages(true)}
+        <MobileChatInput
+          value={newMessage}
+          onChange={setNewMessage}
+          onSend={handleSendMessage}
+          onKeyDown={handleKeyDown}
+          disabled={connectionStatus !== "connected"}
+          isSending={isSending}
+          placeholder="Type a message..."
+          autoFocus={false}
+        />
+      </MobileChatContainer>
+    );
+  }
+
+  // Desktop layout or mobile conversation list
+  return (
+    <div className={`${isMobileView && selectedConversation ? 'h-[calc(100vh-64px)]' : 'h-[calc(100vh-64px-64px)]'} md:h-[calc(100vh-64px)] w-full bg-white font-poppins flex overflow-hidden`}>
+      {renderConversationList()}
+      
+      {selectedConversation ? (
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+          {renderChatHeader()}
+          {renderMessages(false)}
+          {renderDesktopInput()}
         </div>
       ) : (
-        // Empty State - Desktop only
-        <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-gray-50">
-          <div className="rounded-full bg-lightGreen/50 p-6 mb-4">
-            <MessageCircle className="h-12 w-12 text-primaryGreen" />
-          </div>
-          <h2 className="text-xl font-semibold mb-2">Guest Inquiries</h2>
-          <p className="text-gray-500 text-center max-w-sm">
-            Select a conversation to view and respond to guest inquiries about your properties
-          </p>
-        </div>
+        renderEmptyState()
       )}
     </div>
   );

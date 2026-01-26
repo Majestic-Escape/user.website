@@ -62,6 +62,9 @@ export default function MessagesPage() {
   const messagesContainerRef = useRef(null);
   const selectedConversationRef = useRef(null);
   const conversationsRef = useRef([]);
+  const desktopInputRef = useRef(null);
+  const mobileInputRef = useRef(null);
+  const shouldRefocusRef = useRef(false);
   const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
   // Keep refs in sync with state
@@ -72,6 +75,31 @@ export default function MessagesPage() {
   useEffect(() => {
     conversationsRef.current = conversations;
   }, [conversations]);
+
+  // Refocus input after message is sent
+  useEffect(() => {
+    if (shouldRefocusRef.current && newMessage === "") {
+      const inputRef = isMobileView ? mobileInputRef : desktopInputRef;
+      if (inputRef.current) {
+        requestAnimationFrame(() => {
+          inputRef.current.focus();
+        });
+      }
+      shouldRefocusRef.current = false;
+    }
+  }, [newMessage, isMobileView]);
+
+  // Auto-focus input when conversation is selected
+  useEffect(() => {
+    if (selectedConversation && !loadingMessages) {
+      const inputRef = isMobileView ? mobileInputRef : desktopInputRef;
+      if (inputRef.current) {
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 100);
+      }
+    }
+  }, [selectedConversation?.id, loadingMessages, isMobileView]);
 
   // Fetch property details for a conversation
   const fetchPropertyDetails = async (propertyId) => {
@@ -97,15 +125,24 @@ export default function MessagesPage() {
     const footer = document.querySelector('footer');
     if (footer) footer.style.display = 'none';
     
-    const bottomNav = document.querySelector('[class*="bottom-navigation"]');
-    if (bottomNav) bottomNav.style.display = 'none';
-    
     return () => {
       document.body.style.overflow = '';
       if (footer) footer.style.display = '';
-      if (bottomNav) bottomNav.style.display = '';
     };
   }, []);
+
+  // Hide bottom navigation when in mobile chat view
+  useEffect(() => {
+    if (isMobileView && selectedConversation) {
+      // Hide bottom navigation when viewing a chat on mobile
+      const bottomNav = document.querySelector('nav.fixed.bottom-0');
+      if (bottomNav) bottomNav.style.display = 'none';
+      
+      return () => {
+        if (bottomNav) bottomNav.style.display = '';
+      };
+    }
+  }, [isMobileView, selectedConversation]);
 
   // Check mobile view
   useEffect(() => {
@@ -114,6 +151,210 @@ export default function MessagesPage() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Handle mobile viewport height for keyboard
+  const [mobileViewportHeight, setMobileViewportHeight] = useState("100vh");
+  const initialViewportHeight = useRef(null);
+  const isKeyboardOpenRef = useRef(false);
+  const isManualToggleRef = useRef(false);
+  const inputFocusedRef = useRef(false);
+  const lastKeyboardStateRef = useRef(false);
+  
+  // Set initial viewport height once on mount (before any keyboard opens)
+  useEffect(() => {
+    if (typeof window !== "undefined" && initialViewportHeight.current === null) {
+      // Use screen height as baseline since it doesn't change with keyboard
+      initialViewportHeight.current = window.screen.height * 0.85; // Approximate usable viewport
+      // Or use innerHeight if visualViewport not available
+      if (window.visualViewport) {
+        initialViewportHeight.current = window.visualViewport.height;
+      } else {
+        initialViewportHeight.current = window.innerHeight;
+      }
+    }
+  }, []);
+  
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isMobileView || !selectedConversation) return;
+
+    // Capture initial height when entering chat (keyboard should be closed)
+    // Only set if we don't have a value yet or if current viewport is larger (keyboard closed)
+    const currentVpHeight = window.visualViewport?.height || window.innerHeight;
+    if (initialViewportHeight.current === null || currentVpHeight > initialViewportHeight.current) {
+      initialViewportHeight.current = currentVpHeight;
+    }
+
+    const updateHeight = () => {
+      if (window.visualViewport) {
+        const currentHeight = window.visualViewport.height;
+        setMobileViewportHeight(`${currentHeight}px`);
+        
+        // Detect keyboard open/close (keyboard is open if viewport shrinks by more than 150px)
+        const heightDiff = initialViewportHeight.current - currentHeight;
+        const keyboardNowOpen = heightDiff > 150;
+        const wasKeyboardOpen = isKeyboardOpenRef.current;
+        const keyboardStateChanged = keyboardNowOpen !== wasKeyboardOpen;
+        
+        // Only auto-toggle if keyboard state actually changed
+        if (keyboardStateChanged) {
+          // Update keyboard state first
+          isKeyboardOpenRef.current = keyboardNowOpen;
+          lastKeyboardStateRef.current = keyboardNowOpen;
+          
+          // Only auto-toggle if not a manual toggle
+          if (!isManualToggleRef.current) {
+            if (keyboardNowOpen) {
+              // Keyboard just opened - auto-collapse
+              setShowPropertyInfo(false);
+              // Scroll to bottom multiple times as keyboard animates
+              const scrollToBottom = () => {
+                if (chatContainerRef.current) {
+                  chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+                }
+              };
+              scrollToBottom();
+              setTimeout(scrollToBottom, 50);
+              setTimeout(scrollToBottom, 100);
+              setTimeout(scrollToBottom, 150);
+              setTimeout(scrollToBottom, 200);
+              setTimeout(scrollToBottom, 300);
+              setTimeout(scrollToBottom, 400);
+              setTimeout(scrollToBottom, 500);
+            } else {
+              // Keyboard just closed - auto-expand
+              setShowPropertyInfo(true);
+            }
+          }
+          // Always reset manual toggle flag when keyboard state changes
+          isManualToggleRef.current = false;
+        }
+      } else {
+        setMobileViewportHeight(`${window.innerHeight}px`);
+      }
+    };
+
+    // Backup: Use focus/blur events for keyboard detection (more reliable on some Android devices)
+    const handleFocusIn = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        inputFocusedRef.current = true;
+        
+        // Scroll to bottom immediately on focus
+        const scrollToBottom = () => {
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+          }
+        };
+        scrollToBottom();
+        
+        // Small delay to let viewport resize event fire first
+        setTimeout(() => {
+          const keyboardStateChanged = !lastKeyboardStateRef.current;
+          if (inputFocusedRef.current && !isKeyboardOpenRef.current) {
+            // Keyboard likely opened via focus
+            isKeyboardOpenRef.current = true;
+            lastKeyboardStateRef.current = true;
+            if (keyboardStateChanged && !isManualToggleRef.current) {
+              setShowPropertyInfo(false);
+            }
+            if (keyboardStateChanged) {
+              isManualToggleRef.current = false;
+            }
+          }
+          // Scroll again after keyboard detection
+          scrollToBottom();
+        }, 300);
+        
+        // Additional scroll attempts for reliability
+        setTimeout(scrollToBottom, 50);
+        setTimeout(scrollToBottom, 100);
+        setTimeout(scrollToBottom, 150);
+        setTimeout(scrollToBottom, 200);
+        setTimeout(scrollToBottom, 400);
+        setTimeout(scrollToBottom, 500);
+      }
+    };
+
+    const handleFocusOut = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        inputFocusedRef.current = false;
+        // Small delay to check if focus moved to another input
+        setTimeout(() => {
+          const keyboardStateChanged = lastKeyboardStateRef.current;
+          if (!inputFocusedRef.current && isKeyboardOpenRef.current) {
+            // Keyboard likely closed via blur
+            isKeyboardOpenRef.current = false;
+            lastKeyboardStateRef.current = false;
+            if (keyboardStateChanged && !isManualToggleRef.current) {
+              setShowPropertyInfo(true);
+            }
+            if (keyboardStateChanged) {
+              isManualToggleRef.current = false;
+            }
+          }
+        }, 300);
+      }
+    };
+
+    // Initial check
+    updateHeight();
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", updateHeight);
+      window.visualViewport.addEventListener("scroll", updateHeight);
+    }
+    window.addEventListener("resize", updateHeight);
+    
+    // Add focus/blur listeners as backup
+    document.addEventListener("focusin", handleFocusIn);
+    document.addEventListener("focusout", handleFocusOut);
+
+    // Lock body scroll
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", updateHeight);
+        window.visualViewport.removeEventListener("scroll", updateHeight);
+      }
+      window.removeEventListener("resize", updateHeight);
+      document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("focusout", handleFocusOut);
+
+      // Restore body scroll
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "";
+      window.scrollTo(0, scrollY);
+      
+      // Reset keyboard state on unmount but keep initial height
+      isKeyboardOpenRef.current = false;
+      inputFocusedRef.current = false;
+    };
+  }, [isMobileView, selectedConversation]);
+
+  // Handle manual toggle of property info
+  const handleTogglePropertyInfo = () => {
+    isManualToggleRef.current = true;
+    setShowPropertyInfo(prev => !prev);
+  };
+
+  // Reset dropdown to expanded when conversation changes
+  useEffect(() => {
+    if (selectedConversation) {
+      setShowPropertyInfo(true);
+      isManualToggleRef.current = false;
+      lastKeyboardStateRef.current = false;
+      isKeyboardOpenRef.current = false;
+    }
+  }, [selectedConversation?.id]);
 
   // Scroll to bottom of messages - only on initial load or new messages
   const scrollToBottom = (smooth = false) => {
@@ -139,6 +380,16 @@ export default function MessagesPage() {
   // Reset message count when conversation changes
   useEffect(() => {
     prevMessagesLength.current = 0;
+  }, [selectedConversation?.id]);
+
+  // Scroll to bottom when conversation is selected
+  useEffect(() => {
+    if (selectedConversation && messages.length > 0) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        scrollToBottom(false);
+      }, 100);
+    }
   }, [selectedConversation?.id]);
 
   // Initialize auth
@@ -408,8 +659,6 @@ export default function MessagesPage() {
 
     setSending(true);
     const text = newMessage.trim();
-    setNewMessage("");
-
     const clientMessageId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     const optimisticMsg = {
@@ -424,22 +673,38 @@ export default function MessagesPage() {
     };
     setMessages(prev => [...prev, optimisticMsg]);
 
-    if (socketRef.current && connected) {
-      socketRef.current.emit(
-        "message:send",
-        {
-          conversationId: selectedConversation.id,
-          content: { text },
-          type: "text",
-          clientMessageId,
-        },
-        (response) => {
-          setSending(false);
-          if (!response.success) {
-            setMessages(prev => prev.filter(m => m.id !== clientMessageId));
+    try {
+      if (socketRef.current && connected) {
+        socketRef.current.emit(
+          "message:send",
+          {
+            conversationId: selectedConversation.id,
+            content: { text },
+            type: "text",
+            clientMessageId,
+          },
+          (response) => {
+            if (!response.success) {
+              setMessages(prev => prev.filter(m => m.id !== clientMessageId));
+            }
           }
-        }
-      );
+        );
+      }
+
+      // Mark that we should refocus after message is cleared
+      shouldRefocusRef.current = true;
+      setNewMessage("");
+      
+      // Direct focus for desktop - more reliable than useEffect
+      if (!isMobileView && desktopInputRef.current) {
+        setTimeout(() => {
+          desktopInputRef.current?.focus();
+        }, 0);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    } finally {
+      setSending(false);
     }
   };
 
@@ -513,11 +778,18 @@ export default function MessagesPage() {
     if (!date) return "";
     const d = new Date(date);
     const now = new Date();
-    const diff = now - d;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    // Compare calendar days, not time difference
+    const messageDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffTime = today - messageDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    if (days === 0) return "Today";
-    if (days === 1) return "Yesterday";
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) {
+      return d.toLocaleDateString([], { weekday: "long" });
+    }
     return d.toLocaleDateString([], {
       weekday: "long",
       month: "short",
@@ -697,7 +969,13 @@ export default function MessagesPage() {
     const propInfo = getPropertyInfo(selectedConversation);
     
     return (
-      <div className="fixed top-12 left-0 right-0 bottom-16 bg-white flex flex-col font-poppins z-[50]">
+      <div 
+        className="fixed inset-x-0 top-0 bg-white flex flex-col font-poppins z-[9999]"
+        style={{
+          height: mobileViewportHeight,
+          maxHeight: mobileViewportHeight,
+        }}
+      >
         {/* Chat Header */}
         <div className="bg-white border-b flex-shrink-0">
           {/* Host Info Row */}
@@ -721,7 +999,11 @@ export default function MessagesPage() {
               variant="ghost"
               size="sm"
               className="text-gray-500 hover:text-gray-700 flex-shrink-0"
-              onClick={() => setShowPropertyInfo(!showPropertyInfo)}
+              onMouseDown={(e) => {
+                // Prevent default to avoid stealing focus from input (keeps keyboard open)
+                e.preventDefault();
+              }}
+              onClick={handleTogglePropertyInfo}
             >
               {showPropertyInfo ? (
                 <ChevronUp className="h-4 w-4" />
@@ -798,7 +1080,13 @@ export default function MessagesPage() {
         {/* Messages */}
         <div 
           ref={messagesContainerRef}
+          data-chat-messages="true"
           className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+          style={{
+            minHeight: 0,
+            overscrollBehavior: "contain",
+            WebkitOverflowScrolling: "touch",
+          }}
         >
           {loadingMessages ? (
             <div className="flex items-center justify-center h-32">
@@ -900,6 +1188,7 @@ export default function MessagesPage() {
         <div className="p-4 border-t bg-white flex-shrink-0">
           <div className="flex items-center gap-2">
             <Input
+              ref={desktopInputRef}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
@@ -909,9 +1198,10 @@ export default function MessagesPage() {
             />
             <Button
               onClick={sendMessage}
+              onMouseDown={(e) => e.preventDefault()}
               disabled={!newMessage.trim() || sending || !connected}
               size="icon"
-              className="rounded-full bg-primaryGreen hover:bg-brightGreen"
+              className="h-10 w-10 rounded-full bg-primaryGreen hover:bg-brightGreen"
             >
               {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
             </Button>
@@ -1410,26 +1700,66 @@ export default function MessagesPage() {
           {/* Message Input - Fixed at bottom */}
           <div className="p-4 border-t bg-white flex-shrink-0">
             <div className="flex items-center gap-2">
-              <Input
+              <input
+                ref={mobileInputRef}
+                type="text"
                 placeholder="Type a message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+                onFocus={() => {
+                  // Scroll to bottom when keyboard opens
+                  const doScroll = () => scrollToBottom(false);
+                  doScroll();
+                  setTimeout(doScroll, 100);
+                  setTimeout(doScroll, 300);
+                  setTimeout(doScroll, 500);
+                }}
                 disabled={sending || !connected}
-                className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
+                className="flex-1 h-10 px-4 bg-gray-100 rounded-full text-base outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
+                autoComplete="off"
+                autoCorrect="on"
+                autoCapitalize="sentences"
+                enterKeyHint="send"
               />
-              <Button
-                size="icon"
-                className="rounded-full bg-primaryGreen hover:bg-brightGreen"
-                onClick={sendMessage}
-                disabled={!newMessage.trim() || sending || !connected}
+              {/* Using a div to prevent focus stealing on mobile */}
+              <div
+                role="button"
+                aria-disabled={!newMessage.trim() || sending || !connected}
+                className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 select-none cursor-pointer ${
+                  !newMessage.trim() || sending || !connected
+                    ? "bg-gray-300 pointer-events-none"
+                    : "bg-primaryGreen hover:bg-brightGreen active:bg-brightGreen"
+                }`}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  sendMessage();
+                  mobileInputRef.current?.focus();
+                }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  sendMessage();
+                  mobileInputRef.current?.focus();
+                }}
+                style={{ 
+                  WebkitTapHighlightColor: "transparent",
+                  WebkitUserSelect: "none",
+                  userSelect: "none",
+                }}
               >
                 {sending ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin text-white" />
                 ) : (
-                  <Send className="h-5 w-5" />
+                  <Send className="h-5 w-5 text-white" />
                 )}
-              </Button>
+              </div>
             </div>
           </div>
         </div>
