@@ -24,6 +24,7 @@ import { socketManager } from "@/lib/socket";
 import ProtectedRoute from "@/components/protected-route";
 import MobileChatContainer from "@/components/mobile-chat-container";
 import MobileChatInput from "@/components/mobile-chat-input";
+import { usePageVisibility } from "@/hooks/usePageVisibility";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
@@ -64,6 +65,9 @@ export default function ChatPage({ params }) {
   const [property, setProperty] = useState(null);
   const [host, setHost] = useState(null);
   const [error, setError] = useState(null);
+
+  // Track page visibility - only mark messages as read when page is visible
+  const isPageVisible = usePageVisibility();
 
   const socketRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -392,8 +396,10 @@ export default function ChatPage({ params }) {
     }
   }, [messages.length]);
 
-  // Mark messages as read
+  // Mark messages as read - only when page is visible (not in background tab)
   useEffect(() => {
+    // Don't mark as read if page is not visible (tab in background)
+    if (!isPageVisible) return;
     if (!conversationId || !messages.length || !socketRef.current || !userId) return;
 
     const unreadMessageIds = messages
@@ -410,7 +416,7 @@ export default function ChatPage({ params }) {
         messageIds: unreadMessageIds,
       });
     }
-  }, [conversationId, messages, userId]);
+  }, [conversationId, messages, userId, isPageVisible]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !conversationId || !socketRef.current) return;

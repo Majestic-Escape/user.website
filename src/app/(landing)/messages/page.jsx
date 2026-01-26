@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePageVisibility } from "@/hooks/usePageVisibility";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -56,6 +57,9 @@ export default function MessagesPage() {
   const [tripDetailsExpanded, setTripDetailsExpanded] = useState(true);
   const [propertyDetails, setPropertyDetails] = useState({});
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+
+  // Track page visibility - only mark messages as read when page is visible
+  const isPageVisible = usePageVisibility();
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -629,7 +633,10 @@ export default function MessagesPage() {
   }, [selectedConversation?.id]);
 
   // Mark messages as read when viewing conversation (handles new incoming messages)
+  // Only mark as read when page is visible (not in background tab)
   useEffect(() => {
+    // Don't mark as read if page is not visible (tab in background)
+    if (!isPageVisible) return;
     if (!selectedConversation || !messages.length || !socketRef.current || !socketRef.current.connected) return;
 
     const unreadMessageIds = messages
@@ -662,7 +669,7 @@ export default function MessagesPage() {
         )
       );
     }
-  }, [selectedConversation?.id, messages, userId]);
+  }, [selectedConversation?.id, messages, userId, isPageVisible]);
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || sending) return;

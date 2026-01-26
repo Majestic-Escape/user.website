@@ -25,6 +25,7 @@ import Image from "next/image";
 import { socketManager } from "@/lib/socket";
 import MobileChatContainer from "@/components/mobile-chat-container";
 import MobileChatInput from "@/components/mobile-chat-input";
+import { usePageVisibility } from "@/hooks/usePageVisibility";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
@@ -45,6 +46,9 @@ export default function HostInboxPage() {
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
   const [isMobileView, setIsMobileView] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+
+  // Track page visibility - only mark messages as read when page is visible
+  const isPageVisible = usePageVisibility();
 
   const socketRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -466,8 +470,10 @@ export default function HostInboxPage() {
     markedAsReadRef.current = new Set();
   }, [selectedConversation?.id]);
 
-  // Mark messages as read
+  // Mark messages as read - only when page is visible (not in background tab)
   useEffect(() => {
+    // Don't mark as read if page is not visible (tab in background)
+    if (!isPageVisible) return;
     if (!selectedConversation || !messages.length || !socketRef.current || !socketRef.current.connected)
       return;
 
@@ -499,7 +505,7 @@ export default function HostInboxPage() {
         )
       );
     }
-  }, [selectedConversation?.id, messages, currentUserId]);
+  }, [selectedConversation?.id, messages, currentUserId, isPageVisible]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !socketRef.current)
