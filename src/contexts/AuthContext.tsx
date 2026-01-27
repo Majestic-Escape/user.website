@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useCheckToken } from "@/services/useCheckToken";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 type User = {
   email: string;
   // Add other user properties as needed
@@ -78,6 +78,8 @@ type AuthContextType = {
   setPetAllowed: React.Dispatch<React.SetStateAction<string>>;
   checkinType: string;
   setCheckinType: React.Dispatch<React.SetStateAction<string>>;
+  returnUrl: string;
+  setReturnUrl: React.Dispatch<React.SetStateAction<string>>;
   activeTab: string;
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
   // Filter functions
@@ -119,19 +121,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   });
   const [perNightPrice, setPerNightPrice] = useState<string>("");
   const [modalMobilePrice, setModalMobilePrice] = useState<number>(
-    Number(perNightPrice)
+    Number(perNightPrice),
   );
   const pathname = usePathname();
-
+  const router = useRouter();
+  const [returnUrl, setReturnUrl] = useState<string>("");
   useEffect(() => {
     const verify = async () => {
       await checkToken();
       if (pathname == "/") {
         clearAllFilters();
       }
+      if (pathname !== "/login") {
+        setReturnUrl(encodeURIComponent(pathname));
+      }
     };
     verify();
   }, [pathname]);
+
   useEffect(() => {
     // Check for existing user in localStorage on initial load
     const storedUser = localStorage.getItem("user");
@@ -164,6 +171,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser(null);
     localStorage.clear();
     sessionStorage.clear();
+
+    if (
+      pathname.startsWith("/host/") ||
+      pathname.startsWith("/book/") ||
+      pathname.startsWith("/booking-summary")
+    ) {
+      router.push("/");
+    } else {
+      const decodedReturnUrl = decodeURIComponent(returnUrl);
+      router.push(decodedReturnUrl);
+    }
     // localStorage.removeItem("user");
     // localStorage.removeItem("filterState"); // Clear filters on logout
   };
@@ -297,6 +315,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     bookingQuery,
     setBookingQuery,
+    returnUrl,
+    setReturnUrl,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

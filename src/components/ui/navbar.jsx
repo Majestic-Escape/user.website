@@ -17,7 +17,7 @@ export default function Navbar() {
   const { staysWishlist, experiencesWishlist, wishlists } = useWishlist();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState(null);
-  const { user, logout } = useAuth();
+  const { user, logout, returnUrl } = useAuth();
 
   const [totalMessages, setTotalMessages] = useState(false);
   const router = useRouter();
@@ -142,7 +142,10 @@ export default function Navbar() {
               Become a Host On filter page
             </Link> */}
             <Link
-              href="/login"
+              href={{
+                pathname: "/login",
+                query: returnUrl,
+              }}
               className="bg-primaryGreen font-medium hover:bg-brightGreen px-6 text-base rounded-3xl text-white py-1.5"
             >
               Login
