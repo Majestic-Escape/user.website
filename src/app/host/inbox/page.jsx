@@ -42,7 +42,6 @@ export default function HostInboxPage() {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [propertyDetails, setPropertyDetails] = useState({});
-  const [participantDetails, setParticipantDetails] = useState({});
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
   const [isMobileView, setIsMobileView] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -365,13 +364,9 @@ export default function HostInboxPage() {
     loadConversations();
   }, [currentUserId]);
 
-  // Fetch property and participant details
+  // Fetch property details for conversations
   const fetchConversationDetails = async (convs) => {
     const propertyIds = [...new Set(convs.map((c) => c.propertyId))];
-    const guestIds = convs
-      .flatMap((c) => c.participants.filter((p) => p.role === "guest"))
-      .map((p) => p.userId);
-    const uniqueGuestIds = [...new Set(guestIds)];
 
     for (const propertyId of propertyIds) {
       try {
@@ -391,25 +386,7 @@ export default function HostInboxPage() {
         console.error("[HostInbox] Error fetching property:", propertyId, e);
       }
     }
-
-    for (const guestId of uniqueGuestIds) {
-      try {
-        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/guests/info/${guestId}`;
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          const userData = data.user || data.guest || data.data || data;
-          if (userData) {
-            setParticipantDetails((prev) => ({
-              ...prev,
-              [guestId]: userData,
-            }));
-          }
-        }
-      } catch (e) {
-        console.error("[HostInbox] Error fetching guest:", guestId, e);
-      }
-    }
+    // Guest details are already stored in conversation participants (firstName, lastName)
   };
 
   // Load messages for selected conversation
@@ -565,25 +542,24 @@ export default function HostInboxPage() {
   const getGuestName = (conversation) => {
     const guest = getGuestParticipant(conversation);
     if (guest) {
-      if (guest.firstName) return guest.firstName;
-      const fetchedGuest = participantDetails[guest.userId];
-      if (fetchedGuest) {
-        return fetchedGuest.firstName || fetchedGuest.name?.split(' ')[0] || fetchedGuest.email?.split("@")[0] || "Guest";
+      // Use firstName/lastName stored in conversation participant data
+      if (guest.firstName) {
+        return guest.lastName ? `${guest.firstName} ${guest.lastName}` : guest.firstName;
       }
     }
     return "Guest";
   };
 
   const getGuestFirstName = (conversation) => {
-    return getGuestName(conversation);
+    const guest = getGuestParticipant(conversation);
+    if (guest && guest.firstName) {
+      return guest.firstName;
+    }
+    return "Guest";
   };
 
   const getGuestAvatar = (conversation) => {
-    const guest = getGuestParticipant(conversation);
-    if (guest) {
-      const fetchedGuest = participantDetails[guest.userId];
-      return fetchedGuest?.avatar || fetchedGuest?.profilePicture || null;
-    }
+    // Avatar not stored in conversation - return null (will show fallback initials)
     return null;
   };
 
