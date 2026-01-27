@@ -56,8 +56,8 @@ export default function LoginForm() {
             ...acc,
             [curr.path[0]]: curr.message,
           }),
-          {}
-        )
+          {},
+        ),
       );
       return false;
     }
@@ -93,7 +93,7 @@ export default function LoginForm() {
             break;
           case "ACCOUNT_LOCKED":
             toast.error(
-              "Your account is locked due to multiple failed attempts"
+              "Your account is locked due to multiple failed attempts",
             );
             break;
           case "INVALID_OTP":
@@ -179,7 +179,7 @@ export default function LoginForm() {
           toast.error("OTP is required. Please enter the OTP.");
         } else if (errorData.code === "INVALID_OTP") {
           toast.error(
-            `Invalid OTP. ${errorData.otpAttempts.remainingAttempts} attempts remaining.`
+            `Invalid OTP. ${errorData.otpAttempts.remainingAttempts} attempts remaining.`,
           );
         }
         break;
@@ -204,7 +204,7 @@ export default function LoginForm() {
       case 423:
         if (errorData.code === "ACCOUNT_LOCKED") {
           toast.error(
-            `Your account is locked. Try again after ${errorData.unlocksAt.remainingMinutes} minutes.`
+            `Your account is locked. Try again after ${errorData.unlocksAt.remainingMinutes} minutes.`,
           );
         }
         break;
@@ -212,7 +212,7 @@ export default function LoginForm() {
       case 423:
         if (errorData.code === "ACCOUNT_LOCKED") {
           toast.error(
-            `Your account is locked. Try again after ${errorData.unlocksAt.remainingMinutes} minutes.`
+            `Your account is locked. Try again after ${errorData.unlocksAt.remainingMinutes} minutes.`,
           );
         }
         break;
