@@ -24,12 +24,14 @@ class SocketManager {
     if (!token) return null;
 
     // If we have an existing socket with the same token, reuse it
-    if (this.socket && this.token === token && this.socket.connected) {
+    // Check if socket exists and token matches (regardless of connection state)
+    // The socket will connect/reconnect automatically
+    if (this.socket && this.token === token) {
       this.connectionCount++;
       return this.socket;
     }
 
-    // If token changed or socket disconnected, clean up old socket
+    // If token changed, clean up old socket
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
@@ -44,7 +46,9 @@ class SocketManager {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
+      timeout: 20000, // Increase timeout for mobile networks
+      transports: ['websocket', 'polling'], // Try websocket first, fallback to polling
     });
 
     // Clear joined rooms on disconnect
@@ -61,6 +65,19 @@ class SocketManager {
   joinRoom(conversationId) {
     if (!this.socket || !conversationId) return;
     
+    // Only join if socket is connected
+    if (!this.socket.connected) {
+      // Queue the join for when socket connects
+      this.socket.once("connect", () => {
+        this._doJoinRoom(conversationId);
+      });
+      return;
+    }
+
+    this._doJoinRoom(conversationId);
+  }
+
+  _doJoinRoom(conversationId) {
     const roomKey = `conversation:${conversationId}`;
     if (this.joinedRooms.has(roomKey)) {
       return; // Already joined
