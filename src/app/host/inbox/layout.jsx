@@ -68,10 +68,10 @@ export default function InboxLayout({ children }) {
       </div>
 
       {/* Desktop Layout */}
-      <div className="hidden md:block">
+      <div className="hidden md:flex h-screen w-screen overflow-hidden">
         <SidebarProvider>
           <AppSidebar />
-          <SidebarInset>
+          <SidebarInset className="overflow-hidden min-w-0 flex-1">
             <header className="w-full z-10 bg-white border-b flex justify-between h-16 py-2 shrink-0 items-center gap-2 transition-[width,height] ease-linear pr-6">
               <div className="flex justify-between items-center gap-2 px-4">
                 <SidebarTrigger className="-ml-1" />
@@ -106,7 +106,7 @@ export default function InboxLayout({ children }) {
               </div>
             </header>
 
-            <main className="flex-1 h-[calc(100vh-64px)] overflow-hidden">
+            <main className="h-[calc(100vh-64px)] overflow-hidden">
               {children}
             </main>
           </SidebarInset>

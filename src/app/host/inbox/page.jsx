@@ -667,7 +667,7 @@ export default function HostInboxPage() {
 
   // Render conversation list component
   const renderConversationList = () => (
-    <div className={`${selectedConversation ? "hidden md:flex" : "flex"} flex-col w-full md:w-[380px] border-r overflow-hidden`}>
+    <div className={`${selectedConversation ? "hidden md:flex" : "flex"} flex-col w-full md:w-[320px] lg:w-[380px] md:min-w-[280px] md:max-w-[380px] border-r overflow-hidden flex-shrink-0`}>
       {/* Header */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
@@ -821,9 +821,9 @@ export default function HostInboxPage() {
             {getGuestName(selectedConversation).split(" ").map((n) => n[0]).join("").toUpperCase()}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 overflow-hidden">
           <h3 className="font-semibold truncate">{getGuestName(selectedConversation)}</h3>
-          <p className="text-sm text-gray-500">Property Enquiry · Guest</p>
+          <p className="text-sm text-gray-500 truncate">Property Enquiry · Guest</p>
         </div>
         <Button
           variant="ghost"
@@ -848,7 +848,7 @@ export default function HostInboxPage() {
             return (
               <div className="bg-lightGreen/30 rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <Home className="h-4 w-4 text-primaryGreen" />
+                  <Home className="h-4 w-4 text-primaryGreen flex-shrink-0" />
                   <span className="text-xs font-medium text-primaryGreen uppercase tracking-wide">Inquiry About</span>
                 </div>
                 <div className="flex gap-3">
@@ -861,13 +861,13 @@ export default function HostInboxPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 overflow-hidden">
                     <h4 className="font-semibold text-sm md:text-base truncate text-gray-900">{getPropertyName(selectedConversation)}</h4>
-                    {getPropertyType(property) && <p className="text-xs text-gray-600 mt-0.5">{getPropertyType(property)}</p>}
+                    {getPropertyType(property) && <p className="text-xs text-gray-600 mt-0.5 truncate">{getPropertyType(property)}</p>}
                     {(property?.address?.city || property?.address?.state) && (
-                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                        <MapPin className="h-3 w-3" />
-                        {getPropertyLocation(property)}
+                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-1 truncate">
+                        <MapPin className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{getPropertyLocation(property)}</span>
                       </p>
                     )}
                     {getPropertyPrice(property) && (
@@ -1035,11 +1035,11 @@ export default function HostInboxPage() {
 
   // Desktop layout or mobile conversation list
   return (
-    <div className={`${isMobileView && selectedConversation ? 'h-[calc(100vh-64px)]' : 'h-[calc(100vh-64px-64px)]'} md:h-[calc(100vh-64px)] w-full bg-white font-poppins flex overflow-hidden`}>
+    <div className={`${isMobileView && selectedConversation ? 'h-[calc(100vh-64px)]' : 'h-[calc(100vh-64px-64px)]'} md:h-full bg-white font-poppins flex overflow-hidden w-full`}>
       {renderConversationList()}
       
       {selectedConversation ? (
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
           {renderChatHeader()}
           {renderMessages(false)}
           {renderDesktopInput()}
