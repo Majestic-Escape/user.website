@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/popover";
 import type { DateRange } from "react-day-picker";
 import Link from "next/link";
+import { addDays } from "date-fns";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -32,6 +33,7 @@ interface BookingWidgetProps {
   checkinTime: string;
   checkoutTime: string;
   showCalendar: boolean;
+  setDate: React.Dispatch<React.SetStateAction<{ from: Date; to: Date }>>;
   showGuestsDropdown: boolean;
   onDateSelect: (range: DateRange | undefined) => void;
   onGuestChange: (
@@ -66,6 +68,7 @@ export default function BookingWidget({
   activation,
   allowedGuests,
   loading,
+  setDate,
 }: BookingWidgetProps) {
   const { openPriceModal, setOpenPriceModal, setBookingQuery } = useAuth();
   const [totalPrice, setTotalPrice] = useState<number>(pricePerNight);
@@ -222,6 +225,43 @@ export default function BookingWidget({
     return matches;
   }
   const isMobile = useMediaQuery("(max-width: 640px)");
+  function findNextAvailableRange(startFrom: Date, unavailableDates: string[]) {
+    const unavailableSet = new Set(unavailableDates);
+
+    let from = startFrom;
+    let to = addDays(from, 1);
+
+    // while (
+    //   unavailableSet.has(format(from, "yyyy-MM-dd")) ||
+    //   unavailableSet.has(format(to, "yyyy-MM-dd"))
+    // ) {
+    //   from = addDays(from, 1);
+    //   to = addDays(to, 1);
+    // }
+
+    while (true) {
+      const fromStr = format(from, "yyyy-MM-dd");
+      const toStr = format(to, "yyyy-MM-dd");
+
+      if (!unavailableSet.has(fromStr) && !unavailableSet.has(toStr)) {
+        // Both dates are available, we found our range
+        break;
+      }
+
+      // Move both dates forward by 1 day
+      from = addDays(from, 1);
+      to = addDays(to, 1);
+    }
+    console.log("NEW", from, to);
+    return { from, to };
+  }
+  useEffect(() => {
+    const today = new Date();
+
+    const { from, to } = findNextAvailableRange(today, unavailableDates);
+
+    setDate({ from: new Date(from), to: new Date(to) });
+  }, [unavailableDates]);
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("logite", propertyImages[0]);
   }
@@ -379,7 +419,16 @@ export default function BookingWidget({
     checkoutTime,
     filename,
   ]);
+  // function findDate(){
+  //   unavailableDates.forEach((item)=>{date?.from==})
+  // }
 
+  console.log(
+    "All dates",
+
+    unavailableDates,
+    date?.from?.toISOString().slice(0, 10),
+  );
   function getModalRoot() {
     let root = document.getElementById("modal-root");
     if (!root) {
@@ -436,11 +485,9 @@ export default function BookingWidget({
                           CHECK-IN
                         </div>
                         <div className="mt-1 text-base">
-                          {activation
-                            ? date?.from
-                              ? formatDate(date.from)
-                              : "Add date"
-                            : "Add Date"}
+                          {/* {findDate()} */}
+                          {/*filterformatDate(date?.from) */}
+                          {formatDate(date?.from)}
                         </div>
                       </div>
                     </PopoverTrigger>
@@ -450,11 +497,7 @@ export default function BookingWidget({
                           CHECK-OUT
                         </div>
                         <div className="mt-1 text-base">
-                          {activation
-                            ? date?.to
-                              ? formatDate(date.to)
-                              : "Add date"
-                            : "Add date"}
+                          {formatDate(date?.to)}
                         </div>
                       </div>
                     </PopoverTrigger>
