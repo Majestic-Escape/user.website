@@ -28,11 +28,9 @@ import {
 
 const navItems = [
   { name: "Home", icon: LayoutDashboard, href: "/host/dashboard" },
+  { name: "Inbox", icon: MessageCircle, href: "/host/inbox" },
   { name: "Bookings", icon: BookOpen, href: "/host/dashboard/bookings" },
-
   { name: "Listings", icon: Building2, href: "/host/dashboard/listings" },
-
-  { name: "Add", icon: HousePlus, href: "/host/dashboard/add-listing" },
 ];
 
 export default function HostBottomNavigation() {
@@ -74,6 +72,13 @@ export default function HostBottomNavigation() {
                 >
                   <User className="w-4 h-4" />
                   <span className="  ">Switch to Guest</span>
+                </Link>
+                <Link
+                  href="/host/dashboard/add-listing"
+                  className="flex items-center space-x-2 text-sm"
+                >
+                  <HousePlus className="w-4 h-4" />
+                  <span>Add Listing</span>
                 </Link>
                 <Link
                   href="/host/dashboard/revenue"
