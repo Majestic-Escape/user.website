@@ -13,6 +13,7 @@ import {
   Building2Icon,
   HandHelping,
   SquareUser,
+  MessageCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -37,10 +38,8 @@ const navItems = [
 
 const navItemsLoggedIn = [
   { name: "Home", href: "/", icon: HomeIcon },
-
+  { name: "Messages", href: "/messages", icon: MessageCircle },
   { name: "Bookings", href: "/manage-bookings", icon: Calendar },
-  // { name: "Hosting", href: "/host/dashboard", icon: SquareUser },
-  { name: "Help", href: "/help-center", icon: HandHelping },
 ]; //trips
 
 const menuItems = [

@@ -62,12 +62,12 @@ const data = {
       icon: PlusIcon,
       items: [],
     },
-    // {
-    //   title: "Inbox",
-    //   url: "/host/inbox",
-    //   icon: Inbox,
-    //   items: [],
-    // },
+    {
+      title: "Inbox",
+      url: "/host/inbox",
+      icon: Inbox,
+      items: [],
+    },
     {
       title: "Revenue",
       url: "/host/dashboard/revenue",
