@@ -1,0 +1,142 @@
+"use client";
+
+import { io } from "socket.io-client";
+
+const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
+
+/**
+ * Singleton socket manager to prevent duplicate connections.
+ * Ensures only one socket connection per user across all components.
+ */
+class SocketManager {
+  constructor() {
+    this.socket = null;
+    this.token = null;
+    this.connectionCount = 0;
+    this.joinedRooms = new Set();
+  }
+
+  /**
+   * Get or create a socket connection.
+   * Multiple calls with the same token return the same socket instance.
+   */
+  getSocket(token) {
+    if (!token) return null;
+
+    // If we have an existing socket with the same token, reuse it
+    // Check if socket exists and token matches (regardless of connection state)
+    // The socket will connect/reconnect automatically
+    if (this.socket && this.token === token) {
+      this.connectionCount++;
+      return this.socket;
+    }
+
+    // If token changed, clean up old socket
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+      this.joinedRooms.clear();
+    }
+
+    this.token = token;
+    this.connectionCount = 1;
+
+    this.socket = io(CHAT_URL, {
+      auth: { token },
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 10,
+      timeout: 20000, // Increase timeout for mobile networks
+      transports: ['websocket', 'polling'], // Try websocket first, fallback to polling
+    });
+
+    // Clear joined rooms on disconnect
+    this.socket.on("disconnect", () => {
+      this.joinedRooms.clear();
+    });
+
+    return this.socket;
+  }
+
+  /**
+   * Join a conversation room (with client-side deduplication).
+   */
+  joinRoom(conversationId) {
+    if (!this.socket || !conversationId) return;
+    
+    // Only join if socket is connected
+    if (!this.socket.connected) {
+      // Queue the join for when socket connects
+      this.socket.once("connect", () => {
+        this._doJoinRoom(conversationId);
+      });
+      return;
+    }
+
+    this._doJoinRoom(conversationId);
+  }
+
+  _doJoinRoom(conversationId) {
+    const roomKey = `conversation:${conversationId}`;
+    if (this.joinedRooms.has(roomKey)) {
+      return; // Already joined
+    }
+
+    this.socket.emit("conversation:join", { conversationId });
+    this.joinedRooms.add(roomKey);
+  }
+
+  /**
+   * Leave a conversation room.
+   */
+  leaveRoom(conversationId) {
+    if (!this.socket || !conversationId) return;
+
+    const roomKey = `conversation:${conversationId}`;
+    if (!this.joinedRooms.has(roomKey)) {
+      return; // Not in room
+    }
+
+    this.socket.emit("conversation:leave", { conversationId });
+    this.joinedRooms.delete(roomKey);
+  }
+
+  /**
+   * Check if already joined a room.
+   */
+  isInRoom(conversationId) {
+    return this.joinedRooms.has(`conversation:${conversationId}`);
+  }
+
+  /**
+   * Release a reference to the socket.
+   * Only disconnects when all references are released.
+   */
+  releaseSocket() {
+    this.connectionCount--;
+    if (this.connectionCount <= 0 && this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+      this.token = null;
+      this.joinedRooms.clear();
+      this.connectionCount = 0;
+    }
+  }
+
+  /**
+   * Force disconnect (for logout, etc.)
+   */
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+      this.token = null;
+      this.joinedRooms.clear();
+      this.connectionCount = 0;
+    }
+  }
+}
+
+// Export singleton instance
+export const socketManager = new SocketManager();
