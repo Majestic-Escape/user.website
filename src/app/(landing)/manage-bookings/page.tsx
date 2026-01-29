@@ -26,6 +26,7 @@ import ConfirmCancelDialog from "@/components/dialog-modal";
 import Link from "next/link";
 import Invoice from "@/components/invoice";
 import moment from "moment-timezone";
+import Portal from "@/components/portal";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const moderate = Number(process.env.NEXT_PUBLIC_MODERATE_POLICY_DAYS ?? 7);
 const flexible = Number(process.env.NEXT_PUBLIC_FLEXIBLE_POLICY_DAYS ?? 24);
@@ -190,7 +191,7 @@ const ManageBookings: React.FC = () => {
   const router = useRouter();
   const [showDialog, setShowDialog] = useState<boolean>(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
-    null
+    null,
   );
   const [cancelDialogOpen, setCancelDialogOpen] = useState<boolean>(false);
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
@@ -223,7 +224,7 @@ const ManageBookings: React.FC = () => {
               Authorization: `Bearer ${data}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
         const result = await response.json();
         setBookings(result.data);
@@ -236,6 +237,31 @@ const ManageBookings: React.FC = () => {
     fetchData();
     setIsLoading(false);
   }, []);
+  useEffect(() => {
+    if (showInvoice) {
+      const scrollY = window.scrollY;
+
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.width = "100%";
+      document.body.dataset.scrollY = scrollY.toString();
+    } else {
+      const scrollY = document.body.dataset.scrollY;
+
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY));
+      }
+    }
+  }, [showInvoice]);
+
   const getPayment = async (bookingId: string): Promise<void> => {
     const data = JSON.parse(localStorage.getItem("token") || "null");
     if (data) {
@@ -248,7 +274,7 @@ const ManageBookings: React.FC = () => {
               Authorization: `Bearer ${data}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
         if (response.status != 200) {
           return;
@@ -375,7 +401,7 @@ const ManageBookings: React.FC = () => {
     userEmail: string,
     hostEmail: string,
     userName: string,
-    hostName: string
+    hostName: string,
   ): Promise<void> => {
     try {
       if (typeof window === "undefined") return;
@@ -698,7 +724,7 @@ const ManageBookings: React.FC = () => {
     return (
       <span
         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-          status
+          status,
         )}`}
       >
         {status === "processing"
@@ -972,7 +998,7 @@ const ManageBookings: React.FC = () => {
                               router.push(
                                 `/rating?booking=${
                                   booking._id
-                                }&${summaryParams.toString()}&active=${true}`
+                                }&${summaryParams.toString()}&active=${true}`,
                               );
                               setShowDialog(true);
                             }}
@@ -1014,7 +1040,7 @@ const ManageBookings: React.FC = () => {
                                 }`,
                                 `${bookingToCancel.hostId!.firstName} ${
                                   bookingToCancel.hostId!.lastName
-                                }`
+                                }`,
                               );
                               setCancelDialogOpen(false);
                               setBookingToCancel(null);
@@ -1028,52 +1054,56 @@ const ManageBookings: React.FC = () => {
               </Card>
             );
           })}
+
           {showInvoice && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              {/* Outer container — center modal */}
-              <div className="bg-white w-full rounded-2xl max-w-2xl max-h-[90vh] flex flex-col relative">
-                {/* Header (fixed top) */}
-                <div className="sticky rounded-t-2xl top-0 bg-white  border-b flex justify-between items-center px-4 py-3 z-10">
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    Invoice
-                  </h2>
-                  <button
-                    onClick={() => {
-                      setShowInvoice(false);
-                      setInvoiceData(null);
-                    }}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+            <Portal>
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
+                {/* <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-3000 p-4"> */}
+                {/* Outer container — center modal */}
+                <div className="bg-white w-full rounded-2xl max-w-2xl max-h-[90vh] flex flex-col relative">
+                  {/* Header (fixed top) */}
+                  <div className="sticky rounded-t-2xl top-0 bg-white  border-b flex justify-between items-center px-4 py-3 z-10">
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Invoice
+                    </h2>
+                    <button
+                      onClick={() => {
+                        setShowInvoice(false);
+                        setInvoiceData(null);
+                      }}
+                      className="text-gray-500 hover:text-gray-700"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
 
-                {/* Scrollable Content */}
-                <div
-                  ref={printRef}
-                  className="flex-1 overflow-y-auto px-6 py-4"
-                >
-                  <Invoice payment={payment} invoiceData={invoiceData} />
-                </div>
+                  {/* Scrollable Content */}
+                  <div
+                    ref={printRef}
+                    className="flex-1 overflow-y-auto px-6 py-4 z-3001"
+                  >
+                    <Invoice payment={payment} invoiceData={invoiceData} />
+                  </div>
 
-                {/* Footer (fixed bottom) */}
-                <div className="sticky  rounded-b-2xl  bottom-0 bg-gray-50 border-t flex justify-end px-4 py-3 z-10">
-                  <Button onClick={() => downloadPdf()}>Download PDF</Button>
+                  {/* Footer (fixed bottom) */}
+                  <div className="sticky  rounded-b-2xl  bottom-0 bg-gray-50 border-t flex justify-end px-4 py-3 z-10">
+                    <Button onClick={() => downloadPdf()}>Download PDF</Button>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Portal>
           )}
         </div>
       </div>
