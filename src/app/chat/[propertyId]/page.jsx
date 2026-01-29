@@ -248,10 +248,7 @@ export default function ChatPage({ params }) {
     initConversation();
   }, [token, userId, hostId, propertyId]);
 
-  // Ref to track conversationId in socket callbacks (avoids stale closures)
-  const conversationIdRef = useRef(null);
-
-  // Keep ref in sync with state
+  // Keep ref in sync with state (conversationIdRef declared above, used to avoid stale closures in socket callbacks)
   useEffect(() => {
     conversationIdRef.current = conversationId;
   }, [conversationId]);
