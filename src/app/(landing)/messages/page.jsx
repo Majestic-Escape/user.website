@@ -860,7 +860,7 @@ export default function MessagesPage() {
     const diff = now - d;
     
     if (diff < 86400000) {
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
     } else if (diff < 604800000) {
       return d.toLocaleDateString([], { weekday: 'short' });
     }
@@ -872,6 +872,7 @@ export default function MessagesPage() {
     return new Date(date).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -1296,13 +1297,34 @@ export default function MessagesPage() {
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t bg-white flex-shrink-0">
+        <div 
+          className="p-4 border-t bg-white flex-shrink-0"
+          style={{ touchAction: 'none' }}
+          onTouchMove={(e) => e.preventDefault()}
+        >
           <div className="flex items-center gap-2">
             <Input
               ref={desktopInputRef}
               value={newMessage}
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+              onFocus={() => {
+                // Scroll to bottom when keyboard opens
+                const scrollToBottom = () => {
+                  const chatContainer = document.querySelector('[data-chat-messages="true"]');
+                  if (chatContainer) {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                  }
+                };
+                scrollToBottom();
+                setTimeout(scrollToBottom, 50);
+                setTimeout(scrollToBottom, 100);
+                setTimeout(scrollToBottom, 150);
+                setTimeout(scrollToBottom, 200);
+                setTimeout(scrollToBottom, 300);
+                setTimeout(scrollToBottom, 400);
+                setTimeout(scrollToBottom, 500);
+              }}
               placeholder="Type a message..."
               disabled={sending || !connected}
               className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
@@ -1817,7 +1839,11 @@ export default function MessagesPage() {
           </div>
 
           {/* Message Input - Fixed at bottom */}
-          <div className="p-4 border-t bg-white flex-shrink-0">
+          <div 
+            className="p-4 border-t bg-white flex-shrink-0"
+            style={{ touchAction: 'none' }}
+            onTouchMove={(e) => e.preventDefault()}
+          >
             <div className="flex items-center gap-2">
               <input
                 ref={mobileInputRef}
@@ -1835,8 +1861,12 @@ export default function MessagesPage() {
                   // Scroll to bottom when keyboard opens
                   const doScroll = () => scrollToBottom(false);
                   doScroll();
+                  setTimeout(doScroll, 50);
                   setTimeout(doScroll, 100);
+                  setTimeout(doScroll, 150);
+                  setTimeout(doScroll, 200);
                   setTimeout(doScroll, 300);
+                  setTimeout(doScroll, 400);
                   setTimeout(doScroll, 500);
                 }}
                 disabled={sending || !connected}
