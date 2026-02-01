@@ -326,17 +326,17 @@ export default function HostProfile({ propertyData }) {
                       const hostId = propertyData.host._id;
 
                       try {
-                        // Check if conversation already exists for this property
+                        // Check if conversation already exists AND has messages
                         const res = await fetch(`${chatUrl}/api/chat/conversations/check?propertyId=${propertyId}&hostId=${hostId}&guestId=${userId}`, {
                           headers: { Authorization: `Bearer ${parsedToken}` },
                         });
                         const data = await res.json();
 
-                        if (data.success && data.data?.exists && data.data?.conversationId) {
-                          // Conversation exists - go directly to messages
+                        // Only go to messages if conversation exists AND has messages
+                        if (data.success && data.data?.exists && data.data?.conversationId && data.data?.hasMessages) {
                           window.location.href = `/messages?conversationId=${data.data.conversationId}`;
                         } else {
-                          // No existing conversation - go to contact_host to start new chat
+                          // No existing conversation with messages - go to contact_host
                           const hostNameParam = encodeURIComponent(
                             (propertyData?.host?.firstName || '') + ' ' + (propertyData?.host?.lastName || '')
                           );
