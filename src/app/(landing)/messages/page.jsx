@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { socketManager } from "@/lib/socket";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,7 @@ export default function MessagesPage() {
   const [tripDetailsExpanded, setTripDetailsExpanded] = useState(true);
   const [propertyDetails, setPropertyDetails] = useState({});
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [typingUsers, setTypingUsers] = useState(new Map()); // Map<conversationId, Set<userId>>
 
   // Track page visibility - only mark messages as read when page is visible
   const isPageVisible = usePageVisibility();
@@ -69,6 +70,8 @@ export default function MessagesPage() {
   const desktopInputRef = useRef(null);
   const mobileInputRef = useRef(null);
   const shouldRefocusRef = useRef(false);
+  const typingTimeoutRef = useRef(null);
+  const isTypingRef = useRef(false);
   const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
   // Keep refs in sync with state
@@ -560,10 +563,35 @@ export default function MessagesPage() {
           }
         };
 
+        // Listen for typing updates
+        const handleTypingUpdate = (data) => {
+          const { conversationId, userId: typingUserId, isTyping } = data;
+          // Update typing users map for ALL conversations (not just selected)
+          setTypingUsers((prev) => {
+            const updated = new Map(prev);
+            const convTypingUsers = updated.get(conversationId) || new Set();
+            
+            if (isTyping) {
+              convTypingUsers.add(typingUserId);
+            } else {
+              convTypingUsers.delete(typingUserId);
+            }
+            
+            if (convTypingUsers.size > 0) {
+              updated.set(conversationId, convTypingUsers);
+            } else {
+              updated.delete(conversationId);
+            }
+            
+            return updated;
+          });
+        };
+
         socket.on("connect", handleConnect);
         socket.on("disconnect", handleDisconnect);
         socket.on("message:new", handleNewMessage);
         socket.on("message:read", handleMessageRead);
+        socket.on("typing:update", handleTypingUpdate);
 
         // Set initial connection status
         if (socket.connected) {
@@ -586,6 +614,7 @@ export default function MessagesPage() {
         socketRef.current.off("disconnect");
         socketRef.current.off("message:new");
         socketRef.current.off("message:read");
+        socketRef.current.off("typing:update");
         socketManager.releaseSocket();
       }
     };
@@ -671,8 +700,62 @@ export default function MessagesPage() {
     }
   }, [selectedConversation?.id, messages, userId, isPageVisible]);
 
+  // Typing indicator functions - defined before sendMessage
+  const emitTypingStart = useCallback(() => {
+    if (!socketRef.current || !selectedConversation || isTypingRef.current) return;
+    isTypingRef.current = true;
+    socketRef.current.emit("typing:start", { conversationId: selectedConversation.id });
+  }, [selectedConversation]);
+
+  const emitTypingStop = useCallback(() => {
+    if (!socketRef.current || !selectedConversation || !isTypingRef.current) return;
+    isTypingRef.current = false;
+    socketRef.current.emit("typing:stop", { conversationId: selectedConversation.id });
+  }, [selectedConversation]);
+
+  const handleInputChange = useCallback((value) => {
+    setNewMessage(value);
+    
+    // Emit typing start
+    if (value.trim()) {
+      emitTypingStart();
+      
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      
+      // Auto-stop typing after 3 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        emitTypingStop();
+      }, 3000);
+    } else {
+      // Input is empty, stop typing
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      emitTypingStop();
+    }
+  }, [emitTypingStart, emitTypingStop]);
+
+  // Cleanup typing timeout on unmount or conversation change
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      emitTypingStop();
+    };
+  }, [selectedConversation?.id, emitTypingStop]);
+
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || sending) return;
+
+    // Stop typing indicator when sending
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    emitTypingStop();
 
     setSending(true);
     const text = newMessage.trim();
@@ -729,6 +812,7 @@ export default function MessagesPage() {
     setSelectedConversation(conv);
     setShowReservation(true);
     setShowPropertyInfo(true);
+    // Don't clear typing users - we track per conversation now
     if (conv.propertyId && !propertyDetails[conv.propertyId]) {
       fetchPropertyDetails(conv.propertyId);
     }
@@ -776,7 +860,7 @@ export default function MessagesPage() {
     const diff = now - d;
     
     if (diff < 86400000) {
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
     } else if (diff < 604800000) {
       return d.toLocaleDateString([], { weekday: 'short' });
     }
@@ -788,6 +872,7 @@ export default function MessagesPage() {
     return new Date(date).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -839,6 +924,12 @@ export default function MessagesPage() {
   });
 
   const totalUnread = conversations.reduce((sum, conv) => sum + (conv.unreadCount?.[userId] || 0), 0);
+
+  // Helper to check if someone is typing in a conversation
+  const isConversationTyping = (convId) => {
+    const typingSet = typingUsers.get(convId);
+    return typingSet && typingSet.size > 0;
+  };
 
   if (loading) {
     return (
@@ -1010,7 +1101,11 @@ export default function MessagesPage() {
             </Avatar>
             <div className="flex-1 min-w-0">
               <h2 className="font-semibold text-sm truncate">{propInfo.hostName}</h2>
-              <p className="text-xs text-gray-500">Property Host</p>
+              {isConversationTyping(selectedConversation?.id) ? (
+                <p className="text-xs text-primaryGreen animate-pulse">Typing...</p>
+              ) : (
+                <p className="text-xs text-gray-500">Property Host</p>
+              )}
             </div>
             <Button
               variant="ghost"
@@ -1202,13 +1297,34 @@ export default function MessagesPage() {
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t bg-white flex-shrink-0">
+        <div 
+          className="p-4 border-t bg-white flex-shrink-0"
+          style={{ touchAction: 'none' }}
+          onTouchMove={(e) => e.preventDefault()}
+        >
           <div className="flex items-center gap-2">
             <Input
               ref={desktopInputRef}
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+              onFocus={() => {
+                // Scroll to bottom when keyboard opens
+                const scrollToBottom = () => {
+                  const chatContainer = document.querySelector('[data-chat-messages="true"]');
+                  if (chatContainer) {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                  }
+                };
+                scrollToBottom();
+                setTimeout(scrollToBottom, 50);
+                setTimeout(scrollToBottom, 100);
+                setTimeout(scrollToBottom, 150);
+                setTimeout(scrollToBottom, 200);
+                setTimeout(scrollToBottom, 300);
+                setTimeout(scrollToBottom, 400);
+                setTimeout(scrollToBottom, 500);
+              }}
               placeholder="Type a message..."
               disabled={sending || !connected}
               className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
@@ -1466,9 +1582,13 @@ export default function MessagesPage() {
                             {propInfo.location}
                           </p>
                         )}
-                        <p className="text-sm text-gray-600 truncate mt-1">
-                          {conv.lastMessage?.content || "No messages yet"}
-                        </p>
+                        {isConversationTyping(conv.id) ? (
+                          <p className="text-sm text-primaryGreen truncate mt-1 animate-pulse">Typing...</p>
+                        ) : (
+                          <p className="text-sm text-gray-600 truncate mt-1">
+                            {conv.lastMessage?.content || "No messages yet"}
+                          </p>
+                        )}
                       </div>
                       {unreadCount > 0 && (
                         <div className="flex items-center">
@@ -1516,7 +1636,11 @@ export default function MessagesPage() {
                 <h3 className="font-semibold truncate">
                   {getPropertyInfo(selectedConversation).hostName}
                 </h3>
-                <p className="text-sm text-gray-500">Property Host</p>
+                {isConversationTyping(selectedConversation?.id) ? (
+                  <p className="text-sm text-primaryGreen animate-pulse">Typing...</p>
+                ) : (
+                  <p className="text-sm text-gray-500">Property Host</p>
+                )}
               </div>
               <Button
                 variant="ghost"
@@ -1715,14 +1839,18 @@ export default function MessagesPage() {
           </div>
 
           {/* Message Input - Fixed at bottom */}
-          <div className="p-4 border-t bg-white flex-shrink-0">
+          <div 
+            className="p-4 border-t bg-white flex-shrink-0"
+            style={{ touchAction: 'none' }}
+            onTouchMove={(e) => e.preventDefault()}
+          >
             <div className="flex items-center gap-2">
               <input
                 ref={mobileInputRef}
                 type="text"
                 placeholder="Type a message..."
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -1733,8 +1861,12 @@ export default function MessagesPage() {
                   // Scroll to bottom when keyboard opens
                   const doScroll = () => scrollToBottom(false);
                   doScroll();
+                  setTimeout(doScroll, 50);
                   setTimeout(doScroll, 100);
+                  setTimeout(doScroll, 150);
+                  setTimeout(doScroll, 200);
                   setTimeout(doScroll, 300);
+                  setTimeout(doScroll, 400);
                   setTimeout(doScroll, 500);
                 }}
                 disabled={sending || !connected}

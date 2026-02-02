@@ -74,9 +74,12 @@ export default function ChatPage({ params }) {
   const desktopInputRef = useRef(null);
   const shouldRefocusDesktopRef = useRef(false);
   const conversationIdRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+  const isTypingRef = useRef(false);
   const [isMobileView, setIsMobileView] = useState(false);
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [typingUsers, setTypingUsers] = useState(new Map()); // Map<conversationId, Set<userId>>
 
   // Keyboard detection for auto-toggling property info (matching host inbox)
   const isManualToggleRef = useRef(false);
@@ -309,12 +312,36 @@ export default function ChatPage({ params }) {
       }
     };
 
+    const handleTypingUpdate = (data) => {
+      if (data.conversationId === conversationIdRef.current) {
+        setTypingUsers((prev) => {
+          const updated = new Map(prev);
+          const convTypingUsers = updated.get(data.conversationId) || new Set();
+          
+          if (data.isTyping) {
+            convTypingUsers.add(data.userId);
+          } else {
+            convTypingUsers.delete(data.userId);
+          }
+          
+          if (convTypingUsers.size > 0) {
+            updated.set(data.conversationId, convTypingUsers);
+          } else {
+            updated.delete(data.conversationId);
+          }
+          
+          return updated;
+        });
+      }
+    };
+
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on("connect_error", handleConnectError);
     socket.on("error", handleError);
     socket.on("message:new", handleNewMessage);
     socket.on("message:read", handleMessageRead);
+    socket.on("typing:update", handleTypingUpdate);
 
     // Set initial connection status
     if (socket.connected) {
@@ -328,6 +355,7 @@ export default function ChatPage({ params }) {
       socket.off("error", handleError);
       socket.off("message:new", handleNewMessage);
       socket.off("message:read", handleMessageRead);
+      socket.off("typing:update", handleTypingUpdate);
       
       if (conversationIdRef.current) {
         socketManager.leaveRoom(conversationIdRef.current);
@@ -415,8 +443,67 @@ export default function ChatPage({ params }) {
     }
   }, [conversationId, messages, userId, isPageVisible]);
 
+  // Typing indicator functions - defined before handleSendMessage
+  const emitTypingStart = useCallback(() => {
+    if (!socketRef.current || !conversationId || isTypingRef.current) return;
+    isTypingRef.current = true;
+    socketRef.current.emit("typing:start", { conversationId });
+  }, [conversationId]);
+
+  const emitTypingStop = useCallback(() => {
+    if (!socketRef.current || !conversationId || !isTypingRef.current) return;
+    isTypingRef.current = false;
+    socketRef.current.emit("typing:stop", { conversationId });
+  }, [conversationId]);
+
+  const handleInputChange = useCallback((value) => {
+    setNewMessage(value);
+    
+    // Emit typing start
+    if (value.trim()) {
+      emitTypingStart();
+      
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      
+      // Auto-stop typing after 3 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        emitTypingStop();
+      }, 3000);
+    } else {
+      // Input is empty, stop typing
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      emitTypingStop();
+    }
+  }, [emitTypingStart, emitTypingStop]);
+
+  // Cleanup typing timeout on unmount or conversation change
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      emitTypingStop();
+    };
+  }, [conversationId, emitTypingStop]);
+
+  // Clear typing users when conversation changes
+  useEffect(() => {
+    setTypingUsers(new Set());
+  }, [conversationId]);
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !conversationId || !socketRef.current) return;
+
+    // Stop typing indicator when sending
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    emitTypingStop();
 
     setIsSending(true);
     const clientMessageId = `${Date.now()}-${Math.random()}`;
@@ -468,6 +555,7 @@ export default function ChatPage({ params }) {
     return new Date(date).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -540,6 +628,12 @@ export default function ChatPage({ params }) {
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]?.id;
   };
 
+  // Helper to check if someone is typing in a conversation
+  const isConversationTyping = (convId) => {
+    const typingSet = typingUsers.get(convId);
+    return typingSet && typingSet.size > 0;
+  };
+
   if (!token || isLoading) {
     return (
       <ProtectedRoute>
@@ -586,7 +680,11 @@ export default function ChatPage({ params }) {
               </Avatar>
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold truncate">{getHostName()}</h3>
-                <p className="text-sm text-gray-500">Property Host</p>
+                {isConversationTyping(conversationId) ? (
+                  <p className="text-sm text-primaryGreen animate-pulse">Typing...</p>
+                ) : (
+                  <p className="text-sm text-gray-500">Property Host</p>
+                )}
               </div>
               <Button
                 variant="ghost"
@@ -739,7 +837,7 @@ export default function ChatPage({ params }) {
           {/* Message Input - Mobile optimized */}
           <MobileChatInput
             value={newMessage}
-            onChange={setNewMessage}
+            onChange={handleInputChange}
             onSend={handleSendMessage}
             onKeyDown={handleKeyDown}
             disabled={connectionStatus !== "connected"}
@@ -774,9 +872,13 @@ export default function ChatPage({ params }) {
               <h3 className="font-semibold truncate">
                 {property?.title || "Property"}
               </h3>
-              <p className="text-sm text-gray-500 truncate">
-                Host: {host?.firstName || host?.name || "Host"}
-              </p>
+              {isConversationTyping(conversationId) ? (
+                <p className="text-sm text-primaryGreen animate-pulse">Typing...</p>
+              ) : (
+                <p className="text-sm text-gray-500 truncate">
+                  Host: {host?.firstName || host?.name || "Host"}
+                </p>
+              )}
             </div>
             {connectionStatus !== "connected" && (
               <div className="flex items-center text-orange-500">
@@ -860,12 +962,23 @@ export default function ChatPage({ params }) {
 
           {/* Message Input */}
           <div className="p-4 border-t bg-white">
+            {/* Typing indicator */}
+            {typingUsers.size > 0 && (
+              <div className="text-xs text-gray-500 italic mb-2 flex items-center gap-1">
+                <span>{getHostName()} is typing</span>
+                <span className="flex gap-0.5">
+                  <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
+                  <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
+                  <span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Input
                 ref={desktopInputRef}
                 placeholder="Type a message..."
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={isSending || connectionStatus !== "connected"}
                 className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
