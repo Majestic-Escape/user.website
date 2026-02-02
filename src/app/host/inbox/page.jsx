@@ -45,6 +45,7 @@ export default function HostInboxPage() {
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
   const [isMobileView, setIsMobileView] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [typingUsers, setTypingUsers] = useState(new Map()); // Map<conversationId, Set<userId>>
 
   // Track page visibility - only mark messages as read when page is visible
   const isPageVisible = usePageVisibility();
@@ -54,6 +55,8 @@ export default function HostInboxPage() {
   const tokenRef = useRef(null);
   const desktopInputRef = useRef(null);
   const shouldRefocusRef = useRef(false);
+  const typingTimeoutRef = useRef(null);
+  const isTypingRef = useRef(false);
 
   // Refocus desktop input after message is sent
   useEffect(() => {
@@ -153,6 +156,7 @@ export default function HostInboxPage() {
     if (selectedConversation) {
       setShowPropertyInfo(true);
       setShowScrollToBottom(false);
+      // Don't clear typing users - we track per conversation now
       isManualToggleRef.current = false;
       lastKeyboardStateRef.current = false;
     }
@@ -289,11 +293,35 @@ export default function HostInboxPage() {
       }
     };
 
+    const handleTypingUpdate = (data) => {
+      const { conversationId, userId, isTyping } = data;
+      // Update typing users map for ALL conversations (not just selected)
+      setTypingUsers((prev) => {
+        const updated = new Map(prev);
+        const convTypingUsers = updated.get(conversationId) || new Set();
+        
+        if (isTyping) {
+          convTypingUsers.add(userId);
+        } else {
+          convTypingUsers.delete(userId);
+        }
+        
+        if (convTypingUsers.size > 0) {
+          updated.set(conversationId, convTypingUsers);
+        } else {
+          updated.delete(conversationId);
+        }
+        
+        return updated;
+      });
+    };
+
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on("connect_error", handleConnectError);
     socket.on("message:new", handleNewMessage);
     socket.on("message:read", handleMessageRead);
+    socket.on("typing:update", handleTypingUpdate);
 
     // Set initial connection status
     if (socket.connected) {
@@ -306,6 +334,7 @@ export default function HostInboxPage() {
       socket.off("connect_error", handleConnectError);
       socket.off("message:new", handleNewMessage);
       socket.off("message:read", handleMessageRead);
+      socket.off("typing:update", handleTypingUpdate);
       socketManager.releaseSocket();
     };
   }, [currentUserId]);
@@ -484,9 +513,63 @@ export default function HostInboxPage() {
     }
   }, [selectedConversation?.id, messages, currentUserId, isPageVisible]);
 
+  // Typing indicator functions - defined before handleSendMessage
+  const emitTypingStart = useCallback(() => {
+    if (!socketRef.current || !selectedConversation || isTypingRef.current) return;
+    isTypingRef.current = true;
+    socketRef.current.emit("typing:start", { conversationId: selectedConversation.id });
+  }, [selectedConversation]);
+
+  const emitTypingStop = useCallback(() => {
+    if (!socketRef.current || !selectedConversation || !isTypingRef.current) return;
+    isTypingRef.current = false;
+    socketRef.current.emit("typing:stop", { conversationId: selectedConversation.id });
+  }, [selectedConversation]);
+
+  const handleInputChange = useCallback((value) => {
+    setNewMessage(value);
+    
+    // Emit typing start
+    if (value.trim()) {
+      emitTypingStart();
+      
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      
+      // Auto-stop typing after 3 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        emitTypingStop();
+      }, 3000);
+    } else {
+      // Input is empty, stop typing
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      emitTypingStop();
+    }
+  }, [emitTypingStart, emitTypingStop]);
+
+  // Cleanup typing timeout on unmount or conversation change
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      emitTypingStop();
+    };
+  }, [selectedConversation?.id, emitTypingStop]);
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !socketRef.current)
       return;
+
+    // Stop typing indicator when sending
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    emitTypingStop();
 
     setIsSending(true);
     const clientMessageId = `${Date.now()}-${Math.random()}`;
@@ -616,7 +699,7 @@ export default function HostInboxPage() {
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
     if (days === 0) {
-      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
     } else if (days === 1) {
       return "Yesterday";
     } else if (days < 7) {
@@ -631,6 +714,7 @@ export default function HostInboxPage() {
     return new Date(date).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -664,6 +748,12 @@ export default function HostInboxPage() {
     groups[date].push(message);
     return groups;
   }, {});
+
+  // Helper to check if someone is typing in a conversation
+  const isConversationTyping = (convId) => {
+    const typingSet = typingUsers.get(convId);
+    return typingSet && typingSet.size > 0;
+  };
 
   // Render conversation list component
   const renderConversationList = () => (
@@ -782,9 +872,13 @@ export default function HostInboxPage() {
                           {getPropertyLocation(property)}
                         </p>
                       )}
-                      <p className="text-sm text-gray-600 truncate mt-1">
-                        {conv.lastMessage?.content || "No messages yet"}
-                      </p>
+                      {isConversationTyping(conv.id) ? (
+                        <p className="text-sm text-primaryGreen truncate mt-1 animate-pulse">Typing...</p>
+                      ) : (
+                        <p className="text-sm text-gray-600 truncate mt-1">
+                          {conv.lastMessage?.content || "No messages yet"}
+                        </p>
+                      )}
                     </div>
                     {unreadCount > 0 && (
                       <div className="flex items-center">
@@ -804,46 +898,53 @@ export default function HostInboxPage() {
   );
 
   // Render chat header component
-  const renderChatHeader = () => (
-    <div className="border-b bg-white flex-shrink-0">
-      <div className="flex items-center gap-3 p-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden flex-shrink-0"
-          onClick={() => setSelectedConversation(null)}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <Avatar className="h-10 w-10 flex-shrink-0">
-          <AvatarImage src={getGuestAvatar(selectedConversation)} />
-          <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
-            {getGuestName(selectedConversation).split(" ").map((n) => n[0]).join("").toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0 overflow-hidden">
-          <h3 className="font-semibold truncate">{getGuestName(selectedConversation)}</h3>
-          <p className="text-sm text-gray-500 truncate">Property Enquiry · Guest</p>
+  const renderChatHeader = () => {
+    const isTyping = isConversationTyping(selectedConversation?.id);
+    
+    return (
+      <div className="border-b bg-white flex-shrink-0">
+        <div className="flex items-center gap-3 p-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden flex-shrink-0"
+            onClick={() => setSelectedConversation(null)}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <Avatar className="h-10 w-10 flex-shrink-0">
+            <AvatarImage src={getGuestAvatar(selectedConversation)} />
+            <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
+              {getGuestName(selectedConversation).split(" ").map((n) => n[0]).join("").toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <h3 className="font-semibold truncate">{getGuestName(selectedConversation)}</h3>
+            {isTyping ? (
+              <p className="text-sm text-primaryGreen truncate animate-pulse">Typing...</p>
+            ) : (
+              <p className="text-sm text-gray-500 truncate">Property Enquiry · Guest</p>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-500 hover:text-gray-700 flex-shrink-0"
+            onMouseDown={(e) => {
+              // Prevent default to avoid stealing focus from input (keeps keyboard open)
+              e.preventDefault();
+            }}
+            onClick={handleTogglePropertyInfo}
+          >
+            {showPropertyInfo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-gray-500 hover:text-gray-700 flex-shrink-0"
-          onMouseDown={(e) => {
-            // Prevent default to avoid stealing focus from input (keeps keyboard open)
-            e.preventDefault();
-          }}
-          onClick={handleTogglePropertyInfo}
-        >
-          {showPropertyInfo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </Button>
-      </div>
-      
-      {showPropertyInfo && (
-        <div className="px-4 pb-4">
-          {(() => {
-            const property = getPropertyDetails(selectedConversation);
-            const propertyImage = getPropertyImage(selectedConversation);
+        
+        {showPropertyInfo && (
+          <div className="px-4 pb-4">
+            {(() => {
+              const property = getPropertyDetails(selectedConversation);
+              const propertyImage = getPropertyImage(selectedConversation);
             
             return (
               <div className="bg-lightGreen/30 rounded-xl p-3">
@@ -888,6 +989,7 @@ export default function HostInboxPage() {
       )}
     </div>
   );
+  };
 
   // Render messages component
   const renderMessages = (isMobile = false) => {
@@ -981,7 +1083,7 @@ export default function HostInboxPage() {
           ref={desktopInputRef}
           placeholder="Type a message..."
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          onChange={(e) => handleInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isSending || connectionStatus !== "connected"}
           className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
@@ -1021,7 +1123,7 @@ export default function HostInboxPage() {
         {renderMessages(true)}
         <MobileChatInput
           value={newMessage}
-          onChange={setNewMessage}
+          onChange={handleInputChange}
           onSend={handleSendMessage}
           onKeyDown={handleKeyDown}
           disabled={connectionStatus !== "connected"}

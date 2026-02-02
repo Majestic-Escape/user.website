@@ -7,6 +7,7 @@ import { Send, Loader2 } from "lucide-react";
 /**
  * Mobile-optimized chat input component.
  * Uses native input and prevents focus loss on send.
+ * Prevents scrolling when touching the input area.
  */
 export default function MobileChatInput({
   value,
@@ -20,6 +21,7 @@ export default function MobileChatInput({
   autoFocus = false,
 }) {
   const inputRef = useRef(null);
+  const containerRef = useRef(null);
 
   // Auto-focus on mount if requested
   useEffect(() => {
@@ -29,6 +31,24 @@ export default function MobileChatInput({
       }, 300);
     }
   }, [autoFocus]);
+
+  // Prevent touch scrolling on the input container
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const preventScroll = (e) => {
+      // Prevent touch move from scrolling the page/container
+      e.preventDefault();
+    };
+
+    // Add passive: false to allow preventDefault
+    container.addEventListener('touchmove', preventScroll, { passive: false });
+
+    return () => {
+      container.removeEventListener('touchmove', preventScroll);
+    };
+  }, []);
 
   // Scroll chat to bottom when input is focused (keyboard opens)
   const handleFocus = useCallback(() => {
@@ -79,7 +99,11 @@ export default function MobileChatInput({
   }, [handleSend]);
 
   return (
-    <div className={`p-4 border-t bg-white flex-shrink-0 ${className}`} style={{ width: '100%' }}>
+    <div 
+      ref={containerRef}
+      className={`p-4 border-t bg-white flex-shrink-0 ${className}`} 
+      style={{ width: '100%', touchAction: 'none' }}
+    >
       <div className="flex items-center gap-2 w-full">
         <input
           ref={inputRef}

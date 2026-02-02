@@ -12,6 +12,31 @@ import Link from "next/link";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+// Helper function to format time to 12-hour format
+const formatTime = (time) => {
+  if (!time) return '';
+  
+  // Handle if time is already in format like "2:00 PM"
+  if (time.includes('AM') || time.includes('PM')) {
+    return time;
+  }
+  
+  // Handle 24-hour format like "14:00" or "14:00:00"
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours, 10);
+  const minute = minutes || '00';
+  
+  if (hour === 0) {
+    return `12:${minute} AM`;
+  } else if (hour < 12) {
+    return `${hour}:${minute} AM`;
+  } else if (hour === 12) {
+    return `12:${minute} PM`;
+  } else {
+    return `${hour - 12}:${minute} PM`;
+  }
+};
+
 export default function ContactHostPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -40,8 +65,10 @@ export default function ContactHostPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [showMessageInput, setShowMessageInput] = useState(false);
   const [propertyData, setPropertyData] = useState(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const socketRef = useRef(null);
+  const textareaRef = useRef(null);
   const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
   // Fetch property data
@@ -93,6 +120,62 @@ export default function ContactHostPage() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Lock body scroll on mobile to prevent parent page scroll
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    // Save current scroll position and lock body
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.overflow = 'hidden';
+    document.body.style.width = '100%';
+    document.body.dataset.scrollY = scrollY.toString();
+    
+    return () => {
+      // Restore scroll position on unmount
+      const savedScrollY = document.body.dataset.scrollY || '0';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.overflow = '';
+      document.body.style.width = '';
+      window.scrollTo(0, parseInt(savedScrollY, 10));
+      delete document.body.dataset.scrollY;
+    };
+  }, [isMobile]);
+
+  // Handle keyboard visibility on mobile (for send button adjustment)
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    const handleResize = () => {
+      // Use visualViewport API for accurate keyboard detection
+      if (window.visualViewport) {
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        const keyboardH = windowHeight - viewportHeight;
+        setKeyboardHeight(keyboardH > 50 ? keyboardH : 0);
+      }
+    };
+    
+    // Listen to visualViewport resize for keyboard detection
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      window.visualViewport.addEventListener('scroll', handleResize);
+    }
+    
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+        window.visualViewport.removeEventListener('scroll', handleResize);
+      }
+    };
+  }, [isMobile]);
 
   // Initialize auth
   useEffect(() => {
@@ -229,7 +312,7 @@ export default function ContactHostPage() {
   // Success state
   if (sent) {
     return (
-      <div className="fixed top-12 md:top-[76px] left-0 right-0 bottom-12 md:bottom-0 flex items-center justify-center px-4 bg-white z-40">
+      <div className={`fixed ${isMobile ? 'inset-0 z-[100]' : 'top-12 md:top-[76px] left-0 right-0 bottom-12 md:bottom-0 z-40'} flex items-center justify-center px-4 bg-white`}>
         <div className="max-w-md w-full text-center">
           <div className="w-16 h-16 bg-lightGreen rounded-full flex items-center justify-center mx-auto mb-6">
             <Send className="w-8 h-8 text-primaryGreen" />
@@ -261,7 +344,7 @@ export default function ContactHostPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="fixed top-12 md:top-[76px] left-0 right-0 bottom-12 md:bottom-0 flex items-center justify-center bg-white z-40">
+      <div className={`fixed ${isMobile ? 'inset-0 z-[100]' : 'top-12 md:top-[76px] left-0 right-0 bottom-12 md:bottom-0 z-40'} flex items-center justify-center bg-white`}>
         <Loader2 className="w-8 h-8 animate-spin text-primaryGreen" />
       </div>
     );
@@ -271,7 +354,13 @@ export default function ContactHostPage() {
   // Mobile Message Input Screen
   if (isMobile && showMessageInput) {
     return (
-      <div className="fixed top-12 left-0 right-0 bottom-12 bg-white flex flex-col z-50 font-poppins">
+      <div 
+        className="fixed inset-0 bg-white flex flex-col z-[100] font-poppins"
+        style={{ 
+          height: keyboardHeight > 0 ? `${window.visualViewport?.height || window.innerHeight}px` : '100dvh',
+          top: keyboardHeight > 0 ? `${window.visualViewport?.offsetTop || 0}px` : 0
+        }}
+      >
         {/* Header */}
         <div className="flex items-center px-4 py-3 border-b bg-white flex-shrink-0">
           <button onClick={() => setShowMessageInput(false)} className="p-1.5 -ml-1 hover:bg-gray-100 rounded-full">
@@ -281,7 +370,7 @@ export default function ContactHostPage() {
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           {/* Property Card */}
           <div className="p-4 border-b bg-lightGreen/20">
             <div className="flex gap-3">
@@ -340,6 +429,7 @@ export default function ContactHostPage() {
             <h2 className="text-base font-semibold font-bricolage mb-3">Your message</h2>
             
             <Textarea
+              ref={textareaRef}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={`Hi ${hostName.split(' ')[0]}! I'll be visiting...`}
@@ -352,7 +442,7 @@ export default function ContactHostPage() {
           </div>
         </div>
 
-        {/* Fixed Send Button */}
+        {/* Fixed Send Button - adjusts with keyboard */}
         <div className="px-4 py-4 border-t bg-white flex-shrink-0">
           <Button
             onClick={sendMessage}
@@ -379,7 +469,7 @@ export default function ContactHostPage() {
   // Mobile Layout
   if (isMobile) {
     return (
-      <div className="fixed top-12 left-0 right-0 bottom-12 bg-white flex flex-col z-40 font-poppins">
+      <div className="fixed inset-0 bg-white flex flex-col z-[100] font-poppins">
         {/* Header */}
         <div className="flex items-center px-4 py-3 border-b bg-white flex-shrink-0">
           <button onClick={() => router.back()} className="p-1.5 -ml-1 hover:bg-gray-100 rounded-full">
@@ -388,7 +478,7 @@ export default function ContactHostPage() {
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-5">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5">
           {/* Host Info Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex-1">
@@ -418,25 +508,43 @@ export default function ContactHostPage() {
                 <ul className="text-gray-600 text-sm space-y-2">
                   <li className="flex items-start gap-2">
                     <span className="text-primaryGreen mt-0.5">•</span>
-                    <span>Free parking on the premises.</span>
+                    <span>
+                      {propertyData?.amenities?.includes('free-parking') 
+                        ? 'Free parking on premises' 
+                        : propertyData?.amenities?.includes('paid-parking')
+                        ? 'Paid parking on premises'
+                        : 'Parking information not available'}
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-primaryGreen mt-0.5">•</span>
-                    <span>Check-in for this home is between 2:00 pm and 2:00 am (next day) and checkout is at 10:00 am.</span>
+                    <span>
+                      {propertyData?.checkinTime && propertyData?.checkoutTime
+                        ? `Check-in for this home is between ${formatTime(propertyData.checkinTime)} and checkout is at ${formatTime(propertyData.checkoutTime)}.`
+                        : 'Check-in and checkout times will be confirmed by the host.'}
+                    </span>
                   </li>
                 </ul>
               </div>
 
               <div>
-                <h3 className="font-medium text-sm mb-2">Price and availability</h3>
+                <h3 className="font-medium text-sm mb-2">Booking & stay clarity</h3>
                 <ul className="text-gray-600 text-sm space-y-2">
                   <li className="flex items-start gap-2">
                     <span className="text-primaryGreen mt-0.5">•</span>
-                    <span>Get a 5% discount on stays longer than a week, or 10% on stays longer than a month.</span>
+                    <span>Long-stay discounts available.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-primaryGreen mt-0.5">•</span>
-                    <span>Full refund for cancellations up to 30 days before check-in.</span>
+                    <span>Extra mattress available at additional cost.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primaryGreen mt-0.5">•</span>
+                    <span>Government ID required at check-in.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primaryGreen mt-0.5">•</span>
+                    <span>Early check-in / late checkout subject to availability.</span>
                   </li>
                 </ul>
               </div>
@@ -517,11 +625,21 @@ export default function ContactHostPage() {
                   <ul className="text-gray-600 text-sm space-y-2 ml-6">
                     <li className="flex items-start gap-2">
                       <span className="text-primaryGreen mt-0.5">•</span>
-                      <span>Free parking on the premises.</span>
+                      <span>
+                        {propertyData?.amenities?.includes('free-parking') 
+                          ? 'Free parking on premises' 
+                          : propertyData?.amenities?.includes('paid-parking')
+                          ? 'Paid parking on premises'
+                          : 'Parking information not available'}
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-primaryGreen mt-0.5">•</span>
-                      <span>Check-in time for this home starts at 2:00 pm and checkout is at 11:00 am.</span>
+                      <span>
+                        {propertyData?.checkinTime && propertyData?.checkoutTime
+                          ? `Check-in time for this home starts at ${formatTime(propertyData.checkinTime)} and checkout is at ${formatTime(propertyData.checkoutTime)}.`
+                          : 'Check-in and checkout times will be confirmed by the host.'}
+                      </span>
                     </li>
                   </ul>
                 </div>
@@ -529,16 +647,24 @@ export default function ContactHostPage() {
                 <div className="bg-gray-50 rounded-xl p-4">
                   <h3 className="font-medium mb-3 flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-primaryGreen" />
-                    Price and availability
+                    Booking & stay clarity
                   </h3>
                   <ul className="text-gray-600 text-sm space-y-2 ml-6">
                     <li className="flex items-start gap-2">
                       <span className="text-primaryGreen mt-0.5">•</span>
-                      <span>Get a 10% discount on stays longer than a week, or 20% on stays longer than a month.</span>
+                      <span>Long-stay discounts available.</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-primaryGreen mt-0.5">•</span>
-                      <span>Full refund at least 14 days before check-in.</span>
+                      <span>Extra mattress available at additional cost.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primaryGreen mt-0.5">•</span>
+                      <span>Government ID required at check-in.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primaryGreen mt-0.5">•</span>
+                      <span>Early check-in / late checkout subject to availability.</span>
                     </li>
                   </ul>
                 </div>
