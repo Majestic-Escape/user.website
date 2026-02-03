@@ -4,7 +4,7 @@ import Image from "next/image";
 import NavTabLayout from "@/components/nav-tab-layout";
 import { useWishlist } from "@/components/wishlist-context";
 import React, { useEffect, useState } from "react";
-
+import { useAuth } from "@/contexts/AuthContext";
 import { Heart, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,13 +22,13 @@ export default function Navbar() {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [isScrolled, setIsScrolled] = useState(false);
-
+  const { returnUrl } = useAuth();
   const totalWishlistItems =
     staysWishlist.length +
     experiencesWishlist.length +
     Object.values(wishlists.folders).reduce(
       (sum, folder) => sum + folder.items.length,
-      0
+      0,
     );
 
   const toggleWishlist = () => {
@@ -214,7 +214,10 @@ export default function Navbar() {
       )}
 
       <Link
-        href={"/login"}
+        href={{
+          pathname: "/login",
+          query: returnUrl,
+        }}
         className="bg-primaryGreen font-medium hover:bg-brightGreen px-5 rounded-3xl text-white py-2"
         variant="default"
       >

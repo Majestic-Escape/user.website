@@ -227,7 +227,7 @@ body {
     overflow: hidden;
     touch-action: none;
   }
-  
+
   /* Chat messages container - must scroll */
   [data-chat-messages="true"] {
     -webkit-overflow-scrolling: touch;
@@ -237,7 +237,7 @@ body {
     min-height: 0;
     flex: 1 1 0%;
   }
-  
+
   /* Prevent pull-to-refresh on chat pages */
   html:has([data-chat-messages="true"]) {
     overscroll-behavior: none;
@@ -262,3 +262,12 @@ body {
   }
 }
 
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}

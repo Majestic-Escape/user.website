@@ -580,7 +580,7 @@ function ShareDialog({ isOpen, onClose, property }) {
 
         case "email":
           const emailSubject = encodeURIComponent(
-            `Amazing Property in Goa: ${property.title}`
+            `Amazing Property in Goa: ${property.title}`,
           );
           const emailBody = encodeURIComponent(`${shareText}\n\n${shareUrl}`);
           window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
@@ -588,10 +588,10 @@ function ShareDialog({ isOpen, onClose, property }) {
 
         case "whatsapp":
           const isMobile = /iPhone|iPad|iPod|Android/i.test(
-            navigator.userAgent
+            navigator.userAgent,
           );
           const whatsappText = encodeURIComponent(
-            `${shareText}\n\n${shareUrl}`
+            `${shareText}\n\n${shareUrl}`,
           );
           const whatsappUrl = isMobile
             ? `whatsapp://send?text=${whatsappText}`
@@ -613,7 +613,7 @@ function ShareDialog({ isOpen, onClose, property }) {
 
             if (process.env.NEXT_PUBLIC_ENV === "dev") {
               console.log(
-                "Link copied! You can paste it in your messaging app"
+                "Link copied! You can paste it in your messaging app",
               );
             }
           }
@@ -766,13 +766,13 @@ function InfoDialog({ isOpen, onClose, property }) {
 
   const nextImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === property?.images.length - 1 ? 0 : prev + 1
+      prev === property?.images.length - 1 ? 0 : prev + 1,
     );
   };
 
   const prevImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === 0 ? property?.images.length - 1 : prev - 1
+      prev === 0 ? property?.images.length - 1 : prev - 1,
     );
   };
 
@@ -854,8 +854,8 @@ function PropertyCard({ property, includeTaxes }) {
     isInWishlist(property.id, "experiences") || // Check experiences
     Object.keys(wishlists.folders).some(
       (
-        folderId // Check custom folders
-      ) => isInWishlist(property.id, folderId)
+        folderId, // Check custom folders
+      ) => isInWishlist(property.id, folderId),
     );
 
   const showPrevButton = currentImageIndex > 0;
@@ -865,7 +865,7 @@ function PropertyCard({ property, includeTaxes }) {
     e.stopPropagation();
 
     setCurrentImageIndex((prev) =>
-      Math.min(property?.images.length - 1, prev + 1)
+      Math.min(property?.images.length - 1, prev + 1),
     );
   };
 

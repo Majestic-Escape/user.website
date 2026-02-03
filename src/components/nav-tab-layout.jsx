@@ -25,7 +25,7 @@ export default function NavTabLayout() {
 
   return (
     <Tabs value={pathname} className="w-screen bg-white md:w-full">
-      <TabsList className="grid font-bricolage w-full grid-cols-3">
+      <TabsList className="grid font-bricolage w-full grid-cols-3 md:w-[560px] desktop:w-full">
         {tabs.map((tab, index) => (
           <TabsTrigger key={tab.id} value={tab.href} className="py-2" asChild>
             <Link href={tab.href}>

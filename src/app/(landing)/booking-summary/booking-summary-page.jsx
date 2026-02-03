@@ -34,7 +34,21 @@ export default function BookingSummaryPage() {
   useEffect(() => {
     auth();
   }, []);
+  useEffect(() => {
+    // Reset any leftover scroll locks
+    const scrollY = document.body.style.top;
 
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    document.body.style.overflow = "";
+
+    if (scrollY) {
+      window.scrollTo(0, parseInt(scrollY) * -1);
+    }
+  }, []);
   useEffect(() => {
     const propertyId = searchParams.get("propertyId");
     const bookingHistory = searchParams.get("bookingHistory")
