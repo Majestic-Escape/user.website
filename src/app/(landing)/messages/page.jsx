@@ -26,6 +26,7 @@ import {
   MapPin,
   ExternalLink,
   WifiOff,
+  Wifi,
   Check,
   CheckCheck,
 } from "lucide-react";
@@ -48,7 +49,7 @@ export default function MessagesPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
-  const [connected, setConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState("connecting"); // 'connecting' | 'connected' | 'disconnected' | 'error'
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileView, setIsMobileView] = useState(false);
   const [filter, setFilter] = useState("all");
@@ -422,12 +423,43 @@ export default function MessagesPage() {
   }, [router]);
 
   // Load conversations and connect socket
+  const unsubscribeConnectionRef = useRef(null);
+  const initCalledRef = useRef(false); // Prevent duplicate init in StrictMode
+  
+  // Clear stale sessionStorage on mount (in case of hard refresh)
+  useEffect(() => {
+    // Reset init state on fresh mount
+    initCalledRef.current = false;
+  }, []);
+  
   useEffect(() => {
     if (!token || !userId) return;
+
+    // Prevent duplicate fetch in React StrictMode and mobile remounts
+    if (initCalledRef.current) {
+      console.log("[Messages] Init already called, skipping duplicate");
+      return;
+    }
+    
+    // Additional check: prevent rapid re-initialization within 2 seconds
+    const lastInitTime = sessionStorage.getItem('messages_last_init');
+    const now = Date.now();
+    if (lastInitTime && (now - parseInt(lastInitTime, 10)) < 2000) {
+      console.log("[Messages] Init called too recently, skipping (mobile protection)");
+      // Don't return here on desktop - only skip if it's a true duplicate
+      // Check if we already have conversations loaded
+      if (conversations.length > 0) {
+        return;
+      }
+    }
+    
+    initCalledRef.current = true;
+    sessionStorage.setItem('messages_last_init', now.toString());
 
     async function init() {
       try {
         setLoading(true);
+        console.log("[Messages] Fetching conversations...");
         
         const res = await fetch(`${chatUrl}/api/chat/conversations`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -437,12 +469,13 @@ export default function MessagesPage() {
         if (data.success) {
           const allConvs = data.data || [];
           
-          // FILTER: Only show conversations where current user is the GUEST
+          // FILTER: Only show conversations where current user is the GUEST AND has at least one message
+          // This filters out empty conversations created when visiting contact_host but not sending a message
           const guestConversations = allConvs.filter((conv) => {
             const participant = conv.participants.find(
               (p) => p.userId === userId
             );
-            return participant && participant.role === "guest";
+            return participant && participant.role === "guest" && conv.lastMessage;
           });
           
           // Sort by last message time (most recent first)
@@ -474,20 +507,27 @@ export default function MessagesPage() {
         const socket = socketManager.getSocket(token);
         if (!socket) return;
 
+        // Subscribe to connection state changes from socket manager
+        unsubscribeConnectionRef.current = socketManager.onConnectionChange((state) => {
+          setConnectionStatus(state);
+        });
+
         const handleConnect = () => {
-          setConnected(true);
           const guestConvs = (data.data || []).filter((conv) => {
             const participant = conv.participants.find(
               (p) => p.userId === userId
             );
-            return participant && participant.role === "guest";
+            // Only join rooms for conversations with messages
+            return participant && participant.role === "guest" && conv.lastMessage;
           });
           guestConvs.forEach(conv => {
             socketManager.joinRoom(conv.id);
           });
         };
 
-        const handleDisconnect = () => setConnected(false);
+        const handleDisconnect = () => {
+          // Connection state is now managed by socketManager
+        };
         
         const handleNewMessage = (msgData) => {
           const currentConversation = selectedConversationRef.current;
@@ -593,14 +633,12 @@ export default function MessagesPage() {
         socket.on("message:read", handleMessageRead);
         socket.on("typing:update", handleTypingUpdate);
 
-        // Set initial connection status
-        if (socket.connected) {
-          setConnected(true);
-        }
+        // Initial connection status is handled by socketManager.onConnectionChange
 
         socketRef.current = socket;
       } catch (err) {
         console.error("Init error:", err);
+        setConnectionStatus("error");
       } finally {
         setLoading(false);
       }
@@ -609,6 +647,18 @@ export default function MessagesPage() {
     init();
 
     return () => {
+      // Reset init flag on cleanup (for hot reload, not StrictMode)
+      // Note: In StrictMode, cleanup runs before second mount, so we don't reset here
+      // The flag prevents the second mount from fetching again
+      
+      // Clear the mobile protection flag on unmount so fresh page loads work
+      sessionStorage.removeItem('messages_last_init');
+      
+      // Unsubscribe from connection state changes
+      if (unsubscribeConnectionRef.current) {
+        unsubscribeConnectionRef.current();
+        unsubscribeConnectionRef.current = null;
+      }
       if (socketRef.current) {
         socketRef.current.off("connect");
         socketRef.current.off("disconnect");
@@ -623,6 +673,9 @@ export default function MessagesPage() {
   // Load messages when conversation is selected
   useEffect(() => {
     if (!selectedConversation || !token) return;
+
+    // Clear messages immediately when switching conversations to prevent stale data
+    setMessages([]);
 
     async function loadMessages() {
       setLoadingMessages(true);
@@ -668,7 +721,15 @@ export default function MessagesPage() {
     if (!isPageVisible) return;
     if (!selectedConversation || !messages.length || !socketRef.current || !socketRef.current.connected) return;
 
-    const unreadMessageIds = messages
+    // IMPORTANT: Only process messages that belong to the CURRENT conversation
+    // This prevents stale message IDs from being sent when switching conversations
+    const currentConversationMessages = messages.filter(
+      (m) => m.conversationId === selectedConversation.id
+    );
+
+    if (currentConversationMessages.length === 0) return;
+
+    const unreadMessageIds = currentConversationMessages
       .filter(
         (m) =>
           m.senderId !== userId &&
@@ -774,7 +835,7 @@ export default function MessagesPage() {
     setMessages(prev => [...prev, optimisticMsg]);
 
     try {
-      if (socketRef.current && connected) {
+      if (socketRef.current && connectionStatus === "connected") {
         socketRef.current.emit(
           "message:send",
           {
@@ -1326,13 +1387,13 @@ export default function MessagesPage() {
                 setTimeout(scrollToBottom, 500);
               }}
               placeholder="Type a message..."
-              disabled={sending || !connected}
+              disabled={sending || connectionStatus !== "connected"}
               className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
             />
             <Button
               onClick={sendMessage}
               onMouseDown={(e) => e.preventDefault()}
-              disabled={!newMessage.trim() || sending || !connected}
+              disabled={!newMessage.trim() || sending || connectionStatus !== "connected"}
               size="icon"
               className="h-10 w-10 rounded-full bg-primaryGreen hover:bg-brightGreen"
             >
@@ -1454,7 +1515,19 @@ export default function MessagesPage() {
         <div className="p-4 border-b bg-white">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bricolage font-semibold">Messages</h2>
-            {!connected && (
+            {connectionStatus === "connecting" && (
+              <Badge variant="outline" className="text-blue-500 border-blue-500">
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                Connecting
+              </Badge>
+            )}
+            {connectionStatus === "error" && (
+              <Badge variant="outline" className="text-red-500 border-red-500">
+                <WifiOff className="w-3 h-3 mr-1" />
+                Error
+              </Badge>
+            )}
+            {connectionStatus === "disconnected" && (
               <Badge variant="outline" className="text-orange-500 border-orange-500">
                 <WifiOff className="w-3 h-3 mr-1" />
                 Offline
@@ -1869,7 +1942,7 @@ export default function MessagesPage() {
                   setTimeout(doScroll, 400);
                   setTimeout(doScroll, 500);
                 }}
-                disabled={sending || !connected}
+                disabled={sending || connectionStatus !== "connected"}
                 className="flex-1 h-10 px-4 bg-gray-100 rounded-full text-base outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
                 autoComplete="off"
                 autoCorrect="on"
@@ -1879,9 +1952,9 @@ export default function MessagesPage() {
               {/* Using a div to prevent focus stealing on mobile */}
               <div
                 role="button"
-                aria-disabled={!newMessage.trim() || sending || !connected}
+                aria-disabled={!newMessage.trim() || sending || connectionStatus !== "connected"}
                 className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 select-none cursor-pointer ${
-                  !newMessage.trim() || sending || !connected
+                  !newMessage.trim() || sending || connectionStatus !== "connected"
                     ? "bg-gray-300 pointer-events-none"
                     : "bg-primaryGreen hover:bg-brightGreen active:bg-brightGreen"
                 }`}
