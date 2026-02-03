@@ -27,16 +27,16 @@ const Invoice = ({ payment, invoiceData }) => {
       ?.trim()
       ?.split(" ")
       ?.map(
-        (item) => item.charAt(0).toUpperCase() + item.slice(1).toLowerCase()
+        (item) => item.charAt(0).toUpperCase() + item.slice(1).toLowerCase(),
       )
       ?.join(" ");
   };
 
   const calTax = (subtotal, serviceFee) => {
     if (subtotal <= 7500) {
-      return Math.round(subtotal * 0.12) + Math.round(serviceFee * 0.18); // 12% GST in India
+      return Math.round(subtotal * 0.12); // 12% GST in India
     } else if (subtotal > 7500) {
-      return Math.round(subtotal * 0.18) + Math.round(serviceFee * 0.18); // 18% GST in India
+      return Math.round(subtotal * 0.18); // 18% GST in India
     }
   };
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
@@ -76,9 +76,26 @@ const Invoice = ({ payment, invoiceData }) => {
               {invoiceData.propertyId.title}
             </h2>
             <p className="text-sm text-gray-500">
-              {invoiceData.nights} night in{" "}
-              {invoiceData.propertyId.address.city}
+              {/* {invoiceData.nights} night in{" "} */}
+              {invoiceData?.propertyId?.address?.street
+                ? invoiceData?.propertyId?.address?.street
+                : null}
+              , {invoiceData?.propertyId?.address?.district}
             </p>
+            <p className="text-sm text-gray-500">
+              {invoiceData?.propertyId?.address?.city
+                ? invoiceData?.propertyId?.address?.city
+                : null}
+              ,{" "}
+              {invoiceData?.propertyId?.address?.state
+                ? invoiceData?.propertyId?.address?.state
+                : null}
+            </p>
+            <p className="text-sm text-gray-500">
+              {" "}
+              {invoiceData?.propertyId?.address?.pincode}
+            </p>
+            <br />
             <p className="text-sm text-gray-500 mt-1">
               {fmt.format(new Date(invoiceData.checkIn))} &nbsp;–&nbsp;{" "}
               {fmt.format(new Date(invoiceData.checkOut))}
@@ -103,8 +120,8 @@ const Invoice = ({ payment, invoiceData }) => {
               <span className="font-semibold">HM5ZA5R82N</span>
             </p> */}
               <div className="mt-2 flex gap-4 text-sm text-blue-600 underline">
-                <a href="#">Go to itinerary</a>
-                <a href="#">Go to listing</a>
+                {/* <a href="#">Go to itinerary</a>
+                <a href="#">Go to listing</a> */}
               </div>
             </div>
           </div>
@@ -143,7 +160,7 @@ const Invoice = ({ payment, invoiceData }) => {
         </div>
 
         {/* Cancellation Policy */}
-        <div className="mb-6">
+        <div className="mb-6 border-b pb-4">
           <h3 className="font-semibold text-gray-800 text-sm mb-1">
             Cancellation policy
           </h3>
@@ -151,9 +168,9 @@ const Invoice = ({ payment, invoiceData }) => {
             {invoiceData?.cancellationPolicy == "moderate"
               ? `Your booking has moderate cancellation policy. If you cancel anytime before 7 days of check-in, you receive a full refund. If the booking is within 7 days of check-in, the reservation becomes non-refundable, and you will not be able to cancel the booking. Once the check-in date has arrived, cancellation is not possible.`
               : invoiceData?.cancellationPolicy == "flexible"
-              ? `Your booking has flexible cancellation policy. 
+                ? `Your booking has flexible cancellation policy. 
 If you cancel at anytime before 24 hours before check-in, you receive a full refund. If the booking is within 24 hours of check-in, the reservation becomes non-refundable, and you will not be able to cancel the booking. After the check-in time passes, cancellation is no longer possible.`
-              : `Your booking has strict cancellation policy. At no point will the booking be eligible for cancellation.The reservation is non-refundable.`}
+                : `Your booking has strict cancellation policy. At no point will the booking be eligible for cancellation.The reservation is non-refundable.`}
           </p>
         </div>
 
@@ -177,12 +194,12 @@ If you cancel at anytime before 24 hours before check-in, you receive a full ref
               </span>
             </div>
             <div className="flex justify-between">
-              <span>Taxes</span>
+              <span>Taxes (GST)</span>
               <span>
                 ₹
                 {calTax(
                   invoiceData.subTotal,
-                  invoiceData.subTotal * 0.12
+                  invoiceData.subTotal * 0.12,
                 ).toLocaleString()}
                 .00
               </span>
@@ -195,7 +212,7 @@ If you cancel at anytime before 24 hours before check-in, you receive a full ref
         </div>
 
         {/* Payment Info */}
-        <div className="mb-6">
+        <div className="mb-6 pb-4">
           <h3 className="font-semibold text-gray-800 text-sm mb-3">Payment</h3>
           <div className="text-sm text-gray-700 space-y-1">
             <p>{changeUpperCase(payment?.paymentMethod)}</p>
@@ -223,7 +240,7 @@ If you cancel at anytime before 24 hours before check-in, you receive a full ref
 
         {/* Footer */}
         <div className="border-t pt-4 text-xs text-gray-500">
-          <p>
+          {/* <p>
             Payment processed by Majestic Escape Payments India Pvt. Ltd.
             <br />
             c/o 4th floor, Statesman House, Barakhamba Road, Connaught Place,
@@ -232,7 +249,7 @@ If you cancel at anytime before 24 hours before check-in, you receive a full ref
           <p className="mt-2">
             Level 9, Spaze i-Tech Park, A1 Tower, Sector 49, Sohna Road,
             Gurugram, India - 122018
-          </p>
+          </p> */}
           <p className="mt-2">
             <a href="" className="text-blue-600 underline">
               www.majesticescape.com
