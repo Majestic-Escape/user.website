@@ -341,7 +341,7 @@ function BookPageContent() {
     const serviceFee = Math.round(subtotal * 0.12); // 12% service fee like Airbnb
     let taxes;
     if (nightlyRate <= 7500) {
-      taxes = Math.round(subtotal * 0.05) + Math.round(serviceFee); // 12% GST in India
+      taxes = Math.round(subtotal * 0.05) + Math.round(serviceFee); // 5% GST in India
     } else if (nightlyRate > 7500) {
       taxes = Math.round(subtotal * 0.18) + Math.round(serviceFee); // 18% GST in India
     }
