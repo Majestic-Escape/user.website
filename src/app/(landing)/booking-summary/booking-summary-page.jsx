@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -34,21 +34,7 @@ export default function BookingSummaryPage() {
   useEffect(() => {
     auth();
   }, []);
-  useEffect(() => {
-    // Reset any leftover scroll locks
-    const scrollY = document.body.style.top;
 
-    document.body.style.position = "";
-    document.body.style.top = "";
-    document.body.style.left = "";
-    document.body.style.right = "";
-    document.body.style.width = "";
-    document.body.style.overflow = "";
-
-    if (scrollY) {
-      window.scrollTo(0, parseInt(scrollY) * -1);
-    }
-  }, []);
   useEffect(() => {
     const propertyId = searchParams.get("propertyId");
     const bookingHistory = searchParams.get("bookingHistory")

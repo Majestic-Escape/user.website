@@ -299,13 +299,32 @@ function BookPageContent() {
     }
 
     return () => {
-      // Cleanup on unmount
+      // Cleanup on unmount OR when dependencies change
+      const scrollY = document.body.dataset.scrollY || "0";
+
+      // Restore all styles
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.left = "";
       document.body.style.right = "";
       document.body.style.overflow = "";
+
+      // Also reset on html element to be safe
+      document.documentElement.style.overflow = "";
+
+      // Restore scroll position if we have it stored
+      if (scrollY !== "0") {
+        requestAnimationFrame(() => {
+          window.scrollTo(0, parseInt(scrollY, 10));
+        });
+      }
+
+      // Clean up data attribute
       delete document.body.dataset.scrollY;
+
+      // Remove any modal-related classes
+      document.body.classList.remove("razorpay-lock");
+      document.body.classList.remove("modal-lock");
     };
   }, [showGuestModal, showPriceBreakdown]);
 
