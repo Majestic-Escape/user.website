@@ -70,7 +70,11 @@ class SocketManager {
     this.reconnectAttempt = 0;
     this._setConnectionState("connecting");
 
-    console.log(`[SocketManager] Creating new socket connection to ${CHAT_URL}`);
+    // Detect mobile devices - they need polling fallback for stability
+    const isMobile = typeof navigator !== 'undefined' && 
+      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+    console.log(`[SocketManager] Creating new socket connection to ${CHAT_URL} (mobile: ${isMobile})`);
 
     this.socket = io(CHAT_URL, {
       auth: { token },
@@ -78,17 +82,18 @@ class SocketManager {
       reconnection: true,
       reconnectionDelay: 1000, // Start with 1s delay
       reconnectionDelayMax: 10000, // Max 10s between attempts
-      reconnectionAttempts: 10, // Limit attempts to prevent infinite loops
+      reconnectionAttempts: Infinity, // Keep trying forever
       randomizationFactor: 0.5, // Add jitter to prevent thundering herd
       // Connection timeout
       timeout: 20000, // 20s connection timeout
-      // Transport settings - use WebSocket only to avoid polling issues
-      // This prevents "transport close" errors from polling fallback
-      transports: ['websocket'],
+      // Transport settings - mobile needs polling fallback, desktop uses websocket only
+      // Mobile browsers (iOS Safari, Android WebView) aggressively kill WebSockets
+      // Polling survives tab backgrounding better but is expensive at scale
+      transports: isMobile ? ['polling', 'websocket'] : ['websocket'],
       // Don't force new connection on page refresh if one exists
       forceNew: false,
-      // Allow transport upgrade (not needed with websocket-only, but safe)
-      upgrade: false,
+      // Allow transport upgrade from polling to websocket
+      upgrade: true,
       // Multiplexing - reuse connection for multiple namespaces
       multiplex: true,
     });
@@ -252,19 +257,17 @@ class SocketManager {
 
   /**
    * Release a reference to the socket.
-   * Only disconnects when all references are released.
+   * Does NOT disconnect - keeps socket alive for reconnection.
+   * Use disconnect() for explicit disconnection (logout, etc.)
    */
   releaseSocket() {
     this.connectionCount--;
     console.log(`[SocketManager] Released socket, count: ${this.connectionCount}`);
-    if (this.connectionCount <= 0 && this.socket) {
-      console.log("[SocketManager] No more references, disconnecting");
-      this.socket.disconnect();
-      this.socket = null;
-      this.token = null;
-      this.joinedRooms.clear();
+    // Don't disconnect on release - keep socket alive
+    // This prevents disconnection when components unmount (tab switch, navigation)
+    // The socket will be reused when the component remounts
+    if (this.connectionCount < 0) {
       this.connectionCount = 0;
-      this._setConnectionState("disconnected");
     }
   }
 
