@@ -59,7 +59,7 @@ export default function ContactHostPage() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(null);
-  const [connected, setConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState("connecting"); // 'connecting' | 'connected' | 'disconnected' | 'error'
   const [conversationId, setConversationId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -69,6 +69,7 @@ export default function ContactHostPage() {
 
   const socketRef = useRef(null);
   const textareaRef = useRef(null);
+  const initCalledRef = useRef(null); // Track init key to prevent duplicate init
   const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
   // Fetch property data
@@ -213,9 +214,96 @@ export default function ContactHostPage() {
       return;
     }
 
-    async function initChat() {
+    // Create a unique key for this initialization to prevent duplicates in StrictMode
+    // but allow re-init if dependencies actually change
+    const initKey = `${token}-${userId}-${hostId}-${propertyId}`;
+    if (initCalledRef.current === initKey) {
+      console.log("[ContactHost] Init already called for this config, skipping");
+      return;
+    }
+    initCalledRef.current = initKey;
+
+    async function initSocket() {
       try {
         setLoading(true);
+        console.log("[ContactHost] Initializing socket (conversation will be created on first message)...");
+        
+        // DON'T create conversation here - wait until user sends a message
+        // This prevents empty conversations from appearing in host's inbox
+
+        const socket = socketManager.getSocket(token);
+        if (!socket) return;
+
+        // Subscribe to connection state changes from socket manager
+        const unsubscribeConnection = socketManager.onConnectionChange((state) => {
+          setConnectionStatus(state);
+        });
+
+        const handleError = (err) => setError(err.message);
+
+        socket.on("error", handleError);
+
+        socketRef.current = socket;
+        
+        // Store unsubscribe function for cleanup
+        socketRef.current._unsubscribeConnection = unsubscribeConnection;
+      } catch (err) {
+        console.error("Socket init error:", err);
+        setError("Failed to connect to chat server");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    initSocket();
+
+    return () => {
+      if (socketRef.current) {
+        // Unsubscribe from connection state changes
+        if (socketRef.current._unsubscribeConnection) {
+          socketRef.current._unsubscribeConnection();
+        }
+        socketRef.current.off("error");
+        socketManager.releaseSocket();
+      }
+    };
+  }, [token, userId, hostId, propertyId, chatUrl, router]);
+
+  // Helper to wait for socket connection with timeout
+  const waitForSocketConnection = (maxWaitMs = 5000) => {
+    return new Promise((resolve) => {
+      // Already connected
+      if (socketManager.isConnected()) {
+        resolve(true);
+        return;
+      }
+      
+      const startTime = Date.now();
+      const checkInterval = setInterval(() => {
+        if (socketManager.isConnected()) {
+          clearInterval(checkInterval);
+          resolve(true);
+        } else if (Date.now() - startTime > maxWaitMs) {
+          clearInterval(checkInterval);
+          resolve(false);
+        }
+      }, 100);
+    });
+  };
+
+  const sendMessage = async () => {
+    if (!message.trim() || sending) return;
+
+    setSending(true);
+    setError(null);
+
+    try {
+      let convId = conversationId;
+      
+      // Create conversation on first message (lazy creation)
+      // This prevents empty conversations from appearing in host's inbox
+      if (!convId) {
+        console.log("[ContactHost] Creating conversation on first message...");
         const res = await fetch(`${chatUrl}/api/chat/conversations`, {
           method: "POST",
           headers: {
@@ -234,75 +322,77 @@ export default function ContactHostPage() {
         });
 
         const data = await res.json();
-        if (data.success) {
-          setConversationId(data.data.id || data.data._id);
+        console.log("[ContactHost] Conversation response:", data, "status:", res.status);
+        
+        if (!res.ok || !data.success) {
+          console.error("[ContactHost] Failed to create conversation:", data.message || data.error, "status:", res.status);
+          setError(data.message || data.error || "Failed to create conversation");
+          setSending(false);
+          return;
         }
+        
+        convId = data.data.id || data.data._id;
+        console.log("[ContactHost] Created conversationId:", convId);
+        setConversationId(convId);
+      }
 
-        const socket = socketManager.getSocket(token);
-        if (!socket) return;
-
-        const handleConnect = () => setConnected(true);
-        const handleDisconnect = () => setConnected(false);
-        const handleError = (err) => setError(err.message);
-
-        socket.on("connect", handleConnect);
-        socket.on("disconnect", handleDisconnect);
-        socket.on("error", handleError);
-
-        // Set initial connection status
-        if (socket.connected) {
-          setConnected(true);
+      // Wait for socket to be connected (with timeout)
+      // This handles the race condition where user clicks send before socket is ready
+      const isConnected = await waitForSocketConnection(3000);
+      
+      if (!isConnected || !socketRef.current) {
+        console.warn("[ContactHost] Socket not connected after waiting, using HTTP fallback");
+        // HTTP fallback for sending message
+        try {
+          const msgRes = await fetch(`${chatUrl}/api/chat/conversations/${convId}/messages`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              content: { text: message.trim() },
+              type: "text",
+            }),
+          });
+          
+          const msgData = await msgRes.json();
+          if (msgRes.ok && msgData.success) {
+            setSending(false);
+            setSent(true);
+            return;
+          } else {
+            setError(msgData.message || "Failed to send message");
+            setSending(false);
+            return;
+          }
+        } catch (httpErr) {
+          console.error("[ContactHost] HTTP fallback failed:", httpErr);
+          setError("Failed to send message. Please try again.");
+          setSending(false);
+          return;
         }
-
-        socketRef.current = socket;
-      } catch (err) {
-        console.error("Chat init error:", err);
-        setError("Failed to connect to chat server");
-      } finally {
-        setLoading(false);
       }
-    }
 
-    initChat();
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.off("connect");
-        socketRef.current.off("disconnect");
-        socketRef.current.off("error");
-        socketManager.releaseSocket();
-      }
-    };
-  }, [token, userId, hostId, propertyId, chatUrl, router]);
-
-  const sendMessage = async () => {
-    if (!message.trim() || !conversationId || sending) return;
-
-    setSending(true);
-    setError(null);
-
-    try {
       const clientMessageId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
-      if (socketRef.current && connected) {
-        socketRef.current.emit(
-          "message:send",
-          {
-            conversationId,
-            content: { text: message.trim() },
-            type: "text",
-            clientMessageId,
-          },
-          (response) => {
-            setSending(false);
-            if (response.success) {
-              setSent(true);
-            } else {
-              setError(response.error || "Failed to send message");
-            }
+      socketRef.current.emit(
+        "message:send",
+        {
+          conversationId: convId,
+          content: { text: message.trim() },
+          type: "text",
+          clientMessageId,
+        },
+        (response) => {
+          setSending(false);
+          if (response.success) {
+            setSent(true);
+          } else {
+            setError(response.error || "Failed to send message");
           }
-        );
-      }
+        }
+      );
     } catch (err) {
       setSending(false);
       setError(err.message);
@@ -446,7 +536,7 @@ export default function ContactHostPage() {
         <div className="px-4 py-4 border-t bg-white flex-shrink-0">
           <Button
             onClick={sendMessage}
-            disabled={!message.trim() || sending || !conversationId}
+            disabled={!message.trim() || sending}
             className="w-full bg-primaryGreen hover:bg-brightGreen text-white h-12 rounded-xl text-sm font-medium"
           >
             {sending ? (
@@ -690,7 +780,7 @@ export default function ContactHostPage() {
 
               <Button
                 onClick={sendMessage}
-                disabled={!message.trim() || sending || !conversationId}
+                disabled={!message.trim() || sending}
                 className="mt-4 bg-primaryGreen hover:bg-brightGreen text-white px-6 py-2.5 rounded-lg"
               >
                 {sending ? (
