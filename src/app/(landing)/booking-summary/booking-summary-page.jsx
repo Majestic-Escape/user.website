@@ -197,7 +197,7 @@ export default function BookingSummaryPage() {
     year: "numeric",
   });
   return (
-    <div className="min-h-screen font-poppins pt-24">
+    <div className="min-h-screen font-poppins pt-20">
       <header className="flow-root bg-offWhite shadow-sm bg-primaryGreen">
         <div className=" max-w-7xl mx-auto py-4  sm:px-6 lg:px-8 ">
           <div className="text-center justify-center">
@@ -229,7 +229,7 @@ export default function BookingSummaryPage() {
         </div> */}
       </header>
       <main>
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto  sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 border rounded-xl p-4 shadow-lg">
               <div>
