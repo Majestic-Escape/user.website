@@ -61,7 +61,7 @@ export default function ChatPage({ params }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState("disconnected");
+  const [connectionStatus, setConnectionStatus] = useState("connecting");
   const [property, setProperty] = useState(null);
   const [host, setHost] = useState(null);
   const [error, setError] = useState(null);
@@ -265,9 +265,13 @@ export default function ChatPage({ params }) {
 
     socketRef.current = socket;
 
+    // Subscribe to connection state changes from socket manager
+    const unsubscribeConnection = socketManager.onConnectionChange((state) => {
+      setConnectionStatus(state);
+    });
+
     const handleConnect = () => {
       console.log("[Chat] Socket connected, socket id:", socket.id);
-      setConnectionStatus("connected");
       // Join conversation room if we have one
       if (conversationIdRef.current) {
         socketManager.joinRoom(conversationIdRef.current);
@@ -276,12 +280,12 @@ export default function ChatPage({ params }) {
 
     const handleDisconnect = () => {
       console.log("[Chat] Socket disconnected");
-      setConnectionStatus("disconnected");
+      // Connection state is now managed by socketManager
     };
 
     const handleConnectError = (err) => {
       console.error("[Chat] Socket connection error:", err);
-      setConnectionStatus("error");
+      // Connection state is now managed by socketManager
     };
 
     const handleError = (err) => {
@@ -343,12 +347,11 @@ export default function ChatPage({ params }) {
     socket.on("message:read", handleMessageRead);
     socket.on("typing:update", handleTypingUpdate);
 
-    // Set initial connection status
-    if (socket.connected) {
-      setConnectionStatus("connected");
-    }
+    // Initial connection status is handled by socketManager.onConnectionChange
 
     return () => {
+      // Unsubscribe from connection state changes
+      unsubscribeConnection();
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
       socket.off("connect_error", handleConnectError);
@@ -421,21 +424,41 @@ export default function ChatPage({ params }) {
     }
   }, [messages.length]);
 
+  // Track messages we've already marked as read to prevent duplicate emissions
+  const markedAsReadRef = useRef(new Set());
+
+  // Reset marked as read when conversation changes
+  useEffect(() => {
+    markedAsReadRef.current = new Set();
+  }, [conversationId]);
+
   // Mark messages as read - only when page is visible (not in background tab)
   useEffect(() => {
     // Don't mark as read if page is not visible (tab in background)
     if (!isPageVisible) return;
     if (!conversationId || !messages.length || !socketRef.current || !userId) return;
 
-    const unreadMessageIds = messages
+    // IMPORTANT: Only process messages that belong to the CURRENT conversation
+    // This prevents stale message IDs from being sent when switching conversations
+    const currentConversationMessages = messages.filter(
+      (m) => m.conversationId === conversationId
+    );
+
+    if (currentConversationMessages.length === 0) return;
+
+    const unreadMessageIds = currentConversationMessages
       .filter(
         (m) =>
           m.senderId !== userId &&
-          !m.readBy.some((r) => r.userId === userId)
+          !m.readBy.some((r) => r.userId === userId) &&
+          !markedAsReadRef.current.has(m.id)
       )
       .map((m) => m.id);
 
     if (unreadMessageIds.length > 0) {
+      // Mark these as "sent read receipt" immediately to prevent re-sending
+      unreadMessageIds.forEach(id => markedAsReadRef.current.add(id));
+
       socketRef.current.emit("message:read", {
         conversationId,
         messageIds: unreadMessageIds,

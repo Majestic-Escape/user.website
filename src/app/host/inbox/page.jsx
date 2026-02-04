@@ -38,7 +38,7 @@ export default function HostInboxPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState("disconnected");
+  const [connectionStatus, setConnectionStatus] = useState("connecting");
   const [currentUserId, setCurrentUserId] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [propertyDetails, setPropertyDetails] = useState({});
@@ -205,9 +205,13 @@ export default function HostInboxPage() {
 
     socketRef.current = socket;
 
+    // Subscribe to connection state changes from socket manager
+    const unsubscribeConnection = socketManager.onConnectionChange((state) => {
+      setConnectionStatus(state);
+    });
+
     const handleConnect = () => {
       console.log("[HostInbox] Socket connected");
-      setConnectionStatus("connected");
       // Join all conversation rooms
       conversationsRef.current.forEach((conv) => {
         socketManager.joinRoom(conv.id);
@@ -216,12 +220,12 @@ export default function HostInboxPage() {
 
     const handleDisconnect = () => {
       console.log("[HostInbox] Socket disconnected");
-      setConnectionStatus("disconnected");
+      // Connection state is now managed by socketManager
     };
 
     const handleConnectError = (error) => {
-      setConnectionStatus("error");
       console.error("[HostInbox] Socket connection error:", error);
+      // Connection state is now managed by socketManager
     };
 
     const handleNewMessage = (data) => {
@@ -323,12 +327,11 @@ export default function HostInboxPage() {
     socket.on("message:read", handleMessageRead);
     socket.on("typing:update", handleTypingUpdate);
 
-    // Set initial connection status
-    if (socket.connected) {
-      setConnectionStatus("connected");
-    }
+    // Initial connection status is handled by socketManager.onConnectionChange
 
     return () => {
+      // Unsubscribe from connection state changes
+      unsubscribeConnection();
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
       socket.off("connect_error", handleConnectError);
@@ -348,11 +351,44 @@ export default function HostInboxPage() {
     });
   }, [conversations]);
 
+  // Prevent duplicate init in StrictMode
+  const initCalledRef = useRef(false);
+
+  // Clear stale sessionStorage on mount (in case of hard refresh)
+  useEffect(() => {
+    // Reset init state on fresh mount
+    initCalledRef.current = false;
+  }, []);
+
   // Load conversations - FILTER FOR HOST ROLE ONLY
   useEffect(() => {
     if (!tokenRef.current || !currentUserId) return;
 
+    // Prevent duplicate fetch in React StrictMode and mobile remounts
+    // Only check initCalledRef AFTER we have valid token and userId
+    if (initCalledRef.current) {
+      console.log("[HostInbox] Init already called, skipping duplicate");
+      return;
+    }
+    
+    // Additional check: prevent rapid re-initialization within 2 seconds
+    const lastInitTime = sessionStorage.getItem('hostinbox_last_init');
+    const now = Date.now();
+    if (lastInitTime && (now - parseInt(lastInitTime, 10)) < 2000) {
+      console.log("[HostInbox] Init called too recently, skipping (mobile protection)");
+      // Don't return here on desktop - only skip if it's a true duplicate
+      // Check if we already have conversations loaded
+      if (conversations.length > 0) {
+        return;
+      }
+    }
+    
+    // Set the flag AFTER all checks pass and we're about to fetch
+    initCalledRef.current = true;
+    sessionStorage.setItem('hostinbox_last_init', now.toString());
+
     async function loadConversations() {
+      console.log("[HostInbox] Fetching conversations...");
       setIsLoading(true);
       try {
         const response = await fetch(`${CHAT_URL}/api/chat/conversations`, {
@@ -370,7 +406,9 @@ export default function HostInboxPage() {
             const participant = conv.participants.find(
               (p) => p.userId === currentUserId
             );
-            return participant && participant.role === "host";
+            // Only show conversations where user is host AND has at least one message
+            // This filters out empty conversations created when guests visit contact_host but don't send a message
+            return participant && participant.role === "host" && conv.lastMessage;
           });
 
           const sortedConversations = hostConversations.sort((a, b) => {
@@ -391,6 +429,11 @@ export default function HostInboxPage() {
     }
 
     loadConversations();
+    
+    // Cleanup: clear the mobile protection flag on unmount
+    return () => {
+      sessionStorage.removeItem('hostinbox_last_init');
+    };
   }, [currentUserId]);
 
   // Fetch property details for conversations
@@ -421,6 +464,9 @@ export default function HostInboxPage() {
   // Load messages for selected conversation
   useEffect(() => {
     if (!selectedConversation || !tokenRef.current) return;
+
+    // Clear messages immediately when switching conversations to prevent stale data
+    setMessages([]);
 
     async function loadMessages() {
       setIsLoadingMessages(true);
@@ -483,7 +529,15 @@ export default function HostInboxPage() {
     if (!selectedConversation || !messages.length || !socketRef.current || !socketRef.current.connected)
       return;
 
-    const unreadMessageIds = messages
+    // IMPORTANT: Only process messages that belong to the CURRENT conversation
+    // This prevents stale message IDs from being sent when switching conversations
+    const currentConversationMessages = messages.filter(
+      (m) => m.conversationId === selectedConversation.id
+    );
+
+    if (currentConversationMessages.length === 0) return;
+
+    const unreadMessageIds = currentConversationMessages
       .filter(
         (m) =>
           m.senderId !== currentUserId &&
@@ -762,10 +816,22 @@ export default function HostInboxPage() {
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bricolage font-semibold">Guest Inquiries</h2>
-          {connectionStatus !== "connected" && (
+          {connectionStatus === "connecting" && (
+            <Badge variant="outline" className="text-blue-500 border-blue-500">
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              Connecting
+            </Badge>
+          )}
+          {connectionStatus === "error" && (
+            <Badge variant="outline" className="text-red-500 border-red-500">
+              <WifiOff className="w-3 h-3 mr-1" />
+              Error
+            </Badge>
+          )}
+          {connectionStatus === "disconnected" && (
             <Badge variant="outline" className="text-orange-500 border-orange-500">
               <WifiOff className="w-3 h-3 mr-1" />
-              {connectionStatus === "error" ? "Error" : "Offline"}
+              Offline
             </Badge>
           )}
         </div>
