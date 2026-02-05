@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -34,21 +34,7 @@ export default function BookingSummaryPage() {
   useEffect(() => {
     auth();
   }, []);
-  useEffect(() => {
-    // Reset any leftover scroll locks
-    const scrollY = document.body.style.top;
 
-    document.body.style.position = "";
-    document.body.style.top = "";
-    document.body.style.left = "";
-    document.body.style.right = "";
-    document.body.style.width = "";
-    document.body.style.overflow = "";
-
-    if (scrollY) {
-      window.scrollTo(0, parseInt(scrollY) * -1);
-    }
-  }, []);
   useEffect(() => {
     const propertyId = searchParams.get("propertyId");
     const bookingHistory = searchParams.get("bookingHistory")
@@ -211,7 +197,7 @@ export default function BookingSummaryPage() {
     year: "numeric",
   });
   return (
-    <div className="min-h-screen font-poppins pt-24">
+    <div className="min-h-screen font-poppins pt-20">
       <header className="flow-root bg-offWhite shadow-sm bg-primaryGreen">
         <div className=" max-w-7xl mx-auto py-4  sm:px-6 lg:px-8 ">
           <div className="text-center justify-center">
@@ -243,7 +229,7 @@ export default function BookingSummaryPage() {
         </div> */}
       </header>
       <main>
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto  sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 border rounded-xl p-4 shadow-lg">
               <div>

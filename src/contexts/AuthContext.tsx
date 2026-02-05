@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useCheckToken } from "@/services/useCheckToken";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 type User = {
   email: string;
   // Add other user properties as needed
@@ -124,7 +124,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     Number(perNightPrice),
   );
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const allParams = searchParams.toString();
+  const fullUrl = `${pathname}?${allParams}`;
   const [returnUrl, setReturnUrl] = useState<string>("");
   useEffect(() => {
     const verify = async () => {
@@ -133,7 +136,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         clearAllFilters();
       }
       if (pathname !== "/login") {
-        setReturnUrl(encodeURIComponent(pathname));
+        if (pathname == "/filter") {
+          setReturnUrl(encodeURIComponent(fullUrl));
+        } else {
+          setReturnUrl(encodeURIComponent(pathname));
+        }
       }
     };
     verify();
@@ -175,7 +182,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (
       pathname.startsWith("/host/") ||
       pathname.startsWith("/book/") ||
-      pathname.startsWith("/booking-summary")
+      pathname.startsWith("/booking-summary/") ||
+      pathname.startsWith("/filter/")
     ) {
       router.push("/");
     } else {
