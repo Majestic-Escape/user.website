@@ -619,7 +619,7 @@ export default function SearchFilter({
           <div className="grid grid-cols-[10%_80%_10%]">
             <div></div>
             <div className="overflow-hidden">
-              <FilterStaysBar
+              {/* <FilterStaysBar
                 selectProperty={selectProperty}
                 setSelectProperty={setSelectProperty}
                 location={location}
@@ -629,7 +629,7 @@ export default function SearchFilter({
                 senior={null}
                 childrens={null}
                 infants={null}
-              />
+              /> */}
             </div>
             <div></div>
           </div>
