@@ -45,7 +45,7 @@ export default function HeroSection() {
   // }, [])
 
   return (
-    <div className="pt-32 md:pt-48 w-screen -mx-[calc((100vw-100%)/2)] overflow-hidden">
+    <div className="pt-32 md:pt-46 w-screen -mx-[calc((100vw-100%)/2)] overflow-hidden">
       <div className="w-full">
         {/* <img src={"/images/govt/kuno_web.png"}/> */}
         {/* <Image
