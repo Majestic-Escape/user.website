@@ -629,7 +629,7 @@ export default function SearchFilter({
                 senior={null}
                 childrens={null}
                 infants={null}
-              /> */}
+              /> home page filter */}
             </div>
             <div></div>
           </div>
