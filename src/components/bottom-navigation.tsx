@@ -61,6 +61,7 @@ const menuItems = [
   { name: "Refund Policy", href: "/cancellation-policy" },
   { name: "Terms of Service", href: "/terms-of-service" },
   { name: "Help Center", href: "/help-center" },
+  { name: "Account", href: "/account/personal-info" },
   // { name: "Complaints", href: "/complaints" },
 ];
 
@@ -76,6 +77,7 @@ const menuItemsLoggedIn = [
   { name: "Cancellation Policy", href: "/cancellation-policy" },
   { name: "Refund Policy", href: "/cancellation-policy" },
   { name: "Terms of Service", href: "/terms-of-service" },
+  { name: "Account", href: "/account/personal-info" },
   // Support Links
   // { name: "Help Center", href: "/help-center" },
   // { name: "Complaints", href: "/complaints" },
@@ -107,7 +109,9 @@ export function BottomNavigation() {
                 href={item.href}
                 className={cn(
                   "inline-flex flex-col items-center justify-center px-2 hover:bg-gray-50 group",
-                  pathname === item.href ? "text-primaryGreen" : "text-gray-700"
+                  pathname === item.href
+                    ? "text-primaryGreen"
+                    : "text-gray-700",
                 )}
               >
                 <item.icon className="w-5 h-5 mb-1" />
@@ -120,7 +124,9 @@ export function BottomNavigation() {
                 href={item.href}
                 className={cn(
                   "inline-flex flex-col items-center justify-center px-2 hover:bg-gray-50 group",
-                  pathname === item.href ? "text-primaryGreen" : "text-gray-700"
+                  pathname === item.href
+                    ? "text-primaryGreen"
+                    : "text-gray-700",
                 )}
               >
                 <item.icon className="w-5 h-5 mb-1" />
@@ -139,7 +145,14 @@ export function BottomNavigation() {
           </SheetTrigger>
           <SheetContent
             side="right"
-            className="w-[300px] sm:w-[400px] bg-white"
+            className="
+    w-[300px] sm:w-[400px] bg-white
+    data-[state=open]:animate-in
+    data-[state=closed]:animate-out
+    data-[state=closed]:slide-out-to-right
+    data-[state=open]:slide-in-from-right
+    duration-300
+  "
           >
             <SheetHeader>
               <SheetTitle className="text-left text-gray-900 font-bricolage">
@@ -159,7 +172,7 @@ export function BottomNavigation() {
                           pathname === item.href ? "bg-gray-100" : "",
                           item.name == "Switch to Hosting"
                             ? " text-primaryGreen hover:text-brightGreen "
-                            : ""
+                            : "",
                         )}
                         onClick={() => setOpen(false)}
                       >
@@ -181,7 +194,7 @@ export function BottomNavigation() {
                       href={item.href}
                       className={cn(
                         "px-4 py-2  text-sm rounded-md hover:bg-gray-100 transition-colors text-gray-700",
-                        pathname === item.href ? "bg-gray-100" : ""
+                        pathname === item.href ? "bg-gray-100" : "",
                       )}
                       onClick={() => setOpen(false)}
                     >
