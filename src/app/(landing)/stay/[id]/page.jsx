@@ -285,17 +285,68 @@ export default function PropertyPage() {
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("new prop", propertyData?.host);
   }
+  const getMetaTags = () => {
+    if (!propertyData) return null;
 
+    const siteUrl = `https://user.me.coderelix.in/`;
+    const propertyUrl = `${siteUrl}/properties/${propertyId}`;
+    const propertyImage = propertyData?.photos?.[0] || "/default-property.jpg";
+    const absoluteImageUrl = propertyImage.startsWith("http")
+      ? propertyImage
+      : `${siteUrl}${propertyImage}`;
+
+    const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(propertyData.title)}&description=${encodeURIComponent(propertyData.description?.substring(0, 200) || "")}&price=${propertyData.basePrice}&location=${encodeURIComponent(propertyData.address?.city || "Goa")}&image=${encodeURIComponent(absoluteImageUrl)}`;
+
+    return {
+      title: `${propertyData.title} | Majestic Escape`,
+      description:
+        propertyData.description ||
+        `Book ${propertyData.title} in ${propertyData.address?.city || "Goa"}. ${propertyData.basePrice ? `₹${propertyData.basePrice} per night` : ""}`,
+      ogImageUrl,
+      propertyUrl,
+    };
+  };
+  const metaTags = getMetaTags();
   // --- Render the Page Content ---
   return (
     <>
       <Head>
-        <style>
-          {/* {`
-            body {
-              overflow-x: visible !important;
-            } `} */}
-        </style>
+        <title>{metaTags?.title || "Property | Majestic Escape"}</title>
+        <meta
+          name="description"
+          content={
+            metaTags?.description ||
+            "Discover amazing properties on Majestic Escape"
+          }
+        />
+
+        {metaTags && (
+          <>
+            {/* Open Graph Tags */}
+            <meta property="og:title" content={metaTags.title} />
+            <meta property="og:description" content={metaTags.description} />
+            <meta property="og:image" content={metaTags.ogImageUrl} />
+            <meta property="og:url" content={metaTags.propertyUrl} />
+            <meta property="og:type" content="website" />
+            <meta property="og:site_name" content="Majestic Escape" />
+            <meta property="og:locale" content="en_IN" />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+
+            {/* Twitter Tags */}
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content={metaTags.title} />
+            <meta name="twitter:description" content={metaTags.description} />
+            <meta name="twitter:image" content={metaTags.ogImageUrl} />
+
+            {/* Additional OG Properties */}
+            <meta
+              property="og:price:amount"
+              content={propertyData?.basePrice?.toString() || ""}
+            />
+            <meta property="og:price:currency" content="INR" />
+          </>
+        )}
       </Head>
       <main className="min-h-screen pt-[80px] md:pt-52 desktop:pt-56 bg-white booking-widget">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
