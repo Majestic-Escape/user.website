@@ -34,7 +34,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Majestic Escape | Book Hotels, Tours & Holiday Packages in India",
     description:
-      "Discover your perfect gateway with Majestic Escape. From beachfront villas to heritage homes, find authentic stays that capture the true spirit of Goa.",
+      "Discover your perfect gateway with Majestic Escape.From beachfront villas to heritage homes, experience thoughtfully curated stays across India’s most distinctive destinations.",
     images: ["https://majesticescape.in/og-image.jpg"],
   },
   icons: {
