@@ -535,14 +535,23 @@ function BookPageContent() {
       return newData;
     });
 
-    // Clear error for this field when user starts typing
-    if (formErrors[`${type}-${field}-${index}`]) {
+    const singularType = type.replace(/s$/, ""); // 'adults' -> 'adult', 'children' -> 'child'
+    const errorKey = `${singularType}-${field}-${index}`;
+    if (formErrors[errorKey]) {
       setFormErrors((prev) => {
         const newErrors = { ...prev };
-        delete newErrors[`${type}-${field}-${index}`];
+        delete newErrors[errorKey];
         return newErrors;
       });
     }
+    // Clear error for this field when user starts typing
+    // if (formErrors[`${type}-${field}-${index}`]) {
+    //   setFormErrors((prev) => {
+    //     const newErrors = { ...prev };
+    //     delete newErrors[`${type}-${field}-${index}`];
+    //     return newErrors;
+    //   });
+    // }
   };
   // Load Razorpay SDK
   useEffect(() => {
@@ -1255,7 +1264,7 @@ function BookPageContent() {
                   {/* Adults section */}
                   <span className=" pb-6 flex">
                     <span className="text-red-500 pr-2">Note: </span> Enter
-                    names as per government ID
+                    names as per Government ID
                   </span>
                   {guestData.adults.length > 0 && (
                     <div className="mb-6">
