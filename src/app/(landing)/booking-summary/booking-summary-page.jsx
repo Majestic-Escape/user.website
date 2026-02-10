@@ -197,7 +197,7 @@ export default function BookingSummaryPage() {
     year: "numeric",
   });
   return (
-    <div className="min-h-screen font-poppins pt-20">
+    <div className="min-h-screen font-poppins pt-8 md:pt-20">
       <header className="flow-root bg-offWhite shadow-sm bg-primaryGreen">
         <div className=" max-w-7xl mx-auto py-4  sm:px-6 lg:px-8 ">
           <div className="text-center justify-center">
@@ -314,10 +314,6 @@ export default function BookingSummaryPage() {
                     <h4 className="font-medium text-gray-700">Infants</h4>
                     <p className="text-gray-500">{queryData?.infants}</p>
                   </div>
-                  <div>
-                    <h4 className="font-medium text-gray-700">Booking Id</h4>
-                    <p className="text-gray-500">{queryData?.bookingId}</p>
-                  </div>
                 </div>
 
                 <div>
@@ -325,6 +321,10 @@ export default function BookingSummaryPage() {
                   <p className="text-gray-500">
                     ₹{queryData?.totalAmount?.toLocaleString("en-IN")}.00
                   </p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-700">Booking Id</h4>
+                  <p className="text-gray-500">{queryData?.bookingId}</p>
                 </div>
 
                 {/* <button className="w-full border border-gray-300 py-2 rounded-lg">
@@ -334,10 +334,14 @@ export default function BookingSummaryPage() {
                   <h4 className="font-medium text-gray-700">
                     Property Address
                   </h4>
-                  <p className="text-gray-500">
-                    {queryData?.street}, {queryData?.city}, {queryData?.state},{" "}
-                    {queryData?.country}
-                  </p>
+                  <div className="text-gray-500 break-words max-w-full min-w-0">
+                    <p className="text-gray-500">
+                      {queryData?.district ? queryData?.district : null}{" "}
+                      {queryData?.city ? queryData?.city : null},{" "}
+                      {queryData?.state ? queryData?.state : null},{" "}
+                      {queryData?.country ? queryData?.country : null}
+                    </p>
+                  </div>
                   {/* <button className="text-red-400 text-xs mt-1">
                     Get directions
                   </button> */}
