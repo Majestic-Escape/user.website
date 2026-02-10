@@ -333,7 +333,7 @@ export default function RegisterPage() {
                   )}
                 </div>
 
-                <div>
+                <div className="pt-4 md:pt-0">
                   <Input
                     type="text"
                     placeholder="Legal last name"
@@ -355,17 +355,24 @@ export default function RegisterPage() {
               </small>
 
               <div>
-                <Input
-                  type="date"
-                  placeholder="Date of Birth"
-                  value={formData.dob}
-                  onChange={handleInputChange("dob")}
-                  className="w-full text-sm bg-white h-10 px-4"
-                  disabled={isLoading}
-                  aria-label="Date of Birth"
-                  max={minDob}
-                  min="1900-01-01"
-                />
+                <div className="relative">
+                  <Input
+                    type="date"
+                    // placeholder="mm/dd/yyyy"
+                    value={formData.dob}
+                    onChange={handleInputChange("dob")}
+                    className="w-full text-sm bg-white h-10 px-4"
+                    disabled={isLoading}
+                    aria-label="Date of Birth"
+                    max={minDob}
+                    min="1900-01-01"
+                  />
+                  {!formData.dob && (
+                    <div className="md:hidden absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-sm">
+                      mm/dd/yyyy
+                    </div>
+                  )}
+                </div>
                 {errors.dob && (
                   <p className="text-red-500 text-sm mt-1" role="alert">
                     {errors.dob}
@@ -397,7 +404,7 @@ export default function RegisterPage() {
                   </div>
 
                   <div>
-                    <div className="flex">
+                    <div className="flex pt-8 md:pt-0">
                       <div className="flex-shrink-0 flex items-center text-sm justify-center bg-white border border-r-0 border-gray-300 rounded-l-md px-3">
                         +91
                       </div>
