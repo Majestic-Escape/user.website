@@ -242,9 +242,9 @@ export default function BookingSummaryPage() {
                 />
                 <h3 className="mt-4 text-lg font-medium"></h3>
                 <p className="text-gray-600 text-sm">
-                  {queryData?.placeType.charAt(0).toUpperCase() +
+                  {queryData?.placeType?.charAt(0).toUpperCase() +
                     queryData?.placeType.slice(1)}{" "}
-                  {queryData?.propertyType.charAt(0).toUpperCase() +
+                  {queryData?.propertyType?.charAt(0).toUpperCase() +
                     queryData?.propertyType.slice(1)}{" "}
                   by {queryData?.hostFirstName} {queryData?.hostLastName}
                 </p>
