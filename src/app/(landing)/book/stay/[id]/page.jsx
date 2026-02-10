@@ -914,7 +914,7 @@ function BookPageContent() {
             propertyType: property?.propertyType,
             placeType: property?.placeType,
             propertyName: property?.title || "Property",
-            street: property?.address?.street,
+            district: property?.address?.district,
             city: property?.address?.city,
             state: property?.address?.state,
             country: property?.address?.country,

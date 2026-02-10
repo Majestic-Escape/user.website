@@ -41,13 +41,13 @@ export default function Component() {
                   </Link>
                 </li>
                 <li>
-                  <Link
+                  {/* <Link
                     href="/features"
                     className="group flex items-center text-muted-foreground hover:text-primary"
                   >
                     <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                     Features
-                  </Link>
+                  </Link> */}
                 </li>
               </ul>
             </div>
@@ -58,7 +58,7 @@ export default function Component() {
               <ul className="space-y-4">
                 <li>
                   <Link
-                    href="/host"
+                    href="/hosting"
                     className="group flex items-center text-muted-foreground hover:text-primary"
                   >
                     <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -66,40 +66,54 @@ export default function Component() {
                   </Link>
                 </li>
                 <li>
-                  <Link
+                  {/* <Link
                     href="/host"
                     className="group flex items-center text-muted-foreground hover:text-primary"
                   >
                     <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                     Host an experience
-                  </Link>
+                  </Link> */}
                 </li>
                 <li>
                   <Link
+                    href="/hosting#features"
+                    className="group flex items-center text-muted-foreground hover:text-primary"
+                  >
+                    <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
+                    Benefits
+                  </Link>
+                  {/* <Link
                     href="/host/guide"
                     className="group flex items-center text-muted-foreground hover:text-primary"
                   >
                     <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                     Hosting Guide
-                  </Link>
+                  </Link> */}
                 </li>
                 <li>
                   <Link
+                    href="/host-faq"
+                    className="group flex items-center text-muted-foreground hover:text-primary"
+                  >
+                    <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
+                    FAQ
+                  </Link>
+                  {/* <Link
                     href="/guides"
                     className="group flex items-center text-muted-foreground hover:text-primary"
                   >
                     <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                     Guides
-                  </Link>
+                  </Link> */}
                 </li>
                 <li>
-                  <Link
+                  {/* <Link
                     href="/safety"
                     className="group flex items-center text-muted-foreground hover:text-primary"
                   >
                     <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                     Safety
-                  </Link>
+                  </Link> */}
                 </li>
               </ul>
             </div>
@@ -110,7 +124,7 @@ export default function Component() {
               <ul className="space-y-4">
                 <li>
                   <Link
-                    href="/privacy"
+                    href="/privacy-policy"
                     className="group flex items-center text-muted-foreground hover:text-primary"
                   >
                     <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -119,7 +133,7 @@ export default function Component() {
                 </li>
                 <li>
                   <Link
-                    href="/terms"
+                    href="/terms-of-service"
                     className="group flex items-center text-muted-foreground hover:text-primary"
                   >
                     <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -128,7 +142,7 @@ export default function Component() {
                 </li>
                 <li>
                   <Link
-                    href="/cancellation"
+                    href="/cancellation-policy"
                     className="group flex items-center text-muted-foreground hover:text-primary"
                   >
                     <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -136,22 +150,29 @@ export default function Component() {
                   </Link>
                 </li>
                 <li>
-                  <Link
+                  {/* <Link
                     href="/trust-safety"
                     className="group flex items-center text-muted-foreground hover:text-primary"
                   >
                     <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                     Trust & Safety
-                  </Link>
+                  </Link> */}
                 </li>
                 <li>
                   <Link
+                    href="/refund-policy"
+                    className="group flex items-center text-muted-foreground hover:text-primary"
+                  >
+                    <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
+                    Refund Policy
+                  </Link>
+                  {/* <Link
                     href="/cookies"
                     className="group flex items-center text-muted-foreground hover:text-primary"
                   >
                     <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                     Cookies Policy
-                  </Link>
+                  </Link> */}
                 </li>
               </ul>
             </div>
@@ -171,7 +192,7 @@ export default function Component() {
                 </li>
                 <li>
                   <Link
-                    href="/help"
+                    href="/help-center"
                     className="group flex items-center text-muted-foreground hover:text-primary"
                   >
                     <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -188,13 +209,13 @@ export default function Component() {
                   </Link> */}
                 </li>
                 <li>
-                  <Link
+                  {/* <Link
                     href="/contact"
                     className="group flex items-center text-muted-foreground hover:text-primary"
                   >
                     <ChevronRight className="mr-2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                     Contact Us
-                  </Link>
+                  </Link> */}
                 </li>
               </ul>
             </div>
