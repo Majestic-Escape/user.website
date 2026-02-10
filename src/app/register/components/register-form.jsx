@@ -31,7 +31,7 @@ const registerSchema = z.object({
     .regex(/^[a-zA-Z\s]*$/, "Name can only contain letters and spaces"),
   dob: z.string().refine((dob) => {
     const age = Math.floor(
-      (new Date().getTime() - new Date(dob).getTime()) / 3.15576e10
+      (new Date().getTime() - new Date(dob).getTime()) / 3.15576e10,
     );
     return age >= 18;
   }, "You must be 18 or older to use Majestic Escape"),
@@ -70,8 +70,8 @@ export default function RegisterPage() {
             ...acc,
             [curr.path[0]]: curr.message,
           }),
-          {}
-        )
+          {},
+        ),
       );
       return false;
     }
@@ -128,7 +128,7 @@ export default function RegisterPage() {
             break;
           case "ACCOUNT_LOCKED":
             toast.error(
-              "Your account is locked due to multiple failed attempts"
+              "Your account is locked due to multiple failed attempts",
             );
             break;
           case "INVALID_OTP":
@@ -215,7 +215,7 @@ export default function RegisterPage() {
           toast.error("OTP is required. Please enter the OTP.");
         } else if (errorData.code === "INVALID_OTP") {
           toast.error(
-            `Invalid OTP. ${errorData.otpAttempts.remainingAttempts} attempts remaining.`
+            `Invalid OTP. ${errorData.otpAttempts.remainingAttempts} attempts remaining.`,
           );
         }
         break;
@@ -235,7 +235,7 @@ export default function RegisterPage() {
       case 423:
         if (errorData.code === "ACCOUNT_LOCKED") {
           toast.error(
-            `Your account is locked. Try again after ${errorData.unlocksAt.remainingMinutes} minutes.`
+            `Your account is locked. Try again after ${errorData.unlocksAt.remainingMinutes} minutes.`,
           );
         }
         break;
@@ -243,7 +243,7 @@ export default function RegisterPage() {
       case 423:
         if (errorData.code === "ACCOUNT_LOCKED") {
           toast.error(
-            `Your account is locked. Try again after ${errorData.unlocksAt.remainingMinutes} minutes.`
+            `Your account is locked. Try again after ${errorData.unlocksAt.remainingMinutes} minutes.`,
           );
         }
         break;
