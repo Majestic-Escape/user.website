@@ -184,8 +184,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       pathname.startsWith("/book/") ||
       pathname.startsWith("/booking-summary/") ||
       pathname.startsWith("/filter/") ||
-      pathname.startsWith("/register/") ||
-      pathname.startsWith("/login/")
+      pathname.startsWith("/register/")
+      // pathname.startsWith("/login/")
     ) {
       router.push("/");
     } else {
