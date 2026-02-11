@@ -198,8 +198,8 @@ export default function LoginForm() {
       toast.success("Welcome. You are now signed in.");
       setIsRedirecting(true);
       setTimeout(() => {
-        decodedReturnUrl == "/login"
-          ? route.push("/")
+        decodedReturnUrl == "/login" || decodedReturnUrl == "/register"
+          ? router.push("/")
           : router.push(decodedReturnUrl);
         // router.push("/stays");
       }, 800);
