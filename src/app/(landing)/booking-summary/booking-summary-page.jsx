@@ -319,7 +319,7 @@ export default function BookingSummaryPage() {
                 <div>
                   <h4 className="font-medium text-gray-700">Total Amount</h4>
                   <p className="text-gray-500">
-                    ₹{queryData?.totalAmount?.toLocaleString("en-IN")}.00
+                    ₹{Number(queryData?.totalAmount)?.toLocaleString("en-IN")}
                   </p>
                 </div>
                 <div>
