@@ -299,13 +299,32 @@ function BookPageContent() {
     }
 
     return () => {
-      // Cleanup on unmount
+      // Cleanup on unmount OR when dependencies change
+      const scrollY = document.body.dataset.scrollY || "0";
+
+      // Restore all styles
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.left = "";
       document.body.style.right = "";
       document.body.style.overflow = "";
+
+      // Also reset on html element to be safe
+      document.documentElement.style.overflow = "";
+
+      // Restore scroll position if we have it stored
+      if (scrollY !== "0") {
+        requestAnimationFrame(() => {
+          window.scrollTo(0, parseInt(scrollY, 10));
+        });
+      }
+
+      // Clean up data attribute
       delete document.body.dataset.scrollY;
+
+      // Remove any modal-related classes
+      document.body.classList.remove("razorpay-lock");
+      document.body.classList.remove("modal-lock");
     };
   }, [showGuestModal, showPriceBreakdown]);
 
@@ -341,7 +360,7 @@ function BookPageContent() {
     const serviceFee = Math.round(subtotal * 0.12); // 12% service fee like Airbnb
     let taxes;
     if (nightlyRate <= 7500) {
-      taxes = Math.round(subtotal * 0.05) + Math.round(serviceFee); // 12% GST in India
+      taxes = Math.round(subtotal * 0.05) + Math.round(serviceFee); // 5% GST in India
     } else if (nightlyRate > 7500) {
       taxes = Math.round(subtotal * 0.18) + Math.round(serviceFee); // 18% GST in India
     }
@@ -516,14 +535,23 @@ function BookPageContent() {
       return newData;
     });
 
-    // Clear error for this field when user starts typing
-    if (formErrors[`${type}-${field}-${index}`]) {
+    const singularType = type.replace(/s$/, ""); // 'adults' -> 'adult', 'children' -> 'child'
+    const errorKey = `${singularType}-${field}-${index}`;
+    if (formErrors[errorKey]) {
       setFormErrors((prev) => {
         const newErrors = { ...prev };
-        delete newErrors[`${type}-${field}-${index}`];
+        delete newErrors[errorKey];
         return newErrors;
       });
     }
+    // Clear error for this field when user starts typing
+    // if (formErrors[`${type}-${field}-${index}`]) {
+    //   setFormErrors((prev) => {
+    //     const newErrors = { ...prev };
+    //     delete newErrors[`${type}-${field}-${index}`];
+    //     return newErrors;
+    //   });
+    // }
   };
   // Load Razorpay SDK
   useEffect(() => {
@@ -886,7 +914,7 @@ function BookPageContent() {
             propertyType: property?.propertyType,
             placeType: property?.placeType,
             propertyName: property?.title || "Property",
-            street: property?.address?.street,
+            district: property?.address?.district,
             city: property?.address?.city,
             state: property?.address?.state,
             country: property?.address?.country,
@@ -1236,7 +1264,7 @@ function BookPageContent() {
                   {/* Adults section */}
                   <span className=" pb-6 flex">
                     <span className="text-red-500 pr-2">Note: </span> Enter
-                    names as per government ID
+                    names as per Government ID
                   </span>
                   {guestData.adults.length > 0 && (
                     <div className="mb-6">

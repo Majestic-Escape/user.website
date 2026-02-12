@@ -99,7 +99,7 @@ export function PriceNavigation() {
           <div className="text-xl font-semibold text-gray-900">
             ₹
             {nights == 1
-              ? perNightPrice
+              ? Number(perNightPrice).toLocaleString("en-IN")
               : (nights * Number(perNightPrice))?.toLocaleString("en-IN")}
           </div>
 

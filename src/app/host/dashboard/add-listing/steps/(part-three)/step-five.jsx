@@ -4,6 +4,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { TextReveal } from "@/components/text-reveal";
+import WarningDialog from "@/components/warning-modal";
+import { useAuth } from "@/contexts/AuthContext";
 
 const defaultHouseRules = [
   { id: "no_smoking", label: "No smoking" },
@@ -14,18 +16,20 @@ const defaultHouseRules = [
 
 export function SetRules({ updateFormData, formData }) {
   const [selectedRules, setSelectedRules] = useState(
-    formData?.selectedRules || []
+    formData?.selectedRules || [],
   );
   const [customRules, setCustomRules] = useState(formData?.customRules || []);
   const [newRule, setNewRule] = useState("");
+  const [remove, setRemove] = useState(false);
+  const [indexVal, setIndexVal] = useState();
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("this is", formData);
   }
-
+  const [warningDialogOpen, setWarningDialogOpen] = useState(false);
   useEffect(() => {
     updateFormData({ selectedRules, customRules });
   }, [selectedRules, customRules]);
-
+  const { propertyIsActive } = useAuth();
   // const handleChange = () => {
   //   updateFormData({
   //     selectedRules,
@@ -37,12 +41,19 @@ export function SetRules({ updateFormData, formData }) {
     setSelectedRules((prev) =>
       prev.includes(ruleId)
         ? prev.filter((id) => id !== ruleId)
-        : [...prev, ruleId]
+        : [...prev, ruleId],
     );
     // handleChange();
   };
-
+  const handleConfirm = () => {
+    if (propertyIsActive) {
+      setWarningDialogOpen(true);
+    } else {
+      addCustomRule();
+    }
+  };
   const addCustomRule = () => {
+    setWarningDialogOpen(false);
     if (newRule) {
       // setCustomRules((prev) => [...prev, newRule.trim()]);
       const updatedRules = [...customRules, newRule.trim()];
@@ -53,10 +64,14 @@ export function SetRules({ updateFormData, formData }) {
   };
 
   const removeCustomRule = (index) => {
+    setWarningDialogOpen(false);
     setCustomRules((prev) => prev.filter((_, i) => i !== index));
+    setRemove(false);
     // handleChange();
   };
-
+  const handleCancelUpload = () => {
+    setWarningDialogOpen(false);
+  };
   return (
     <div className="max-w-4xl mx-auto p-6 md:space-y-8 md:max-w-3xl ">
       <TextReveal>
@@ -64,6 +79,15 @@ export function SetRules({ updateFormData, formData }) {
           Let's set the stay rules
         </h3>
       </TextReveal>
+      {
+        <WarningDialog
+          open={warningDialogOpen}
+          onClose={handleCancelUpload}
+          onConfirm={() => {
+            remove ? removeCustomRule(indexVal) : addCustomRule();
+          }}
+        />
+      }
       <TextReveal>
         <div className="pt-4 md:pt-0">
           <h3 className="text-base text-absoluteDark mb-2 font-medium font-bricolage">
@@ -107,7 +131,7 @@ export function SetRules({ updateFormData, formData }) {
 
                 <Button
                   className="w-32 bg-primaryGreen hover:bg-brightGreen h-10"
-                  onClick={addCustomRule}
+                  onClick={handleConfirm}
                   type="button"
                 >
                   Add
@@ -129,7 +153,11 @@ export function SetRules({ updateFormData, formData }) {
                         {rule}
                       </span>
                       <button
-                        onClick={() => removeCustomRule(index)}
+                        onClick={() => {
+                          setIndexVal(index);
+                          setRemove(true);
+                          handleConfirm();
+                        }}
                         className="bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-2 rounded"
                       >
                         Remove

@@ -8,14 +8,14 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "sonner";
 export const revalidate = 0;
 export const metadata = {
-  title: "Majestic Escape | Your Perfect Gateway",
+  title: "Majestic Escape | Book Hotels, Tours & Holiday Packages in India",
   description:
     "Discover your perfect gateway with Majestic Escape.From beachfront villas to heritage homes, experience thoughtfully curated stays across India’s most distinctive destinations.",
   keywords:
     "Majestic Escape, Goa, home-stays, luxury accommodation, vacation rentals, beachfront villas, heritage homes",
   authors: [{ name: "Majestic Escape" }],
   openGraph: {
-    title: "Majestic Escape | Your Perfect Gateway",
+    title: "Majestic Escape | Book Hotels, Tours & Holiday Packages in India",
     description:
       "Discover your perfect gateway with Majestic Escape. From beachfront villas to heritage homes, experience thoughtfully curated stays across India’s most distinctive destinations.",
     url: "https://majesticescape.in/",
@@ -32,9 +32,9 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Majestic Escape | Your Perfect Gateway",
+    title: "Majestic Escape | Book Hotels, Tours & Holiday Packages in India",
     description:
-      "Discover your perfect gateway with Majestic Escape. From beachfront villas to heritage homes, find authentic stays that capture the true spirit of Goa.",
+      "Discover your perfect gateway with Majestic Escape.From beachfront villas to heritage homes, experience thoughtfully curated stays across India’s most distinctive destinations.",
     images: ["https://majesticescape.in/og-image.jpg"],
   },
   icons: {
@@ -61,6 +61,11 @@ export const metadata = {
 
 export const viewport = {
   themeColor: "#ffffff",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 interface RootLayoutProps {

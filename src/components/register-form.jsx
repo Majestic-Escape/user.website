@@ -32,7 +32,7 @@ const registerSchema = z.object({
     .regex(/^[a-zA-Z\s]*$/, "Name can only contain letters and spaces"),
   dob: z.string().refine((dob) => {
     const age = Math.floor(
-      (new Date().getTime() - new Date(dob).getTime()) / 3.15576e10
+      (new Date().getTime() - new Date(dob).getTime()) / 3.15576e10,
     );
     return age >= 18;
   }, "You must be 18 or older to use Majestic Escape"),
@@ -72,8 +72,8 @@ export default function RegisterPage() {
             ...acc,
             [curr.path[0]]: curr.message,
           }),
-          {}
-        )
+          {},
+        ),
       );
       return false;
     }
@@ -129,7 +129,7 @@ export default function RegisterPage() {
             break;
           case "ACCOUNT_LOCKED":
             toast.error(
-              "Your account is locked due to multiple failed attempts"
+              "Your account is locked due to multiple failed attempts",
             );
             break;
           case "INVALID_OTP":
@@ -222,7 +222,7 @@ export default function RegisterPage() {
           toast.error("OTP is required. Please enter the OTP.");
         } else if (errorData.code === "INVALID_OTP") {
           toast.error(
-            `Invalid OTP. ${errorData.otpAttempts.remainingAttempts} attempts remaining.`
+            `Invalid OTP. ${errorData.otpAttempts.remainingAttempts} attempts remaining.`,
           );
         }
         break;
@@ -243,7 +243,7 @@ export default function RegisterPage() {
         if (errorData.code === "ACCOUNT_LOCKED") {
           const minutes = errorData.unlocksAt?.remainingMinutes ?? "a few";
           toast.error(
-            `Your account is locked. Try again after ${minutes} minutes.`
+            `Your account is locked. Try again after ${minutes} minutes.`,
           );
         }
         break;
@@ -251,7 +251,7 @@ export default function RegisterPage() {
       case 423:
         if (errorData.code === "ACCOUNT_LOCKED") {
           toast.error(
-            `Your account is locked. Try again after ${errorData.unlocksAt.remainingMinutes} minutes.`
+            `Your account is locked. Try again after ${errorData.unlocksAt.remainingMinutes} minutes.`,
           );
         }
         break;
@@ -275,6 +275,11 @@ export default function RegisterPage() {
       handleVerifyOtp();
     }
   };
+  const minDob = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 18);
+    return d.toISOString().split("T")[0];
+  })();
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-white ">
@@ -328,7 +333,7 @@ export default function RegisterPage() {
                   )}
                 </div>
 
-                <div>
+                <div className="pt-4 md:pt-0">
                   <Input
                     type="text"
                     placeholder="Legal last name"
@@ -350,15 +355,24 @@ export default function RegisterPage() {
               </small>
 
               <div>
-                <Input
-                  type="date"
-                  placeholder="Date of Birth"
-                  value={formData.dob}
-                  onChange={handleInputChange("dob")}
-                  className="w-full text-sm bg-white h-10 px-4"
-                  disabled={isLoading}
-                  aria-label="Date of Birth"
-                />
+                <div className="relative">
+                  <Input
+                    type="date"
+                    // placeholder="mm/dd/yyyy"
+                    value={formData.dob}
+                    onChange={handleInputChange("dob")}
+                    className="w-full text-sm bg-white h-10 px-4"
+                    disabled={isLoading}
+                    aria-label="Date of Birth"
+                    max={minDob}
+                    min="1900-01-01"
+                  />
+                  {!formData.dob && (
+                    <div className="md:hidden absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-sm">
+                      mm/dd/yyyy
+                    </div>
+                  )}
+                </div>
                 {errors.dob && (
                   <p className="text-red-500 text-sm mt-1" role="alert">
                     {errors.dob}
@@ -390,7 +404,7 @@ export default function RegisterPage() {
                   </div>
 
                   <div>
-                    <div className="flex">
+                    <div className="flex pt-8 md:pt-0">
                       <div className="flex-shrink-0 flex items-center text-sm justify-center bg-white border border-r-0 border-gray-300 rounded-l-md px-3">
                         +91
                       </div>

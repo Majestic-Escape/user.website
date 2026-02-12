@@ -90,7 +90,9 @@ export default function Navbar() {
             transition-all duration-300 ${
               isScrolled
                 ? "opacity-0 hidden md:hidden"
-                : "opacity-100 hidden md:block"
+                : filter
+                  ? "opacity-0 hidden md:hidden"
+                  : "opacity-100 hidden md:block"
             }`}
           >
             <NavTabLayout />

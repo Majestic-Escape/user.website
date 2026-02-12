@@ -29,7 +29,7 @@ export default function ContactPage() {
               <Phone className="h-6 w-6 text-primary mt-1" />
               <div>
                 <p className="font-medium">Phone</p>
-                <p className="text-muted-foreground">+91 83699 95283</p>
+                <p className="text-muted-foreground">+91 7219666822</p>
               </div>
             </div>
 

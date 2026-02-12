@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useCheckToken } from "@/services/useCheckToken";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 type User = {
   email: string;
   // Add other user properties as needed
@@ -60,6 +60,8 @@ type AuthContextType = {
   setRooms: React.Dispatch<React.SetStateAction<FilterRooms>>;
   showAllAmenities: boolean;
   setShowAllAmenities: React.Dispatch<React.SetStateAction<boolean>>;
+  propertyIsActive: boolean;
+  setPropertyIsActive: React.Dispatch<React.SetStateAction<boolean>>;
   openPriceModal: boolean;
   setOpenPriceModal: React.Dispatch<React.SetStateAction<boolean>>;
   resetClicked: boolean;
@@ -78,6 +80,8 @@ type AuthContextType = {
   setPetAllowed: React.Dispatch<React.SetStateAction<string>>;
   checkinType: string;
   setCheckinType: React.Dispatch<React.SetStateAction<string>>;
+  returnUrl: string;
+  setReturnUrl: React.Dispatch<React.SetStateAction<string>>;
   activeTab: string;
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
   // Filter functions
@@ -96,6 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [modalFilter, setModalFilter] = useState<boolean>(false);
   const [resetClicked, setResetClicked] = useState<boolean>(false);
+  const [propertyIsActive, setPropertyIsActive] = useState<boolean>(false);
   // Add all filter states from modal
   const [priceRange, setPriceRange] = useState([501, 83000]);
   const [rooms, setRooms] = useState({ bedrooms: 0, beds: 0, bathrooms: 0 });
@@ -110,6 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [openPriceModal, setOpenPriceModal] = useState(false);
   const [activeTab, setActiveTab] = useState("filters");
   const { checkToken } = useCheckToken();
+
   const [modalCheckDate, setModalCheckDate] = useState<{
     from: Date | undefined;
     to: Date | undefined;
@@ -119,19 +125,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   });
   const [perNightPrice, setPerNightPrice] = useState<string>("");
   const [modalMobilePrice, setModalMobilePrice] = useState<number>(
-    Number(perNightPrice)
+    Number(perNightPrice),
   );
   const pathname = usePathname();
-
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const allParams = searchParams.toString();
+  const fullUrl = `${pathname}?${allParams}`;
+  const [returnUrl, setReturnUrl] = useState<string>("");
   useEffect(() => {
     const verify = async () => {
       await checkToken();
       if (pathname == "/") {
         clearAllFilters();
       }
+      if (pathname !== "/login") {
+        if (pathname == "/filter") {
+          setReturnUrl(encodeURIComponent(fullUrl));
+        } else {
+          setReturnUrl(encodeURIComponent(pathname));
+        }
+      }
     };
     verify();
   }, [pathname]);
+
   useEffect(() => {
     // Check for existing user in localStorage on initial load
     const storedUser = localStorage.getItem("user");
@@ -164,6 +182,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser(null);
     localStorage.clear();
     sessionStorage.clear();
+
+    if (
+      pathname.startsWith("/host/") ||
+      pathname.startsWith("/book/") ||
+      pathname.startsWith("/booking-summary/") ||
+      pathname.startsWith("/filter/") ||
+      pathname.startsWith("/register/")
+      // pathname.startsWith("/login/")
+    ) {
+      router.push("/");
+    } else {
+      const decodedReturnUrl = decodeURIComponent(returnUrl);
+      router.push(decodedReturnUrl);
+    }
     // localStorage.removeItem("user");
     // localStorage.removeItem("filterState"); // Clear filters on logout
   };
@@ -297,6 +329,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     bookingQuery,
     setBookingQuery,
+    returnUrl,
+    setReturnUrl,
+    propertyIsActive,
+    setPropertyIsActive,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

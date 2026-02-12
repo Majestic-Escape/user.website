@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // Simple Skeleton component (assuming it might be used elsewhere too)
 export function Skeleton({ className, ...props }) {
@@ -119,7 +119,25 @@ export default function HostProfile({ propertyData }) {
   //   return <HostProfileSkeleton />;
   // }
   const [isExpanded, setIsExpanded] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const maxLength = 275;
+
+  // Get current user ID from token
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const parsed = JSON.parse(token);
+        const payload = JSON.parse(atob(parsed.split('.')[1]));
+        setCurrentUserId(payload.userId);
+      }
+    } catch (e) {
+      console.error('Error parsing token:', e);
+    }
+  }, []);
+
+  // Check if current user is the host of this property
+  const isOwnListing = currentUserId && propertyData?.host?._id === currentUserId;
 
   // if (error) {
   //   // You might want to pass the error object to display a more specific message
@@ -233,9 +251,7 @@ export default function HostProfile({ propertyData }) {
                 </div>
 
                 <h3 className="text-lg md:text-xl font-semibold font-bricolage text-gray-900 mb-1">
-                  {propertyData?.host?.firstName +
-                    " " +
-                    propertyData?.host?.lastName || "Host"}
+                  {propertyData?.host?.firstName || "Host"}
                 </h3>
                 <div className="flex justify-center">
                   {" "}
@@ -282,9 +298,72 @@ export default function HostProfile({ propertyData }) {
                   )} */}
                 </div>
 
-                <Button className="w-full hidden bg-primaryGreen hover:bg-brightGreen font-normal text-white rounded-lg text-sm">
-                  Message host
-                </Button>
+                {/* Only show Message host button if not own listing */}
+                {!isOwnListing && (
+                  <Button 
+                    className="w-full bg-primaryGreen hover:bg-brightGreen font-normal text-white rounded-lg text-sm"
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      if (!token) {
+                        window.location.href = '/login';
+                        return;
+                      }
+                      
+                      // Parse token to get userId
+                      let parsedToken;
+                      let userId;
+                      try {
+                        parsedToken = JSON.parse(token);
+                        const payload = JSON.parse(atob(parsedToken.split('.')[1]));
+                        userId = payload.userId;
+                      } catch (e) {
+                        window.location.href = '/login';
+                        return;
+                      }
+
+                      const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || 'http://localhost:3001';
+                      const propertyId = propertyData._id;
+                      const hostId = propertyData.host._id;
+
+                      try {
+                        // Check if conversation already exists AND has messages
+                        const res = await fetch(`${chatUrl}/api/chat/conversations/check?propertyId=${propertyId}&hostId=${hostId}&guestId=${userId}`, {
+                          headers: { Authorization: `Bearer ${parsedToken}` },
+                        });
+                        const data = await res.json();
+
+                        // Only go to messages if conversation exists AND has messages
+                        if (data.success && data.data?.exists && data.data?.conversationId && data.data?.hasMessages) {
+                          window.location.href = `/messages?conversationId=${data.data.conversationId}`;
+                        } else {
+                          // No existing conversation with messages - go to contact_host
+                          const hostNameParam = encodeURIComponent(
+                            (propertyData?.host?.firstName || '') + ' ' + (propertyData?.host?.lastName || '')
+                          );
+                          const propName = encodeURIComponent(propertyData?.title || 'Property');
+                          const propImage = encodeURIComponent(propertyData?.images?.[0] || '');
+                          const propType = encodeURIComponent(propertyData?.propertyType || 'Entire home');
+                          const respTime = encodeURIComponent(propertyData?.host?.responseTime || 'within an hour');
+                          window.location.href = `/contact_host/${propertyId}?hostId=${hostId}&hostName=${hostNameParam}&propertyName=${propName}&propertyImage=${propImage}&propertyType=${propType}&responseTime=${respTime}`;
+                        }
+                      } catch (err) {
+                        // On error, fall back to contact_host page
+                        console.error('Error checking conversation:', err);
+                        const hostNameParam = encodeURIComponent(
+                          (propertyData?.host?.firstName || '') + ' ' + (propertyData?.host?.lastName || '')
+                        );
+                        const propName = encodeURIComponent(propertyData?.title || 'Property');
+                        const propImage = encodeURIComponent(propertyData?.images?.[0] || '');
+                        const propType = encodeURIComponent(propertyData?.propertyType || 'Entire home');
+                        const respTime = encodeURIComponent(propertyData?.host?.responseTime || 'within an hour');
+                        window.location.href = `/contact_host/${propertyId}?hostId=${hostId}&hostName=${hostNameParam}&propertyName=${propName}&propertyImage=${propImage}&propertyType=${propType}&responseTime=${respTime}`;
+                      }
+                    }}
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Message host
+                  </Button>
+                )}
               </div>
             </Card>
 
@@ -570,9 +649,11 @@ export default function HostProfile({ propertyData }) {
               <li>Response rate: 100%</li>
               <li>Responds within an hour</li>
             </ul>
-            <button className="mt-4 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2">
-              <MessageCircle size={16} /> Message host
-            </button>
+            {!isOwnListing && (
+              <button className="mt-4 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2">
+                <MessageCircle size={16} /> Message host
+              </button>
+            )}
           </div>
 
           <div className="text-gray-700 space-y-2 mt-6">

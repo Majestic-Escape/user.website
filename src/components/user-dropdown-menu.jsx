@@ -20,16 +20,16 @@ export function UserDropdownMenu() {
 
   const handleLogout = () => {
     logout();
-    localStorage.clear();
-    sessionStorage.clear();
-    router.push("/login"); // Redirect to home page after logout
+    // localStorage.clear();
+    // sessionStorage.clear();
+    // router.push("/login"); // Redirect to home page after logout
   };
 
-  if (!user) {
-    // If there's no user, redirect to login page
-    router.push("/login");
-    return null;
-  }
+  // if (!user) {
+  //   // If there's no user, redirect to login page
+  //   router.push("/login");
+  //   return null;
+  // }
   return (
     <div className="relative">
       <DropdownMenu>
@@ -51,13 +51,18 @@ export function UserDropdownMenu() {
               "z-[1100]",
               "absolute right-0 mt-2",
               "overflow-hidden",
-              "origin-top-right"
+              "origin-top-right",
             )}
             sideOffset={5}
           >
             <DropdownMenuItem asChild>
               <Link className="py-2" href="/account/personal-info">
                 Account
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link className="py-2" href="/messages">
+                Messages
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>

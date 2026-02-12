@@ -69,8 +69,11 @@ const destinations = [
 
 const LocationCard = ({ name, staysNearby, image, countData }) => {
   const actualStaysNearby = countData?.filter(
-    (item) => item?.city?.toLowerCase() == name?.toLowerCase()
+    (item) => item?.city?.toLowerCase() == name?.toLowerCase(),
   );
+
+  const displayCount =
+    actualStaysNearby?.length > 0 ? actualStaysNearby[0]?.count : staysNearby;
   return (
     <div className="w-full flex-shrink-0 px-2 mb-4">
       <Link
@@ -88,9 +91,7 @@ const LocationCard = ({ name, staysNearby, image, countData }) => {
             {name}
           </h3>
           <p className="text-sm text-stone text-gray pt-2">
-            <span className="font-bold text-brightGreen">
-              {actualStaysNearby?.[0]?.count}
-            </span>{" "}
+            <span className="font-bold text-brightGreen">{displayCount}</span>{" "}
             Stays Nearby
           </p>
         </div>
@@ -102,9 +103,9 @@ const LocationCard = ({ name, staysNearby, image, countData }) => {
 const LocationWisestays = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [windowWidth, setWindowWidth] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 1024
+    typeof window !== "undefined" ? window.innerWidth : 1024,
   );
-  const [countData, setCountData] = useState();
+  const [countData, setCountData] = useState([]);
   const fetchCount = async (cities) => {
     try {
       const response = await fetch(
@@ -114,17 +115,20 @@ const LocationWisestays = () => {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       if (!response.ok) {
         return;
       }
       const result = await response.json();
-      setCountData(result.data);
+      // console.log("ree", result.data);
+      const final = await result.data;
+      setCountData(final);
     } catch (error) {
       console.error(error);
     }
   };
+
   useEffect(() => {
     const cities = [];
     destinations.forEach((item) => cities.push(item.name));
@@ -150,7 +154,7 @@ const LocationWisestays = () => {
   const maxIndex = Math.max(0, destinations.length - itemsPerView);
   const visibleDestinations = destinations.slice(
     currentIndex,
-    currentIndex + itemsPerView
+    currentIndex + itemsPerView,
   );
   const handleNext = () => {
     setCurrentIndex((prev) => Math.min(prev + itemsPerView, maxIndex));
@@ -168,13 +172,7 @@ const LocationWisestays = () => {
       return (
         <div className="grid grid-cols-2 gap-4">
           {visibleDestinations.map((destination) => (
-            <LocationCard
-              key={destination.id}
-              name={destination.name}
-              countData={countData}
-              staysNearby={destination.staysNearby}
-              image={destination.image}
-            />
+            <LocationCard {...destination} countData={countData} />
           ))}
         </div>
       );
@@ -185,13 +183,7 @@ const LocationWisestays = () => {
         return (
           <div className="grid grid-cols-4 gap-4">
             {visibleDestinations.map((destination) => (
-              <LocationCard
-                key={destination.id}
-                name={destination.name}
-                countData={countData}
-                staysNearby={destination.staysNearby}
-                image={destination.image}
-              />
+              <LocationCard {...destination} countData={countData} />
             ))}
           </div>
         );
@@ -258,7 +250,7 @@ const LocationWisestays = () => {
                 className="flex-shrink-0 "
                 style={{ width: `${100 / itemsPerView}%` }}
               >
-                <LocationCard {...destination} />
+                <LocationCard {...destination} countData={countData} />
               </div>
             ))}
           </div>

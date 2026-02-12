@@ -200,7 +200,7 @@ const AnalyticsPage = () => {
               Authorization: `Bearer ${data}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
         const result = await response.json();
         const final = await result.data;
@@ -314,12 +314,12 @@ const AnalyticsPage = () => {
     const utc1 = Date.UTC(
       date1.getFullYear(),
       date1.getMonth(),
-      date1.getDate()
+      date1.getDate(),
     );
     const utc2 = Date.UTC(
       date2.getFullYear(),
       date2.getMonth(),
-      date2.getDate()
+      date2.getDate(),
     );
     return Math.floor(Math.abs(utc2 - utc1) / (1000 * 60 * 60 * 24));
   }
@@ -336,7 +336,7 @@ const AnalyticsPage = () => {
       const final = bookings?.filter(
         (item) =>
           new Date(item?.checkIn).toLocaleDateString() ==
-          date.toLocaleDateString()
+          date.toLocaleDateString(),
       );
       let sum = 0;
       let sumBook = 0;
@@ -392,9 +392,9 @@ const AnalyticsPage = () => {
       const final = bookings?.filter(
         (item) =>
           `${new Date(item?.checkIn).getMonth()}/${new Date(
-            item?.checkIn
+            item?.checkIn,
           ).getFullYear()}` ==
-          `${new Date(newDate).getMonth()}/${new Date(newDate).getFullYear()}`
+          `${new Date(newDate).getMonth()}/${new Date(newDate).getFullYear()}`,
       );
 
       let sum = 0;
@@ -432,7 +432,7 @@ const AnalyticsPage = () => {
     const data = arr.map((propTitle, i) => {
       const final = bookings?.filter(
         (item) =>
-          item?.propertyId?.title?.toLowerCase() === propTitle.toLowerCase()
+          item?.propertyId?.title?.toLowerCase() === propTitle.toLowerCase(),
       );
       let sum = 0;
       let sumBook = 0;
@@ -739,7 +739,7 @@ const AnalyticsPage = () => {
                 ?.filter((item) =>
                   item?.title
                     ?.toLowerCase()
-                    .includes(propertySearch.toLowerCase())
+                    .includes(propertySearch.toLowerCase()),
                 )
                 .map((item) => (
                   <SelectItem key={item._id} value={item?.title}>
@@ -854,7 +854,7 @@ const AnalyticsPage = () => {
                 data={
                   getDaysBetweenTwoDates(
                     new Date(dateRange.from),
-                    new Date(dateRange.to)
+                    new Date(dateRange.to),
                   ) <= 31
                     ? daysBar()
                     : monthsBar()
@@ -864,15 +864,15 @@ const AnalyticsPage = () => {
                   dataKey={
                     getDaysBetweenTwoDates(
                       new Date(dateRange.from),
-                      new Date(dateRange.to)
+                      new Date(dateRange.to),
                     ) <= 7
                       ? "day"
                       : getDaysBetweenTwoDates(
-                          new Date(dateRange.from),
-                          new Date(dateRange.to)
-                        ) <= 31
-                      ? "short"
-                      : "month"
+                            new Date(dateRange.from),
+                            new Date(dateRange.to),
+                          ) <= 31
+                        ? "short"
+                        : "month"
                   }
                 />
                 <YAxis />
@@ -928,7 +928,7 @@ const AnalyticsPage = () => {
                 data={
                   getDaysBetweenTwoDates(
                     new Date(dateRange.from),
-                    new Date(dateRange.to)
+                    new Date(dateRange.to),
                   ) <= 31
                     ? daysBar()
                     : monthsBar()
@@ -938,15 +938,15 @@ const AnalyticsPage = () => {
                   dataKey={
                     getDaysBetweenTwoDates(
                       new Date(dateRange.from),
-                      new Date(dateRange.to)
+                      new Date(dateRange.to),
                     ) <= 7
                       ? "day"
                       : getDaysBetweenTwoDates(
-                          new Date(dateRange.from),
-                          new Date(dateRange.to)
-                        ) <= 31
-                      ? "short"
-                      : "month"
+                            new Date(dateRange.from),
+                            new Date(dateRange.to),
+                          ) <= 31
+                        ? "short"
+                        : "month"
                   }
                 />
                 <YAxis />
@@ -992,7 +992,7 @@ const AnalyticsPage = () => {
         </Card>
       </div>
 
-      <Card className="w-[470px]">
+      <Card className="lg:w-full">
         <CardHeader>
           <div className="flex justify-between items-center space-x-2 ">
             <div>
@@ -1005,7 +1005,7 @@ const AnalyticsPage = () => {
                   onClick={() =>
                     onGetExporProduct(
                       `Analytics_Data_${arrayCheckinDate[0]}${arrayCheckinDate[1]}${arrayCheckinDate[2]}_${arrayCheckoutDate[0]}${arrayCheckoutDate[1]}${arrayCheckoutDate[2]}`,
-                      "AnalyticsHistoryExport"
+                      "AnalyticsHistoryExport",
                     )
                   }
                 >
@@ -1062,7 +1062,7 @@ const AnalyticsPage = () => {
                           {checkLength(
                             booking?.userId.firstName +
                               " " +
-                              booking?.userId.lastName
+                              booking?.userId.lastName,
                           )}
                         </span>
                       </TableCell>
@@ -1080,7 +1080,7 @@ const AnalyticsPage = () => {
                             year: "numeric",
                             month: "short",
                             day: "numeric",
-                          }
+                          },
                         )}
                       </TableCell>
                       <TableCell>
@@ -1090,7 +1090,7 @@ const AnalyticsPage = () => {
                             year: "numeric",
                             month: "short",
                             day: "numeric",
-                          }
+                          },
                         )}
                       </TableCell>
                       <TableCell>
@@ -1102,10 +1102,10 @@ const AnalyticsPage = () => {
                             booking?.status === "pending"
                               ? "outline"
                               : booking?.status === "confirmed"
-                              ? "default"
-                              : booking?.status === "cancelled"
-                              ? "destructive"
-                              : "secondary"
+                                ? "default"
+                                : booking?.status === "cancelled"
+                                  ? "destructive"
+                                  : "secondary"
                           }
                         >
                           {booking?.status}

@@ -65,7 +65,7 @@ export default function FilterProperties({
 
   return (
     <>
-      <header className="pt-24">
+      <header className="pt-16">
         <SheetProvider>
           {/* <div className="fixed pt-6 top-16 z-40 bg-white shadow-sm"> */}
           {/* <SearchFilter
@@ -87,10 +87,8 @@ export default function FilterProperties({
       <main className="pt-16 md:pt-32 lg:pt-0">
         <div className="font-poppins flex justify-center w-full bg-white">
           <div className="w-full max-w-[1760px]">
-            <div className="mx-auto px-2 lg:px-[72px] py-8 sm:py-16 lg:py-[60px] font-poppins bg-white text-absoluteDark">
-              <h2
-                className="text-3xl sm:text-2xl lg:text-4xl font-bricolage font-semibold mb-2 text-absoluteDark lg:mt-40 sm:pt-10 md:pt-0"
-              >
+            <div className="mx-auto px-2 lg:px-[62px] py-8 sm:py-16 lg:py-[8px] font-poppins bg-white text-absoluteDark">
+              <h2 className="text-3xl sm:text-2xl lg:text-4xl font-bricolage font-semibold mb-2 text-absoluteDark lg:mt-40 sm:pt-10 md:pt-0">
                 Discover Our Finest Stays
               </h2>
               <p className="text-lg sm:text-base text-stone mb-4 sm:mb-8">

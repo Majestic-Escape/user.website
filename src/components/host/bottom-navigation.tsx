@@ -18,6 +18,7 @@ import {
   ChartNoAxesColumn,
   Landmark,
   HelpingHand,
+  LogOut,
 } from "lucide-react";
 import {
   Sheet,
@@ -25,19 +26,30 @@ import {
   SheetTrigger,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext";
 
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 const navItems = [
   { name: "Home", icon: LayoutDashboard, href: "/host/dashboard" },
+  { name: "Inbox", icon: MessageCircle, href: "/host/inbox" },
   { name: "Bookings", icon: BookOpen, href: "/host/dashboard/bookings" },
-
   { name: "Listings", icon: Building2, href: "/host/dashboard/listings" },
-
-  { name: "Add", icon: HousePlus, href: "/host/dashboard/add-listing" },
 ];
 
 export default function HostBottomNavigation() {
+  const { user, logout } = useAuth();
   const [active, setActive] = useState("Dashboard");
 
+  const router = useRouter();
+  const handleLogout = () => {
+    logout();
+
+    localStorage.clear();
+    sessionStorage.clear();
+    // localStorage.removeItem("token");
+    router.push("/login"); // Redirect to home page after logout
+  };
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-background border-t border-border py-2 px-0 md:hidden z-50">
       <ul className="flex justify-between items-center">
@@ -74,6 +86,13 @@ export default function HostBottomNavigation() {
                 >
                   <User className="w-4 h-4" />
                   <span className="  ">Switch to Guest</span>
+                </Link>
+                <Link
+                  href="/host/dashboard/add-listing"
+                  className="flex items-center space-x-2 text-sm"
+                >
+                  <HousePlus className="w-4 h-4" />
+                  <span>Add Listing</span>
                 </Link>
                 <Link
                   href="/host/dashboard/revenue"
@@ -121,6 +140,12 @@ export default function HostBottomNavigation() {
                   <Star className="w-4 h-4" />
                   <span>Reviews</span>
                 </Link>
+                <Button
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-left font-normal text-sm rounded-md hover:bg-gray-100 transition-colors bg-gray-100 shadow-none border-none text-gray-700"
+                >
+                  Logout
+                </Button>
               </nav>
             </SheetContent>
           </Sheet>

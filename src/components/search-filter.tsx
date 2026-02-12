@@ -43,7 +43,7 @@ type Guests = {
 };
 
 const safeParseDate = (
-  dateString: string | undefined | null
+  dateString: string | undefined | null,
 ): Date | undefined => {
   if (!dateString) return undefined;
 
@@ -104,21 +104,41 @@ export default function SearchFilter({
   const [openDatePicker, setOpenDatePicker] = React.useState(false);
   const [openGuests, setOpenGuests] = React.useState(false);
   const [selectProperty, setSelectProperty] = React.useState(
-    property ? property : ""
+    property ? property : "",
   );
+  const [matches, setMatches] = React.useState(false);
+  const pathname = usePathname();
+  const isStayDetailPage =
+    pathname.startsWith("/stay/") && pathname !== "/stay";
+
+  function useMediaQuery(query: string) {
+    React.useEffect(() => {
+      const media = window.matchMedia(query);
+      setMatches(media.matches);
+
+      const listener = () => setMatches(media.matches);
+      media.addEventListener("change", listener);
+
+      return () => media.removeEventListener("change", listener);
+    }, [query]);
+
+    return matches;
+  }
+
+  const isMobile = useMediaQuery("(max-width: 640px)");
   const [guests, setGuests] = React.useState<Guests>({
     adults: Number(active ? grownup : 0),
     children: Number(active ? child : 0),
     infants: Number(active ? baby : 0),
   });
   const newAmenities = addAmenities.map((x) =>
-    x.toLowerCase().replaceAll(" ", "_")
+    x.toLowerCase().replaceAll(" ", "_"),
   );
   const router = useRouter();
-  const pathname = usePathname();
+  // const pathname = usePathname();
   const handleGuestChange = (
     type: keyof Guests,
-    operation: "increment" | "decrement"
+    operation: "increment" | "decrement",
   ) => {
     setGuests((prev) => ({
       ...prev,
@@ -145,7 +165,7 @@ export default function SearchFilter({
             children: 0,
             infants: 0,
           },
-        })
+        }),
       );
       setSearchTerm("");
       setGuests({ adults: 0, children: 0, infants: 0 });
@@ -189,7 +209,7 @@ export default function SearchFilter({
         },
         searchTerm,
         guests,
-      })
+      }),
     );
   }, [dateRange, searchTerm, selectProperty, guests, hydrated]);
 
@@ -250,13 +270,13 @@ export default function SearchFilter({
         description: "Long and popular beach in Goa",
       },
     ],
-    []
+    [],
   );
 
   const filteredDestinations = React.useMemo(() => {
     if (!searchTerm) return destinations;
     return destinations.filter((dest) =>
-      dest.label.toLowerCase().includes(searchTerm.toLowerCase())
+      dest.label.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [searchTerm, destinations]);
 
@@ -301,16 +321,18 @@ export default function SearchFilter({
         rooms?.bathrooms || ""
       }&bookingType=${bookingType || ""}&checkinType=${
         checkinType || ""
-      }&pets=${petAllowed || ""}`
+      }&pets=${petAllowed || ""}`,
     );
   };
+  //middle navbar
   return (
     <>
+      {" "}
       <div
         className={`transition-all duration-300 ${
           isScrolled
             ? "opacity-100 -translate-y-full"
-            : "opacity-100 translate-y-0 "
+            : "opacity-100 translate-y-0  lg:my-4"
         } hidden md:flex font-poppins items-center gap-1 relative bg-white rounded-full border-[1px] z-30 border-gray-200 shadow-md max-w-full ${
           isScrolled ? "md:w-[500px]" : "md:w-[850px]"
         }  pl-2 py-1  mx-auto`}
@@ -589,21 +611,29 @@ export default function SearchFilter({
       <div
         className={`lg:block w-[101vw] px-6 bg-white  bdesktop:flex  bdesktop:justify-center transition-all duration-300 -ml-8 ${
           isScrolled
-            ? "md:opacity-100 md:-translate-y-3/4 border-b border-gray-100 shadow-sm"
-            : "opacity-100 translate-y-0 "
+            ? "md:opacity-100 md:-translate-y-3/4  border-gray-100 shadow-sm"
+            : "opacity-100 translate-y-2 "
         }`}
       >
-        <FilterStaysBar
-          selectProperty={selectProperty}
-          setSelectProperty={setSelectProperty}
-          location={location}
-          from={null}
-          to={null}
-          adults={null}
-          senior={null}
-          childrens={null}
-          infants={null}
-        />
+        {isStayDetailPage ? null : (
+          <div className="grid grid-cols-[10%_80%_10%]">
+            <div></div>
+            <div className="overflow-hidden">
+              {/* <FilterStaysBar
+                selectProperty={selectProperty}
+                setSelectProperty={setSelectProperty}
+                location={location}
+                from={null}
+                to={null}
+                adults={null}
+                senior={null}
+                childrens={null}
+                infants={null}
+              /> home page filter */}
+            </div>
+            <div></div>
+          </div>
+        )}
       </div>
     </>
   );

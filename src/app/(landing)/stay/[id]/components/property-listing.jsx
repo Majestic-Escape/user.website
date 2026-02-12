@@ -170,6 +170,7 @@ export default function PropertyListing({
             activation={activation}
             allowedGuests={propertyDetails?.guests}
             loading={loading}
+            setDate={setDate}
           />
         </div>
       </div>

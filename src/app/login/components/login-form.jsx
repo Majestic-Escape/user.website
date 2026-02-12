@@ -31,7 +31,7 @@ const loginSchema = z.object({
     .min(1, "Email is required"),
 });
 export default function LoginForm() {
-  const { login } = useAuth();
+  const { login, returnUrl } = useAuth();
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [errors, setErrors] = useState({});
@@ -39,11 +39,13 @@ export default function LoginForm() {
   const [step, setStep] = useState(1);
   const [isEditingEmail, setIsEditingEmail] = useState(false); // Update 1
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const router = useRouter();
-  const params = useSearchParams();
-  const returnUrl = params.get("returnUrl");
-  console.log("nnic", returnUrl);
+  // const router = useRouter();
+  // const params = useSearchParams();
+  // const returnUrl = params.get("returnUrl");
+  // console.log("nnic", returnUrl);
   const decodedReturnUrl = returnUrl ? decodeURIComponent(returnUrl) : "/";
+  const router = useRouter();
+  console.log("what we found", returnUrl, decodedReturnUrl);
   useEffect(() => {
     const handleResize = () => {
       const keyboardHeight = window.visualViewport.height - window.innerHeight;
@@ -196,7 +198,9 @@ export default function LoginForm() {
       toast.success("Welcome. You are now signed in.");
       setIsRedirecting(true);
       setTimeout(() => {
-        router.push(decodedReturnUrl);
+        decodedReturnUrl == "/login" || decodedReturnUrl == "/register"
+          ? router.push("/")
+          : router.push(decodedReturnUrl);
         // router.push("/stays");
       }, 800);
       // router.push("/stays");
