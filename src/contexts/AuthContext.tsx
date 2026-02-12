@@ -60,6 +60,8 @@ type AuthContextType = {
   setRooms: React.Dispatch<React.SetStateAction<FilterRooms>>;
   showAllAmenities: boolean;
   setShowAllAmenities: React.Dispatch<React.SetStateAction<boolean>>;
+  propertyIsActive: boolean;
+  setPropertyIsActive: React.Dispatch<React.SetStateAction<boolean>>;
   openPriceModal: boolean;
   setOpenPriceModal: React.Dispatch<React.SetStateAction<boolean>>;
   resetClicked: boolean;
@@ -98,6 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [modalFilter, setModalFilter] = useState<boolean>(false);
   const [resetClicked, setResetClicked] = useState<boolean>(false);
+  const [propertyIsActive, setPropertyIsActive] = useState<boolean>(false);
   // Add all filter states from modal
   const [priceRange, setPriceRange] = useState([501, 83000]);
   const [rooms, setRooms] = useState({ bedrooms: 0, beds: 0, bathrooms: 0 });
@@ -112,6 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [openPriceModal, setOpenPriceModal] = useState(false);
   const [activeTab, setActiveTab] = useState("filters");
   const { checkToken } = useCheckToken();
+
   const [modalCheckDate, setModalCheckDate] = useState<{
     from: Date | undefined;
     to: Date | undefined;
@@ -327,6 +331,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setBookingQuery,
     returnUrl,
     setReturnUrl,
+    propertyIsActive,
+    setPropertyIsActive,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

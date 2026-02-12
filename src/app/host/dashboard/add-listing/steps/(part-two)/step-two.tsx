@@ -9,6 +9,17 @@ import { TextReveal } from "@/components/text-reveal";
 import axios from "axios";
 import { toast } from "sonner";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import WarningDialog from "@/components/warning-modal";
+import { useAuth } from "@/contexts/AuthContext";
+
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface Photo {
@@ -22,12 +33,14 @@ interface MakeItStandOutProps {
 }
 
 export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
+  const { propertyIsActive } = useAuth();
   const [photos, setPhotos] = useState<Photo[]>(
     formData?.photos?.map((url: string) => ({
       id: crypto.randomUUID(),
       url,
     })) || [],
   );
+  const [warningDialogOpen, setWarningDialogOpen] = useState<boolean>(false);
   const [draggedPhoto, setDraggedPhoto] = useState<Photo | null>(null);
   const draggedNodeRef = useRef<HTMLDivElement | null>(null);
   const [uploading, setUploading] = useState(false); // Optional: Show loading state
@@ -40,24 +53,19 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
       fileInputRef.current.value = "";
     }
   };
-  const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
 
-    const filesArray = Array.from(files);
-
+  const validateAndUploadFiles = (files: File[]) => {
     // Validate new files
     const MAX_FILES = 20;
-    const totalFilesAfterUpload = photos.length + filesArray.length;
+    const totalFilesAfterUpload = photos.length + files.length;
 
     if (totalFilesAfterUpload > MAX_FILES) {
       toast.error(
-        ` You already have ${photos.length}. You can add only ${MAX_FILES - photos.length} more.`,
+        `You already have ${photos.length}. You can add only ${MAX_FILES - photos.length} more.`,
       );
-      resetFileInput();
-      return;
+      return false;
     }
-    //You can upload a maximum of ${MAX_FILES} images.
+
     const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
     const ALLOWED_TYPES = [
       "image/jpg",
@@ -72,7 +80,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
     const validFiles: File[] = [];
     const invalidFiles: string[] = [];
 
-    filesArray.forEach((file) => {
+    files.forEach((file) => {
       if (!ALLOWED_TYPES.includes(file.type)) {
         invalidFiles.push(`${file.name} (invalid type)`);
       } else if (file.size > MAX_SIZE) {
@@ -84,22 +92,99 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
 
     if (invalidFiles.length > 0) {
       toast.error(
-        ` ${invalidFiles.slice(0, 3).join(", ")}${invalidFiles.length > 3 ? "..." : ""}`,
+        `${invalidFiles.slice(0, 3).join(", ")}${invalidFiles.length > 3 ? "..." : ""}`,
       );
     }
 
     if (validFiles.length === 0) {
-      resetFileInput();
-      return;
+      return false;
     }
 
     // Process the valid files
     handlePhotoUpload(validFiles);
+    return true;
   };
 
-  const handlePhotoUpload = async (files: File[]) => {
-    console.log(`Uploading ${files.length} files`);
+  const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
+    const filesArray = Array.from(files);
+
+    validateAndUploadFiles(filesArray);
+    resetFileInput();
+  };
+
+  const handleConfirmUpload = () => {
+    setWarningDialogOpen(false);
+    // Small delay to ensure dialog is closed before opening file picker
+    setTimeout(() => {
+      fileInputRef.current?.click();
+    }, 100);
+  };
+
+  const handleCancelUpload = () => {
+    setWarningDialogOpen(false);
+    resetFileInput();
+  };
+  // const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const files = e.target.files;
+  //   if (!files || files.length === 0) return;
+
+  //   const filesArray = Array.from(files);
+
+  //   // Validate new files
+  //   const MAX_FILES = 20;
+  //   const totalFilesAfterUpload = photos.length + filesArray.length;
+
+  //   if (totalFilesAfterUpload > MAX_FILES) {
+  //     toast.error(
+  //       ` You already have ${photos.length}. You can add only ${MAX_FILES - photos.length} more.`,
+  //     );
+  //     resetFileInput();
+  //     return;
+  //   }
+  //   //You can upload a maximum of ${MAX_FILES} images.
+  //   const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+  //   const ALLOWED_TYPES = [
+  //     "image/jpg",
+  //     "image/jpeg",
+  //     "image/png",
+  //     "image/webp",
+  //     "image/heic",
+  //     "image/heif",
+  //     "application/octet-stream",
+  //   ];
+
+  //   const validFiles: File[] = [];
+  //   const invalidFiles: string[] = [];
+
+  //   filesArray.forEach((file) => {
+  //     if (!ALLOWED_TYPES.includes(file.type)) {
+  //       invalidFiles.push(`${file.name} (invalid type)`);
+  //     } else if (file.size > MAX_SIZE) {
+  //       invalidFiles.push(`${file.name} (too large)`);
+  //     } else {
+  //       validFiles.push(file);
+  //     }
+  //   });
+
+  //   if (invalidFiles.length > 0) {
+  //     toast.error(
+  //       ` ${invalidFiles.slice(0, 3).join(", ")}${invalidFiles.length > 3 ? "..." : ""}`,
+  //     );
+  //   }
+
+  //   if (validFiles.length === 0) {
+  //     resetFileInput();
+  //     return;
+  //   }
+
+  //   // Process the valid files
+  //   handlePhotoUpload(validFiles);
+  // };
+
+  const handlePhotoUpload = async (files: File[]) => {
     setUploading(true);
     const formData = new FormData();
 
@@ -108,12 +193,10 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
     });
 
     try {
-      console.log("Making backend call");
       const res = await axios.post(`${API_URL}/uploads/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      console.log("Fetch data from backend");
       const newPhotos = res.data.urls.map((url: string) => ({
         id: crypto.randomUUID(),
         url,
@@ -124,7 +207,6 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
         console.log("Updated photos:", updatedPhotos);
       }
 
-      console.log("Update the form");
       setPhotos(updatedPhotos);
       updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
 
@@ -303,6 +385,14 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
     setDraggedPhoto(null);
     updateFormData({ photos: photos.map((photo) => photo.url) });
   }, [photos, updateFormData]);
+  const handleButtonClick = () => {
+    if (propertyIsActive) {
+      setWarningDialogOpen(true);
+    } else {
+      // Open file picker directly
+      fileInputRef.current?.click();
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -333,6 +423,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
           Add photos to make your place stand out
         </h3>
       </TextReveal>
+
       <TextReveal>
         <div>
           <div className="pt-4 md:pt-0 space-y-4">
@@ -346,25 +437,26 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
               disabled={uploading} // Disable during upload
             > */}
 
+            <input
+              id="photos"
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              multiple
+              onChange={handleFileSelection}
+              className="hidden" // Hide the actual input
+            />
+
+            {/* Custom button that triggers the flow */}
             <Label
               htmlFor="photos"
               className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primaryGreen"
+              onClick={(e) => {
+                e.preventDefault(); // Prevent default label behavior
+                handleButtonClick();
+              }}
             >
               <div className="relative flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg hover:border-primaryGreen">
-                <input
-                  id="photos"
-                  type="file"
-                  accept="image/*"
-                  ref={fileInputRef}
-                  multiple
-                  onChange={handleFileSelection}
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  style={{ zIndex: 10 }}
-                  onClick={(e) => {
-                    (e.target as HTMLInputElement).value = "";
-                  }}
-                />
-
                 <span className="pointer-events-none text-center">
                   <p className="mt-2">
                     {uploading ? (
@@ -372,7 +464,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
                     ) : (
                       <div>
                         <div className="text-2xl">📷</div>
-                        <div>"Click to upload photos"</div>
+                        <div>Click to upload photos</div>
                       </div>
                     )}
                   </p>
@@ -388,6 +480,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
                 will be set as property profile image.
               </div>
             )}
+
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {photos.map((photo) => (
                 <div
@@ -426,6 +519,13 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
                 </div>
               ))}
             </div>
+            {
+              <WarningDialog
+                open={warningDialogOpen}
+                onClose={handleCancelUpload}
+                onConfirm={handleConfirmUpload}
+              />
+            }
           </div>
         </div>
       </TextReveal>

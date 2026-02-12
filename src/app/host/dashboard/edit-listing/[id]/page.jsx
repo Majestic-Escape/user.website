@@ -29,6 +29,7 @@ export default function EditListing({ params }) {
   const { id } = use(params);
   const router = useRouter();
   const auth = useAuth();
+  const { propertyIsActive, setPropertyIsActive } = useAuth();
   const [showMembershipPopup, setShowMembershipPopup] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [originalData, setOriginalData] = useState(null);
@@ -79,13 +80,16 @@ export default function EditListing({ params }) {
         setIsLoading(true);
         const listing = await propertyService.getUserListingById(
           auth.user?.email,
-          id
+          id,
         );
         const clone = JSON.parse(JSON.stringify(listing));
         setOriginalData(clone);
         setFormData(clone);
         // setOriginalData(listing);
         // setFormData(listing);
+        if (clone?.status == "active") {
+          setPropertyIsActive(true);
+        }
         setInitialStatus(listing.status); // Store the initial status
       } catch (error) {
         toast.error("Failed to fetch listing data. Please try again.");
@@ -122,14 +126,14 @@ export default function EditListing({ params }) {
     const significantFields = ["images", "title", "description", "customRules"];
     return significantFields.some(
       (field) =>
-        JSON.stringify(formData[field]) !== JSON.stringify(originalData[field])
+        JSON.stringify(formData[field]) !== JSON.stringify(originalData[field]),
     );
   };
 
   const determineNewStatus = (
     isExiting,
     hasSignificantChanges,
-    isFinalSubmit = false
+    isFinalSubmit = false,
   ) => {
     if (isExiting && initialStatus === "incomplete") {
       return "incomplete";
@@ -160,7 +164,7 @@ export default function EditListing({ params }) {
         id,
         "",
         "",
-        dataToSave
+        dataToSave,
       );
       setFormData(response);
       // toast.success("Progress saved successfully");
@@ -193,7 +197,7 @@ export default function EditListing({ params }) {
       } else {
         successMessage = "Listing has been updated.";
       }
-
+      setPropertyIsActive(false);
       toast.success(successMessage);
       setTimeout(() => {
         setShowMembershipPopup(true);
@@ -292,7 +296,7 @@ export default function EditListing({ params }) {
   if (!formData && !isLoading) {
     return <div>No listing data found.</div>;
   }
-
+  console.log("prop stat", propertyIsActive);
   return (
     <div className="flex flex-col relative h-full">
       <header className="bg-white w-screen z-50 top-0 fixed right-0 left-0 border-b border-b-gray-200 p-4">

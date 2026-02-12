@@ -7,15 +7,76 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { TextReveal } from "@/components/text-reveal";
+import WarningDialog from "@/components/warning-modal";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function ListingDetails({ updateFormData, formData }) {
   const [title, setTitle] = useState(formData?.title || "");
+  const [titleEditConfirmed, setTitleEditConfirmed] = useState(false);
+  const [descriptionEditConfirmed, setDescriptionEditConfirmed] =
+    useState(false);
+  const { propertyIsActive } = useAuth();
+  const [warningDialogOpen, setWarningDialogOpen] = useState(false);
+  const [change, setChange] = useState(false);
+  const [pendingField, setPendingField] = useState(null);
+  const [hasConfirmedEdit, setHasConfirmedEdit] = useState(false);
+  const [pendingValue, setPendingValue] = useState("");
   const [description, setDescription] = useState(formData?.description || "");
   const maxTitleLength = 72;
   const maxDescriptionLength = 500;
   useEffect(() => {
     updateFormData({ title, description });
   }, [title, description]);
+
+  const handleCancelUpload = () => {
+    setWarningDialogOpen(false);
+    setPendingField(null);
+    setPendingValue("");
+  };
+
+  const handleConfirmUpload = () => {
+    setWarningDialogOpen(false);
+    setHasConfirmedEdit(true);
+
+    if (pendingField === "title") {
+      setTitle(pendingValue);
+      setTitleEditConfirmed(true);
+    } else if (pendingField === "description") {
+      setDescription(pendingValue);
+      setDescriptionEditConfirmed(true);
+    }
+
+    setPendingField(null);
+    setPendingValue("");
+  };
+  const handleTitleChange = (e) => {
+    const newValue = e.target.value;
+
+    if (propertyIsActive && !titleEditConfirmed) {
+      // Store the pending change and show warning
+
+      setPendingField("title");
+      setPendingValue(newValue);
+      setWarningDialogOpen(true);
+    } else {
+      // User has confirmed or property is not active
+      setTitle(newValue);
+    }
+  };
+
+  const handleDescriptionChange = (e) => {
+    const newValue = e.target.value;
+
+    if (propertyIsActive && !descriptionEditConfirmed) {
+      // Store the pending change and show warning
+      setPendingField("description");
+      setPendingValue(newValue);
+      setWarningDialogOpen(true);
+    } else {
+      // User has confirmed or property is not active
+      setDescription(newValue);
+    }
+  };
 
   return (
     <div className="max-w-3xl mx-auto p-6">
@@ -31,7 +92,13 @@ export function ListingDetails({ updateFormData, formData }) {
             </p>
           </div>
         </TextReveal>
-
+        {
+          <WarningDialog
+            open={warningDialogOpen}
+            onClose={handleCancelUpload}
+            onConfirm={handleConfirmUpload}
+          />
+        }
         <TextReveal>
           <Card className="p-6 space-y-6">
             <div className="space-y-4">
@@ -48,7 +115,7 @@ export function ListingDetails({ updateFormData, formData }) {
                 <Input
                   id="title"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={handleTitleChange}
                   maxLength={maxTitleLength}
                   className="text-sm h-12 md:text-base"
                   placeholder="Enter your listing title"
@@ -76,7 +143,7 @@ export function ListingDetails({ updateFormData, formData }) {
                 <Textarea
                   id="description"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={handleDescriptionChange}
                   maxLength={maxDescriptionLength}
                   rows={4}
                   className="resize-none p-4 text-sm md:text-base"

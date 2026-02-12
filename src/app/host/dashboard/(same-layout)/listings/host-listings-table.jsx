@@ -76,7 +76,7 @@ const StatusPill = ({ status }) => {
   return (
     <span
       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-        status
+        status,
       )}`}
     >
       {status === "processing"
@@ -99,12 +99,12 @@ const getUserPropertyListings = async (userEmail, page = 1, limit = 10) => {
           Authorization: `Bearer ${data}`,
         },
         params: { page, limit },
-      }
+      },
     );
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch user listings"
+      error.response?.data?.message || "Failed to fetch user listings",
     );
   }
 };
@@ -189,7 +189,7 @@ export function HostListingsTable({ userEmail }) {
               "Content-Type": "application/json",
             },
             method: "PATCH",
-          }
+          },
         );
 
         if (!response.ok) {
@@ -225,7 +225,7 @@ export function HostListingsTable({ userEmail }) {
               "Content-Type": "application/json",
             },
             method: "PATCH",
-          }
+          },
         );
 
         if (!response.ok) {
@@ -409,7 +409,7 @@ export function HostListingsTable({ userEmail }) {
                 <DropdownMenuItem
                   onClick={() => {
                     router.push(
-                      `/host/dashboard/calendar?propertyId=${listing._id}`
+                      `/host/dashboard/calendar?propertyId=${listing._id}`,
                     );
                   }}
                 >
@@ -434,7 +434,7 @@ export function HostListingsTable({ userEmail }) {
         },
       },
     ],
-    [handleImageClick, handleDelistClick]
+    [handleImageClick, handleDelistClick],
   );
 
   const table = useReactTable({
@@ -590,7 +590,7 @@ export function HostListingsTable({ userEmail }) {
                             ? null
                             : flexRender(
                                 header.column.columnDef.header,
-                                header.getContext()
+                                header.getContext(),
                               )}
                         </TableHead>
                       );
@@ -613,7 +613,7 @@ export function HostListingsTable({ userEmail }) {
                         <TableCell key={cell.id}>
                           {flexRender(
                             cell.column.columnDef.cell,
-                            cell.getContext()
+                            cell.getContext(),
                           )}
                         </TableCell>
                       ))}
