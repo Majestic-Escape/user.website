@@ -21,7 +21,6 @@ const NOINDEX_PATHS = [
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check if path should have noindex
   const shouldNoIndex = NOINDEX_PATHS.some(
     (path) => pathname.startsWith(path) || pathname === path,
   );
@@ -29,28 +28,22 @@ export function middleware(request: NextRequest) {
   // Create response
   const response = NextResponse.next();
 
-  // Add X-Robots-Tag header for noindex pages
+  // ALWAYS set headers - don't rely on shouldNoIndex for response
   if (shouldNoIndex) {
+    // Method A: X-Robots-Tag header (works for ALL content types)
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
-    console.log(`🔒 Added X-Robots-Tag for: ${pathname}`);
+
+    // Method B: Also set as regular header for redundancy
+    response.headers.set("x-robots-tag", "noindex, nofollow");
+
+    console.log(`🔒 Added noindex headers for: ${pathname}`);
   }
 
-  // Add pathname to headers for generateMetadata
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-pathname", pathname);
-
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  return response;
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except static files and images
-     */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
