@@ -125,19 +125,20 @@ export default function HostProfile({ propertyData }) {
   // Get current user ID from token
   useEffect(() => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (token) {
         const parsed = JSON.parse(token);
-        const payload = JSON.parse(atob(parsed.split('.')[1]));
+        const payload = JSON.parse(atob(parsed.split(".")[1]));
         setCurrentUserId(payload.userId);
       }
     } catch (e) {
-      console.error('Error parsing token:', e);
+      console.error("Error parsing token:", e);
     }
   }, []);
 
   // Check if current user is the host of this property
-  const isOwnListing = currentUserId && propertyData?.host?._id === currentUserId;
+  const isOwnListing =
+    currentUserId && propertyData?.host?._id === currentUserId;
 
   // if (error) {
   //   // You might want to pass the error object to display a more specific message
@@ -300,62 +301,95 @@ export default function HostProfile({ propertyData }) {
 
                 {/* Only show Message host button if not own listing */}
                 {!isOwnListing && (
-                  <Button 
+                  <Button
                     className="w-full bg-primaryGreen hover:bg-brightGreen font-normal text-white rounded-lg text-sm"
                     onClick={async () => {
-                      const token = localStorage.getItem('token');
+                      const token = localStorage.getItem("token");
                       if (!token) {
-                        window.location.href = '/login';
+                        window.location.href = "/login";
                         return;
                       }
-                      
+
                       // Parse token to get userId
                       let parsedToken;
                       let userId;
                       try {
                         parsedToken = JSON.parse(token);
-                        const payload = JSON.parse(atob(parsedToken.split('.')[1]));
+                        const payload = JSON.parse(
+                          atob(parsedToken.split(".")[1]),
+                        );
                         userId = payload.userId;
                       } catch (e) {
-                        window.location.href = '/login';
+                        window.location.href = "/login";
                         return;
                       }
 
-                      const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || 'http://localhost:3001';
+                      const chatUrl =
+                        process.env.NEXT_PUBLIC_CHAT_URL ||
+                        "http://localhost:3001";
                       const propertyId = propertyData._id;
                       const hostId = propertyData.host._id;
 
                       try {
                         // Check if conversation already exists AND has messages
-                        const res = await fetch(`${chatUrl}/api/chat/conversations/check?propertyId=${propertyId}&hostId=${hostId}&guestId=${userId}`, {
-                          headers: { Authorization: `Bearer ${parsedToken}` },
-                        });
+                        const res = await fetch(
+                          `${chatUrl}/api/chat/conversations/check?propertyId=${propertyId}&hostId=${hostId}&guestId=${userId}`,
+                          {
+                            headers: { Authorization: `Bearer ${parsedToken}` },
+                          },
+                        );
                         const data = await res.json();
 
                         // Only go to messages if conversation exists AND has messages
-                        if (data.success && data.data?.exists && data.data?.conversationId && data.data?.hasMessages) {
+                        if (
+                          data.success &&
+                          data.data?.exists &&
+                          data.data?.conversationId &&
+                          data.data?.hasMessages
+                        ) {
                           window.location.href = `/messages?conversationId=${data.data.conversationId}`;
                         } else {
                           // No existing conversation with messages - go to contact_host
                           const hostNameParam = encodeURIComponent(
-                            (propertyData?.host?.firstName || '') + ' ' + (propertyData?.host?.lastName || '')
+                            (propertyData?.host?.firstName || "") +
+                              " " +
+                              (propertyData?.host?.lastName || ""),
                           );
-                          const propName = encodeURIComponent(propertyData?.title || 'Property');
-                          const propImage = encodeURIComponent(propertyData?.images?.[0] || '');
-                          const propType = encodeURIComponent(propertyData?.propertyType || 'Entire home');
-                          const respTime = encodeURIComponent(propertyData?.host?.responseTime || 'within an hour');
+                          const propName = encodeURIComponent(
+                            propertyData?.title || "Property",
+                          );
+                          const propImage = encodeURIComponent(
+                            propertyData?.images?.[0] || "",
+                          );
+                          const propType = encodeURIComponent(
+                            propertyData?.propertyType || "Entire home",
+                          );
+                          const respTime = encodeURIComponent(
+                            propertyData?.host?.responseTime ||
+                              "within an hour",
+                          );
                           window.location.href = `/contact_host/${propertyId}?hostId=${hostId}&hostName=${hostNameParam}&propertyName=${propName}&propertyImage=${propImage}&propertyType=${propType}&responseTime=${respTime}`;
                         }
                       } catch (err) {
                         // On error, fall back to contact_host page
-                        console.error('Error checking conversation:', err);
+                        console.error("Error checking conversation:", err);
                         const hostNameParam = encodeURIComponent(
-                          (propertyData?.host?.firstName || '') + ' ' + (propertyData?.host?.lastName || '')
+                          (propertyData?.host?.firstName || "") +
+                            " " +
+                            (propertyData?.host?.lastName || ""),
                         );
-                        const propName = encodeURIComponent(propertyData?.title || 'Property');
-                        const propImage = encodeURIComponent(propertyData?.images?.[0] || '');
-                        const propType = encodeURIComponent(propertyData?.propertyType || 'Entire home');
-                        const respTime = encodeURIComponent(propertyData?.host?.responseTime || 'within an hour');
+                        const propName = encodeURIComponent(
+                          propertyData?.title || "Property",
+                        );
+                        const propImage = encodeURIComponent(
+                          propertyData?.images?.[0] || "",
+                        );
+                        const propType = encodeURIComponent(
+                          propertyData?.propertyType || "Entire home",
+                        );
+                        const respTime = encodeURIComponent(
+                          propertyData?.host?.responseTime || "within an hour",
+                        );
                         window.location.href = `/contact_host/${propertyId}?hostId=${hostId}&hostName=${hostNameParam}&propertyName=${propName}&propertyImage=${propImage}&propertyType=${propType}&responseTime=${respTime}`;
                       }
                     }}
@@ -395,44 +429,49 @@ export default function HostProfile({ propertyData }) {
           </div>
 
           {/* Right Column - Host Details */}
-          <div className="space-y-4">
-            {/* Conditionally render the details card only if there's info to show OR if they are a superhost (to show the superhost explanation) */}
+          {propertyData?.host?.about?.length != 0 &&
+          propertyData?.host?.languages?.length != 0 ? (
+            <div className="space-y-4">
+              {/* Conditionally render the details card only if there's info to show OR if they are a superhost (to show the superhost explanation) */}
 
-            {propertyData?.host?.about && (
-              <div className=" items-start gap-3">
-                <p className="text-md font-bold pb-4">Bio</p>
-                <p className="text-md font-light whitespace-pre-line">
-                  {getTruncatedText(propertyData.host.about)}
-                </p>
-                {needsTruncation && (
-                  <button
-                    onClick={toggleExpand}
-                    className="text-[#4D7C3F] font-medium hover:text-[#3D6A2F] underline mt-2 focus:outline-none focus:ring-2 focus:ring-[#4D7C3F] focus:ring-opacity-50 rounded"
-                  >
-                    {isExpanded ? "Show less" : "Read more"}
-                  </button>
-                )}
-              </div>
-            )}
-            {propertyData?.host?.languages &&
-              propertyData?.host?.languages.length > 0 && (
-                <div className="flex  items-start gap-3">
-                  <Languages className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
-                  <div>
-                    <p className="text-md font-thin text-gray-500">
-                      {propertyData?.host?.languages.map((item, index) => {
-                        if (propertyData?.host?.languages.length == index + 1) {
-                          return `${item} `;
-                        } else {
-                          return `${item}, `;
-                        }
-                      })}
-                    </p>
-                  </div>
+              {propertyData?.host?.about && (
+                <div className=" items-start gap-3">
+                  <p className="text-md font-bold pb-4">Bio</p>
+                  <p className="text-md font-light whitespace-pre-line">
+                    {getTruncatedText(propertyData.host.about)}
+                  </p>
+                  {needsTruncation && (
+                    <button
+                      onClick={toggleExpand}
+                      className="text-[#4D7C3F] font-medium hover:text-[#3D6A2F] underline mt-2 focus:outline-none focus:ring-2 focus:ring-[#4D7C3F] focus:ring-opacity-50 rounded"
+                    >
+                      {isExpanded ? "Show less" : "Read more"}
+                    </button>
+                  )}
                 </div>
               )}
-            <div className="flex justify-between pt-8">
-              {/* {propertyData?.host?.dob && (
+              {propertyData?.host?.languages &&
+                propertyData?.host?.languages.length > 0 && (
+                  <div className="flex  items-start gap-3">
+                    <Languages className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
+                    <div>
+                      <p className="text-md font-thin text-gray-500">
+                        {propertyData?.host?.languages.map((item, index) => {
+                          if (
+                            propertyData?.host?.languages.length ==
+                            index + 1
+                          ) {
+                            return `${item} `;
+                          } else {
+                            return `${item}, `;
+                          }
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              <div className="flex justify-between pt-8">
+                {/* {propertyData?.host?.dob && (
                 <div className="flex pl-3 items-start gap-3">
                   <Calendar className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
                   <div>
@@ -443,7 +482,7 @@ export default function HostProfile({ propertyData }) {
                 </div>
               )} */}
 
-              {/* {propertyData?.host?.address && (
+                {/* {propertyData?.host?.address && (
                 <div className="flex items-start gap-3 pr-8">
                   <MapPin className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
                   <div>
@@ -453,8 +492,8 @@ export default function HostProfile({ propertyData }) {
                   </div>
                 </div>
               )} */}
-            </div>
-            {/* {hostData && (
+              </div>
+              {/* {hostData && (
               <>
                 <div className=" items-center gap-2 mb-4">
                 <Badge className="bg-[#4D7C3F]/10 text-[#4D7C3F] hover:bg-[#4D7C3F]/10 border-0"> 
@@ -470,8 +509,8 @@ export default function HostProfile({ propertyData }) {
                 <Separator className="my-4" />
               </>
             )} */}
-            <div className="grid gap-4">
-              {/* {hostData?.dob && (
+              <div className="grid gap-4">
+                {/* {hostData?.dob && (
                       <div className="flex items-start gap-3">
                         <Calendar className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
                         <div>
@@ -481,7 +520,7 @@ export default function HostProfile({ propertyData }) {
                         </div>
                       </div>
                     )} */}
-              {/* {propertyData && (
+                {/* {propertyData && (
                 <>
                   <div className="items-center pl-3 pt-8 gap-2 mb-4">
                     <Badge className="bg-[#4D7C3F]/10 text-[#4D7C3F] hover:bg-[#4D7C3F]/10 border-0">
@@ -499,7 +538,7 @@ export default function HostProfile({ propertyData }) {
                   <Separator className="my-4" />
                 </>
               )} */}
-              {/* {propertyData.education && (
+                {/* {propertyData.education && (
                 <div className="flex items-start gap-3">
                   <BookOpen className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
                   <div>
@@ -510,37 +549,37 @@ export default function HostProfile({ propertyData }) {
                 </div>
               )} */}
 
-              {propertyData.work && (
-                <div className="flex items-start gap-3">
-                  <Briefcase className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium">{propertyData.work}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-            {/* Testimonial Card */}
-            {propertyData.testimonial &&
-              (propertyData.testimonial.text ||
-                propertyData.testimonial.author) && (
-                <Card className="overflow-hidden border border-gray-200 rounded-xl shadow-sm p-5">
-                  <h3 className="text-base font-semibold text-gray-900 mb-3">
-                    What guests are saying
-                  </h3>
-                  {propertyData.testimonial.text && (
-                    <div className="text-sm text-gray-600 italic">
-                      "{propertyData.testimonial.text}"
+                {propertyData.work && (
+                  <div className="flex items-start gap-3">
+                    <Briefcase className="w-5 h-5 text-[#4D7C3F] mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">{propertyData.work}</p>
                     </div>
-                  )}
-                  {propertyData.testimonial.author && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      — {propertyData.testimonial.author}
-                    </p>
-                  )}
-                </Card>
-              )}
-            {/* Placeholder if NO details AND NO testimonial exist */}
-            {/* {!hostData.isSuperhost &&
+                  </div>
+                )}
+              </div>
+              {/* Testimonial Card */}
+              {propertyData.testimonial &&
+                (propertyData.testimonial.text ||
+                  propertyData.testimonial.author) && (
+                  <Card className="overflow-hidden border border-gray-200 rounded-xl shadow-sm p-5">
+                    <h3 className="text-base font-semibold text-gray-900 mb-3">
+                      What guests are saying
+                    </h3>
+                    {propertyData.testimonial.text && (
+                      <div className="text-sm text-gray-600 italic">
+                        "{propertyData.testimonial.text}"
+                      </div>
+                    )}
+                    {propertyData.testimonial.author && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        — {propertyData.testimonial.author}
+                      </p>
+                    )}
+                  </Card>
+                )}
+              {/* Placeholder if NO details AND NO testimonial exist */}
+              {/* {!hostData.isSuperhost &&
             !hostData.birthInfo &&
             !hostData.education &&
             !hostData.work &&
@@ -555,7 +594,8 @@ export default function HostProfile({ propertyData }) {
                 </div>
               </Card>
             )} */}
-          </div>
+            </div>
+          ) : null}
         </div>
 
         {/* "Show more" button (still hidden as per original code) */}
@@ -571,11 +611,11 @@ export default function HostProfile({ propertyData }) {
         {/* Footer Protection Message */}
         <div className="mt-6 pt-4 border-t border-gray-200">
           <div className="flex items-center text-xs text-gray-500">
-            <Shield className="w-3 h-3 mr-2 text-gray-400" />
+            {/* <Shield className="w-3 h-3 mr-2 text-gray-400" />
             <p>
               To help protect your payment, always use Majestic Escape to send
               money and communicate with hosts.
-            </p>
+            </p> */}
           </div>
         </div>
       </div>

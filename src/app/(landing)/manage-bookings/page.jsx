@@ -5,8 +5,8 @@ export const metadata = {
   },
 };
 
-import HostLayoutClient from "./HostLayoutClient";
+import BookingList from "./BookingList";
 
 export default function HostLayout({ children }) {
-  return <HostLayoutClient>{children}</HostLayoutClient>;
+  return <BookingList>{children}</BookingList>;
 }

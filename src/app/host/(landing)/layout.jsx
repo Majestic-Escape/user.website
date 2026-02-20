@@ -6,7 +6,7 @@ const Layout = ({ children }) => {
       <Navbar />
       <main className="font-poppins">{children}</main>
     </>
-  )
-}
+  );
+};
 
-export default Layout
+export default Layout;

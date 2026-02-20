@@ -1,9 +1,11 @@
-"use client";
-
 import React, { Suspense } from "react";
 import BookingSummaryPage from "./booking-summary-page";
-import { useEffect } from "react";
-
+export const metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 export default function Page() {
   return (
     <Suspense
