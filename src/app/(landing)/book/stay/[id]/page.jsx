@@ -5,8 +5,18 @@ export const metadata = {
   },
 };
 
-import BookStay from "./BookStay";
+import Messaging from "./BookStay";
 
-export default function BookLayout({ children }) {
-  return <BookStay>{children}</BookStay>;
+export default function BookLayout() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
+        </div>
+      }
+    >
+      <Messaging />
+    </Suspense>
+  );
 }
