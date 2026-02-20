@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const NOINDEX_PATHS = [
+  "/host",
   "/dashboard",
   "/login",
   "/register",

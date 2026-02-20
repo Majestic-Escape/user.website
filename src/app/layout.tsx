@@ -10,6 +10,7 @@ import { headers } from "next/headers";
 export const revalidate = 0;
 
 const NOINDEX_PATHS = [
+  "/host",
   "/dashboard",
   "/login",
   "/register",
@@ -25,12 +26,23 @@ const NOINDEX_PATHS = [
 ];
 export async function generateMetadata() {
   const headersList = await headers();
-  const pathname =
-    headersList.get("x-pathname") || headersList.get("x-url") || "";
+  const url = headersList.get("x-url") || "";
+
+  let pathname = "";
+  try {
+    if (url) {
+      const urlObj = new URL(url);
+      pathname = urlObj.pathname;
+    }
+  } catch (e) {
+    console.error("Error parsing URL:", e);
+  }
+  if (!pathname) {
+    pathname = headersList.get("x-pathname") || "";
+  }
   const shouldNoIndex = NOINDEX_PATHS.some(
     (path) => pathname.startsWith(path) || pathname === path,
   );
-
   const baseMetadata = {
     title: "Majestic Escape | Book Hotels, Tours & Holiday Packages in India",
     description:
