@@ -1,5 +1,4 @@
 import React, { Suspense } from "react";
-import BookingSummaryPage from "./booking-summary-page";
 import BookingList from "./BookingList";
 export const metadata = {
   robots: {
