@@ -6,7 +6,7 @@ export const metadata = {
     follow: false,
   },
 };
-export default function Page() {
+export default function SummaryLayout() {
   return (
     <Suspense
       fallback={
