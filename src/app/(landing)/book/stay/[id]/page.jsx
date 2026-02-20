@@ -1,3 +1,5 @@
+import React, { Suspense } from "react";
+
 export const metadata = {
   robots: {
     index: false,
