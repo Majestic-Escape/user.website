@@ -1,15 +1,12 @@
 import React, { Suspense } from "react";
-
+import BookingList from "./BookingList";
 export const metadata = {
   robots: {
     index: false,
     follow: false,
   },
 };
-
-import Messaging from "./BookStay";
-
-export default function BookLayout() {
+export default function HostLayout() {
   return (
     <Suspense
       fallback={
@@ -18,7 +15,7 @@ export default function BookLayout() {
         </div>
       }
     >
-      <Messaging />
+      <BookingList />
     </Suspense>
   );
 }

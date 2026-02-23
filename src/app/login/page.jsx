@@ -6,7 +6,12 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import LoginForm from "./components/login-form";
 import { CarouselSpacing } from "../../components/carousel-heading";
-
+export const metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 export default function LoginPage() {
   return (
     <div className="min-h-screen  grid grid-cols-1 lg:grid-cols-2 font-poppins">

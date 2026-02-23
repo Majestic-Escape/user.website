@@ -1,10 +1,12 @@
-"use client";
-
 import React, { Suspense } from "react";
 import BookingSummaryPage from "./booking-summary-page";
-import { useEffect } from "react";
-
-export default function Page() {
+export const metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+export default function SummaryLayout() {
   return (
     <Suspense
       fallback={
