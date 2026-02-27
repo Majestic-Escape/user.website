@@ -262,15 +262,8 @@ export default function GoaRules() {
                         Department of Tourism, Goa, has commissioned a new
                         service by the name 'Statistics Proforma as per Form XI'
                         which can be accessed from the Department of Tourism
-                        website at the{" "}
-                        <a
-                          href={"https://www.goatourism.gov.in/"}
-                          target="_blank"
-                          className="underline"
-                        >
-                          Tourist Statistics Data Registration portal
-                        </a>{" "}
-                        (Tourist Statistics Data Registration) or{" "}
+                        website at the Tourist Statistics Data Registration
+                        portal or{" "}
                         <a
                           href={"https://goaonline.gov.in/"}
                           target="_blank"
@@ -281,15 +274,6 @@ export default function GoaRules() {
                         portal under the service list of Tourism Department.
                         While submitting Form XI, a processing fee is required
                         to be paid.{" "}
-                        <a
-                          href={
-                            " https://www.goatourism.gov.in/online-submission-of-statistics-proforma-data-as-per-form-xi."
-                          }
-                          target="_blank"
-                          className="underline"
-                        >
-                          Refer this for more details.
-                        </a>{" "}
                       </li>
                       <br />
                       <li>
