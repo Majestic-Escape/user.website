@@ -38,15 +38,15 @@ export default function MaharashtraRules() {
                         advice, but it should give you a good head start in
                         understanding your local laws. If you have questions,
                         please contact the relevant officials from the{" "}
-                        <a
+                        {/* <a
                           className="underline"
                           href={
                             "https://www.maharashtratourism.gov.in/web/mh-tourism/directorate-of-tourism"
                           }
                           target="_blank"
-                        >
-                          Directorate of Tourism (“DoT”) – Maharashtra Tourism
-                        </a>
+                        > */}
+                        Directorate of Tourism (“DoT”) – Maharashtra Tourism
+                        {/* </a> */}
                         , other Government agencies directly, or consult a local
                         lawyer.
                         <br />
@@ -67,17 +67,16 @@ export default function MaharashtraRules() {
                       units on Majestic Escape, then make sure you have obtained
                       requisite registrations and permissions to operate the
                       premises under the{" "}
-                      <a
+                      {/* <a
                         href={
                           "https://mahakamgar.maharashtra.gov.in/images/lc/pdf/the-bombay-shops-establishments-act.pdf"
                         }
                         target="_blank"
                         className="underline"
-                      >
-                        Maharashtra Shops and Establishments Act, 1948
-                      </a>{" "}
-                      . New registration and renewals can be done online by
-                      logging onto the{" "}
+                      > */}
+                      Maharashtra Shops and Establishments Act, 1948
+                      {/* </a> */} . New registration and renewals can be done
+                      online by logging onto the{" "}
                       <a
                         href={"https://portal.mcgm.gov.in/irj/portal/anonymous"}
                         target="_blank"
@@ -105,16 +104,15 @@ export default function MaharashtraRules() {
                       <br />
                       B&Bs or lodging houses require a license from the BMC as
                       per the provisions of the{" "}
-                      <a
+                      {/* <a
                         href={
                           "https://lj.maharashtra.gov.in/Site/Upload/Acts/H-4094%20The%20Mumbai%20Municipal%20Corporation%20Act.pdf"
                         }
                         target="_blank"
                         className="underline"
-                      >
-                        Mumbai Municipal Corporation Act, 1888
-                      </a>{" "}
-                      . For this, hosts can log into the{" "}
+                      > */}
+                      Mumbai Municipal Corporation Act, 1888
+                      {/* </a> */} . For this, hosts can log into the{" "}
                       <a
                         href={"https://portal.mcgm.gov.in/irj/portal/anonymous"}
                         target="_blank"
@@ -138,45 +136,43 @@ export default function MaharashtraRules() {
                       <ul className="list-disc ml-5 space-y-2">
                         <li>
                           {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
-                          <a
+                          {/* <a
                             href={
                               "https://www.maharashtratourism.gov.in/documents/38210/1718089/Adventure+Tourism+Policy.pdf"
                             }
                             target="_blank"
                             className="underline"
-                          >
-                            Adventure Tourism (Activities) Policy
-                          </a>{" "}
-                          – Adventure tourism activities conducted on land,
-                          water and air.
+                          > */}
+                          Adventure Tourism (Activities) Policy
+                          {/* </a> */} – Adventure tourism activities conducted
+                          on land, water and air.
                         </li>{" "}
                         <br />
                         <li>
                           {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
-                          <a
+                          {/* <a
                             href={
                               "https://www.maharashtratourism.gov.in/documents/38210/1718089/Caravan+Tourism+Policy.pdf"
                             }
                             target="_blank"
                             className="underline"
-                          >
-                            Caravan Tourism Policy
-                          </a>{" "}
-                          – Caravans and caravan parks.
+                          > */}
+                          Caravan Tourism Policy
+                          {/* </a> */} – Caravans and caravan parks.
                         </li>{" "}
                         <br />
                         <li>
                           {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
-                          <a
+                          {/* <a
                             href={
                               "https://www.maharashtratourism.gov.in/documents/38210/1718089/Beach+Shack+Policy.pdf"
                             }
                             target="_blank"
                             className="underline"
-                          >
-                            Beach Shack Policy
-                          </a>{" "}
-                          – Beach shacks, deck-beds, giant umbrellas.
+                          > */}
+                          Beach Shack Policy
+                          {/* </a> */} – Beach shacks, deck-beds, giant
+                          umbrellas.
                         </li>{" "}
                       </ul>
                       <br />
