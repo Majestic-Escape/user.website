@@ -19,10 +19,10 @@ export default function LoginPage() {
 
       <div className="bg-gradient-to-tr from-primaryGreen to-brightGreen p-6 lg:p-10  flex-col hidden lg:flex">
         <TextReveal>
-          <h1 className="text-2xl  font-bricolage lg:text-3xl font-medium text-white mb-12">
+          <h2 className="text-2xl  font-bricolage lg:text-3xl font-medium text-white mb-12">
             Sign in to your account
             <br />
-          </h1>
+          </h2>
         </TextReveal>
 
         <Card className="bg-white p-6 mb-8">
