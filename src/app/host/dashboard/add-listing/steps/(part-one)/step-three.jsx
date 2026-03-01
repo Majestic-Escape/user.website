@@ -126,19 +126,20 @@ export function LocationForm({ updateFormData, formData }) {
       handleMarkerDragEnd
     );
 
-    autocompleteRef.current = new googleMapsRef.current.places.Autocomplete(
-      document.getElementById("address-input"),
-      {
-        componentRestrictions: { country: "IN" },
-        bounds: new googleMapsRef.current.LatLngBounds(
-          new googleMapsRef.current.LatLng(14.8, 73.6), // SW corner of Goa
-          new googleMapsRef.current.LatLng(15.8, 74.3) // NE corner of Goa
-        ),
-        strictBounds: true,
-      }
-    );
 
-    autocompleteRef.current.addListener("place_changed", handlePlaceSelect);
+    autocompleteRef.current = new google.maps.places.Autocomplete(
+  document.getElementById("address-input"),
+  {
+    componentRestrictions: { country: "IN" },
+    bounds: new google.maps.LatLngBounds(
+      new google.maps.LatLng(14.8, 73.6),
+      new google.maps.LatLng(15.8, 74.3)
+    ),
+    strictBounds: false,
+  }
+);
+
+autocompleteRef.current.addListener("place_changed", handlePlaceSelect);
   };
 
   const handleMarkerDragEnd = () => {
