@@ -7,11 +7,12 @@ export default function BlogPost() {
     <div className="max-w-[85rem] py-24 font-poppins px-4 sm:px-6 lg:px-8 mx-auto">
       <div className="grid lg:grid-cols-3 gap-y-8 lg:gap-y-0 lg:gap-x-6">
         {/* Content */}
+
         <div className="lg:col-span-2">
           <div className="py-8 lg:pe-8">
             <div className="space-y-5 pt-8 md:pt-0 lg:space-y-8">
               <Link
-                className="inline-flex items-center gap-x-1.5 text-sm text-gray-600 decoration-2 hover:underline focus:outline-none focus:underline "
+                className="inline-flex items-center gap-x-1.5 text-sm text-gray-600 decoration-2 hover:underline focus:outline-none focus:underline"
                 href="/blogs"
               >
                 <svg
@@ -31,31 +32,24 @@ export default function BlogPost() {
                 Back to Blog
               </Link>
               <h1 className="text-3xl font-semibold lg:text-5xl text-absoluteDark font-bricolage">
-                Top 5 Reasons Why Homestays Are Better Than Hotels
+                How to Plan a Budget Trip Without Compromising Comfort
               </h1>
               <div className="flex items-center gap-x-5">
                 <a
-                  className="inline-flex items-center gap-1.5 py-1 px-3 sm:py-2 sm:px-4 rounded-full text-xs sm:text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200   "
+                  className="inline-flex items-center gap-1.5 py-1 px-3 sm:py-2 sm:px-4 rounded-full text-xs sm:text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200"
                   href="#"
                 >
-                  Stays
+                  Travel Inspiration
                 </a>
-                <p className="text-xs sm:text-sm text-gray-800 ">
+                <p className="text-xs sm:text-sm text-gray-800">
                   November 21, 2024
                 </p>
               </div>
-              <p className="text-lg text-gray-800 ">
-                Homestays have become a popular choice for travellers who want
-                comfort, space, and a local touch—all at a better price. If
-                you’re debating between a hotel and a homestay for your next
-                trip, here are five clear reasons why homestays often win.
-              </p>
-              <p className="text-lg text-gray-800 ">
-                <p className="font-medium"> More Space for the Same Price </p>
-                Hotels usually offer compact rooms, while homestays provide full
-                homes with bedrooms, living areas, kitchens, and balconies.
-                Families, groups, and long-stay travellers get far more space
-                without paying premium rates.
+              <p className="text-lg text-gray-800">
+                A budget trip doesn’t require sacrificing comfort. With the
+                right choices, you can enjoy a smooth, relaxing getaway at a
+                reasonable cost. Here’s a clear, practical guide to planning a
+                comfortable trip on a budget.
               </p>
               <div className="text-center">
                 <div className="grid lg:grid-cols-2 gap-3">
@@ -65,8 +59,8 @@ export default function BlogPost() {
                         width={600}
                         height={600}
                         className="size-full absolute top-0 start-0 object-cover rounded-xl"
-                        src="/images/blog/1/homestay.jpg"
-                        alt="Sada Fort Landscape"
+                        src="/images/blog/2/beach-1.webp"
+                        alt="Cola Beach Lagoon"
                       />
                     </figure>
                     <figure className="relative w-full h-60">
@@ -74,8 +68,8 @@ export default function BlogPost() {
                         width={600}
                         height={600}
                         className="size-full absolute top-0 start-0 object-cover rounded-xl"
-                        src="/images/blog/1/homestay4.jpg"
-                        alt="Coastal Fortification"
+                        src="/images/blog/2/beach-2.jpg"
+                        alt="Divar Island Scenery"
                       />
                     </figure>
                   </div>
@@ -84,39 +78,35 @@ export default function BlogPost() {
                       width={600}
                       height={600}
                       className="size-full absolute top-0 start-0 object-cover rounded-xl"
-                      src="/images/blog/1/homestay2.jpg"
-                      alt="Historical Fort View"
+                      src="/images/blog/2/beach-3.jpg"
+                      alt="Dudhsagar Falls"
                     />
                   </figure>
                 </div>
-                <span className="mt-3 block text-sm text-center text-gray-500 ">
-                  {/* Sada Fort&apos;s Architectural Panorama */}
+                <span className="mt-3 block text-sm text-center text-gray-500">
+                  {/* Hidden gems: Cola Beach, Divar Island, and Dudhsagar Falls */}
                 </span>
               </div>
-              <p className="text-lg text-gray-800 ">
-                <p className="font-medium">
-                  A More Local and Authentic Experience
-                </p>{" "}
-                Homestays let you experience a destination like a local. You
-                stay in real neighbourhoods, interact with hosts, and get access
-                to insider recommendations—something hotels rarely offer.
+              <p className="text-lg text-gray-800">
+                <b>Choose Value-Driven</b> : Stays Look for vacation rentals,
+                homestays, and short-term stays that offer strong amenities at
+                low prices. Filter by reviews, cleanliness, and essentials like
+                WiFi and AC. Many affordable stays deliver hotel-level comfort
+                without premium rates.
               </p>
-              <p className="text-lg text-gray-800 ">
-                <p className="font-medium">
-                  Better Amenities and Home-Like Comfort
-                </p>{" "}
-                Most homestays include kitchens, washing machines, private
-                parking, workspaces, and outdoor areas. You get the flexibility
-                to cook, relax, and enjoy a comfortable stay without the
-                limitations of a hotel room.
+              <p className="text-lg text-gray-800">
+                <b>Travel in Off-Peak Seasons</b> Airfares, stays, and
+                activities cost far less outside peak periods. Off-season travel
+                gives you quieter destinations, better availability, and
+                high-quality stays at discounted rates.
               </p>
               <blockquote className="text-center p-4 sm:px-7">
-                {/* <p className="text-xl font-medium text-gray-800 lg:text-2xl lg:leading-normal xl:text-2xl xl:leading-normal ">
-                  Sada Fort whispers stories of colonial resilience, standing as
-                  a silent guardian of Goa&apos;s multilayered history.
+                {/* <p className="text-xl font-medium text-gray-800 lg:text-2xl lg:leading-normal xl:text-2xl xl:leading-normal">
+                  &quot;Goa’s hidden nooks are the heart of its charm, where
+                  every traveler finds a story waiting to be told.&quot;
                 </p>
-                <p className="mt-5 text-gray-800 ">
-                  Local Historian, Maria Santos
+                <p className="mt-5 text-gray-800">
+                  - Ananya Desai, Travel Blogger
                 </p> */}
               </blockquote>
               <figure>
@@ -124,70 +114,87 @@ export default function BlogPost() {
                   width={600}
                   height={600}
                   className="w-full object-cover rounded-xl"
-                  src="/images/blog/1/homestay3.jpg"
-                  alt="Sada Fort Archaeological Details"
+                  src="/images/img1.png"
+                  alt="Chorao Bird Sanctuary"
                 />
-                <figcaption className="mt-3 text-sm text-center text-gray-500 ">
-                  Intricate stonework at Sada Fort
+                <figcaption className="mt-3 text-sm text-center text-gray-500">
+                  {/* Wildlife wonders at Chorao Island Bird Sanctuary */}
                 </figcaption>
               </figure>
+              <p className="text-lg text-gray-800">
+                <b>Select the Right Location</b>: Staying slightly away from
+                hotspots reduces costs while maintaining access and comfort.
+                Search for budget-friendly homes, private rooms, or villas near
+                major attractions instead of inside them.
+              </p>
               <div className="space-y-3">
-                <p className="font-medium">
-                  Ideal for Longer Stays and Workations
-                </p>{" "}
-                <p className="text-lg text-gray-800 ">
-                  For long trips, homestays are more practical. They provide
-                  WiFi, kitchens, and comfortable setups for remote work, all at
-                  affordable rates. Hotels rarely match this level of
-                  convenience for extended stays.
+                {/* <h3 className="text-2xl font-semibold">
+                  Tips for November Explorers
+                </h3> */}
+                <p className="text-lg text-gray-800">
+                  <b>Prioritize Low-Cost, High-Value Activities:</b> Skip
+                  overpriced attractions. Choose walking trails, public
+                  viewpoints, local markets, and free cultural experiences. Many
+                  of these offer better immersion at nearly zero cost.
                 </p>
               </div>
-              <div className="space-y-3">
-                <p className="font-medium">More Value for Money</p>{" "}
-                <p className="text-lg text-gray-800 ">
-                  Homestays usually cost less than hotels while offering more
-                  space, privacy, and amenities. For groups or families, the
-                  cost per person becomes even better, making homestays a
-                  budget-friendly yet comfortable choice. If you want space,
-                  flexibility, and a stay that feels like home, homestays offer
-                  clear advantages over traditional hotels.
-                </p>
-              </div>
-
+              <p className="text-lg text-gray-800">
+                <b>Select the Right Location</b>: Staying slightly away from
+                hotspots reduces costs while maintaining access and comfort.
+                Search for budget-friendly homes, private rooms, or villas near
+                major attractions instead of inside them.
+              </p>
+              <p className="text-lg text-gray-800">
+                <b>Use Price Tracking Tools</b>: Set alerts for flights and
+                stays. Flexible travel dates often unlock lower prices without
+                affecting comfort.
+              </p>
+              <p className="text-lg text-gray-800">
+                <b> Compare Amenities Before Booking</b>: Comfort comes from
+                clarity. Check amenity lists, guest photos, and verified reviews
+                to avoid surprises. Prioritize factors like hygiene, mattress
+                quality, and noise levels. A budget trip becomes easy when you
+                focus on smart timing, strategic locations, and high-value
+                stays. Start exploring affordable rentals and plan your next
+                comfortable getaway without stretching your budget.
+              </p>
+              {/* <ul className="list-disc list-outside space-y-5 ps-5 text-lg text-gray-800">
+                <li className="ps-2">
+                  Relish authentic Goan cuisine in small village restaurants to
+                  complete your cultural journey.
+                </li>
+                <li className="ps-2">
+                  Support local guides and conservation efforts wherever
+                  possible.
+                </li>
+              </ul> */}
               <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-y-5 lg:gap-y-0">
-                {/* Badges/Tags */}
                 <div>
                   <a
-                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200    "
+                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200"
                     href="#"
                   >
                     Goa
                   </a>
                   <a
-                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200    "
+                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200"
                     href="#"
                   >
-                    Historical Sites
+                    Hidden Gems
                   </a>
                   <a
-                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200    "
+                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200"
                     href="#"
                   >
-                    Travel
-                  </a>
-                  <a
-                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200    "
-                    href="#"
-                  >
-                    Heritage
+                    Travel Tips
                   </a>
                 </div>
-                {/* End Badges/Tags */}
               </div>
             </div>
           </div>
         </div>
         {/* End Content */}
+
         {/* Sidebar */}
         <div className="lg:col-span-1 lg:w-full lg:h-full lg:bg-gradient-to-r lg:from-gray-50 lg:via-transparent lg:to-transparent ">
           <div className="sticky top-0 start-0 py-8 lg:ps-8">
@@ -240,11 +247,11 @@ export default function BlogPost() {
               {/* Media */}
               <Link
                 className="group flex items-center gap-x-6 focus:outline-none"
-                href="/blog/2"
+                href="/blog/top-5-reasons-why-homestays-are-better-than-hotels"
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">
-                    How to Plan a Budget Trip Without Compromising Comfort
+                    Top 5 Reasons Why Homestays Are Better Than Hotels
                   </span>
                 </div>
                 <div className="shrink-0 relative rounded-lg overflow-hidden size-20">
@@ -252,7 +259,7 @@ export default function BlogPost() {
                     width={600}
                     height={600}
                     className="size-full absolute top-0 start-0 object-cover rounded-lg"
-                    src="/images/img1.png?height=220&width=320"
+                    src="/images/sada-fort-karnataka.png?height=220&width=320"
                     alt="Blog Image"
                   />
                 </div>
@@ -261,7 +268,7 @@ export default function BlogPost() {
               {/* Media */}
               <Link
                 className="group flex items-center gap-x-6 focus:outline-none"
-                href="/blog/3"
+                href="/blog/how-to-choose-the-perfect-homestay-for-your-family-trip"
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">
@@ -282,7 +289,7 @@ export default function BlogPost() {
               {/* Media */}
               <Link
                 className="group flex items-center gap-x-6 focus:outline-none"
-                href="/blog/4"
+                href="/blog/spice-of-life-a-culinary-journey-through-goan-cuisine"
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">

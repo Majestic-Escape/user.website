@@ -31,32 +31,31 @@ export default function BlogPost() {
                 Back to Blog
               </Link>
               <h1 className="text-3xl font-semibold lg:text-5xl text-absoluteDark font-bricolage">
-                How to Choose the Perfect Homestay for Your Family Trip
+                Top 5 Reasons Why Homestays Are Better Than Hotels
               </h1>
               <div className="flex items-center gap-x-5">
                 <a
-                  className="inline-flex items-center gap-1.5 py-1 px-3 sm:py-2 sm:px-4 rounded-full text-xs sm:text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200 "
+                  className="inline-flex items-center gap-1.5 py-1 px-3 sm:py-2 sm:px-4 rounded-full text-xs sm:text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200   "
                   href="#"
                 >
-                  Adventure Awaits
+                  Stays
                 </a>
                 <p className="text-xs sm:text-sm text-gray-800 ">
                   November 21, 2024
                 </p>
               </div>
               <p className="text-lg text-gray-800 ">
-                Choosing the right homestay can define the comfort, safety, and
-                overall experience of your family vacation. With so many options
-                available, it’s important to focus on factors that ensure
-                convenience, space, and a stress-free stay. Here’s a clear,
-                practical guide to help you pick the perfect homestay for your
-                next family trip.
+                Homestays have become a popular choice for travellers who want
+                comfort, space, and a local touch—all at a better price. If
+                you’re debating between a hotel and a homestay for your next
+                trip, here are five clear reasons why homestays often win.
               </p>
               <p className="text-lg text-gray-800 ">
-                <b>Check the Space and Room Layout :</b> Families need more than
-                just beds. Look for homestays with multiple rooms, larger common
-                areas, and enough space for kids to move comfortably. Ensure the
-                photos match the listed room sizes and layout.
+                <p className="font-medium"> More Space for the Same Price </p>
+                Hotels usually offer compact rooms, while homestays provide full
+                homes with bedrooms, living areas, kitchens, and balconies.
+                Families, groups, and long-stay travellers get far more space
+                without paying premium rates.
               </p>
               <div className="text-center">
                 <div className="grid lg:grid-cols-2 gap-3">
@@ -66,8 +65,8 @@ export default function BlogPost() {
                         width={600}
                         height={600}
                         className="size-full absolute top-0 start-0 object-cover rounded-xl"
-                        src="/images/blog/3/water-sports-1.jpg"
-                        alt="Parasailing adventure in Goa"
+                        src="/images/blog/1/homestay.jpg"
+                        alt="Sada Fort Landscape"
                       />
                     </figure>
                     <figure className="relative w-full h-60">
@@ -75,8 +74,8 @@ export default function BlogPost() {
                         width={600}
                         height={600}
                         className="size-full absolute top-0 start-0 object-cover rounded-xl"
-                        src="/images/blog/3/water-sports-2.jpg"
-                        alt="Scenic coastal bike trail"
+                        src="/images/blog/1/homestay4.jpg"
+                        alt="Coastal Fortification"
                       />
                     </figure>
                   </div>
@@ -85,153 +84,109 @@ export default function BlogPost() {
                       width={600}
                       height={600}
                       className="size-full absolute top-0 start-0 object-cover rounded-xl"
-                      src="/images/blog/3/water-sports-3.jpg"
-                      alt="Jet skiing in Goa"
+                      src="/images/blog/1/homestay2.jpg"
+                      alt="Historical Fort View"
                     />
                   </figure>
                 </div>
                 <span className="mt-3 block text-sm text-center text-gray-500 ">
-                  {/* Thrill-seekers’ paradise: Water sports and bike tours in Goa */}
+                  {/* Sada Fort&apos;s Architectural Panorama */}
                 </span>
               </div>
-              {/* <h3 className="text-2xl font-semibold">
-                Water Sports Highlights
-              </h3> */}
               <p className="text-lg text-gray-800 ">
-                <b>Prioritize Safety :</b>
-                Features Safety should be non-negotiable. Choose properties with
-                secure entrances, proper lighting, child-friendly furniture, and
-                reliable neighbourhoods. Read recent reviews to confirm the host
-                maintains safety standards.
+                <p className="font-medium">
+                  A More Local and Authentic Experience
+                </p>{" "}
+                Homestays let you experience a destination like a local. You
+                stay in real neighbourhoods, interact with hosts, and get access
+                to insider recommendations—something hotels rarely offer.
               </p>
               <p className="text-lg text-gray-800 ">
-                <b>Look for Family-Friendly Amenities :</b> Essential amenities
-                make a big difference. Prioritize WiFi, clean bathrooms, AC or
-                heating, kitchens, washing machines, and parking. If you’re
-                travelling with infants or seniors, check for extra features
-                like ground-floor rooms, cribs, or easy access.
+                <p className="font-medium">
+                  Better Amenities and Home-Like Comfort
+                </p>{" "}
+                Most homestays include kitchens, washing machines, private
+                parking, workspaces, and outdoor areas. You get the flexibility
+                to cook, relax, and enjoy a comfortable stay without the
+                limitations of a hotel room.
               </p>
-
-              {/* <ul className="list-disc list-outside space-y-5 ps-5 text-lg text-gray-800 ">
-                <li className="ps-2">
-                  **Jet Skiing**: Zoom across the waves on a high-speed jet ski,
-                  a must-try for adrenaline junkies.
-                </li>
-                <li className="ps-2">
-                  **Scuba Diving**: Discover underwater treasures and vibrant
-                  marine life in spots like Grande Island.
-                </li>
-                <li className="ps-2">
-                  **Parasailing**: Enjoy panoramic views of Goa&apos;s coastline
-                  as you soar high above the water.
-                </li>
-              </ul> */}
-              {/* <blockquote className="text-center p-4 sm:px-7">
-                <p className="text-xl font-medium text-gray-800 lg:text-2xl lg:leading-normal xl:text-2xl xl:leading-normal ">
-                  &quot;Nothing compares to the thrill of parasailing with the
-                  wind in your face and the sea beneath you.&quot;
+              <blockquote className="text-center p-4 sm:px-7">
+                {/* <p className="text-xl font-medium text-gray-800 lg:text-2xl lg:leading-normal xl:text-2xl xl:leading-normal ">
+                  Sada Fort whispers stories of colonial resilience, standing as
+                  a silent guardian of Goa&apos;s multilayered history.
                 </p>
                 <p className="mt-5 text-gray-800 ">
-                  - Maria D&apos;Souza, Local Guide
-                </p>
+                  Local Historian, Maria Santos
+                </p> */}
               </blockquote>
-              <h3 className="text-2xl font-semibold">
-                Exploring Goa on Two Wheels
-              </h3>
-              <p className="text-lg text-gray-800 ">
-                Goa&apos;s bike tours are equally exhilarating, offering a
-                chance to explore lush greenery, quaint villages, and stunning
-                beaches. Popular routes include the Vagator-Chapora stretch and
-                the scenic ride to Palolem.
-              </p> */}
               <figure>
                 <Image
                   width={600}
                   height={600}
                   className="w-full object-cover rounded-xl"
-                  src="/images/white_water_rafting.png"
-                  alt="Biking through Goan countryside"
+                  src="/images/blog/1/homestay3.jpg"
+                  alt="Sada Fort Archaeological Details"
                 />
                 <figcaption className="mt-3 text-sm text-center text-gray-500 ">
-                  {/* Uncover Goa&apos;s beauty with bike tours */}
+                  Intricate stonework at Sada Fort
                 </figcaption>
               </figure>
-              <p className="text-lg text-gray-800 ">
-                <b>Review the Host’s Ratings and Responsiveness :</b> A good
-                host ensures a smooth stay. Choose homestays with high ratings,
-                consistent positive reviews, and hosts known for quick replies.
-                Responsive hosts help with early check-ins, local tips, and
-                faster issue resolution.
-              </p>
-              <p className="text-lg text-gray-800 ">
-                <b>Check the Location Carefully :</b> Pick a neighbourhood close
-                to key attractions, restaurants, and medical facilities. For
-                family trips, convenience is more important than staying in
-                crowded hotspots. Search for homestays in safe, accessible areas
-                with good transport options.
-              </p>
-              <p className="text-lg text-gray-800 ">
-                <b>Browse Real Guest Photos :</b>
-                Guest photos reveal the actual condition of the property. They
-                show cleanliness, furnishing quality, and how well the homestay
-                is maintained—without filters or wide-angle tricks.
-              </p>
-              <p className="text-lg text-gray-800 ">
-                <b>Understand the Policies :</b>
-                Check cancellation rules, extra guest charges, house rules, and
-                check-in timings. Clear policies help avoid surprises and keep
-                your family’s schedule smooth. Choosing the right homestay
-                becomes easy when you focus on space, safety, amenities, and
-                trustworthy hosts. Start exploring well-reviewed homestays to
-                find the perfect fit for your family getaway.
-              </p>
-
-              {/* <div className="space-y-3">
-                <h3 className="text-2xl font-semibold ">
-                  Tips for Adventure Enthusiasts
-                </h3>
+              <div className="space-y-3">
+                <p className="font-medium">
+                  Ideal for Longer Stays and Workations
+                </p>{" "}
                 <p className="text-lg text-gray-800 ">
-                  Before setting out on your adventure, remember to:
+                  For long trips, homestays are more practical. They provide
+                  WiFi, kitchens, and comfortable setups for remote work, all at
+                  affordable rates. Hotels rarely match this level of
+                  convenience for extended stays.
                 </p>
-                <ul className="list-disc list-outside space-y-5 ps-5 text-lg text-gray-800 ">
-                  <li className="ps-2">
-                    Wear appropriate safety gear for water sports and biking.
-                  </li>
-                  <li className="ps-2">
-                    Stay hydrated and apply sunscreen to protect against the
-                    tropical sun.
-                  </li>
-                  <li className="ps-2">
-                    Respect local guidelines and the environment.
-                  </li>
-                </ul>
-              </div> */}
+              </div>
+              <div className="space-y-3">
+                <p className="font-medium">More Value for Money</p>{" "}
+                <p className="text-lg text-gray-800 ">
+                  Homestays usually cost less than hotels while offering more
+                  space, privacy, and amenities. For groups or families, the
+                  cost per person becomes even better, making homestays a
+                  budget-friendly yet comfortable choice. If you want space,
+                  flexibility, and a stay that feels like home, homestays offer
+                  clear advantages over traditional hotels.
+                </p>
+              </div>
+
               <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-y-5 lg:gap-y-0">
+                {/* Badges/Tags */}
                 <div>
                   <a
-                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200 "
+                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200    "
                     href="#"
                   >
-                    Water Sports
+                    Goa
                   </a>
                   <a
-                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200 "
+                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200    "
                     href="#"
                   >
-                    Adventure
+                    Historical Sites
                   </a>
                   <a
-                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200 "
+                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200    "
                     href="#"
                   >
-                    Bike Tours
+                    Travel
+                  </a>
+                  <a
+                    className="m-0.5 inline-flex items-center gap-1.5 py-2 px-3 rounded-full text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200    "
+                    href="#"
+                  >
+                    Heritage
                   </a>
                 </div>
+                {/* End Badges/Tags */}
               </div>
             </div>
           </div>
         </div>
-
         {/* End Content */}
         {/* Sidebar */}
         <div className="lg:col-span-1 lg:w-full lg:h-full lg:bg-gradient-to-r lg:from-gray-50 lg:via-transparent lg:to-transparent ">
@@ -285,7 +240,7 @@ export default function BlogPost() {
               {/* Media */}
               <Link
                 className="group flex items-center gap-x-6 focus:outline-none"
-                href="/blog/2"
+                href="/blog/how-to-plan-a-budget-trip-without-compromising-comfort"
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">
@@ -306,11 +261,11 @@ export default function BlogPost() {
               {/* Media */}
               <Link
                 className="group flex items-center gap-x-6 focus:outline-none"
-                href="/blog/3"
+                href="/blog/how-to-choose-the-perfect-homestay-for-your-family-trip"
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">
-                    Top 5 Reasons Why Homestays Are Better Than Hotels
+                    How to Choose the Perfect Homestay for Your Family Trip
                   </span>
                 </div>
                 <div className="shrink-0 relative rounded-lg overflow-hidden size-20">
@@ -318,7 +273,7 @@ export default function BlogPost() {
                     width={600}
                     height={600}
                     className="size-full absolute top-0 start-0 object-cover rounded-lg"
-                    src="/images/sada-fort-karnataka.png?height=220&width=320"
+                    src="/images/white_water_rafting.png?height=220&width=320"
                     alt="Blog Image"
                   />
                 </div>
@@ -327,7 +282,7 @@ export default function BlogPost() {
               {/* Media */}
               <Link
                 className="group flex items-center gap-x-6 focus:outline-none"
-                href="/blog/4"
+                href="/blog/spice-of-life-a-culinary-journey-through-goan-cuisine"
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">
