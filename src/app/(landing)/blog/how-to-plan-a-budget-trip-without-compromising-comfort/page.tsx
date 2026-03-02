@@ -247,7 +247,7 @@ export default function BlogPost() {
               {/* Media */}
               <Link
                 className="group flex items-center gap-x-6 focus:outline-none"
-                href="/blog/1"
+                href="/blog/top-5-reasons-why-homestays-are-better-than-hotels"
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">
@@ -268,7 +268,7 @@ export default function BlogPost() {
               {/* Media */}
               <Link
                 className="group flex items-center gap-x-6 focus:outline-none"
-                href="/blog/3"
+                href="/blog/how-to-choose-the-perfect-homestay-for-your-family-trip"
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">
@@ -289,7 +289,7 @@ export default function BlogPost() {
               {/* Media */}
               <Link
                 className="group flex items-center gap-x-6 focus:outline-none"
-                href="/blog/4"
+                href="/blog/spice-of-life-a-culinary-journey-through-goan-cuisine"
               >
                 <div className="grow">
                   <span className="text-base font-medium text-absluteDark font-bricolage group-hover:text-brightGreen group-focus:text-brightGreen ">
