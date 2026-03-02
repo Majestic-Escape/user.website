@@ -9,28 +9,28 @@ import SubHeading from "@/components/ui/sub-heading";
 
 const blogPosts = [
   {
-    id: 1,
+    path: "top-5-reasons-why-homestays-are-better-than-hotels",
     image: "/images/sada-fort-karnataka.png?height=220&width=320",
     category: "Stays",
     title: "Top 5 Reasons Why Homestays Are Better Than Hotels",
     date: "October 21, 2024",
   },
   {
-    id: 2,
+    path: "how-to-plan-a-budget-trip-without-compromising-comfort",
     image: "/images/img1.png?height=220&width=320",
     category: "Adventure",
     title: "How to Plan a Budget Trip Without Compromising Comfort",
     date: "October 20, 2024",
   },
   {
-    id: 3,
+    path: "how-to-choose-the-perfect-homestay-for-your-family-trip",
     image: "/images/white_water_rafting.png?height=220&width=320",
     category: "Adventure",
-    title: "Waves and Wheels: Goa's Best Water Sports and Bike Tours",
+    title: "How to Choose the Perfect Homestay for your Family Trip",
     date: "October 19, 2024",
   },
   {
-    id: 4,
+    path: "spice-of-life-a-culinary-journey-through-goan-cuisine",
     image: "/images/Fish-curry.jpg?height=220&width=320",
     category: "Food",
     title: "Spice of Life: A Culinary Journey Through Goan Cuisine",
@@ -38,9 +38,9 @@ const blogPosts = [
   },
 ];
 
-function BlogCard({ id, image, category, title, date }) {
+function BlogCard({ path, image, category, title, date }) {
   return (
-    <Link href={`/blog/${id}`} className="w-full flex-shrink-0">
+    <Link href={`/blog/${path}`} className="w-full flex-shrink-0">
       <div className="flex flex-col overflow-hidden rounded-lg">
         <Image
           width={500}
@@ -81,7 +81,7 @@ export default function Blogs() {
           <div className="mx-auto">
             <div className="mb-12">
               <Heading text="Stories & Insights" />
-              <SubHeading text="Handpicked luxury stays in the pearl of the orient" />
+              <SubHeading text="Handpick luxury stays in the pearl of the orient" />
             </div>
 
             <div className="relative">
@@ -96,9 +96,9 @@ export default function Blogs() {
                   }}
                 >
                   {blogPosts.map((post) => (
-                    <div key={post.id} className=" px-2">
+                    <div key={post.path} className=" px-2">
                       <BlogCard
-                        id={post.id}
+                        path={post.path}
                         image={post.image}
                         category={post.category}
                         title={post.title}
