@@ -9,6 +9,7 @@ const blogPosts = [
     id: 1,
     image: "/images/sada-fort-karnataka.png?height=220&width=320",
     category: "Stays",
+    route: "top-5-reasons-why-homestays-are-better-than-hotels",
     title: "Top 5 Reasons Why Homestays Are Better Than Hotels",
     date: "October 21, 2024",
   },
@@ -16,6 +17,7 @@ const blogPosts = [
     id: 2,
     image: "/images/img1.png?height=220&width=320",
     category: "Adventure",
+    route: "how-to-plan-a-budget-trip-without-compromising-comfort",
     title: "How to Plan a Budget Trip Without Compromising Comfort",
     date: "October 20, 2024",
   },
@@ -23,6 +25,7 @@ const blogPosts = [
     id: 3,
     image: "/images/white_water_rafting.png?height=220&width=320",
     category: "Adventure",
+    route: "how-to-choose-the-perfect-homestay-for-your-family-trip",
     title: "How to Choose the Perfect Homestay for Your Family Trip",
     date: "October 19, 2024",
   },
@@ -30,6 +33,7 @@ const blogPosts = [
     id: 4,
     image: "/images/Fish-curry.jpg?height=220&width=320",
     category: "Food",
+    route: "spice-of-life-a-culinary-journey-through-goan-cuisine",
     title: "Spice of Life: A Culinary Journey Through Goan Cuisine",
     date: "October 18, 2024",
   },
@@ -49,7 +53,7 @@ export default function BlogPage() {
           {blogPosts.map((post) => (
             <Link
               key={post.id}
-              href={`/blog/${post.id}`}
+              href={`/blog/${post.route}`}
               className="group block rounded-xl overflow-hidden focus:outline-none focus:bg-[#fafafa]"
             >
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
