@@ -1,0 +1,24 @@
+{
+  "redirects": [
+    {
+      "source": "/blog/1",
+      "destination": "/blog/top-5-reasons-why-homestays-are-better-than-hotels",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/2",
+      "destination": "/blog/how-to-plan-a-budget-trip-without-compromising-comfort",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/3",
+      "destination": "/blog/top-5-reasons-why-homestays-are-better-than-hotels",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/4",
+      "destination": "/blog/spice-of-life-a-culinary-journey-through-goan-cuisine",
+      "statusCode": 301
+    }
+  ]
+}
