@@ -68,7 +68,7 @@ export default function HeroSection() {
           unoptimized
         />
         <Image
-          src="/images/hero/Artboard_1.png"
+          src="/images/hero/Artboard_Mob.png"
           alt="Full width image"
           width={1920} // Set your image dimensions
           height={1920}
