@@ -58,22 +58,24 @@ export default function HeroSection() {
           priority
         /> */}
         <Image
-          src="/images/hero/KUNO-WEB-DESKTOP-1.png"
+          src="/images/hero/SOU_WEB_BANNER.png"
           alt="Full width image"
           width={1920} // Set your image dimensions
           height={1080}
           className="hidden md:block -pt-2 md:pt-8 lg:-pt-2 w-full h-auto object-contain"
           sizes="100vw"
           priority
+          unoptimized
         />
         <Image
-          src="/images/hero/KUNO-MBL-FIN.png"
+          src="/images/hero/Artboard_Mob.png"
           alt="Full width image"
           width={1920} // Set your image dimensions
           height={1920}
           className="block md:hidden pt-6 w-full h-auto object-contain"
           sizes="100vw"
           priority
+          unoptimized
         />
         {/* <ChatSimulator /> */}
       </div>
