@@ -17,7 +17,7 @@ export const propertyService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to fetch properties"
+        error.response?.data?.message || "Failed to fetch properties",
       );
     }
   },
@@ -28,12 +28,12 @@ export const propertyService = {
         `${API_BASE_URL}/properties/front/dynamic`,
         {
           params,
-        }
+        },
       );
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to fetch properties"
+        error.response?.data?.message || "Failed to fetch properties",
       );
     }
   },
@@ -46,7 +46,7 @@ export const propertyService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to fetch properties"
+        error.response?.data?.message || "Failed to fetch properties",
       );
     }
   },
@@ -57,7 +57,7 @@ export const propertyService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to fetch property"
+        error.response?.data?.message || "Failed to fetch property",
       );
     }
   },
@@ -68,12 +68,12 @@ export const propertyService = {
     try {
       const response = await axios.post(
         `${API_BASE_URL}/properties/create-listing-property/`,
-        propertyData
+        propertyData,
       );
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to create property"
+        error.response?.data?.message || "Failed to create property",
       );
     }
   },
@@ -83,12 +83,12 @@ export const propertyService = {
       // console.group("back", propertyData);
       const response = await axios.put(
         `${API_BASE_URL}/properties/update-listing-property/${id}?submit=${submit}&status=${status}`,
-        propertyData
+        propertyData,
       );
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to update property"
+        error.response?.data?.message || "Failed to update property",
       );
     }
   },
@@ -96,12 +96,12 @@ export const propertyService = {
   updateKyc: async (id) => {
     try {
       const response = await axios.patch(
-        `${API_BASE_URL}/properties/update-kyc-property/${id}`
+        `${API_BASE_URL}/properties/update-kyc-property/${id}`,
       );
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to update property"
+        error.response?.data?.message || "Failed to update property",
       );
     }
   },
@@ -111,12 +111,12 @@ export const propertyService = {
         `${API_BASE_URL}/properties/user-properties/${userEmail}`,
         {
           params: { page, limit },
-        }
+        },
       );
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to fetch user listings"
+        error.response?.data?.message || "Failed to fetch user listings",
       );
     }
   },
@@ -128,7 +128,7 @@ export const propertyService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to fetch user listing"
+        error.response?.data?.message || "Failed to fetch user listing",
       );
     }
   },
