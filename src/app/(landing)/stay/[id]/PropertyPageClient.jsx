@@ -288,7 +288,7 @@ export default function PropertyPageClient() {
   const getMetaTags = () => {
     if (!propertyData) return null;
 
-    const siteUrl = `https://user.me.coderelix.in/`;
+    const siteUrl = `https://majesticescape.in/`;
     const propertyUrl = `${siteUrl}/properties/${propertyId}`;
     const propertyImage = propertyData?.photos?.[0] || "/default-property.jpg";
     const absoluteImageUrl = propertyImage.startsWith("http")
