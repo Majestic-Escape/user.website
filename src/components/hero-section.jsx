@@ -58,7 +58,7 @@ export default function HeroSection() {
           priority
         /> */}
         <Image
-          src="/images/hero/SOU_WEB_BANNER.png"
+          src="/images/hero/SOU_WEB_BANNER.jpg"
           alt="Full width image"
           width={1920} // Set your image dimensions
           height={1080}
