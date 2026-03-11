@@ -68,7 +68,7 @@ export default function StayCard({ property, includeTaxes }) {
     isInWishlist(property?._id, "stays") ||
     isInWishlist(property?._id, "experiences") ||
     Object.keys(wishlists.folders).some((folderId) =>
-      isInWishlist(property?._id, folderId)
+      isInWishlist(property?._id, folderId),
     );
 
   const handleWishlist = (e) => {
@@ -108,6 +108,11 @@ export default function StayCard({ property, includeTaxes }) {
   }, [property?._id]);
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log(property);
+  }
+
+  function convertToUpperCase(item) {
+    const newItem = item[0]?.toUpperCase() + item.slice(1);
+    return newItem;
   }
   return (
     <div
@@ -169,13 +174,15 @@ export default function StayCard({ property, includeTaxes }) {
           <div className="w-full">
             <h3 className=" mt-1 font-medium  text-graphite w-full overflow-hidden">
               <span className="block truncate text-ellipsis whitespace-nowrap">
-                {property?.title}
+                {convertToUpperCase(property?.propertyType)} in{" "}
+                {convertToUpperCase(property?.address?.city)}
               </span>
             </h3>
             <p className="text-sm mb-0.5 flex justify-start gap-x-1 items-center text-stone">
               <MapPin className="w-4 h-auto  inline-block mr-1 align-middle hover:text-stone text-stone" />
               <span className="text-stone text-sm">
-                {property?.address?.city}, {property?.address?.state}
+                {convertToUpperCase(property?.address?.city)},{" "}
+                {convertToUpperCase(property?.address?.state)}
               </span>
             </p>
             <p className="text-gray-600">
