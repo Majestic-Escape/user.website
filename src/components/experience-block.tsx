@@ -18,11 +18,19 @@ type BookingModalProps = {
 
 function BookingModal({ isOpen, onClose }: BookingModalProps) {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    location: "",
+    name: "",
+    email: "",
+    phone: "",
+    traveller_type: "",
+    source: "Facebook",
   });
-
+  const [errors, setErrors] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    traveller_type: "",
+  });
+  const [loading, setLoading] = useState(false);
   // Use a ref to store the scroll position
   const scrollPositionRef = useRef(0);
 
@@ -73,14 +81,82 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
     };
   }, [isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   console.log("Form submitted:", formData);
+  //   // Add your form submission logic here
+  //   // alert(
+  //   //   `Booking submitted for ${formData.name} at ${formData.location}`,
+  //   // );
+  //   onClose();
+  // };
+  const validate = () => {
+    const newErrors = {
+      name: "",
+      email: "",
+      phone: "",
+      traveller_type: "",
+    };
+
+    const nameRegex = /^[A-Za-z\s]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^[0-9]{10}$/;
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    } else if (!nameRegex.test(formData.name)) {
+      newErrors.name = "Name should contain only letters";
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Enter a valid email address";
+    }
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (!phoneRegex.test(formData.phone)) {
+      newErrors.phone = "Phone must be 10 digits";
+    }
+
+    if (!formData.traveller_type) {
+      newErrors.traveller_type = "Select tour type";
+    }
+
+    setErrors(newErrors);
+
+    return !newErrors.name && !newErrors.email && !newErrors.phone;
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Add your form submission logic here
-    alert(
-      `Booking submitted for ${formData.firstName} ${formData.lastName} at ${formData.location}`,
-    );
-    onClose();
+    if (!validate()) return;
+    setLoading(true);
+
+    try {
+      const res = await fetch(
+        "https://live-am.coderelix.com/webhook/6ddb7f90-fb17-4209-8f0d-685bf79a4659",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        },
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to submit");
+      }
+
+      console.log("Form submitted successfully", res);
+
+      onClose(); // close modal
+    } catch (error) {
+      console.error("Submission error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle Escape key
@@ -128,44 +204,72 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <div>
                 <label
-                  htmlFor="firstName"
+                  htmlFor="name"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  First Name
+                  Name
                 </label>
                 <input
                   type="text"
-                  id="firstName"
+                  id="name"
                   required
-                  value={formData.firstName}
+                  value={formData.name}
                   onChange={(e) =>
-                    setFormData({ ...formData, firstName: e.target.value })
+                    setFormData({ ...formData, name: e.target.value })
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:border-transparent"
                   placeholder="John"
                 />
+                {errors.name && (
+                  <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                )}
               </div>
               <div>
                 <label
-                  htmlFor="lastName"
+                  htmlFor="email"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Last Name
+                  Email
                 </label>
                 <input
                   type="text"
-                  id="lastName"
+                  id="email"
                   required
-                  value={formData.lastName}
+                  value={formData.email}
                   onChange={(e) =>
-                    setFormData({ ...formData, lastName: e.target.value })
+                    setFormData({ ...formData, email: e.target.value })
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:border-transparent"
-                  placeholder="Doe"
+                  placeholder="abc@email.com"
                 />
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Contact Number
+                </label>
+                <input
+                  type="text"
+                  id="phone"
+                  required
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:border-transparent"
+                  placeholder=""
+                />
+                {errors.phone && (
+                  <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                )}
               </div>
             </div>
 
@@ -174,14 +278,14 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
                 htmlFor="location"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Select Location
+                Select Travel Type
               </label>
               <select
                 id="location"
                 required
-                value={formData.location}
+                value={formData.traveller_type}
                 onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
+                  setFormData({ ...formData, traveller_type: e.target.value })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:border-transparent"
               >
@@ -192,13 +296,19 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
                   </option>
                 ))}
               </select>
+              {errors.traveller_type && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.traveller_type}
+                </p>
+              )}
             </div>
 
             <button
               type="submit"
+              disabled={loading}
               className="w-full mt-6 px-4 py-3 font-medium text-white bg-primaryGreen rounded-lg hover:bg-brightGreen transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:ring-offset-2"
             >
-              Submit Booking
+              {loading ? "Submitting..." : "Submit Booking"}
             </button>
           </form>
         </div>
@@ -221,30 +331,26 @@ function ImageTextSection({ images, items }: ImageTextSectionProps) {
 
   return (
     <>
-      <div className="w-full md:flex border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+      <div className="w-full md:flex md:items-stretch border border-gray-200 rounded-lg overflow-hidden shadow-sm">
         {/* LEFT SECTION */}
-        <div className="w-full md:w-[30%] relative border-r border-gray-200 bg-gray-50">
-          {/* This div will take the full height of its parent */}
-          <div className="relative w-full h-full ">
-            <Image
-              src={images[index]}
-              alt={`Slide ${index + 1}`}
-              fill
-              className="object-cover "
-              sizes="(max-width: 768px) 100vw, 30vw"
-              // priority
-              unoptimized
-            />
-          </div>
+        {/* LEFT SECTION */}
+        <div className="w-full md:w-[50%] relative border-r border-gray-200 bg-gray-50 flex h-[320px] md:h-auto">
+          <Image
+            src={images[index]}
+            alt={`Slide ${index + 1}`}
+            width={1024}
+            height={768}
+            className="w-full h-auto"
+            unoptimized
+          />
 
-          {/* Navigation - only show if there's more than one image */}
+          {/* Navigation */}
           {images.length > 1 && (
             <>
               {index !== 0 && (
                 <button
                   onClick={prev}
                   className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow rounded-full w-10 h-10 flex items-center justify-center text-xl z-10"
-                  aria-label="Previous image"
                 >
                   ‹
                 </button>
@@ -254,7 +360,6 @@ function ImageTextSection({ images, items }: ImageTextSectionProps) {
                 <button
                   onClick={next}
                   className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow rounded-full w-10 h-10 flex items-center justify-center text-xl z-10"
-                  aria-label="Next image"
                 >
                   ›
                 </button>
@@ -264,7 +369,7 @@ function ImageTextSection({ images, items }: ImageTextSectionProps) {
         </div>
 
         {/* RIGHT SECTION */}
-        <div className="w-full md:w-[70%] p-6 md:p-10">
+        <div className="w-full md:w-[50%] p-6 md:p-10">
           <div className="text-xl md:text-2xl pb-4 md:pb-8 font-semibold">
             Rann Utsav
           </div>
@@ -318,7 +423,7 @@ export default function Component() {
         <div className="mt-12">
           <ImageTextSection
             images={[
-              "/images/hero/Artboard_Mob.png",
+              "/images/hero/1024.jpg",
               "/images/govt/rann_utsav.png",
               "/images/govt/evoke.png",
             ]}
@@ -334,7 +439,7 @@ export default function Component() {
           <div className="mt-16">
             <ImageTextSection
               images={[
-                "/images/govt/evoke.png",
+                "/images/hero/SOU_WEB_BANNER.jpg",
                 "/images/govt/rann_utsav.png",
                 "/images/govt/evoke.png",
               ]}
