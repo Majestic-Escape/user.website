@@ -1,5 +1,6 @@
 "use client";
 import Hero from "@/components/experience-hero";
+import Block from "@/components/experience-block";
 import Blogs from "@/components/blogs";
 import Newsletter from "@/components/newsletter";
 import { ExpHero } from "@/components/exp-hero";
@@ -14,7 +15,8 @@ export default function Component() {
       <main>
         {/*className="pt-16"*/}
         <ExpHero />
-        <Hero />
+        {/* <Hero /> */}
+        <Block />
       </main>
       {/* <ExperienceSection /> */}
       {/* <ExperienceSoulTraveling /> */}

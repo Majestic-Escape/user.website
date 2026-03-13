@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import FilterModal from "@/components/ui/modal";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-export default function FarmHouse() {
+export default function FarmHouse({ locationName }) {
   const searchParams = useSearchParams();
   const from = searchParams.get("from");
   const to = searchParams.get("to");
@@ -55,7 +55,7 @@ export default function FarmHouse() {
           `${API_URL}/properties/search-properties`,
           {
             params: {
-              location: location,
+              location: locationName ? locationName : location,
               from: from ? new Date(from).toISOString() : undefined,
               to: to ? new Date(to).toISOString() : undefined,
               guests: guests,

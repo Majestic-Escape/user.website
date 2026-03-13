@@ -76,11 +76,11 @@ export default function LocalRules() {
                         24 hours.
                       </p>
                       <Link
-                        href="mailto:support@majesticescape.com"
+                        href="mailto:support@majesticescape.in"
                         target="_blank"
                         className="w-full bg-primaryGreen py-2 px-3 rounded-3xl hover:bg-brightGreen transition-colors text-sm text-white"
                       >
-                        support@majesticescape.com
+                        support@majesticescape.in
                       </Link>
                     </div>
                   </CardContent>

@@ -90,7 +90,7 @@ export default function Component() {
 
   const prevSlide = () => {
     setStartIndex(
-      (prevIndex) => (prevIndex - 1 + properties.length) % properties.length
+      (prevIndex) => (prevIndex - 1 + properties.length) % properties.length,
     );
   };
 

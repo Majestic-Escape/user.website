@@ -67,6 +67,7 @@ export default function Layout({ children }) {
 
   const mainPage = pathname == "/";
   const isFilter = pathname.startsWith("/filter");
+  const isLocation = pathname.startsWith("/location/");
 
   function useMediaQuery(query) {
     useEffect(() => {
@@ -87,7 +88,7 @@ export default function Layout({ children }) {
     <QueryClientProvider client={queryClient}>
       <div className="font-poppins">
         <div>
-          {isStayDetailPage || mainPage || isFilter ? (
+          {isStayDetailPage || mainPage || isFilter || isLocation ? (
             !isMobile ? (
               <Navbar />
             ) : null
