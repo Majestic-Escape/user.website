@@ -511,11 +511,11 @@ function ImageTextSection(data: ImageTextSectionProps) {
               </div>
             ))} */}
           </div>
-          <div className="lg:flex space-x-5 lg:justify-end">
+          <div className="lg:flex md:space-x-5 lg:justify-end">
             <button
               onClick={() => setIsModalActivityOpen(true)}
               className={
-                "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-2 sm:px-6 md:px-6 py-2 sm:py-3 md:mr-0 font-medium text-white bg-primaryGreen rounded-full hover:bg-brightGreen transition-colors duration-300 cursor-pointer"
+                "text-sm mb-6 md:mb-0 w-full sm:w-64 md:text-base text-center sm:mr-4 px-2 sm:px-6 md:px-6 py-2 sm:py-3 md:mr-0 font-medium text-white bg-primaryGreen rounded-full hover:bg-brightGreen transition-colors duration-300 cursor-pointer"
               }
             >
               Activities
