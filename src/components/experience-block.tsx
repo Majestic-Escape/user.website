@@ -19,7 +19,7 @@ type BookingModalProps = {
   onClose: () => void;
 };
 const data = {
-  images: ["/images/hero/CHARDHAM_2.jpg", "/images/hero/CHARDHAM_5.jpg"],
+  images: ["/images/tour/CHARDHAM_1.jpg", "/images/tour/CHARDHAM_2.jpg"],
   items: [
     "5 Nights/6 Days",
     "Ex-Haridwar",
