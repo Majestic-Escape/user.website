@@ -2,12 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Dot, X } from "lucide-react";
+import { Check, Dot, X } from "lucide-react";
 import Heading from "@/components/ui/heading";
 
 type ImageTextSectionProps = {
   images: string[];
   items: string[];
+  disabled: boolean;
+  title: string;
+  content: string;
 };
 
 // Modal Component
@@ -15,7 +18,46 @@ type BookingModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
+const data = {
+  images: ["/images/hero/CHARDHAM_2.jpg", "/images/hero/CHARDHAM_5.jpg"],
+  items: [
+    "5 Nights/6 Days",
+    "Ex-Haridwar",
+    "Explore Yamunotri, Gangotri, Kedarnath & Badrinath",
+    "All-inclusive package (transport, accommodation, meals)",
+    "Guided temple tours",
+  ],
+  title: "Char Dham Yatra",
+  content: `Embark on a dive pilgrimage with our Char Dham Yatra package
+            starting from Haridwar. In 5 nights and 6 days, you'll visit the
+            sacred shrines of Yamunotri, Gangotri, Kedarnath and Badrinath. This
+            meticulously curated journey includes comfortable accommodations,
+            seamless transfers and guided tours, ensuring you experience the
+            spiritual essence of the Himalayas.`,
+  disabled: false,
+};
+const data2 = {
+  images: [
+    "/images/tour/rann_utsav_1.jpg",
+    "/images/tour/rann_utsav_2.jpg",
+    "/images/tour/rann_utsav_3.jpg",
+  ],
+  items: [
+    "White Desert experience at the Great Rann of Kutch",
+    "Cultural festival with folk music, dance & craft exhibitions",
+    "Stay in luxury desert tents at Dhordo Tent City",
+    "Camel rides, ATV rides & desert safaris",
+    "Visit craft villages & traditional Kutchi markets",
+  ],
+  title: "Rann Utsav",
+  content: `Experience the magical charm of the White Desert with our specially curated Rann Utsav journey 
+  in Gujarat’s Kutch region. Held in Dhordo near the Great Rann of Kutch, this vibrant festival celebrates 
+  the region’s rich culture, traditions, and natural beauty through music, dance, crafts, and unforgettable 
+  desert landscapes.`,
+  disabled: true,
+};
 
+const sections = [data, data2];
 function BookingModal({ isOpen, onClose }: BookingModalProps) {
   const [formData, setFormData] = useState({
     name: "",
@@ -34,14 +76,7 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
   // Use a ref to store the scroll position
   const scrollPositionRef = useRef(0);
 
-  const locations = [
-    "Rann Utsav - White Desert",
-    "Kerala Backwaters",
-    "Goa Beaches",
-    "Rajasthan Palaces",
-    "Himalayan Treks",
-    "Andaman Islands",
-  ];
+  const locations = ["Solo", "Couple", "Family", "Group", "Corporate"];
 
   // Lock scroll when modal opens
   useEffect(() => {
@@ -221,7 +256,7 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:border-transparent"
-                  placeholder="John"
+                  placeholder="Enter your name"
                 />
                 {errors.name && (
                   <p className="text-red-500 text-sm mt-1">{errors.name}</p>
@@ -243,7 +278,7 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
                     setFormData({ ...formData, email: e.target.value })
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:border-transparent"
-                  placeholder="abc@email.com"
+                  placeholder="Enter your email id"
                 />
                 {errors.email && (
                   <p className="text-red-500 text-sm mt-1">{errors.email}</p>
@@ -265,7 +300,7 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
                     setFormData({ ...formData, phone: e.target.value })
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:border-transparent"
-                  placeholder=""
+                  placeholder="Enter your WhatsApp number"
                 />
                 {errors.phone && (
                   <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
@@ -289,7 +324,7 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:border-transparent"
               >
-                <option value="">Choose a location</option>
+                <option value="">Traveller Type</option>
                 {locations.map((loc) => (
                   <option key={loc} value={loc}>
                     {loc}
@@ -317,26 +352,26 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
   );
 }
 
-function ImageTextSection({ images, items }: ImageTextSectionProps) {
+function ImageTextSection(data: ImageTextSectionProps) {
   const [index, setIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const next = () => {
-    setIndex((prev) => (prev + 1) % images.length);
+    setIndex((prev) => (prev + 1) % data.images.length);
   };
 
   const prev = () => {
-    setIndex((prev) => (prev - 1 + images.length) % images.length);
+    setIndex((prev) => (prev - 1 + data.images.length) % data.images.length);
   };
 
   return (
     <>
-      <div className="w-full md:flex md:items-stretch border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+      <div className="w-full lg:flex lg:items-stretch border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         {/* LEFT SECTION */}
         {/* LEFT SECTION */}
-        <div className="w-full md:w-[50%] relative border-r border-gray-200 bg-gray-50 flex h-[320px] md:h-auto">
+        <div className="w-full lg:w-[50%] relative border-r border-gray-200 bg-gray-50 flex h-[220px] md:h-[420px] lg:h-auto">
           <Image
-            src={images[index]}
+            src={data.images[index]}
             alt={`Slide ${index + 1}`}
             width={1024}
             height={768}
@@ -345,7 +380,7 @@ function ImageTextSection({ images, items }: ImageTextSectionProps) {
           />
 
           {/* Navigation */}
-          {images.length > 1 && (
+          {data.images.length > 1 && (
             <>
               {index !== 0 && (
                 <button
@@ -356,7 +391,7 @@ function ImageTextSection({ images, items }: ImageTextSectionProps) {
                 </button>
               )}
 
-              {index < images.length - 1 && (
+              {index < data.images.length - 1 && (
                 <button
                   onClick={next}
                   className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow rounded-full w-10 h-10 flex items-center justify-center text-xl z-10"
@@ -369,37 +404,35 @@ function ImageTextSection({ images, items }: ImageTextSectionProps) {
         </div>
 
         {/* RIGHT SECTION */}
-        <div className="w-full md:w-[50%] p-6 md:p-10">
+        <div className="w-full lg:w-[50%] p-6 md:p-10">
           <div className="text-xl md:text-2xl pb-4 md:pb-8 font-semibold">
-            Rann Utsav
+            {data?.title}
           </div>
-          <div className="text-base md:text-lg pb-6 md:pb-8 text-gray-600">
-            Nestled within the surreal serenity of the White Rann, every stay
-            here is a sensory escape. If you're searching for the best tent in
-            the Rann of Kutch, you've arrived at the right place. At Rann
-            Utsav-The Tent City, accommodations range from tastefully furnished
-            premium tents with wooden interiors and soft linens to regal rajwadi
-            suites, which exude royal charm with spacious living areas and
-            curated artefacts. Each option is designed for comfort, privacy, and
-            a unique experience.
+          <div className="text-base md:text-lg text-justify lg:text-base pb-6 md:pb-8 text-gray-600">
+            {data?.content}
           </div>
-          <div className="pb-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-2 md:gap-y-1 gap-x-6 md:gap-x-10">
-            {items.map((item, i) => (
+          <div className="pb-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-y-2 md:gap-y-1 gap-x-6 md:gap-x-10">
+            {data?.items.map((item, i) => (
               <div
                 key={i}
-                className="flex items-center gap-1 md:gap-3 text-sm md:text-base text-gray-800 font-medium"
+                className="flex  gap-1 md:gap-3 text-sm md:text-base lg:text-base text-gray-800 font-medium"
               >
-                <Dot className="h-6 w-6 md:h-9 md:w-9 mr-1 md:mr-2 text-black shrink-0" />
+                <Check className="h-6 w-6 md:h-6 md:w-6 mr-1 md:mr-2 text-black shrink-0" />
                 <span>{item}</span>
               </div>
             ))}
           </div>
-          <div className="flex justify-end">
+          <div className="lg:flex lg:justify-end">
             <button
               onClick={() => setIsModalOpen(true)}
-              className="text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-4 sm:px-6 md:px-6 py-4 sm:py-3 font-medium text-white bg-primaryGreen rounded-full hover:bg-brightGreen transition-colors duration-300 cursor-pointer"
+              className={
+                data?.disabled
+                  ? "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-4 sm:px-6 md:px-6 py-4 sm:py-3 md:mr-0 font-medium text-black bg-white border-2 border-primaryGreen rounded-full  transition-colors duration-300 "
+                  : "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-4 sm:px-6 md:px-6 py-4 sm:py-3 md:mr-0 font-medium text-white bg-primaryGreen rounded-full hover:bg-brightGreen transition-colors duration-300 cursor-pointer"
+              }
+              disabled={data?.disabled}
             >
-              Book Now
+              {data?.disabled ? "Coming Soon" : "Get Itinerary"}
             </button>
           </div>
         </div>
@@ -419,41 +452,17 @@ export default function Component() {
     <div className="w-full font-poppins bg-white text-absolute-dark">
       <section id="experiences" className="px-4 sm:px-6 md:px-[72px] py-16">
         <Heading text="Exciting Experiences in India" />
-
-        <div className="mt-12">
-          <ImageTextSection
-            images={[
-              "/images/hero/1024.jpg",
-              "/images/govt/rann_utsav.png",
-              "/images/govt/evoke.png",
-            ]}
-            items={[
-              "Adventure Sports",
-              "River Rafting",
-              "Trekking",
-              "Wildlife Safari",
-              "Camping",
-              "Cultural Tours",
-            ]}
-          />
-          <div className="mt-16">
-            <ImageTextSection
-              images={[
-                "/images/hero/SOU_WEB_BANNER.jpg",
-                "/images/govt/rann_utsav.png",
-                "/images/govt/evoke.png",
-              ]}
-              items={[
-                "Adventure Sports",
-                "River Rafting",
-                "Trekking",
-                "Wildlife Safari",
-                "Camping",
-                "Cultural Tours",
-              ]}
-            />
+        {sections.map((section, i) => (
+          <div key={i} className="mt-16">
+            <ImageTextSection {...section} />
           </div>
-        </div>
+        ))}
+        {/* <div className="mt-12">
+          <ImageTextSection {...data} />
+          <div className="mt-16">
+            <ImageTextSection {...data2} />
+          </div>
+        </div> */}
       </section>
     </div>
   );
