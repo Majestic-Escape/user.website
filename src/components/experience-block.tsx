@@ -230,10 +230,10 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
           {/* Modal Header */}
           <div className="mb-6">
             <h3 className="text-2xl font-semibold text-gray-900">
-              Book Your Experience
+              Curate Your Experience
             </h3>
             <p className="text-sm text-gray-500 mt-1">
-              Fill in your details to proceed with booking
+              Fill in your details to proceed
             </p>
           </div>
 
@@ -313,7 +313,7 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
                 htmlFor="location"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Select Travel Type
+                Select Traveller Type
               </label>
               <select
                 id="location"
@@ -343,7 +343,7 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
               disabled={loading}
               className="w-full mt-6 px-4 py-3 font-medium text-white bg-primaryGreen rounded-lg hover:bg-brightGreen transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:ring-offset-2"
             >
-              {loading ? "Submitting..." : "Submit Booking"}
+              {loading ? "Submitting..." : "Get Itinerary"}
             </button>
           </form>
         </div>
@@ -369,12 +369,11 @@ function ImageTextSection(data: ImageTextSectionProps) {
       <div className="w-full lg:flex lg:items-stretch border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         {/* LEFT SECTION */}
         {/* LEFT SECTION */}
-        <div className="w-full lg:w-[50%] relative border-r border-gray-200 bg-gray-50 flex h-[220px] md:h-[420px] lg:h-auto">
+        <div className="w-full lg:w-[50%] relative border-r border-gray-200 bg-gray-50 flex  lg:h-auto">
           <Image
             src={data.images[index]}
             alt={`Slide ${index + 1}`}
-            width={1024}
-            height={768}
+            fill
             className="w-full h-auto"
             unoptimized
           />
