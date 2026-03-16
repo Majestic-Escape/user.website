@@ -465,7 +465,7 @@ function ImageTextSection(data: ImageTextSectionProps) {
           <img
             src={data.images[index]}
             alt={`Slide ${index + 1}`}
-            className="absolute inset-0 w-full  text-transparent"
+            className="w-full h-full object-cover"
           />
 
           {/* Navigation */}
