@@ -77,9 +77,10 @@ const LocationCard = ({ name, staysNearby, image, countData }) => {
   return (
     <div className="w-full flex-shrink-0 px-2 mb-4">
       <Link
-        href={`/filter?propertyType=${""}&location=${
+        href={`/location/${name ? name : ""}`}
+        /*/filter?propertyType=${""}&location=${
           name ? name : ""
-        }&from=${""}&to=${""}&adults=${""}&senior=${""}&children=${""}&infants=${""}`}
+        }&from=${""}&to=${""}&adults=${""}&senior=${""}&children=${""}&infants=${""} */
       >
         <div className="flex flex-col overflow-hidden ">
           <img

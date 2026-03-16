@@ -26,7 +26,7 @@ async function fetchProperty(id) {
 export async function generateMetadata({ params }) {
   try {
     const property = await fetchProperty(params.id);
-    const siteUrl = "http://localhost:3000" || "https://user.me.coderelix.in";
+    const siteUrl = process.env.NEXTAUTH_URL;
 
     return {
       title: `${property.title} | Majestic Escape`,
