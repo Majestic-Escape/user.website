@@ -369,7 +369,7 @@ function ImageTextSection(data: ImageTextSectionProps) {
       <div className="w-full lg:flex lg:items-stretch border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         {/* LEFT SECTION */}
         {/* LEFT SECTION */}
-        <div className="w-full lg:w-[50%] relative border-r border-gray-200 bg-gray-50 flex  lg:h-auto">
+        <div className="w-full lg:w-[50%] relative border-r border-gray-200 bg-gray-50 flex  h-[220px] md:h-[420px] lg:h-auto">
           <Image
             src={data.images[index]}
             alt={`Slide ${index + 1}`}
