@@ -18,6 +18,12 @@ type BookingModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
+
+type ActivityModalProps = {
+  data: string[];
+  isOpen: boolean;
+  onClose: () => void;
+};
 const data = {
   images: ["/images/tour/CHARDHAM_1.jpg", "/images/tour/CHARDHAM_2.jpg"],
   items: [
@@ -30,10 +36,7 @@ const data = {
   title: "Char Dham Yatra",
   content: `Embark on a dive pilgrimage with our Char Dham Yatra package
             starting from Haridwar. In 5 nights and 6 days, you'll visit the
-            sacred shrines of Yamunotri, Gangotri, Kedarnath and Badrinath. This
-            meticulously curated journey includes comfortable accommodations,
-            seamless transfers and guided tours, ensuring you experience the
-            spiritual essence of the Himalayas.`,
+            sacred shrines of Yamunotri, Gangotri, Badrinath. `,
   disabled: false,
 };
 const data2 = {
@@ -51,9 +54,7 @@ const data2 = {
   ],
   title: "Rann Utsav",
   content: `Experience the magical charm of the White Desert with our specially curated Rann Utsav journey 
-  in Gujarat’s Kutch region. Held in Dhordo near the Great Rann of Kutch, this vibrant festival celebrates 
-  the region’s rich culture, traditions, and natural beauty through music, dance, crafts, and unforgettable 
-  desert landscapes.`,
+  in Gujarat’s Kutch region. Held in Dhordo near the Great Rann of Kutch.`,
   disabled: true,
 };
 
@@ -351,10 +352,101 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
     </div>
   );
 }
+function ActivityModal({ data, isOpen, onClose }: ActivityModalProps) {
+  const [loading, setLoading] = useState(false);
+  // Use a ref to store the scroll position
+  const scrollPositionRef = useRef(0);
 
+  // Lock scroll when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      // Store the current scroll position in the ref
+      scrollPositionRef.current = window.scrollY;
+
+      // Get the current width to prevent layout shift
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
+
+      // Lock the scroll on both body and html
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.documentElement.style.paddingRight = `${scrollbarWidth}px`;
+
+      // Don't set position relative and top on body - this causes the jumping
+      // Instead, just prevent scrolling and let the modal handle positioning
+    } else {
+      // Restore scroll position
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      document.body.style.paddingRight = "";
+      document.documentElement.style.paddingRight = "";
+
+      // Scroll back to the saved position instantly
+      window.scrollTo(0, scrollPositionRef.current);
+    }
+
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      document.body.style.paddingRight = "";
+      document.documentElement.style.paddingRight = "";
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={onClose}
+      />
+
+      {/* Modal - Center it properly */}
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left shadow-xl transition-all">
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          {/* Modal Header */}
+          <div className="mb-6">
+            <h3 className="text-2xl font-semibold text-gray-900">
+              Things to Experience
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">List of activities</p>
+          </div>
+
+          {/* Form */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-3">
+              {data.map((item: string, i: number) => (
+                <div
+                  key={i}
+                  className="flex  gap-1 md:gap-3 text-sm md:text-base lg:text-base text-gray-800 font-medium"
+                >
+                  <Check className="h-6 w-6 md:h-6 md:w-6 mr-1 md:mr-2 text-black shrink-0" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 function ImageTextSection(data: ImageTextSectionProps) {
   const [index, setIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalActivityOpen, setIsModalActivityOpen] = useState(false);
 
   const next = () => {
     setIndex((prev) => (prev + 1) % data.images.length);
@@ -370,12 +462,10 @@ function ImageTextSection(data: ImageTextSectionProps) {
         {/* LEFT SECTION */}
         {/* LEFT SECTION */}
         <div className="w-full lg:w-[50%] relative border-r border-gray-200 bg-gray-50 flex  h-[220px] md:h-[420px] lg:h-auto">
-          <Image
+          <img
             src={data.images[index]}
             alt={`Slide ${index + 1}`}
-            fill
-            className="w-full h-auto"
-            unoptimized
+            className="absolute inset-0 w-full  text-transparent"
           />
 
           {/* Navigation */}
@@ -404,14 +494,14 @@ function ImageTextSection(data: ImageTextSectionProps) {
 
         {/* RIGHT SECTION */}
         <div className="w-full lg:w-[50%] p-6 md:p-10">
-          <div className="text-xl md:text-2xl pb-4 md:pb-8 font-semibold">
+          <div className="text-lg md:text-xl pb-4 md:pb-8 font-semibold">
             {data?.title}
           </div>
-          <div className="text-base md:text-lg text-justify lg:text-base pb-6 md:pb-8 text-gray-600">
+          <div className="text-base md:text-base text-justify lg:text-base pb-6 md:pb-8 text-gray-600">
             {data?.content}
           </div>
-          <div className="pb-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-y-2 md:gap-y-1 gap-x-6 md:gap-x-10">
-            {data?.items.map((item, i) => (
+          <div className="pb-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-y-2 md:gap-y-1 gap-x-6 md:gap-x-10">
+            {/* {data?.items.map((item, i) => (
               <div
                 key={i}
                 className="flex  gap-1 md:gap-3 text-sm md:text-base lg:text-base text-gray-800 font-medium"
@@ -419,15 +509,23 @@ function ImageTextSection(data: ImageTextSectionProps) {
                 <Check className="h-6 w-6 md:h-6 md:w-6 mr-1 md:mr-2 text-black shrink-0" />
                 <span>{item}</span>
               </div>
-            ))}
+            ))} */}
           </div>
-          <div className="lg:flex lg:justify-end">
+          <div className="lg:flex space-x-5 lg:justify-end">
+            <button
+              onClick={() => setIsModalActivityOpen(true)}
+              className={
+                "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-2 sm:px-6 md:px-6 py-2 sm:py-3 md:mr-0 font-medium text-white bg-primaryGreen rounded-full hover:bg-brightGreen transition-colors duration-300 cursor-pointer"
+              }
+            >
+              Activities
+            </button>
             <button
               onClick={() => setIsModalOpen(true)}
               className={
                 data?.disabled
-                  ? "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-4 sm:px-6 md:px-6 py-4 sm:py-3 md:mr-0 font-medium text-black bg-white border-2 border-primaryGreen rounded-full  transition-colors duration-300 "
-                  : "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-4 sm:px-6 md:px-6 py-4 sm:py-3 md:mr-0 font-medium text-white bg-primaryGreen rounded-full hover:bg-brightGreen transition-colors duration-300 cursor-pointer"
+                  ? "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-2 sm:px-6 md:px-6 py-2 sm:py-3 md:mr-0 font-medium text-black bg-white border-2 border-primaryGreen rounded-full  transition-colors duration-300 "
+                  : "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-2 sm:px-6 md:px-6 py-2 sm:py-3 md:mr-0 font-medium text-white bg-primaryGreen rounded-full hover:bg-brightGreen transition-colors duration-300 cursor-pointer"
               }
               disabled={data?.disabled}
             >
@@ -441,6 +539,11 @@ function ImageTextSection(data: ImageTextSectionProps) {
       <BookingModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+      <ActivityModal
+        data={data.items}
+        isOpen={isModalActivityOpen}
+        onClose={() => setIsModalActivityOpen(false)}
       />
     </>
   );
