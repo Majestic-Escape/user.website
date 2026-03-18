@@ -16,6 +16,7 @@ type ImageTextSectionProps = {
 // Modal Component
 type BookingModalProps = {
   isOpen: boolean;
+  data: string;
   onClose: () => void;
 };
 
@@ -84,12 +85,13 @@ const rannUtsav = {
 };
 
 const sections = [data, doDhaam, unity, rannUtsav];
-function BookingModal({ isOpen, onClose }: BookingModalProps) {
+function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     traveller_type: "",
+    experience: "",
     source: "Facebook",
   });
   const [errors, setErrors] = useState({
@@ -97,7 +99,9 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
     email: "",
     phone: "",
     traveller_type: "",
+    experience: "",
   });
+
   const [loading, setLoading] = useState(false);
   // Use a ref to store the scroll position
   const scrollPositionRef = useRef(0);
@@ -157,6 +161,7 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
       email: "",
       phone: "",
       traveller_type: "",
+      experience: "",
     };
 
     const nameRegex = /^[A-Za-z\s]+$/;
@@ -363,6 +368,21 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
                 </p>
               )}
             </div>
+            <div>
+              <label
+                htmlFor="location"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Experience
+              </label>
+              <input
+                id="experience"
+                value={data}
+                onChange={(e) => setFormData({ ...formData, experience: data })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:border-transparent cursor-default"
+                readOnly
+              />
+            </div>
 
             <button
               type="submit"
@@ -472,7 +492,7 @@ function ImageTextSection(data: ImageTextSectionProps) {
   const [index, setIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalActivityOpen, setIsModalActivityOpen] = useState(false);
-
+  const [experienceType, setExperienceType] = useState("");
   const next = () => {
     setIndex((prev) => (prev + 1) % data.images.length);
   };
@@ -524,6 +544,13 @@ function ImageTextSection(data: ImageTextSectionProps) {
           </div>
           <div className="text-base md:text-base text-justify lg:text-base pb-6 md:pb-8 text-gray-600">
             {data?.content}
+            {data?.disabled ? (
+              <>
+                <br></br>
+                <br></br>
+                <b>(Note: Booking starts this June)</b>
+              </>
+            ) : null}
           </div>
           <div className="pb-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-y-2 md:gap-y-1 gap-x-6 md:gap-x-10">
             {/* {data?.items.map((item, i) => (
@@ -546,7 +573,10 @@ function ImageTextSection(data: ImageTextSectionProps) {
               Activities
             </button>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setIsModalOpen(true);
+                setExperienceType(data.title);
+              }}
               className={
                 data?.disabled
                   ? "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-2 sm:px-6 md:px-6 py-2 sm:py-3 md:mr-0 font-medium text-black bg-white border-2 border-primaryGreen rounded-full  transition-colors duration-300 "
@@ -554,7 +584,7 @@ function ImageTextSection(data: ImageTextSectionProps) {
               }
               disabled={data?.disabled}
             >
-              {data?.disabled ? "Starting from October" : "Get Itinerary"}
+              {data?.disabled ? "Coming Soon" : "Get Itinerary"}
             </button>
           </div>
         </div>
@@ -563,7 +593,10 @@ function ImageTextSection(data: ImageTextSectionProps) {
       {/* Booking Modal */}
       <BookingModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        data={experienceType}
+        onClose={() => {
+          setIsModalOpen(false);
+        }}
       />
       <ActivityModal
         data={data.items}
