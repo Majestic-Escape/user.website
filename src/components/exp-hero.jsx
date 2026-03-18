@@ -2,7 +2,7 @@ import Link from "next/link";
 import VideoBackground from "./experiences/video-bg";
 import { useRef } from "react";
 import { useEffect } from "react";
-
+import Image from "next/image";
 export function ExpHero() {
   // return (
   //   <section className="relative h-[500px] md:h-[80vh]  w-full">
@@ -38,76 +38,111 @@ export function ExpHero() {
   // );
   const playerRef = useRef(null);
 
-  useEffect(() => {
-    let player;
+  // useEffect(() => {
+  //   let player;
 
-    const initPlayer = () => {
-      if (playerRef.current) {
-        playerRef.current.destroy();
-      }
+  //   const initPlayer = () => {
+  //     if (playerRef.current) {
+  //       playerRef.current.destroy();
+  //     }
 
-      playerRef.current = new window.YT.Player("yt-player", {
-        videoId: "T-kulebBnxg",
-        playerVars: {
-          autoplay: 1,
-          mute: 1,
-          controls: 0,
-          modestbranding: 1,
-          rel: 0,
-          playsinline: 1,
-          start: 10,
-          end: 88,
-        },
-        events: {
-          onReady: (e) => {
-            e.target.mute();
-            e.target.seekTo(10);
-            e.target.playVideo();
-          },
-          onStateChange: (e) => {
-            if (e.data === window.YT.PlayerState.ENDED) {
-              e.target.seekTo(10);
-              e.target.playVideo();
-            }
-          },
-        },
-      });
-    };
+  //     playerRef.current = new window.YT.Player("yt-player", {
+  //       videoId: "T-kulebBnxg",
+  //       playerVars: {
+  //         autoplay: 1,
+  //         mute: 1,
+  //         controls: 0,
+  //         modestbranding: 1,
+  //         rel: 0,
+  //         playsinline: 1,
+  //         start: 10,
+  //         end: 88,
+  //       },
+  //       events: {
+  //         onReady: (e) => {
+  //           e.target.mute();
+  //           e.target.seekTo(10);
+  //           e.target.playVideo();
+  //         },
+  //         onStateChange: (e) => {
+  //           if (e.data === window.YT.PlayerState.ENDED) {
+  //             e.target.seekTo(10);
+  //             e.target.playVideo();
+  //           }
+  //         },
+  //       },
+  //     });
+  //   };
 
-    // ✅ If YT already loaded → init immediately
-    if (window.YT && window.YT.Player) {
-      initPlayer();
-    } else {
-      // Load API once
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      document.body.appendChild(tag);
+  //   // ✅ If YT already loaded → init immediately
+  //   if (window.YT && window.YT.Player) {
+  //     initPlayer();
+  //   } else {
+  //     // Load API once
+  //     const tag = document.createElement("script");
+  //     tag.src = "https://www.youtube.com/iframe_api";
+  //     document.body.appendChild(tag);
 
-      window.onYouTubeIframeAPIReady = initPlayer;
-    }
+  //     window.onYouTubeIframeAPIReady = initPlayer;
+  //   }
 
-    // ✅ Cleanup on route change
-    return () => {
-      if (playerRef.current) {
-        playerRef.current.destroy();
-        playerRef.current = null;
-      }
-    };
-  }, []);
+  //   // ✅ Cleanup on route change
+  //   return () => {
+  //     if (playerRef.current) {
+  //       playerRef.current.destroy();
+  //       playerRef.current = null;
+  //     }
+  //   };
+  // }, []);
 
   return (
-    <section className="relative mt-24 md:mt-0 h-[500px] md:h-[80vh] w-full overflow-hidden">
+    <section className="relative mt-24 md:mt-0 h-[500px] md:h-[85vh] w-full overflow-hidden">
       {/* Video Background */}
 
       <div className="absolute inset-0 z-0">
-        <div
+        {/* <div
           id="yt-player"
           className="absolute 
         top-1/2 left-1/2
         w-[320%] h-[280%] md:h-[200%] md:w-[280%] lg:h-[160%]
         -translate-x-1/2 -translate-y-1/2
         pointer-events-none"
-        />
+        /> */}
+        <div className="md:pt-46 w-screen -mx-[calc((100vw-100%)/2)] overflow-hidden">
+          <div className="w-full">
+            {/* <img src={"/images/govt/kuno_web.png"}/> */}
+            {/* <Image
+                  src="/images/govt/kuno_web_1.png"
+                  alt="Full width image"
+                  width={1920} // Set your image dimensions
+                  height={1080}
+                  className="-pt-2 md:pt-12 lg:-pt-2 w-full pt-2 h-auto object-contain"
+                  sizes="100vw"
+                  priority
+                /> */}
+            <Image
+              src="/images/hero/experience.jpg"
+              alt="Full width image"
+              width={1920} // Set your image dimensions
+              height={1080}
+              className="hidden md:block   w-full h-auto object-contain"
+              sizes="100vw"
+              priority
+              unoptimized
+            />
+            <Image
+              src="/images/hero/Artboard_Mob.png"
+              alt="Full width image"
+              width={1920} // Set your image dimensions
+              height={1920}
+              className="block md:hidden pt-6 w-full h-auto object-contain"
+              sizes="100vw"
+              priority
+              unoptimized
+            />
+            {/* <ChatSimulator /> */}
+          </div>
+        </div>
       </div>
       {/* src="https://www.youtube.com/embed/T-kulebBnxg?autoplay=1&mute=1&loop=1&start=10&end=88&playlist=T-kulebBnxg&controls=0&modestbranding=1&rel=0"
           title="YouTube video player"

@@ -16,6 +16,7 @@ type ImageTextSectionProps = {
 // Modal Component
 type BookingModalProps = {
   isOpen: boolean;
+  data: string;
   onClose: () => void;
 };
 
@@ -25,7 +26,10 @@ type ActivityModalProps = {
   onClose: () => void;
 };
 const data = {
-  images: ["/images/tour/CHARDHAM_1.jpg", "/images/tour/CHARDHAM_2.jpg"],
+  images: [
+    "/images/tour/CHARDHAM_1.jpg",
+    // "/images/tour/CHARDHAM_2.jpg"
+  ],
   items: [
     "5 Nights/6 Days",
     "Ex-Haridwar",
@@ -34,16 +38,41 @@ const data = {
     "Guided temple tours",
   ],
   title: "Char Dham Yatra",
-  content: `Embark on a dive pilgrimage with our Char Dham Yatra package
+  content: `Embark on a divine pilgrimage with our Char Dham Yatra package
             starting from Haridwar. In 5 nights and 6 days, you'll visit the
             sacred shrines of Yamunotri, Gangotri, Badrinath. `,
   disabled: false,
 };
-const data2 = {
+const doDhaam = {
+  images: ["/images/tour/do_dhaam.jpg"],
+  items: [
+    "5 Nights/6 Days",
+    "Visit Haridwar - Guptkashi/Sitapur",
+    "Explore Kedarnath & Badrinath",
+    "All-inclusive package (transport, accommodation, meals)",
+    "Guided temple tours",
+  ],
+  title: "Do Dham Yatra",
+  content: `Embark on a divine pilgrimage with our Do Dham Yatra package starting from Haridwar. In 5 nights and 6 days, you'll visit the sacred shrines of Kedarnath and Badrinath`,
+  disabled: false,
+};
+const unity = {
+  images: ["/images/tour/statue_of_unity.jpg"],
+  items: [
+    "Statue of Unity tour",
+    "Visit Valley of flowers and unity glow garden",
+    "Stay in royal cottage/premium villa",
+    "Enjoy jungle safari.",
+  ],
+  title: "Statue of Unity",
+  content: `Visit Statue of Unity dedicated to Sardar Vallabhbhai Patel, one of the most important leaders in Indian history.`,
+  disabled: false,
+};
+const rannUtsav = {
   images: [
     "/images/tour/rann_utsav_1.jpg",
-    "/images/tour/rann_utsav_2.jpg",
-    "/images/tour/rann_utsav_3.jpg",
+    // "/images/tour/rann_utsav_2.jpg",
+    // "/images/tour/rann_utsav_3.jpg",
   ],
   items: [
     "White Desert experience at the Great Rann of Kutch",
@@ -58,13 +87,14 @@ const data2 = {
   disabled: true,
 };
 
-const sections = [data, data2];
-function BookingModal({ isOpen, onClose }: BookingModalProps) {
+const sections = [data, doDhaam, unity, rannUtsav];
+function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     traveller_type: "",
+    experience: "",
     source: "Facebook",
   });
   const [errors, setErrors] = useState({
@@ -72,7 +102,9 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
     email: "",
     phone: "",
     traveller_type: "",
+    experience: "",
   });
+
   const [loading, setLoading] = useState(false);
   // Use a ref to store the scroll position
   const scrollPositionRef = useRef(0);
@@ -132,6 +164,7 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
       email: "",
       phone: "",
       traveller_type: "",
+      experience: "",
     };
 
     const nameRegex = /^[A-Za-z\s]+$/;
@@ -338,6 +371,21 @@ function BookingModal({ isOpen, onClose }: BookingModalProps) {
                 </p>
               )}
             </div>
+            <div>
+              <label
+                htmlFor="location"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Experience
+              </label>
+              <input
+                id="experience"
+                value={data}
+                onChange={(e) => setFormData({ ...formData, experience: data })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:border-transparent cursor-default"
+                readOnly
+              />
+            </div>
 
             <button
               type="submit"
@@ -447,7 +495,7 @@ function ImageTextSection(data: ImageTextSectionProps) {
   const [index, setIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalActivityOpen, setIsModalActivityOpen] = useState(false);
-
+  const [experienceType, setExperienceType] = useState("");
   const next = () => {
     setIndex((prev) => (prev + 1) % data.images.length);
   };
@@ -499,6 +547,13 @@ function ImageTextSection(data: ImageTextSectionProps) {
           </div>
           <div className="text-base md:text-base text-justify lg:text-base pb-6 md:pb-8 text-gray-600">
             {data?.content}
+            {data?.disabled ? (
+              <>
+                <br></br>
+                <br></br>
+                <b>(Note: Booking starts this June)</b>
+              </>
+            ) : null}
           </div>
           <div className="pb-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-y-2 md:gap-y-1 gap-x-6 md:gap-x-10">
             {/* {data?.items.map((item, i) => (
@@ -521,7 +576,10 @@ function ImageTextSection(data: ImageTextSectionProps) {
               Activities
             </button>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setIsModalOpen(true);
+                setExperienceType(data.title);
+              }}
               className={
                 data?.disabled
                   ? "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-2 sm:px-6 md:px-6 py-2 sm:py-3 md:mr-0 font-medium text-black bg-white border-2 border-primaryGreen rounded-full  transition-colors duration-300 "
@@ -538,7 +596,10 @@ function ImageTextSection(data: ImageTextSectionProps) {
       {/* Booking Modal */}
       <BookingModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        data={experienceType}
+        onClose={() => {
+          setIsModalOpen(false);
+        }}
       />
       <ActivityModal
         data={data.items}
