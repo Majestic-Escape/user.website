@@ -26,7 +26,10 @@ type ActivityModalProps = {
   onClose: () => void;
 };
 const data = {
-  images: ["/images/tour/CHARDHAM_1.jpg", "/images/tour/CHARDHAM_2.jpg"],
+  images: [
+    "/images/tour/CHARDHAM_1.jpg",
+    // "/images/tour/CHARDHAM_2.jpg"
+  ],
   items: [
     "5 Nights/6 Days",
     "Ex-Haridwar",
@@ -49,7 +52,7 @@ const doDhaam = {
     "All-inclusive package (transport, accommodation, meals)",
     "Guided temple tours",
   ],
-  title: "Do Dhaam",
+  title: "Do Dham Yatra",
   content: `Embark on a divine pilgrimage with our Do Dham Yatra package starting from Haridwar. In 5 nights and 6 days, you'll visit the sacred shrines of Kedarnath and Badrinath`,
   disabled: false,
 };
@@ -68,8 +71,8 @@ const unity = {
 const rannUtsav = {
   images: [
     "/images/tour/rann_utsav_1.jpg",
-    "/images/tour/rann_utsav_2.jpg",
-    "/images/tour/rann_utsav_3.jpg",
+    // "/images/tour/rann_utsav_2.jpg",
+    // "/images/tour/rann_utsav_3.jpg",
   ],
   items: [
     "White Desert experience at the Great Rann of Kutch",
