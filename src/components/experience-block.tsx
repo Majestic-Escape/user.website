@@ -34,12 +34,37 @@ const data = {
     "Guided temple tours",
   ],
   title: "Char Dham Yatra",
-  content: `Embark on a dive pilgrimage with our Char Dham Yatra package
+  content: `Embark on a divine pilgrimage with our Char Dham Yatra package
             starting from Haridwar. In 5 nights and 6 days, you'll visit the
             sacred shrines of Yamunotri, Gangotri, Badrinath. `,
   disabled: false,
 };
-const data2 = {
+const doDhaam = {
+  images: ["/images/tour/do_dhaam.jpg"],
+  items: [
+    "5 Nights/6 Days",
+    "Visit Haridwar - Guptkashi/Sitapur",
+    "Explore Kedarnath & Badrinath",
+    "All-inclusive package (transport, accommodation, meals)",
+    "Guided temple tours",
+  ],
+  title: "Do Dhaam",
+  content: `Embark on a divine pilgrimage with our Do Dham Yatra package starting from Haridwar. In 5 nights and 6 days, you'll visit the sacred shrines of Kedarnath and Badrinath`,
+  disabled: false,
+};
+const unity = {
+  images: ["/images/tour/statue_of_unity.jpg"],
+  items: [
+    "Statue of Unity tour",
+    "Visit Valley of flowers and unity glow garden",
+    "Stay in royal cottage/premium villa",
+    "Enjoy jungle safari.",
+  ],
+  title: "Statue of Unity",
+  content: `Visit Statue of Unity dedicated to Sardar Vallabhbhai Patel, one of the most important leaders in Indian history.`,
+  disabled: false,
+};
+const rannUtsav = {
   images: [
     "/images/tour/rann_utsav_1.jpg",
     "/images/tour/rann_utsav_2.jpg",
@@ -58,7 +83,7 @@ const data2 = {
   disabled: true,
 };
 
-const sections = [data, data2];
+const sections = [data, doDhaam, unity, rannUtsav];
 function BookingModal({ isOpen, onClose }: BookingModalProps) {
   const [formData, setFormData] = useState({
     name: "",
@@ -529,7 +554,7 @@ function ImageTextSection(data: ImageTextSectionProps) {
               }
               disabled={data?.disabled}
             >
-              {data?.disabled ? "Coming Soon" : "Get Itinerary"}
+              {data?.disabled ? "Starting from October" : "Get Itinerary"}
             </button>
           </div>
         </div>
