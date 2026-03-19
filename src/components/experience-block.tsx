@@ -25,7 +25,7 @@ type ActivityModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
-const data = {
+const charDham = {
   images: [
     "/images/tour/CHARDHAM_1.jpg",
     // "/images/tour/CHARDHAM_2.jpg"
@@ -37,13 +37,13 @@ const data = {
     "All-inclusive package (transport, accommodation, meals)",
     "Guided temple tours",
   ],
-  title: "Char Dham Yatra",
+  title: "Char Dham Yatra Package",
   content: `Embark on a divine pilgrimage with our Char Dham Yatra package
             starting from Haridwar. In 5 nights and 6 days, you'll visit the
             sacred shrines of Yamunotri, Gangotri, Badrinath. `,
   disabled: false,
 };
-const doDhaam = {
+const doDham = {
   images: ["/images/tour/do_dhaam.jpg"],
   items: [
     "5 Nights/6 Days",
@@ -52,8 +52,19 @@ const doDhaam = {
     "All-inclusive package (transport, accommodation, meals)",
     "Guided temple tours",
   ],
-  title: "Do Dham Yatra",
+  title: "Do Dham Yatra Package - Kedarnath & Badrinath",
   content: `Embark on a divine pilgrimage with our Do Dham Yatra package starting from Haridwar. In 5 nights and 6 days, you'll visit the sacred shrines of Kedarnath and Badrinath`,
+  disabled: false,
+};
+const goa = {
+  images: ["/images/tour/goa.jpg"],
+  items: [
+    "Pick and drop",
+    "All-inclusive package (transport, accommodation, meals)",
+    "Guided tours",
+  ],
+  title: "Goa Coastal Escape Package - Beaches & Sightseeing",
+  content: `Discover Goa, India's top holiday destination that offers a vibrant mix of beaches, heritage sites, adventure sports, and nightlife.`,
   disabled: false,
 };
 const unity = {
@@ -64,8 +75,32 @@ const unity = {
     "Stay in royal cottage/premium villa",
     "Enjoy jungle safari.",
   ],
-  title: "Statue of Unity",
+  title: "Statue of Unity Tour Package - Gujarat",
   content: `Visit Statue of Unity dedicated to Sardar Vallabhbhai Patel, one of the most important leaders in Indian history.`,
+  disabled: false,
+};
+const dwarka = {
+  images: ["/images/tour/dwarka.jpg"],
+  items: [
+    "Darshan at the sacred Jyotirlingas of Somnath and Nageshwar",
+    "Explore Dwarka",
+    "All-inclusive package (transport, accommodation, meals)",
+    "Visit to key spiritual and historical sites",
+  ],
+  title: "Dwarka Somnath Nageshwar Jyotirlinga Tour Package – Gujarat",
+  content: `Experience a divine journey through the sacred lands of Dwarka, Somnath, and Nageshwar—where faith meets timeless heritage.`,
+  disabled: false,
+};
+const ram_mandir = {
+  images: ["/images/tour/ram_mandir.jpg"],
+  items: [
+    "Divine darshan at Shri Ram Mandir in Ayodhya and the sacred Kashi Vishwanath Temple",
+    "Spiritual walk through the ancient lanes and heritage",
+    "Comfortable travel, guided sightseeing, and seamless transfers for a hassle-free pilgrimage",
+  ],
+  title:
+    "Ayodhya Varanasi Spiritual Tour Package – Ram Mandir & Kashi Vishwanath",
+  content: `Embark on a soulful journey to Ayodhya and Varanasi, witnessing the divine aura of Shri Ram Mandir and Kashi Vishwanath.`,
   disabled: false,
 };
 const rannUtsav = {
@@ -81,13 +116,13 @@ const rannUtsav = {
     "Camel rides, ATV rides & desert safaris",
     "Visit craft villages & traditional Kutchi markets",
   ],
-  title: "Rann Utsav",
+  title: "Rann Utsav White Desert Experience - Kutch",
   content: `Experience the magical charm of the White Desert with our specially curated Rann Utsav journey 
   in Gujarat’s Kutch region. Held in Dhordo near the Great Rann of Kutch.`,
   disabled: true,
 };
 
-const sections = [data, doDhaam, unity, rannUtsav];
+const sections = [charDham, doDham, unity, dwarka, goa, ram_mandir, rannUtsav];
 function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
   const [formData, setFormData] = useState({
     name: "",
