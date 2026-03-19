@@ -121,7 +121,7 @@ export function ExpHero() {
                   priority
                 /> */}
             <Image
-              src="/images/hero/experience.jpg"
+              src="/images/hero/Experiences.jpg"
               alt="Full width image"
               width={1920} // Set your image dimensions
               height={1080}

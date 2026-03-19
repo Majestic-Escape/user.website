@@ -18,6 +18,7 @@ export default function Component() {
         {/* <Hero /> */}
         <Block />
       </main>
+
       {/* <ExperienceSection /> */}
       {/* <ExperienceSoulTraveling /> */}
       {/* <Blogs /> */}
