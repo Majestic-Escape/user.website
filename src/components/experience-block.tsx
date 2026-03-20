@@ -132,6 +132,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
     experience: "",
     source: "Facebook",
   });
+
   const [errors, setErrors] = useState({
     name: "",
     email: "",
@@ -276,6 +277,9 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+  useEffect(() => {
+    setFormData({ ...formData, experience: data });
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -365,6 +369,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
                   id="phone"
                   required
                   value={formData.phone}
+                  maxLength={10}
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })
                   }
