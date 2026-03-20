@@ -129,15 +129,15 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
     email: "",
     phone: "",
     traveller_type: "",
-    experience: "",
+    experience: data,
     source: "Facebook",
   });
+
   const [errors, setErrors] = useState({
     name: "",
     email: "",
     phone: "",
     traveller_type: "",
-    experience: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -232,6 +232,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
 
     return !newErrors.name && !newErrors.email && !newErrors.phone;
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
@@ -365,6 +366,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
                   id="phone"
                   required
                   value={formData.phone}
+                  maxLength={10}
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })
                   }
@@ -416,7 +418,6 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
               <input
                 id="experience"
                 value={data}
-                onChange={(e) => setFormData({ ...formData, experience: data })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:border-transparent cursor-default"
                 readOnly
               />
