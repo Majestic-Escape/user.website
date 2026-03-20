@@ -146,7 +146,6 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
 
   const locations = ["Solo", "Couple", "Family", "Group", "Corporate"];
 
-  console.log("abc", formData);
   // Lock scroll when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -278,9 +277,6 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-  useEffect(() => {
-    setFormData({ ...formData, experience: data });
-  }, []);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
