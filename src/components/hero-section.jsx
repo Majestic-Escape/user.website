@@ -59,24 +59,40 @@ export default function HeroSection() {
         /> */}
         <Image
           src="/images/hero/ArtBoard2.jpg"
-          alt="Full width image"
-          width={1920} // Set your image dimensions
+          alt="Desktop image"
+          width={1920}
           height={1080}
-          className=" hidden md:block -pt-2 md:pt-8 lg:-pt-2 w-full h-auto object-contain"
+          style={{ paddingTop: "58px" }}
+          className="hidden lg:block w-full h-auto object-contain"
           sizes="100vw"
           priority
           unoptimized
         />
+
+        {/* 📲 Tablet */}
+        <Image
+          src="/images/hero/ArtBoard2.jpg" // or separate tablet image if you have
+          alt="Tablet image"
+          width={1920}
+          height={1080}
+          className="hidden md:block lg:hidden w-full h-auto object-contain pt-8"
+          sizes="100vw"
+          priority
+          unoptimized
+        />
+
+        {/* 📱 Mobile */}
         <Image
           src="/images/hero/ArtBoard1.jpg"
-          alt="Full width image"
-          width={1920} // Set your image dimensions
+          alt="Mobile image"
+          width={1920}
           height={1920}
-          className="block md:hidden pt-6 w-full h-auto object-contain"
+          className="block md:hidden w-full h-auto object-contain pt-6"
           sizes="100vw"
           priority
           unoptimized
         />
+
         {/* <ChatSimulator /> */}
       </div>
     </div>
