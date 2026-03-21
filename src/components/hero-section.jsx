@@ -58,17 +58,17 @@ export default function HeroSection() {
           priority
         /> */}
         <Image
-          src="/images/hero/SOU_WEB_BANNER.jpg"
+          src="/images/hero/ArtBoard2.jpg"
           alt="Full width image"
           width={1920} // Set your image dimensions
           height={1080}
-          className="hidden md:block -pt-2 md:pt-8 lg:-pt-2 w-full h-auto object-contain"
+          className=" hidden md:block -pt-2 md:pt-8 lg:-pt-2 w-full h-auto object-contain"
           sizes="100vw"
           priority
           unoptimized
         />
         <Image
-          src="/images/hero/Artboard_Mob.png"
+          src="/images/hero/ArtBoard1.jpg"
           alt="Full width image"
           width={1920} // Set your image dimensions
           height={1920}
