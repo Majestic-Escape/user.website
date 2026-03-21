@@ -20,7 +20,7 @@
 }
 @media (min-width: 700px) and (max-width: 999px) {
   .hero-root {
-    padding-top: 170px !important; /* Reduce large gap under navbar */
+    padding-top: 170px !important;/* Reduce large gap under navbar */
     padding-bottom: 20px !important;
   }
 
