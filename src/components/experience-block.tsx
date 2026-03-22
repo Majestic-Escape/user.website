@@ -239,6 +239,9 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
     setLoading(true);
 
     try {
+      if (typeof window !== "undefined" && (window as any).fbq) {
+        (window as any).fbq("track", "Lead");
+      }
       const res = await fetch(
         "https://live-am.coderelix.com/webhook/6ddb7f90-fb17-4209-8f0d-685bf79a4659",
         {
@@ -308,7 +311,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form id="experience-inquiry-form" onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 gap-3">
               <div>
                 <label
@@ -424,6 +427,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
             </div>
 
             <button
+            id="experience-submit-button"
               type="submit"
               disabled={loading}
               className="w-full mt-6 px-4 py-3 font-medium text-white bg-primaryGreen rounded-lg hover:bg-brightGreen transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:ring-offset-2"
