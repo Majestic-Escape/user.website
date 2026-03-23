@@ -129,7 +129,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
     email: "",
     phone: "",
     traveller_type: "",
-    experience: data,
+    experience: data || "",
     source: "Facebook",
   });
 
@@ -141,6 +141,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
   });
 
   const [loading, setLoading] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<null | string>(null);
   // Use a ref to store the scroll position
   const scrollPositionRef = useRef(0);
 
@@ -254,12 +255,26 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
       );
 
       if (!res.ok) {
-        throw new Error("Failed to submit");
+        // Attempt to parse status from body even on non-2xx
+        let jsonErr = null;
+        try {
+          jsonErr = await res.json();
+        } catch (e) {
+          // ignore
+        }
+        setSubmissionStatus((jsonErr && jsonErr.status) || "error");
+        return;
       }
 
-      console.log("Form submitted successfully", res);
-
-      onClose(); // close modal
+      const json = await res.json().catch(() => null);
+      const status = json?.status || "success";
+      setSubmissionStatus(status);
+      // If success, close the booking modal shortly after showing popup
+      if (status === "success") {
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+      }
     } catch (error) {
       console.error("Submission error:", error);
     } finally {
@@ -278,6 +293,32 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, experience: data || "" }));
+  }, [data]);
+
+  // Clear submission status and reset form when modal is closed
+  useEffect(() => {
+    if (!isOpen) {
+      setSubmissionStatus(null);
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        traveller_type: "",
+        experience: data || "",
+        source: "Facebook",
+      });
+    }
+  }, [isOpen, data]);
+
+  // Auto-hide submission popup after a few seconds
+  useEffect(() => {
+    if (!submissionStatus) return;
+    const t = setTimeout(() => setSubmissionStatus(null), 3500);
+    return () => clearTimeout(t);
+  }, [submissionStatus]);
 
   if (!isOpen) return null;
 
@@ -435,6 +476,39 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
               {loading ? "Submitting..." : "Get Itinerary"}
             </button>
           </form>
+
+          {/* Submission status popup */}
+          {submissionStatus && (
+            <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+              <div className="pointer-events-auto max-w-xs w-full mx-4 bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center">
+                <div className="flex items-center justify-center mb-2">
+                  {submissionStatus === "success" ? (
+                    <Check className="h-6 w-6 text-green-600" />
+                  ) : submissionStatus === "duplicate" ? (
+                    <Dot className="h-6 w-6 text-orange-500" />
+                  ) : (
+                    <X className="h-6 w-6 text-red-600" />
+                  )}
+                </div>
+                <div className="text-sm font-medium text-gray-900">
+                  {submissionStatus === "success" && "Submitted successfully."}
+                  {submissionStatus === "duplicate" && "Duplicate enquiry detected."}
+                  {submissionStatus !== "success" && submissionStatus !== "duplicate" && "Submission failed. Please try again."}
+                </div>
+                <div className="mt-3">
+                  <button
+                    onClick={() => {
+                      setSubmissionStatus(null);
+                      if (submissionStatus === "success") onClose();
+                    }}
+                    className="px-3 py-2 bg-gray-100 rounded-md text-sm"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
