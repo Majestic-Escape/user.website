@@ -129,7 +129,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
     email: "",
     phone: "",
     traveller_type: "",
-    experience: data,
+    experience: data || "",
     source: "Facebook",
   });
 
@@ -278,6 +278,10 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, experience: data || "" }));
+  }, [data]);
 
   if (!isOpen) return null;
 
