@@ -10,6 +10,7 @@ import { useSearchParams } from "next/navigation";
 type ImageTextSectionProps = {
   images: string[];
   items: string[];
+
   disabled: boolean;
   title: string;
   content: string;
@@ -18,12 +19,14 @@ type ImageTextSectionProps = {
 // Modal Component
 type BookingModalProps = {
   isOpen: boolean;
+  source: string;
   data: string;
   onClose: () => void;
 };
 
 type ActivityModalProps = {
   data: string[];
+
   isOpen: boolean;
   onClose: () => void;
 };
@@ -125,16 +128,14 @@ const rannUtsav = {
 };
 
 const sections = [charDham, doDham, unity, dwarka, goa, ram_mandir, rannUtsav];
-function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
-  const searchParams = useSearchParams();
-  const utm_source = searchParams.get("utm_source");
+function BookingModal({ isOpen, source, onClose, data }: BookingModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     traveller_type: "",
     experience: data || "",
-    source: utm_source || "direct",
+    source: source,
   });
 
   const [errors, setErrors] = useState({
@@ -143,7 +144,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
     phone: "",
     traveller_type: "",
   });
-
+  // console.log(formData.source);
   const [loading, setLoading] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<null | string>(null);
   // Use a ref to store the scroll position
@@ -262,18 +263,28 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
       );
 
       const json = await res.json();
-
-      if (!res.ok || json?.status !== "success") {
+      if (res.status == 200) {
+        if (json.status != "success") {
+          // console.log(res.status);
+          // console.log(json);
+          if (json?.status == "duplicate") {
+            toast.error("You have already submitted the details.");
+            return;
+          } else {
+            // console.log(res);
+            toast.error("Make sure that all fields are filled.");
+            return;
+          }
+        }
+      } else {
         toast.error("Something went wrong. Please try again.");
-        return;
       }
-
+      // console.log(json);
       toast.success(
         "Thank you for requesting your itinerary! Our travel experts are crafting the perfect experience for you. Magic is on its way!",
       );
     } catch (error) {
       console.error("Submission error:", error);
-      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -305,7 +316,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
         phone: "",
         traveller_type: "",
         experience: data || "",
-        source: "Facebook",
+        source: source || "direct",
       });
     }
   }, [isOpen, data]);
@@ -479,7 +490,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
           </form>
 
           {/* Submission status popup */}
-          {submissionStatus && (
+          {/* {submissionStatus && (
             <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
               <div className="pointer-events-auto max-w-xs w-full mx-4 bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center">
                 <div className="flex items-center justify-center mb-2">
@@ -512,7 +523,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>
@@ -614,6 +625,8 @@ function ImageTextSection(data: ImageTextSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalActivityOpen, setIsModalActivityOpen] = useState(false);
   const [experienceType, setExperienceType] = useState("");
+  const searchParams = useSearchParams();
+  const utm_source = searchParams.get("utm_source");
   const next = () => {
     setIndex((prev) => (prev + 1) % data.images.length);
   };
@@ -715,6 +728,7 @@ function ImageTextSection(data: ImageTextSectionProps) {
       <BookingModal
         isOpen={isModalOpen}
         data={experienceType}
+        source={utm_source || "direct"}
         onClose={() => {
           setIsModalOpen(false);
         }}
