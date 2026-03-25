@@ -282,11 +282,15 @@ function BookingModal({ isOpen, source, onClose, data }: BookingModalProps) {
       // console.log(json);
       toast.success(
         "Thank you for requesting your itinerary! Our travel experts are crafting the perfect experience for you. Magic is on its way!",
+        {
+          duration: 5000, // 5 seconds (in milliseconds)
+        },
       );
     } catch (error) {
       console.error("Submission error:", error);
     } finally {
       setLoading(false);
+      onClose();
     }
   };
 
@@ -483,7 +487,11 @@ function BookingModal({ isOpen, source, onClose, data }: BookingModalProps) {
               id="experience-submit-button"
               type="submit"
               disabled={loading}
-              className="w-full mt-6 px-4 py-3 font-medium text-white bg-primaryGreen rounded-lg hover:bg-brightGreen transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:ring-offset-2"
+              className={
+                loading
+                  ? "w-full mt-6 px-4 py-3 font-medium text-white bg-lightGreen rounded-lg  transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:ring-offset-2"
+                  : "w-full mt-6 px-4 py-3 font-medium text-white bg-primaryGreen rounded-lg hover:bg-brightGreen transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:ring-offset-2"
+              }
             >
               {loading ? "Submitting..." : "Get Itinerary"}
             </button>
