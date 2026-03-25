@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Check, Dot, X } from "lucide-react";
 import Heading from "@/components/ui/heading";
+import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 
 type ImageTextSectionProps = {
   images: string[];
@@ -124,13 +126,15 @@ const rannUtsav = {
 
 const sections = [charDham, doDham, unity, dwarka, goa, ram_mandir, rannUtsav];
 function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
+  const searchParams = useSearchParams();
+  const utm_source = searchParams.get("utm_source");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     traveller_type: "",
     experience: data || "",
-    source: "Facebook",
+    source: utm_source || "direct",
   });
 
   const [errors, setErrors] = useState({
@@ -236,13 +240,16 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!validate()) return;
+
     setLoading(true);
 
     try {
       if (typeof window !== "undefined" && (window as any).fbq) {
         (window as any).fbq("track", "Lead");
       }
+
       const res = await fetch(
         "https://live-am.coderelix.com/webhook/6ddb7f90-fb17-4209-8f0d-685bf79a4659",
         {
@@ -254,29 +261,19 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
         },
       );
 
-      if (!res.ok) {
-        // Attempt to parse status from body even on non-2xx
-        let jsonErr = null;
-        try {
-          jsonErr = await res.json();
-        } catch (e) {
-          // ignore
-        }
-        setSubmissionStatus((jsonErr && jsonErr.status) || "error");
+      const json = await res.json();
+
+      if (!res.ok || json?.status !== "success") {
+        toast.error("Something went wrong. Please try again.");
         return;
       }
 
-      const json = await res.json().catch(() => null);
-      const status = json?.status || "success";
-      setSubmissionStatus(status);
-      // If success, close the booking modal shortly after showing popup
-      if (status === "success") {
-        setTimeout(() => {
-          onClose();
-        }, 2000);
-      }
+      toast.success(
+        "Thank you for requesting your itinerary! Our travel experts are crafting the perfect experience for you. Magic is on its way!",
+      );
     } catch (error) {
       console.error("Submission error:", error);
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -352,7 +349,11 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
           </div>
 
           {/* Form */}
-          <form id="experience-inquiry-form" onSubmit={handleSubmit} className="space-y-4">
+          <form
+            id="experience-inquiry-form"
+            onSubmit={handleSubmit}
+            className="space-y-4"
+          >
             <div className="grid grid-cols-1 gap-3">
               <div>
                 <label
@@ -468,7 +469,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
             </div>
 
             <button
-            id="experience-submit-button"
+              id="experience-submit-button"
               type="submit"
               disabled={loading}
               className="w-full mt-6 px-4 py-3 font-medium text-white bg-primaryGreen rounded-lg hover:bg-brightGreen transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:ring-offset-2"
@@ -492,8 +493,11 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
                 </div>
                 <div className="text-sm font-medium text-gray-900">
                   {submissionStatus === "success" && "Submitted successfully."}
-                  {submissionStatus === "duplicate" && "Duplicate enquiry detected."}
-                  {submissionStatus !== "success" && submissionStatus !== "duplicate" && "Submission failed. Please try again."}
+                  {submissionStatus === "duplicate" &&
+                    "Duplicate enquiry detected."}
+                  {submissionStatus !== "success" &&
+                    submissionStatus !== "duplicate" &&
+                    "Submission failed. Please try again."}
                 </div>
                 <div className="mt-3">
                   <button
