@@ -287,6 +287,7 @@ function BookingModal({ isOpen, source, onClose, data }: BookingModalProps) {
       console.error("Submission error:", error);
     } finally {
       setLoading(false);
+      onClose();
     }
   };
 
@@ -483,7 +484,11 @@ function BookingModal({ isOpen, source, onClose, data }: BookingModalProps) {
               id="experience-submit-button"
               type="submit"
               disabled={loading}
-              className="w-full mt-6 px-4 py-3 font-medium text-white bg-primaryGreen rounded-lg hover:bg-brightGreen transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:ring-offset-2"
+              className={
+                loading
+                  ? "w-full mt-6 px-4 py-3 font-medium text-white bg-lightGreen rounded-lg  transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:ring-offset-2"
+                  : "w-full mt-6 px-4 py-3 font-medium text-white bg-primaryGreen rounded-lg hover:bg-brightGreen transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:ring-offset-2"
+              }
             >
               {loading ? "Submitting..." : "Get Itinerary"}
             </button>
