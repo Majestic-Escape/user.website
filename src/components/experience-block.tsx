@@ -664,7 +664,7 @@ function ImageTextSection({
         </div>
 
         {/* RIGHT SECTION */}
-        <div className="w-full lg:w-[50%] p-6 md:p-10">
+        <div className="w-full lg:w-[50%] p-6 md:p-10 m-auto">
           <div className="text-lg md:text-xl pb-4 md:pb-8 font-semibold">
             {title}
           </div>
