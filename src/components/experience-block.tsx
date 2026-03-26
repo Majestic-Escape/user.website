@@ -14,6 +14,9 @@ type ImageTextSectionProps = {
   disabled: boolean;
   title: string;
   content: string;
+
+  autoOpen?: boolean;
+  setAutoOpen?: () => void;
 };
 
 // Modal Component
@@ -628,21 +631,38 @@ function ActivityModal({ data, isOpen, onClose }: ActivityModalProps) {
     </div>
   );
 }
-function ImageTextSection(data: ImageTextSectionProps) {
+function ImageTextSection({
+  images,
+  items,
+  disabled,
+  title,
+  content,
+  autoOpen,
+  setAutoOpen,
+}: ImageTextSectionProps) {
   const [index, setIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalActivityOpen, setIsModalActivityOpen] = useState(false);
   const [experienceType, setExperienceType] = useState("");
   const searchParams = useSearchParams();
   const utm_source = searchParams.get("utm_source");
+
   const next = () => {
-    setIndex((prev) => (prev + 1) % data.images.length);
+    setIndex((prev) => (prev + 1) % images.length);
   };
 
   const prev = () => {
-    setIndex((prev) => (prev - 1 + data.images.length) % data.images.length);
+    setIndex((prev) => (prev - 1 + images.length) % images.length);
   };
+  useEffect(() => {
+    if (autoOpen) {
+      setExperienceType(title);
+      setIsModalOpen(true);
 
+      // reset after opening
+      setAutoOpen?.();
+    }
+  }, [autoOpen]);
   return (
     <>
       <div className="w-full lg:flex lg:items-stretch border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
@@ -650,13 +670,13 @@ function ImageTextSection(data: ImageTextSectionProps) {
         {/* LEFT SECTION */}
         <div className="w-full lg:w-[50%] relative border-r border-gray-200 bg-gray-50 flex  h-[220px] md:h-[420px] lg:h-auto">
           <img
-            src={data.images[index]}
+            src={images[index]}
             alt={`Slide ${index + 1}`}
             className="w-full h-full object-cover"
           />
 
           {/* Navigation */}
-          {data.images.length > 1 && (
+          {images.length > 1 && (
             <>
               {index !== 0 && (
                 <button
@@ -667,7 +687,7 @@ function ImageTextSection(data: ImageTextSectionProps) {
                 </button>
               )}
 
-              {index < data.images.length - 1 && (
+              {index < images.length - 1 && (
                 <button
                   onClick={next}
                   className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow rounded-full w-10 h-10 flex items-center justify-center text-xl z-10"
@@ -682,11 +702,11 @@ function ImageTextSection(data: ImageTextSectionProps) {
         {/* RIGHT SECTION */}
         <div className="w-full lg:w-[50%] p-6 md:p-10">
           <div className="text-lg md:text-xl pb-4 md:pb-8 font-semibold">
-            {data?.title}
+            {title}
           </div>
           <div className="text-base md:text-base text-justify lg:text-base pb-6 md:pb-8 text-gray-600">
-            {data?.content}
-            {data?.disabled ? (
+            {content}
+            {disabled ? (
               <>
                 <br></br>
                 <br></br>
@@ -717,16 +737,16 @@ function ImageTextSection(data: ImageTextSectionProps) {
             <button
               onClick={() => {
                 setIsModalOpen(true);
-                setExperienceType(data.title);
+                setExperienceType(title);
               }}
               className={
-                data?.disabled
+                disabled
                   ? "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-2 sm:px-6 md:px-6 py-2 sm:py-3 md:mr-0 font-medium text-black bg-white border-2 border-primaryGreen rounded-full  transition-colors duration-300 "
                   : "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-2 sm:px-6 md:px-6 py-2 sm:py-3 md:mr-0 font-medium text-white bg-primaryGreen rounded-full hover:bg-brightGreen transition-colors duration-300 cursor-pointer"
               }
-              disabled={data?.disabled}
+              disabled={disabled}
             >
-              {data?.disabled ? "Coming Soon" : "Get Itinerary"}
+              {disabled ? "Coming Soon" : "Get Itinerary"}
             </button>
           </div>
         </div>
@@ -742,22 +762,69 @@ function ImageTextSection(data: ImageTextSectionProps) {
         }}
       />
       <ActivityModal
-        data={data.items}
+        data={items}
         isOpen={isModalActivityOpen}
         onClose={() => setIsModalActivityOpen(false)}
       />
     </>
   );
 }
-
+const campaignMap: Record<string, number> = {
+  chardham: 0,
+  dodham: 1,
+  sou: 2,
+  dwarka: 3,
+  goa: 4,
+  ayodhya: 5,
+  rann: 6,
+};
 export default function Component() {
+  const searchParams = useSearchParams();
+  const utm_campaign = searchParams.get("utm_campaign");
+
+  const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!utm_campaign) return;
+
+    const campaign = utm_campaign.toLowerCase().replace(/\s+/g, "");
+
+    const index = campaignMap[campaign];
+    if (index !== undefined) {
+      setTimeout(() => {
+        const el = sectionRefs.current[index];
+
+        if (el) {
+          el.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+
+          setTimeout(() => {
+            setActiveIndex(index);
+          }, 600);
+        }
+      }, 100); // wait for DOM mount
+    }
+  }, [utm_campaign]);
   return (
     <div className="w-full font-poppins bg-white text-absolute-dark">
       <section id="experiences" className="px-4 sm:px-6 md:px-[72px] py-16">
         <Heading text="Exciting Experiences in India" />
         {sections.map((section, i) => (
-          <div key={i} className="mt-16">
-            <ImageTextSection {...section} />
+          <div
+            key={i}
+            ref={(el) => {
+              sectionRefs.current[i] = el;
+            }}
+            className="mt-16"
+          >
+            <ImageTextSection
+              {...section}
+              autoOpen={activeIndex === i}
+              setAutoOpen={() => setActiveIndex(null)}
+            />
           </div>
         ))}
         {/* <div className="mt-12">
