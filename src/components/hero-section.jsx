@@ -58,7 +58,7 @@ export default function HeroSection() {
           priority
         /> */}
         <Image
-          src="/images/hero/ArtBoard2.jpg"
+          src="/images/hero/Banner.webp"
           alt="Desktop image"
           width={1920}
           height={1080}
@@ -71,7 +71,7 @@ export default function HeroSection() {
 
         {/* 📲 Tablet */}
         <Image
-          src="/images/hero/ArtBoard2.jpg" // or separate tablet image if you have
+          src="/images/hero/Banner.webp" // or separate tablet image if you have
           alt="Tablet image"
           width={1920}
           height={1080}
@@ -83,7 +83,7 @@ export default function HeroSection() {
 
         {/* 📱 Mobile */}
         <Image
-          src="/images/hero/ArtBoard1.jpg"
+          src="/images/hero/Mobile_Banner.webp"
           alt="Mobile image"
           width={1920}
           height={1920}

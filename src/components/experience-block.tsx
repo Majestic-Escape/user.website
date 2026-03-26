@@ -4,24 +4,32 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Check, Dot, X } from "lucide-react";
 import Heading from "@/components/ui/heading";
+import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 
 type ImageTextSectionProps = {
   images: string[];
   items: string[];
+
   disabled: boolean;
   title: string;
   content: string;
+
+  autoOpen?: boolean;
+  setAutoOpen?: () => void;
 };
 
 // Modal Component
 type BookingModalProps = {
   isOpen: boolean;
+  source: string;
   data: string;
   onClose: () => void;
 };
 
 type ActivityModalProps = {
   data: string[];
+
   isOpen: boolean;
   onClose: () => void;
 };
@@ -123,14 +131,14 @@ const rannUtsav = {
 };
 
 const sections = [charDham, doDham, unity, dwarka, goa, ram_mandir, rannUtsav];
-function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
+function BookingModal({ isOpen, source, onClose, data }: BookingModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     traveller_type: "",
     experience: data || "",
-    source: "Facebook",
+    source: source,
   });
 
   const [errors, setErrors] = useState({
@@ -139,7 +147,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
     phone: "",
     traveller_type: "",
   });
-
+  // console.log(formData.source);
   const [loading, setLoading] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<null | string>(null);
   // Use a ref to store the scroll position
@@ -148,42 +156,6 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
   const locations = ["Solo", "Couple", "Family", "Group", "Corporate"];
 
   // Lock scroll when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      // Store the current scroll position in the ref
-      scrollPositionRef.current = window.scrollY;
-
-      // Get the current width to prevent layout shift
-      const scrollbarWidth =
-        window.innerWidth - document.documentElement.clientWidth;
-
-      // Lock the scroll on both body and html
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-      document.documentElement.style.paddingRight = `${scrollbarWidth}px`;
-
-      // Don't set position relative and top on body - this causes the jumping
-      // Instead, just prevent scrolling and let the modal handle positioning
-    } else {
-      // Restore scroll position
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-      document.body.style.paddingRight = "";
-      document.documentElement.style.paddingRight = "";
-
-      // Scroll back to the saved position instantly
-      window.scrollTo(0, scrollPositionRef.current);
-    }
-
-    // Cleanup function
-    return () => {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-      document.body.style.paddingRight = "";
-      document.documentElement.style.paddingRight = "";
-    };
-  }, [isOpen]);
 
   // const handleSubmit = (e: React.FormEvent) => {
   //   e.preventDefault();
@@ -236,13 +208,16 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!validate()) return;
+
     setLoading(true);
 
     try {
       if (typeof window !== "undefined" && (window as any).fbq) {
         (window as any).fbq("track", "Lead");
       }
+
       const res = await fetch(
         "https://live-am.coderelix.com/webhook/6ddb7f90-fb17-4209-8f0d-685bf79a4659",
         {
@@ -254,31 +229,35 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
         },
       );
 
-      if (!res.ok) {
-        // Attempt to parse status from body even on non-2xx
-        let jsonErr = null;
-        try {
-          jsonErr = await res.json();
-        } catch (e) {
-          // ignore
+      const json = await res.json();
+      if (res.status == 200) {
+        if (json.status != "success") {
+          // console.log(res.status);
+          // console.log(json);
+          if (json?.status == "duplicate") {
+            toast.error("You have already submitted the details.");
+            return;
+          } else {
+            // console.log(res);
+            toast.error("Make sure that all fields are filled.");
+            return;
+          }
         }
-        setSubmissionStatus((jsonErr && jsonErr.status) || "error");
-        return;
+      } else {
+        toast.error("Something went wrong. Please try again.");
       }
-
-      const json = await res.json().catch(() => null);
-      const status = json?.status || "success";
-      setSubmissionStatus(status);
-      // If success, close the booking modal shortly after showing popup
-      if (status === "success") {
-        setTimeout(() => {
-          onClose();
-        }, 2000);
-      }
+      // console.log(json);
+      toast.success(
+        "Thank you for requesting your itinerary! Our travel experts are crafting the perfect experience for you. Magic is on its way!",
+        {
+          duration: 5000, // 5 seconds (in milliseconds)
+        },
+      );
     } catch (error) {
       console.error("Submission error:", error);
     } finally {
       setLoading(false);
+      onClose();
     }
   };
 
@@ -308,7 +287,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
         phone: "",
         traveller_type: "",
         experience: data || "",
-        source: "Facebook",
+        source: source || "direct",
       });
     }
   }, [isOpen, data]);
@@ -352,7 +331,11 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
           </div>
 
           {/* Form */}
-          <form id="experience-inquiry-form" onSubmit={handleSubmit} className="space-y-4">
+          <form
+            id="experience-inquiry-form"
+            onSubmit={handleSubmit}
+            className="space-y-4"
+          >
             <div className="grid grid-cols-1 gap-3">
               <div>
                 <label
@@ -468,17 +451,21 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
             </div>
 
             <button
-            id="experience-submit-button"
+              id="experience-submit-button"
               type="submit"
               disabled={loading}
-              className="w-full mt-6 px-4 py-3 font-medium text-white bg-primaryGreen rounded-lg hover:bg-brightGreen transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:ring-offset-2"
+              className={
+                loading
+                  ? "w-full mt-6 px-4 py-3 font-medium text-white bg-lightGreen rounded-lg  transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:ring-offset-2"
+                  : "w-full mt-6 px-4 py-3 font-medium text-white bg-primaryGreen rounded-lg hover:bg-brightGreen transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primaryGreen focus:ring-offset-2"
+              }
             >
               {loading ? "Submitting..." : "Get Itinerary"}
             </button>
           </form>
 
           {/* Submission status popup */}
-          {submissionStatus && (
+          {/* {submissionStatus && (
             <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
               <div className="pointer-events-auto max-w-xs w-full mx-4 bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center">
                 <div className="flex items-center justify-center mb-2">
@@ -492,8 +479,11 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
                 </div>
                 <div className="text-sm font-medium text-gray-900">
                   {submissionStatus === "success" && "Submitted successfully."}
-                  {submissionStatus === "duplicate" && "Duplicate enquiry detected."}
-                  {submissionStatus !== "success" && submissionStatus !== "duplicate" && "Submission failed. Please try again."}
+                  {submissionStatus === "duplicate" &&
+                    "Duplicate enquiry detected."}
+                  {submissionStatus !== "success" &&
+                    submissionStatus !== "duplicate" &&
+                    "Submission failed. Please try again."}
                 </div>
                 <div className="mt-3">
                   <button
@@ -508,7 +498,7 @@ function BookingModal({ isOpen, onClose, data }: BookingModalProps) {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>
@@ -605,19 +595,38 @@ function ActivityModal({ data, isOpen, onClose }: ActivityModalProps) {
     </div>
   );
 }
-function ImageTextSection(data: ImageTextSectionProps) {
+function ImageTextSection({
+  images,
+  items,
+  disabled,
+  title,
+  content,
+  autoOpen,
+  setAutoOpen,
+}: ImageTextSectionProps) {
   const [index, setIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalActivityOpen, setIsModalActivityOpen] = useState(false);
   const [experienceType, setExperienceType] = useState("");
+  const searchParams = useSearchParams();
+  const utm_source = searchParams.get("utm_source");
+
   const next = () => {
-    setIndex((prev) => (prev + 1) % data.images.length);
+    setIndex((prev) => (prev + 1) % images.length);
   };
 
   const prev = () => {
-    setIndex((prev) => (prev - 1 + data.images.length) % data.images.length);
+    setIndex((prev) => (prev - 1 + images.length) % images.length);
   };
+  useEffect(() => {
+    if (autoOpen) {
+      setExperienceType(title);
+      setIsModalOpen(true);
 
+      // reset after opening
+      setAutoOpen?.();
+    }
+  }, [autoOpen]);
   return (
     <>
       <div className="w-full lg:flex lg:items-stretch border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
@@ -625,13 +634,13 @@ function ImageTextSection(data: ImageTextSectionProps) {
         {/* LEFT SECTION */}
         <div className="w-full lg:w-[50%] relative border-r border-gray-200 bg-gray-50 flex  h-[220px] md:h-[420px] lg:h-auto">
           <img
-            src={data.images[index]}
+            src={images[index]}
             alt={`Slide ${index + 1}`}
             className="w-full h-full object-cover"
           />
 
           {/* Navigation */}
-          {data.images.length > 1 && (
+          {images.length > 1 && (
             <>
               {index !== 0 && (
                 <button
@@ -642,7 +651,7 @@ function ImageTextSection(data: ImageTextSectionProps) {
                 </button>
               )}
 
-              {index < data.images.length - 1 && (
+              {index < images.length - 1 && (
                 <button
                   onClick={next}
                   className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow rounded-full w-10 h-10 flex items-center justify-center text-xl z-10"
@@ -655,13 +664,13 @@ function ImageTextSection(data: ImageTextSectionProps) {
         </div>
 
         {/* RIGHT SECTION */}
-        <div className="w-full lg:w-[50%] p-6 md:p-10">
+        <div className="w-full lg:w-[50%] p-6 md:p-10 m-auto">
           <div className="text-lg md:text-xl pb-4 md:pb-8 font-semibold">
-            {data?.title}
+            {title}
           </div>
           <div className="text-base md:text-base text-justify lg:text-base pb-6 md:pb-8 text-gray-600">
-            {data?.content}
-            {data?.disabled ? (
+            {content}
+            {disabled ? (
               <>
                 <br></br>
                 <br></br>
@@ -692,16 +701,16 @@ function ImageTextSection(data: ImageTextSectionProps) {
             <button
               onClick={() => {
                 setIsModalOpen(true);
-                setExperienceType(data.title);
+                setExperienceType(title);
               }}
               className={
-                data?.disabled
+                disabled
                   ? "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-2 sm:px-6 md:px-6 py-2 sm:py-3 md:mr-0 font-medium text-black bg-white border-2 border-primaryGreen rounded-full  transition-colors duration-300 "
                   : "text-sm w-full sm:w-64 md:text-base text-center sm:mr-4 px-2 sm:px-6 md:px-6 py-2 sm:py-3 md:mr-0 font-medium text-white bg-primaryGreen rounded-full hover:bg-brightGreen transition-colors duration-300 cursor-pointer"
               }
-              disabled={data?.disabled}
+              disabled={disabled}
             >
-              {data?.disabled ? "Coming Soon" : "Get Itinerary"}
+              {disabled ? "Coming Soon" : "Get Itinerary"}
             </button>
           </div>
         </div>
@@ -711,27 +720,75 @@ function ImageTextSection(data: ImageTextSectionProps) {
       <BookingModal
         isOpen={isModalOpen}
         data={experienceType}
+        source={utm_source || "direct"}
         onClose={() => {
           setIsModalOpen(false);
         }}
       />
       <ActivityModal
-        data={data.items}
+        data={items}
         isOpen={isModalActivityOpen}
         onClose={() => setIsModalActivityOpen(false)}
       />
     </>
   );
 }
-
+const campaignMap: Record<string, number> = {
+  chardham: 0,
+  dodham: 1,
+  sou: 2,
+  dwarka: 3,
+  goa: 4,
+  ayodhya: 5,
+  rann: 6,
+};
 export default function Component() {
+  const searchParams = useSearchParams();
+  const utm_campaign = searchParams.get("utm_campaign");
+
+  const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!utm_campaign) return;
+
+    const campaign = utm_campaign.toLowerCase().replace(/\s+/g, "");
+
+    const index = campaignMap[campaign];
+    if (index !== undefined) {
+      setTimeout(() => {
+        const el = sectionRefs.current[index];
+
+        if (el) {
+          el.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+
+          setTimeout(() => {
+            setActiveIndex(index);
+          }, 600);
+        }
+      }, 100); // wait for DOM mount
+    }
+  }, [utm_campaign]);
   return (
     <div className="w-full font-poppins bg-white text-absolute-dark">
       <section id="experiences" className="px-4 sm:px-6 md:px-[72px] py-16">
         <Heading text="Exciting Experiences in India" />
         {sections.map((section, i) => (
-          <div key={i} className="mt-16">
-            <ImageTextSection {...section} />
+          <div
+            key={i}
+            ref={(el) => {
+              sectionRefs.current[i] = el;
+            }}
+            className="mt-16"
+          >
+            <ImageTextSection
+              {...section}
+              autoOpen={activeIndex === i}
+              setAutoOpen={() => setActiveIndex(null)}
+            />
           </div>
         ))}
         {/* <div className="mt-12">
