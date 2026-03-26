@@ -156,42 +156,6 @@ function BookingModal({ isOpen, source, onClose, data }: BookingModalProps) {
   const locations = ["Solo", "Couple", "Family", "Group", "Corporate"];
 
   // Lock scroll when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      // Store the current scroll position in the ref
-      scrollPositionRef.current = window.scrollY;
-
-      // Get the current width to prevent layout shift
-      const scrollbarWidth =
-        window.innerWidth - document.documentElement.clientWidth;
-
-      // Lock the scroll on both body and html
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-      document.documentElement.style.paddingRight = `${scrollbarWidth}px`;
-
-      // Don't set position relative and top on body - this causes the jumping
-      // Instead, just prevent scrolling and let the modal handle positioning
-    } else {
-      // Restore scroll position
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-      document.body.style.paddingRight = "";
-      document.documentElement.style.paddingRight = "";
-
-      // Scroll back to the saved position instantly
-      window.scrollTo(0, scrollPositionRef.current);
-    }
-
-    // Cleanup function
-    return () => {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-      document.body.style.paddingRight = "";
-      document.documentElement.style.paddingRight = "";
-    };
-  }, [isOpen]);
 
   // const handleSubmit = (e: React.FormEvent) => {
   //   e.preventDefault();
