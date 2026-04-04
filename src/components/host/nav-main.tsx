@@ -23,6 +23,7 @@ export function NavMain({
     url: string;
     icon?: LucideIcon;
     isActive?: boolean;
+    badge?: number;
     items?: {
       title: string;
       url: string;
@@ -86,6 +87,18 @@ export function NavMain({
                     >
                       {item.title}
                     </span>
+                    {item.badge != null && item.badge > 0 && (
+                      <span
+                        className={`
+                          ml-auto flex items-center justify-center
+                          min-w-[20px] h-5 px-1.5 rounded-full
+                          text-[11px] font-bold leading-none
+                          ${isActive ? "bg-white text-primaryGreen" : "bg-red-500 text-white"}
+                        `}
+                      >
+                        {item.badge > 9 ? "9+" : item.badge}
+                      </span>
+                    )}
                   </SidebarMenuButton>
                 </Link>
 

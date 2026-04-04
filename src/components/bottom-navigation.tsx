@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUnreadCount } from "@/contexts/UnreadCountContext";
 
 const navItems = [
   { name: "Home", href: "/", icon: HomeIcon },
@@ -87,6 +88,7 @@ export function BottomNavigation() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { unreadCount } = useUnreadCount();
 
   const router = useRouter();
 
@@ -114,7 +116,14 @@ export function BottomNavigation() {
                     : "text-gray-700",
                 )}
               >
-                <item.icon className="w-5 h-5 mb-1" />
+                <div className="relative">
+                  <item.icon className="w-5 h-5 mb-1" />
+                  {item.name === "Messages" && unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full leading-none">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </div>
                 <span className="text-xs">{item.name}</span>
               </Link>
             ))
