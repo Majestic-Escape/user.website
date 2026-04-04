@@ -26,6 +26,7 @@ import { socketManager } from "@/lib/socket";
 import MobileChatContainer from "@/components/mobile-chat-container";
 import MobileChatInput from "@/components/mobile-chat-input";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
+import { useUnreadCount } from "@/contexts/UnreadCountContext";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
@@ -49,6 +50,7 @@ export default function HostInboxPage() {
 
   // Track page visibility - only mark messages as read when page is visible
   const isPageVisible = usePageVisibility();
+  const { refreshUnreadCount } = useUnreadCount();
 
   const socketRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -391,7 +393,8 @@ export default function HostInboxPage() {
       console.log("[HostInbox] Fetching conversations...");
       setIsLoading(true);
       try {
-        const response = await fetch(`${CHAT_URL}/api/chat/conversations`, {
+        // Server-side role filtering — only fetches host conversations (no wasted bandwidth)
+        const response = await fetch(`${CHAT_URL}/api/chat/conversations?role=host`, {
           headers: {
             Authorization: `Bearer ${tokenRef.current}`,
           },
@@ -402,14 +405,8 @@ export default function HostInboxPage() {
         const data = await response.json();
         console.log("[HostInbox] Raw conversations response:", data);
         if (data.success) {
-          const hostConversations = (data.data || []).filter((conv) => {
-            const participant = conv.participants.find(
-              (p) => p.userId === currentUserId
-            );
-            // Only show conversations where user is host AND has at least one message
-            // This filters out empty conversations created when guests visit contact_host but don't send a message
-            return participant && participant.role === "host" && conv.lastMessage;
-          });
+          // Server already filters by role=host — only need to filter empty convos
+          const hostConversations = (data.data || []).filter((conv) => conv.lastMessage);
 
           const sortedConversations = hostConversations.sort((a, b) => {
             const timeA = a.lastMessage?.sentAt ? new Date(a.lastMessage.sentAt) : new Date(0);
@@ -564,6 +561,9 @@ export default function HostInboxPage() {
             : conv
         )
       );
+
+      // Refresh global unread count badge
+      refreshUnreadCount();
     }
   }, [selectedConversation?.id, messages, currentUserId, isPageVisible]);
 
