@@ -27,6 +27,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUnreadCount } from "@/contexts/UnreadCountContext";
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -39,6 +40,7 @@ const navItems = [
 
 export default function HostBottomNavigation() {
   const { user, logout } = useAuth();
+  const { unreadCount } = useUnreadCount();
   const [active, setActive] = useState("Dashboard");
 
   const router = useRouter();
@@ -62,7 +64,14 @@ export default function HostBottomNavigation() {
               } hover:text-primary hover:bg-accent`}
               onClick={() => setActive(item.name)}
             >
-              <item.icon className="w-5 h-5 mb-1" />
+              <div className="relative">
+                <item.icon className="w-5 h-5 mb-1" />
+                {item.name === "Inbox" && unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full leading-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </div>
               <span className="text-xs font-medium">{item.name}</span>
             </Link>
           </li>

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import {
   AlertCircle,
   CheckCheck,
@@ -142,6 +143,15 @@ const data = {
 
 export function AppSidebar({ ...props }) {
   const pathname = usePathname();
+  const { unreadCount } = useUnreadCount();
+
+  // Inject badge into Inbox item
+  const navItems = data.navMain.map((item) => {
+    if (item.title === "Inbox") {
+      return { ...item, badge: unreadCount };
+    }
+    return item;
+  });
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -149,7 +159,7 @@ export function AppSidebar({ ...props }) {
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} pathname={pathname} />
+        <NavMain items={navItems} pathname={pathname} />
       </SidebarContent>
 
       <SidebarRail />

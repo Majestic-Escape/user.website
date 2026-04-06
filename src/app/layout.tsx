@@ -5,6 +5,7 @@ import { ReactNode } from "react";
 import { WishlistProvider } from "@/components/wishlist-context";
 import { Providers } from "@/components/providers";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { UnreadCountProvider } from "@/contexts/UnreadCountContext";
 import { Toaster } from "sonner";
 export const revalidate = 0;
 export const metadata = {
@@ -81,9 +82,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body className="antialiased">
         <Providers>
           <AuthProvider>
+            <UnreadCountProvider>
             <WishlistProvider>
               <div>{children}</div>
             </WishlistProvider>
+            </UnreadCountProvider>
           </AuthProvider>
         </Providers>
         <Toaster position="top-center" closeButton richColors />
