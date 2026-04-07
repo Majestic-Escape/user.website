@@ -33,6 +33,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
+import { useUnreadCount } from "@/contexts/UnreadCountContext";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -62,6 +63,7 @@ export default function MessagesPage() {
 
   // Track page visibility - only mark messages as read when page is visible
   const isPageVisible = usePageVisibility();
+  const { refreshUnreadCount } = useUnreadCount();
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -461,7 +463,7 @@ export default function MessagesPage() {
         setLoading(true);
         console.log("[Messages] Fetching conversations...");
         
-        const res = await fetch(`${chatUrl}/api/chat/conversations`, {
+        const res = await fetch(`${chatUrl}/api/chat/conversations?role=guest`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -469,14 +471,8 @@ export default function MessagesPage() {
         if (data.success) {
           const allConvs = data.data || [];
           
-          // FILTER: Only show conversations where current user is the GUEST AND has at least one message
-          // This filters out empty conversations created when visiting contact_host but not sending a message
-          const guestConversations = allConvs.filter((conv) => {
-            const participant = conv.participants.find(
-              (p) => p.userId === userId
-            );
-            return participant && participant.role === "guest" && conv.lastMessage;
-          });
+          // Server already filters by role=guest — only need to filter empty convos
+          const guestConversations = allConvs.filter((conv) => conv.lastMessage);
           
           // Sort by last message time (most recent first)
           const sortedConversations = guestConversations.sort((a, b) => {
@@ -758,6 +754,9 @@ export default function MessagesPage() {
             : conv
         )
       );
+
+      // Refresh global unread count badge
+      refreshUnreadCount();
     }
   }, [selectedConversation?.id, messages, userId, isPageVisible]);
 

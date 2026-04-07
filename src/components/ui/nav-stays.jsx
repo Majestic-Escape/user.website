@@ -6,6 +6,7 @@ import NavTabLayout from "@/components/nav-tab-layout";
 import { useWishlist } from "@/components/wishlist-context";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageSquare } from "lucide-react";
 import SearchFilter from "../search-filter";
@@ -18,8 +19,6 @@ export default function Navbar() {
   const { staysWishlist, experiencesWishlist, wishlists } = useWishlist();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [totalMessages, setTotalMessages] = useState(false);
-  const [propertyType, setPropertyType] = useState("");
   const router = useRouter();
 
   const pathname = usePathname();
@@ -28,6 +27,8 @@ export default function Navbar() {
   const mainPage = pathname == "/";
   const filter = pathname.startsWith("/stay/");
   const { user, logout, returnUrl } = useAuth();
+  const { unreadCount } = useUnreadCount();
+  const [propertyType, setPropertyType] = useState("");
 
   const switchToHosting = () => {
     router.push("/host/dashboard");
@@ -139,16 +140,16 @@ export default function Navbar() {
                     {totalWishlistItems}
                   </span>
                 )}
-              </Button> */}
+              {/* <Button> */}
 
-              {/* <Link href="/inbox" className="relative">
+              <Link href="/messages" className="relative">
                 <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                {totalMessages > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                    {totalMessages}
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center font-bold text-[10px] leading-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
-              </Link> */}
+              </Link>
 
               <UserDropdownMenu />
             </nav>

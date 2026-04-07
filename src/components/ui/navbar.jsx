@@ -6,6 +6,7 @@ import NavTabLayout from "@/components/nav-tab-layout";
 import { useWishlist } from "@/components/wishlist-context";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import WishlistPopup from "../wishlist-popup";
 import { UserDropdownMenu } from "@/components/user-dropdown-menu";
 
@@ -18,8 +19,8 @@ export default function Navbar() {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState(null);
   const { user, logout, returnUrl } = useAuth();
+  const { unreadCount } = useUnreadCount();
 
-  const [totalMessages, setTotalMessages] = useState(false);
   const router = useRouter();
 
   const switchToHosting = () => {
@@ -118,14 +119,14 @@ export default function Navbar() {
               )}
             </Button> */}
 
-            {/* <Link href="/inbox" className="relative">
+            <Link href="/messages" className="relative">
               <MessageSquare className="h-5 w-5 text-muted-foreground" />
-              {totalMessages > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                  {totalMessages}
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center font-bold text-[10px] leading-none">
+                  {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
-            </Link> */}
+            </Link>
 
             <UserDropdownMenu className="" />
           </nav>
