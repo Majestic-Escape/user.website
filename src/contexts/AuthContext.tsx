@@ -139,7 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (pathname == "/") {
         clearAllFilters();
       }
-      if (pathname !== "/login") {
+      if (pathname !== "/login" && pathname !== "/login-options") {
         if (pathname == "/filter") {
           setReturnUrl(encodeURIComponent(fullUrl));
         } else {
