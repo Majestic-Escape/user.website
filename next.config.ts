@@ -39,6 +39,17 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  async rewrites() {
+    const backendUrl =
+      process.env.BACKEND_URL || "http://localhost:5005/api/v1";
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${backendUrl}/:path*`,
+      },
+    ];
+  },
+
   async redirects() {
     return [
       // 1. Redirect www to non-www (HTTPS version)
