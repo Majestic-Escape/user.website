@@ -100,6 +100,8 @@ export default function HostInboxPage() {
   // Refs to track current state in socket callbacks (avoids stale closures)
   const selectedConversationRef = useRef(null);
   const conversationsRef = useRef([]);
+  const isMobileViewRef = useRef(false);
+  const programmaticBackRef = useRef(false);
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -109,6 +111,25 @@ export default function HostInboxPage() {
   useEffect(() => {
     conversationsRef.current = conversations;
   }, [conversations]);
+
+  useEffect(() => {
+    isMobileViewRef.current = isMobileView;
+  }, [isMobileView]);
+
+  // Handle browser back button on mobile: go to conversation list instead of leaving the page
+  useEffect(() => {
+    const handlePopState = () => {
+      if (programmaticBackRef.current) {
+        programmaticBackRef.current = false;
+        return;
+      }
+      if (isMobileViewRef.current && selectedConversationRef.current) {
+        setSelectedConversation(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Detect mobile view
   useEffect(() => {
@@ -151,6 +172,23 @@ export default function HostInboxPage() {
   const handleTogglePropertyInfo = useCallback(() => {
     isManualToggleRef.current = true;
     setShowPropertyInfo(prev => !prev);
+  }, []);
+
+  const handleSelectConversation = useCallback((conv) => {
+    setSelectedConversation(conv);
+    // Push a history entry on mobile so the browser back button returns to the list
+    if (isMobileViewRef.current) {
+      history.pushState({ conversationSelected: true }, '');
+    }
+  }, []);
+
+  const handleBackToList = useCallback(() => {
+    setSelectedConversation(null);
+    // Sync browser history when navigating back via the arrow button
+    if (isMobileViewRef.current && history.state?.conversationSelected) {
+      programmaticBackRef.current = true;
+      history.back();
+    }
   }, []);
 
   // Reset dropdown to expanded when conversation changes
@@ -906,7 +944,7 @@ export default function HostInboxPage() {
                       ? "bg-lightGreen/40"
                       : "bg-gray-50 hover:bg-lightGreen/20"
                   }`}
-                  onClick={() => setSelectedConversation(conv)}
+                  onClick={() => handleSelectConversation(conv)}
                 >
                   <div className="flex gap-3">
                     <Avatar className="h-12 w-12 flex-shrink-0">
@@ -974,7 +1012,7 @@ export default function HostInboxPage() {
             variant="ghost"
             size="icon"
             className="md:hidden flex-shrink-0"
-            onClick={() => setSelectedConversation(null)}
+            onClick={handleBackToList}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>

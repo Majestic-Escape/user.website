@@ -75,6 +75,8 @@ export default function MessagesPage() {
   const shouldRefocusRef = useRef(false);
   const typingTimeoutRef = useRef(null);
   const isTypingRef = useRef(false);
+  const isMobileViewRef = useRef(false);
+  const programmaticBackRef = useRef(false);
   const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
   // Keep refs in sync with state
@@ -85,6 +87,25 @@ export default function MessagesPage() {
   useEffect(() => {
     conversationsRef.current = conversations;
   }, [conversations]);
+
+  useEffect(() => {
+    isMobileViewRef.current = isMobileView;
+  }, [isMobileView]);
+
+  // Handle browser back button on mobile: go to conversation list instead of leaving the page
+  useEffect(() => {
+    const handlePopState = () => {
+      if (programmaticBackRef.current) {
+        programmaticBackRef.current = false;
+        return;
+      }
+      if (isMobileViewRef.current && selectedConversationRef.current) {
+        setSelectedConversation(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Refocus input after message is sent
   useEffect(() => {
@@ -876,10 +897,19 @@ export default function MessagesPage() {
     if (conv.propertyId && !propertyDetails[conv.propertyId]) {
       fetchPropertyDetails(conv.propertyId);
     }
+    // Push a history entry on mobile so the browser back button returns to the list
+    if (isMobileViewRef.current) {
+      history.pushState({ conversationSelected: true }, '');
+    }
   };
 
   const handleBackToList = () => {
     setSelectedConversation(null);
+    // Sync browser history when navigating back via the arrow button
+    if (isMobileViewRef.current && history.state?.conversationSelected) {
+      programmaticBackRef.current = true;
+      history.back();
+    }
   };
 
   // Get host name from property details - only first name for privacy
