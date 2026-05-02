@@ -33,6 +33,7 @@ import Image from "next/image";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -1063,7 +1064,7 @@ export default function MessagesPage() {
             {!loaded ? (
               <Skeleton className="w-full h-full" />
             ) : propInfo.image ? (
-              <Image
+              <ImageWithSkeleton
                 src={propInfo.image}
                 alt={propInfo.title}
                 fill
@@ -1233,7 +1234,7 @@ export default function MessagesPage() {
                     {!loaded ? (
                       <Skeleton className="w-full h-full" />
                     ) : propInfo.image ? (
-                      <Image
+                      <ImageWithSkeleton
                         src={propInfo.image}
                         alt={propInfo.title}
                         fill
@@ -1471,7 +1472,7 @@ export default function MessagesPage() {
                     {!loaded ? (
                       <Skeleton className="w-full h-full" />
                     ) : propInfo.image ? (
-                      <Image
+                      <ImageWithSkeleton
                         src={propInfo.image}
                         alt={propInfo.title}
                         fill
@@ -1698,7 +1699,7 @@ export default function MessagesPage() {
                           <div className="flex items-center gap-1.5 mt-1">
                             {propInfo.image ? (
                               <div className="relative h-5 w-5 rounded overflow-hidden flex-shrink-0">
-                                <Image
+                                <ImageWithSkeleton
                                   src={propInfo.image}
                                   alt=""
                                   fill
@@ -1829,7 +1830,7 @@ export default function MessagesPage() {
                           {!loaded ? (
                             <Skeleton className="w-full h-full" />
                           ) : propInfo.image ? (
-                            <Image
+                            <ImageWithSkeleton
                               src={propInfo.image}
                               alt={propInfo.title}
                               fill

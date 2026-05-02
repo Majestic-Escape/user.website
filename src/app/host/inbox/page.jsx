@@ -28,6 +28,7 @@ import MobileChatInput from "@/components/mobile-chat-input";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
@@ -970,7 +971,7 @@ export default function HostInboxPage() {
                         <div className="flex items-center gap-1.5 mt-1">
                           {propertyImage ? (
                             <div className="relative h-5 w-5 rounded overflow-hidden flex-shrink-0">
-                              <Image src={propertyImage} alt="" fill className="object-cover" />
+                              <ImageWithSkeleton src={propertyImage} alt="" fill className="object-cover" />
                             </div>
                           ) : (
                             <Home className="h-4 w-4 text-primaryGreen flex-shrink-0" />
@@ -1077,7 +1078,7 @@ export default function HostInboxPage() {
                     {!loaded ? (
                       <Skeleton className="w-full h-full" />
                     ) : propertyImage ? (
-                      <Image src={propertyImage} alt={getPropertyName(selectedConversation)} fill className="object-cover" />
+                      <ImageWithSkeleton src={propertyImage} alt={getPropertyName(selectedConversation)} fill className="object-cover" />
                     ) : (
                       <div className="flex items-center justify-center h-full">
                         <Home className="h-6 w-6 text-gray-400" />
