@@ -1064,7 +1064,8 @@ export default function HostInboxPage() {
             {(() => {
               const property = getPropertyDetails(selectedConversation);
               const propertyImage = getPropertyImage(selectedConversation);
-            
+              const loaded = isPropertyLoaded(selectedConversation);
+
             return (
               <div className="bg-lightGreen/30 rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-2">
@@ -1073,7 +1074,9 @@ export default function HostInboxPage() {
                 </div>
                 <div className="flex gap-3">
                   <div className="relative h-16 w-20 md:h-20 md:w-28 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
-                    {propertyImage ? (
+                    {!loaded ? (
+                      <Skeleton className="w-full h-full" />
+                    ) : propertyImage ? (
                       <Image src={propertyImage} alt={getPropertyName(selectedConversation)} fill className="object-cover" />
                     ) : (
                       <div className="flex items-center justify-center h-full">
@@ -1082,15 +1085,19 @@ export default function HostInboxPage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0 overflow-hidden">
-                    <h4 className="font-semibold text-sm md:text-base truncate text-gray-900">{getPropertyName(selectedConversation)}</h4>
-                    {getPropertyType(property) && <p className="text-xs text-gray-600 mt-0.5 truncate">{getPropertyType(property)}</p>}
-                    {(property?.address?.city || property?.address?.state) && (
+                    {loaded ? (
+                      <h4 className="font-semibold text-sm md:text-base truncate text-gray-900">{getPropertyName(selectedConversation)}</h4>
+                    ) : (
+                      <Skeleton className="h-4 w-32" />
+                    )}
+                    {loaded && getPropertyType(property) && <p className="text-xs text-gray-600 mt-0.5 truncate">{getPropertyType(property)}</p>}
+                    {loaded && (property?.address?.city || property?.address?.state) && (
                       <p className="text-xs text-gray-500 flex items-center gap-1 mt-1 truncate">
                         <MapPin className="h-3 w-3 flex-shrink-0" />
                         <span className="truncate">{getPropertyLocation(property)}</span>
                       </p>
                     )}
-                    {getPropertyPrice(property) && (
+                    {loaded && getPropertyPrice(property) && (
                       <p className="text-xs font-medium text-primaryGreen mt-1">₹{getPropertyPrice(property).toLocaleString()}/night</p>
                     )}
                   </div>
