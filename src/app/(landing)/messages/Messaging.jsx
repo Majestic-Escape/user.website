@@ -34,6 +34,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { useUnreadCount } from "@/contexts/UnreadCountContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -57,7 +59,7 @@ export default function MessagesPage() {
   const [showReservation, setShowReservation] = useState(true);
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
   const [tripDetailsExpanded, setTripDetailsExpanded] = useState(true);
-  const [propertyDetails, setPropertyDetails] = useState({});
+  const [propertyDetails, setPropertyDetails] = useState(() => getInitialPropertyDetails());
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [typingUsers, setTypingUsers] = useState(new Map()); // Map<conversationId, Set<userId>>
 
@@ -144,6 +146,7 @@ export default function MessagesPage() {
           ...prev,
           [propertyId]: json.data
         }));
+        setCachedProperty(propertyId, json.data);
       }
     } catch (err) {
       console.error("Error fetching property:", err);
@@ -912,6 +915,8 @@ export default function MessagesPage() {
     }
   };
 
+  const isPropertyLoaded = (conv) => Boolean(conv && propertyDetails[conv.propertyId]);
+
   // Get host name from property details - only first name for privacy
   const getHostName = (conv) => {
     const property = propertyDetails[conv.propertyId];
@@ -1629,6 +1634,7 @@ export default function MessagesPage() {
               {filteredConversations.map((conv) => {
                 const unreadCount = conv.unreadCount?.[userId] || 0;
                 const propInfo = getPropertyInfo(conv);
+                const propertyLoaded = isPropertyLoaded(conv);
 
                 return (
                   <Card
@@ -1641,50 +1647,67 @@ export default function MessagesPage() {
                     onClick={() => handleSelectConversation(conv)}
                   >
                     <div className="flex gap-3">
-                      <Avatar className="h-12 w-12 flex-shrink-0">
-                        <AvatarImage src={propInfo.hostImage} />
-                        <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
-                          {propInfo.hostName
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      {propertyLoaded ? (
+                        <Avatar className="h-12 w-12 flex-shrink-0">
+                          <AvatarImage src={propInfo.hostImage} />
+                          <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
+                            {propInfo.hostName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
-                          <span className="font-medium text-sm truncate">
-                            {propInfo.hostName}
-                          </span>
+                          {propertyLoaded ? (
+                            <span className="font-medium text-sm truncate">
+                              {propInfo.hostName}
+                            </span>
+                          ) : (
+                            <Skeleton className="h-4 w-24" />
+                          )}
                           <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
                             {formatTime(conv.lastMessage?.sentAt)}
                           </span>
                         </div>
                         {/* Property Context Badge */}
-                        <div className="flex items-center gap-1.5 mt-1">
-                          {propInfo.image ? (
-                            <div className="relative h-5 w-5 rounded overflow-hidden flex-shrink-0">
-                              <Image
-                                src={propInfo.image}
-                                alt=""
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <Home className="h-4 w-4 text-primaryGreen flex-shrink-0" />
-                          )}
-                          <p className="text-xs text-primaryGreen font-medium truncate">
-                            {propInfo.title}
-                          </p>
-                        </div>
-                        {propInfo.location && (
+                        {propertyLoaded ? (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            {propInfo.image ? (
+                              <div className="relative h-5 w-5 rounded overflow-hidden flex-shrink-0">
+                                <Image
+                                  src={propInfo.image}
+                                  alt=""
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <Home className="h-4 w-4 text-primaryGreen flex-shrink-0" />
+                            )}
+                            <p className="text-xs text-primaryGreen font-medium truncate">
+                              {propInfo.title}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <Skeleton className="h-5 w-5 rounded flex-shrink-0" />
+                            <Skeleton className="h-3 w-32" />
+                          </div>
+                        )}
+                        {propertyLoaded && propInfo.location && (
                           <p className="text-[11px] text-gray-400 truncate flex items-center gap-1 mt-0.5">
                             <MapPin className="h-3 w-3" />
                             {propInfo.location}
                           </p>
                         )}
-                        {isConversationTyping(conv.id) ? (
+                        {!propertyLoaded ? (
+                          <Skeleton className="h-4 w-40 mt-1" />
+                        ) : isConversationTyping(conv.id) ? (
                           <p className="text-sm text-primaryGreen truncate mt-1 animate-pulse">Typing...</p>
                         ) : (
                           <p className="text-sm text-gray-600 truncate mt-1">

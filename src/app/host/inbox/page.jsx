@@ -27,6 +27,8 @@ import MobileChatContainer from "@/components/mobile-chat-container";
 import MobileChatInput from "@/components/mobile-chat-input";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { useUnreadCount } from "@/contexts/UnreadCountContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
@@ -42,7 +44,7 @@ export default function HostInboxPage() {
   const [connectionStatus, setConnectionStatus] = useState("connecting");
   const [currentUserId, setCurrentUserId] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
-  const [propertyDetails, setPropertyDetails] = useState({});
+  const [propertyDetails, setPropertyDetails] = useState(() => getInitialPropertyDetails());
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
   const [isMobileView, setIsMobileView] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -487,6 +489,7 @@ export default function HostInboxPage() {
               ...prev,
               [propertyId]: property,
             }));
+            setCachedProperty(propertyId, property);
           }
         }
       } catch (e) {
@@ -738,6 +741,8 @@ export default function HostInboxPage() {
     return null;
   };
 
+  const isPropertyLoaded = (conversation) => Boolean(conversation && propertyDetails[conversation.propertyId]);
+
   const getPropertyName = (conversation) => {
     const property = propertyDetails[conversation.propertyId];
     return property?.title || property?.name || "Property Inquiry";
@@ -935,6 +940,7 @@ export default function HostInboxPage() {
               const unreadCount = conv.unreadCount[currentUserId] || 0;
               const propertyImage = getPropertyImage(conv);
               const property = getPropertyDetails(conv);
+              const propertyLoaded = isPropertyLoaded(conv);
 
               return (
                 <Card
@@ -960,23 +966,32 @@ export default function HostInboxPage() {
                           {formatTime(conv.lastMessage?.sentAt)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        {propertyImage ? (
-                          <div className="relative h-5 w-5 rounded overflow-hidden flex-shrink-0">
-                            <Image src={propertyImage} alt="" fill className="object-cover" />
-                          </div>
-                        ) : (
-                          <Home className="h-4 w-4 text-primaryGreen flex-shrink-0" />
-                        )}
-                        <p className="text-xs text-primaryGreen font-medium truncate">{getPropertyName(conv)}</p>
-                      </div>
-                      {(property?.address?.city || property?.address?.state || property?.city) && (
+                      {propertyLoaded ? (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {propertyImage ? (
+                            <div className="relative h-5 w-5 rounded overflow-hidden flex-shrink-0">
+                              <Image src={propertyImage} alt="" fill className="object-cover" />
+                            </div>
+                          ) : (
+                            <Home className="h-4 w-4 text-primaryGreen flex-shrink-0" />
+                          )}
+                          <p className="text-xs text-primaryGreen font-medium truncate">{getPropertyName(conv)}</p>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Skeleton className="h-5 w-5 rounded flex-shrink-0" />
+                          <Skeleton className="h-3 w-32" />
+                        </div>
+                      )}
+                      {propertyLoaded && (property?.address?.city || property?.address?.state || property?.city) && (
                         <p className="text-[11px] text-gray-400 truncate flex items-center gap-1 mt-0.5">
                           <MapPin className="h-3 w-3" />
                           {getPropertyLocation(property)}
                         </p>
                       )}
-                      {isConversationTyping(conv.id) ? (
+                      {!propertyLoaded ? (
+                        <Skeleton className="h-4 w-40 mt-1" />
+                      ) : isConversationTyping(conv.id) ? (
                         <p className="text-sm text-primaryGreen truncate mt-1 animate-pulse">Typing...</p>
                       ) : (
                         <p className="text-sm text-gray-600 truncate mt-1">
