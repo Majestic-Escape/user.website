@@ -6,9 +6,12 @@ import { socketManager } from "@/lib/socket";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Send, Loader2, Clock, Home, MapPin, Calendar, Users, ExternalLink } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Clock, Home, MapPin, Calendar, ExternalLink, Pencil } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DatePicker } from "@/components/date-picker";
+import { format, differenceInCalendarDays } from "date-fns";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -66,6 +69,9 @@ export default function ContactHostPage() {
   const [showMessageInput, setShowMessageInput] = useState(false);
   const [propertyData, setPropertyData] = useState(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [selectedDates, setSelectedDates] = useState(null); // { from: Date, to: Date } | null
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [mobileDatePickerOpen, setMobileDatePickerOpen] = useState(false);
 
   const socketRef = useRef(null);
   const textareaRef = useRef(null);
@@ -105,6 +111,25 @@ export default function ContactHostPage() {
     ? [propertyData.address.city, propertyData.address.state].filter(Boolean).join(", ")
     : "";
   const propertyPrice = propertyData?.basePrice || propertyData?.price?.base || null;
+
+  // Trip plan helpers
+  const tripNights = selectedDates?.from && selectedDates?.to
+    ? Math.max(differenceInCalendarDays(selectedDates.to, selectedDates.from), 1)
+    : 0;
+  const tripTotalPrice = propertyPrice && tripNights > 0 ? propertyPrice * tripNights : null;
+
+  const formatTripRange = () => {
+    if (!selectedDates?.from || !selectedDates?.to) return null;
+    return `${format(selectedDates.from, "d MMM")} – ${format(selectedDates.to, "d MMM yyyy")}`;
+  };
+
+  const buildOutgoingMessage = () => {
+    const base = message.trim();
+    if (!selectedDates?.from || !selectedDates?.to) return base;
+    const range = `${format(selectedDates.from, "d MMM yyyy")} – ${format(selectedDates.to, "d MMM yyyy")}`;
+    const nightsLabel = `${tripNights} night${tripNights === 1 ? "" : "s"}`;
+    return `${base}\n\n🗓️ Requested dates: ${range} (${nightsLabel})`;
+  };
 
   // Set default message after hostName is available
   useEffect(() => {
@@ -294,6 +319,8 @@ export default function ContactHostPage() {
   const sendMessage = async () => {
     if (!message.trim() || sending) return;
 
+    const outgoing = buildOutgoingMessage();
+
     setSending(true);
     setError(null);
 
@@ -351,7 +378,7 @@ export default function ContactHostPage() {
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
-              content: { text: message.trim() },
+              content: { text: outgoing },
               type: "text",
             }),
           });
@@ -380,7 +407,7 @@ export default function ContactHostPage() {
         "message:send",
         {
           conversationId: convId,
-          content: { text: message.trim() },
+          content: { text: outgoing },
           type: "text",
           clientMessageId,
         },
@@ -487,31 +514,89 @@ export default function ContactHostPage() {
                     {propertyLocation}
                   </p>
                 )}
+                {propertyPrice && !selectedDates && (
+                  <p className="text-xs font-medium text-primaryGreen mt-1">
+                    ₹{propertyPrice.toLocaleString()}/night
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
           {/* Dates & Guests */}
           <div className="px-4 py-4 border-b">
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex justify-between items-center mb-3 gap-3">
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="w-4 h-4 text-gray-400" />
                 <span className="font-medium">Dates</span>
               </div>
-              <Link 
-                href={`/stay/${propertyId}`}
-                className="text-sm text-primaryGreen font-medium"
-              >
-                Add dates
-              </Link>
+              <Popover open={mobileDatePickerOpen} onOpenChange={setMobileDatePickerOpen}>
+                <PopoverTrigger asChild>
+                  {selectedDates ? (
+                    <button className="flex items-center gap-1.5 text-sm font-medium text-gray-900 hover:text-primaryGreen group">
+                      <span>{formatTripRange()}</span>
+                      <Pencil className="w-3 h-3 text-gray-400 group-hover:text-primaryGreen" />
+                    </button>
+                  ) : (
+                    <button className="flex items-center gap-1.5 text-xs font-medium text-primaryGreen border border-primaryGreen/40 hover:bg-primaryGreen hover:text-white hover:border-primaryGreen rounded-full px-3 py-1.5 transition-colors">
+                      <Calendar className="w-3.5 h-3.5" />
+                      Add dates for accurate pricing
+                    </button>
+                  )}
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto max-w-[95vw] p-4 z-[200]"
+                  align="end"
+                  sideOffset={6}
+                >
+                  <DatePicker
+                    initialDates={selectedDates || undefined}
+                    onSelect={(dates) => {
+                      if (dates?.from && dates?.to) {
+                        setSelectedDates({ from: dates.from, to: dates.to });
+                        setMobileDatePickerOpen(false);
+                      }
+                    }}
+                    onClose={() => setMobileDatePickerOpen(false)}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2 text-sm">
-                <Users className="w-4 h-4 text-gray-400" />
-                <span className="font-medium">Guests</span>
+            {selectedDates && tripTotalPrice && (
+              <div className="mb-3 pl-6 space-y-1">
+                <p className="text-sm text-gray-600">
+                  ₹{propertyPrice.toLocaleString()} × {tripNights} {tripNights === 1 ? "night" : "nights"}
+                </p>
+                <p className="text-base font-semibold text-primaryGreen">
+                  Total ₹{tripTotalPrice.toLocaleString()}
+                </p>
               </div>
-              <span className="text-sm text-gray-600">1 guest</span>
-            </div>
+            )}
+            {selectedDates && (
+              <div className="flex justify-end mb-3">
+                <button
+                  onClick={() => setSelectedDates(null)}
+                  className="text-xs text-gray-500 hover:text-gray-700 underline"
+                >
+                  Clear dates
+                </button>
+              </div>
+            )}
+            <p className="text-xs text-gray-500 text-center mt-1">You won't be charged yet</p>
+            <Link href={`/stay/${propertyId}`} className="block mt-3">
+              <Button
+                variant="outline"
+                className="w-full border-primaryGreen text-primaryGreen hover:bg-primaryGreen hover:text-white"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View property
+              </Button>
+            </Link>
+            {selectedDates && (
+              <p className="mt-2 text-xs text-primaryGreen text-center">
+                Host will see these dates with your message
+              </p>
+            )}
           </div>
 
           {/* Message Input */}
@@ -829,29 +914,66 @@ export default function ContactHostPage() {
                     {propertyLocation}
                   </p>
                 )}
-                {propertyPrice && (
+                {propertyPrice && !tripTotalPrice && (
                   <p className="text-sm font-medium text-primaryGreen mb-4">
                     ₹{propertyPrice.toLocaleString()}/night
                   </p>
+                )}
+                {tripTotalPrice && (
+                  <div className="mb-4 space-y-1">
+                    <p className="text-sm text-gray-600">
+                      ₹{propertyPrice.toLocaleString()} × {tripNights} {tripNights === 1 ? "night" : "nights"}
+                    </p>
+                    <p className="text-base font-semibold text-primaryGreen">
+                      Total ₹{tripTotalPrice.toLocaleString()}
+                    </p>
+                  </div>
                 )}
 
                 <hr className="mb-4" />
 
                 {/* Dates & Guests */}
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center gap-3">
                     <span className="text-sm text-gray-600">Dates</span>
-                    <Link 
-                      href={`/stay/${propertyId}`}
-                      className="text-sm font-medium text-primaryGreen hover:underline"
-                    >
-                      Add dates for accurate pricing
-                    </Link>
+                    <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                      <PopoverTrigger asChild>
+                        {selectedDates ? (
+                          <button className="flex items-center gap-1.5 text-sm font-medium text-gray-900 hover:text-primaryGreen group">
+                            <span>{formatTripRange()}</span>
+                            <Pencil className="w-3 h-3 text-gray-400 group-hover:text-primaryGreen" />
+                          </button>
+                        ) : (
+                          <button className="flex items-center gap-1.5 text-xs font-medium text-primaryGreen border border-primaryGreen/40 hover:bg-primaryGreen hover:text-white hover:border-primaryGreen rounded-full px-3 py-1.5 transition-colors">
+                            <Calendar className="w-3.5 h-3.5" />
+                            Add dates for accurate pricing
+                          </button>
+                        )}
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto max-w-[95vw] p-4" align="end" sideOffset={6}>
+                        <DatePicker
+                          initialDates={selectedDates || undefined}
+                          onSelect={(dates) => {
+                            if (dates?.from && dates?.to) {
+                              setSelectedDates({ from: dates.from, to: dates.to });
+                              setDatePickerOpen(false);
+                            }
+                          }}
+                          onClose={() => setDatePickerOpen(false)}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Guests</span>
-                    <span className="text-sm font-medium">1 guest</span>
-                  </div>
+                  {selectedDates && (
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => setSelectedDates(null)}
+                        className="text-xs text-gray-500 hover:text-gray-700 underline"
+                      >
+                        Clear dates
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <hr className="my-4" />
@@ -868,6 +990,12 @@ export default function ContactHostPage() {
                     View property
                   </Button>
                 </Link>
+
+                {selectedDates && (
+                  <p className="mt-3 text-xs text-primaryGreen text-center">
+                    Host will see these dates with your message
+                  </p>
+                )}
               </div>
             </div>
           </div>
