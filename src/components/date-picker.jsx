@@ -6,7 +6,14 @@ import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
 
 
-export function DatePicker({ onSelect, onClose, initialDates, numberOfMonths = 1 }) {
+/**
+ * @param {object} props
+ * @param {(dates: any) => void} props.onSelect
+ * @param {() => void} [props.onClose]
+ * @param {{ from?: Date, to?: Date } | undefined} [props.initialDates]
+ * @param {number} [props.numberOfMonths]
+ */
+export function DatePicker({ onSelect, onClose, initialDates = undefined, numberOfMonths = 1 }) {
   const [selectedDates, setSelectedDates] = React.useState(initialDates)
 
   const hasFullRange = Boolean(selectedDates?.from && selectedDates?.to)
