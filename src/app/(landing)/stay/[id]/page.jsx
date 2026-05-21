@@ -6,7 +6,11 @@ import PropertyPageClient from "./PropertyPageClient";
 async function fetchProperty(id) {
   if (!id) throw new Error("Property ID is missing");
 
-  const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  // Server-side fetch needs a fully-qualified URL. NEXT_PUBLIC_API_BASE_URL is
+  // typically a relative path ("/api/v1") that only resolves in the browser,
+  // so prefer BACKEND_URL on the server.
+  const API_URL =
+    process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
   const response = await fetch(`${API_URL}/properties/${id}`, {
     // Add cache control if needed
     next: { revalidate: 3600 }, // Revalidate every hour
@@ -89,12 +93,12 @@ export default async function PropertyPage({ params }) {
             Error loading property
           </h2>
           <p className="text-red-600">Try refreshing</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          <a
+            href={`/stay/${params.id}`}
+            className="mt-4 inline-block px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
           >
             Try Again
-          </button>
+          </a>
         </div>
       </div>
     );
