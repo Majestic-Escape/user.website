@@ -1,5 +1,6 @@
 import { Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConversationRowSkeleton } from "@/components/conversation-row-skeleton";
 
 // Loading shell for /messages.
 //
@@ -14,28 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 // The geometry below deliberately mirrors the real markup in Messaging.jsx —
 // `p-4 border-b` header, `p-2 border-b` filter strip, `p-2 space-y-2` list of
 // `p-3` cards with a 12x12 avatar. If you restyle the list, restyle this too.
-
-function ConversationRowSkeleton() {
-  return (
-    <div className="p-3 rounded-xl bg-gray-50">
-      <div className="flex gap-3">
-        <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
-        <div className="flex-1 min-w-0 space-y-1.5">
-          <div className="flex justify-between items-start">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-3 w-10 ml-2 flex-shrink-0" />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Skeleton className="h-5 w-5 rounded flex-shrink-0" />
-            <Skeleton className="h-3 w-32" />
-          </div>
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="h-3.5 w-40" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function MessagesSkeleton({ rows = 5 }) {
   return (

@@ -58,7 +58,10 @@ export default function MessagesPage() {
     const cachedUserId = readUserIdFromStoredToken();
     return {
       userId: cachedUserId,
-      conversations: getCachedConversations(cachedUserId) ?? [],
+      // "guest" scopes this to /messages. The same userId has a separate,
+      // different list under "host" for /host/inbox — sharing a key would let
+      // one surface paint the other's threads.
+      conversations: getCachedConversations(cachedUserId, "guest") ?? [],
     };
   });
 
@@ -119,7 +122,7 @@ export default function MessagesPage() {
   // message arrived and the instant render would show the wrong preview.
   useEffect(() => {
     if (userId && conversations.length > 0) {
-      setCachedConversations(userId, conversations);
+      setCachedConversations(userId, "guest", conversations);
     }
   }, [userId, conversations]);
 
@@ -1796,7 +1799,10 @@ export default function MessagesPage() {
                           </p>
                         )}
                       </div>
-                      {unreadCount > 0 && (
+                      {/* Gated too: the count comes off the conversation, so an
+                          otherwise all-skeleton row would show a live unread
+                          number floating beside grey bars. */}
+                      {propertyLoaded && unreadCount > 0 && (
                         <div className="flex items-center">
                           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primaryGreen text-white text-xs">
                             {unreadCount}
