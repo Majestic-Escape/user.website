@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import Messaging from "./Messaging";
+import MessagesSkeleton from "./MessagesSkeleton";
 
 export const metadata = {
   robots: {
@@ -9,13 +10,11 @@ export const metadata = {
 };
 export default function MessageLayout() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
-        </div>
-      }
-    >
+    // Same skeleton the client component uses while it loads, so the Suspense
+    // boundary and the component's own loading state are visually identical —
+    // previously these were two different spinners and the user saw both in
+    // sequence on a single navigation.
+    <Suspense fallback={<MessagesSkeleton />}>
       <Messaging />
     </Suspense>
   );
