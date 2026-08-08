@@ -35,6 +35,12 @@ import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
+import {
+  getCachedConversations,
+  setCachedConversations,
+  readUserIdFromStoredToken,
+} from "@/lib/conversationsCache";
+import MessagesSkeleton from "./MessagesSkeleton";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -44,11 +50,25 @@ export default function MessagesPage() {
   const conversationIdFromUrl = searchParams.get('conversationId');
   const [token, setToken] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [conversations, setConversations] = useState([]);
+  // Read the session cache once, synchronously, before the first paint. The
+  // auth effect below sets `userId` too late to seed initial state, so we decode
+  // the same token here. On a revisit this means the list renders on frame one
+  // instead of flashing a loader while /api/chat/conversations round-trips.
+  const [bootstrap] = useState(() => {
+    const cachedUserId = readUserIdFromStoredToken();
+    return {
+      userId: cachedUserId,
+      conversations: getCachedConversations(cachedUserId) ?? [],
+    };
+  });
+
+  const [conversations, setConversations] = useState(bootstrap.conversations);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+  // Only block on a genuinely cold start. With cached conversations we render
+  // them immediately and revalidate in the background.
+  const [loading, setLoading] = useState(bootstrap.conversations.length === 0);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("connecting"); // 'connecting' | 'connected' | 'disconnected' | 'error'
@@ -59,6 +79,8 @@ export default function MessagesPage() {
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
   const [tripDetailsExpanded, setTripDetailsExpanded] = useState(true);
   const [propertyDetails, setPropertyDetails] = useState(() => getInitialPropertyDetails());
+  // Property ids with a request currently in the air — see fetchPropertyDetails.
+  const inFlightPropertiesRef = useRef(new Set());
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [typingUsers, setTypingUsers] = useState(new Map()); // Map<conversationId, Set<userId>>
 
@@ -70,7 +92,9 @@ export default function MessagesPage() {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const selectedConversationRef = useRef(null);
-  const conversationsRef = useRef([]);
+  // Seeded from the same cache as state so `init()` can tell a cold start from
+  // a revalidate without depending on effect ordering.
+  const conversationsRef = useRef(bootstrap.conversations);
   const desktopInputRef = useRef(null);
   const mobileInputRef = useRef(null);
   const shouldRefocusRef = useRef(false);
@@ -88,6 +112,16 @@ export default function MessagesPage() {
   useEffect(() => {
     conversationsRef.current = conversations;
   }, [conversations]);
+
+  // Persist on every change rather than only after the initial fetch, so
+  // socket-driven updates (new message, read receipts, unread counts) are what
+  // the next visit paints — otherwise the cache would go stale the moment a
+  // message arrived and the instant render would show the wrong preview.
+  useEffect(() => {
+    if (userId && conversations.length > 0) {
+      setCachedConversations(userId, conversations);
+    }
+  }, [userId, conversations]);
 
   useEffect(() => {
     isMobileViewRef.current = isMobileView;
@@ -133,10 +167,20 @@ export default function MessagesPage() {
     }
   }, [selectedConversation?.id, loadingMessages, isMobileView]);
 
-  // Fetch property details for a conversation
+  // Fetch property details for a conversation.
+  //
+  // The `propertyDetails[propertyId]` guard alone was not enough: it reads a
+  // value captured in this closure, so when the list mounts and fires one call
+  // per conversation, several conversations sharing a property (a host with
+  // repeat threads, or the same listing enquired about twice) all saw an empty
+  // map and each issued its own request for the same id. `inFlightPropertiesRef`
+  // dedupes across those concurrent callers, so the list costs exactly one
+  // request per *distinct* property.
   const fetchPropertyDetails = async (propertyId) => {
     if (!propertyId || propertyDetails[propertyId]) return;
-    
+    if (inFlightPropertiesRef.current.has(propertyId)) return;
+
+    inFlightPropertiesRef.current.add(propertyId);
     try {
       const res = await fetch(`${API_BASE_URL}/properties/${propertyId}`);
       const json = await res.json();
@@ -149,6 +193,10 @@ export default function MessagesPage() {
       }
     } catch (err) {
       console.error("Error fetching property:", err);
+    } finally {
+      // Always release, so a transient failure can be retried on the next
+      // render pass instead of wedging that property as permanently "loading".
+      inFlightPropertiesRef.current.delete(propertyId);
     }
   };
 
@@ -483,9 +531,11 @@ export default function MessagesPage() {
 
     async function init() {
       try {
-        setLoading(true);
-        console.log("[Messages] Fetching conversations...");
-        
+        // Revalidate silently when we already painted a cached list — flipping
+        // `loading` here would tear it down and reintroduce the very flash this
+        // cache exists to remove.
+        if (conversationsRef.current.length === 0) setLoading(true);
+
         const res = await fetch(`${chatUrl}/api/chat/conversations?role=guest`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -1025,12 +1075,12 @@ export default function MessagesPage() {
     return typingSet && typingSet.size > 0;
   };
 
+  // Cold start only — with a cached list we render it immediately and
+  // revalidate behind the scenes, so this branch is skipped entirely on a
+  // revisit. Same component as page.jsx's Suspense fallback so there is one
+  // loading appearance for this route, not three.
   if (loading) {
-    return (
-      <div className="h-screen pt-12 md:pt-[76px] pb-16 md:pb-0 w-full flex items-center justify-center bg-white">
-        <Loader2 className="w-8 h-8 animate-spin text-primaryGreen" />
-      </div>
-    );
+    return <MessagesSkeleton />;
   }
 
 
@@ -1690,9 +1740,20 @@ export default function MessagesPage() {
                           ) : (
                             <Skeleton className="h-4 w-24" />
                           )}
-                          <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                            {formatTime(conv.lastMessage?.sentAt)}
-                          </span>
+                          {/* Gated on the same flag as the rest of the row.
+                              The timestamp comes straight off the conversation
+                              so it used to render while the name, property and
+                              avatar were still skeletons — which read as a
+                              half-broken row rather than a loading one. A row
+                              is now either entirely real or entirely
+                              placeholder. */}
+                          {propertyLoaded ? (
+                            <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                              {formatTime(conv.lastMessage?.sentAt)}
+                            </span>
+                          ) : (
+                            <Skeleton className="h-3 w-10 ml-2 flex-shrink-0" />
+                          )}
                         </div>
                         {/* Property Context Badge */}
                         {propertyLoaded ? (
