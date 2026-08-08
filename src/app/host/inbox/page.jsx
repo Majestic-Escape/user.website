@@ -30,22 +30,47 @@ import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
+import {
+  getCachedConversations,
+  setCachedConversations,
+  readUserIdFromStoredToken,
+} from "@/lib/conversationsCache";
+import ConversationRowsSkeleton from "@/components/conversation-row-skeleton";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
 export default function HostInboxPage() {
-  const [conversations, setConversations] = useState([]);
+  // Read the session cache once, synchronously, before the first paint. The
+  // auth effect sets `currentUserId` too late to seed initial state, so we
+  // decode the same token here. On a revisit the list renders on frame one
+  // instead of showing a loader while the request round-trips.
+  //
+  // Scoped to "host": the same userId has a separate, different list under
+  // "guest" for /messages. Sharing a key would paint guest threads here.
+  const [bootstrap] = useState(() => {
+    const cachedUserId = readUserIdFromStoredToken();
+    return {
+      userId: cachedUserId,
+      conversations: getCachedConversations(cachedUserId, "host") ?? [],
+    };
+  });
+
+  const [conversations, setConversations] = useState(bootstrap.conversations);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  // Only block on a genuinely cold start; with a cached list we render it
+  // immediately and revalidate in the background.
+  const [isLoading, setIsLoading] = useState(bootstrap.conversations.length === 0);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("connecting");
   const [currentUserId, setCurrentUserId] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [propertyDetails, setPropertyDetails] = useState(() => getInitialPropertyDetails());
+  // Property ids with a request currently in the air — see fetchConversationDetails.
+  const inFlightPropertiesRef = useRef(new Set());
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
   const [isMobileView, setIsMobileView] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -102,7 +127,9 @@ export default function HostInboxPage() {
 
   // Refs to track current state in socket callbacks (avoids stale closures)
   const selectedConversationRef = useRef(null);
-  const conversationsRef = useRef([]);
+  // Seeded from the same cache as state so loadConversations() can tell a cold
+  // start from a revalidate without depending on effect ordering.
+  const conversationsRef = useRef(bootstrap.conversations);
   const isMobileViewRef = useRef(false);
   const programmaticBackRef = useRef(false);
 
@@ -113,7 +140,13 @@ export default function HostInboxPage() {
 
   useEffect(() => {
     conversationsRef.current = conversations;
-  }, [conversations]);
+    // Persist on every change rather than only after the initial fetch, so
+    // socket-driven updates (new message, unread counts) are what the next
+    // visit paints instead of a list that went stale the moment a guest replied.
+    if (currentUserId && conversations.length > 0) {
+      setCachedConversations(currentUserId, "host", conversations);
+    }
+  }, [conversations, currentUserId]);
 
   useEffect(() => {
     isMobileViewRef.current = isMobileView;
@@ -431,8 +464,10 @@ export default function HostInboxPage() {
     sessionStorage.setItem('hostinbox_last_init', now.toString());
 
     async function loadConversations() {
-      console.log("[HostInbox] Fetching conversations...");
-      setIsLoading(true);
+      // Revalidate silently when a cached list is already on screen — flipping
+      // isLoading here would tear it down and reintroduce the flash this cache
+      // exists to remove.
+      if (conversationsRef.current.length === 0) setIsLoading(true);
       try {
         // Server-side role filtering — only fetches host conversations (no wasted bandwidth)
         const response = await fetch(`${CHAT_URL}/api/chat/conversations?role=host`, {
@@ -474,29 +509,52 @@ export default function HostInboxPage() {
     };
   }, [currentUserId]);
 
-  // Fetch property details for conversations
+  // Fetch property details for conversations.
+  //
+  // This used to `await` inside a `for` loop, so N distinct properties cost N
+  // sequential round-trips — an inbox with 8 listings waited for 8 requests to
+  // complete one after another before the last row filled in. They are
+  // independent, so they run concurrently now and the wait is one round-trip
+  // rather than N.
+  //
+  // It also refetched every property on every mount, ignoring the sessionStorage
+  // cache that already had them. Skipping what we hold means a revisit usually
+  // issues zero property requests, and `inFlightPropertiesRef` stops a second
+  // caller (e.g. a socket update arriving mid-load) from duplicating one that
+  // is already in the air.
   const fetchConversationDetails = async (convs) => {
-    const propertyIds = [...new Set(convs.map((c) => c.propertyId))];
+    const propertyIds = [...new Set(convs.map((c) => c.propertyId))].filter(
+      (id) => id && !propertyDetails[id] && !inFlightPropertiesRef.current.has(id)
+    );
+    if (propertyIds.length === 0) return;
 
-    for (const propertyId of propertyIds) {
-      try {
-        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/properties/${propertyId}`;
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          const property = data.data || data.property || data;
-          if (property && (property.title || property.name || property._id)) {
-            setPropertyDetails((prev) => ({
-              ...prev,
-              [propertyId]: property,
-            }));
-            setCachedProperty(propertyId, property);
+    propertyIds.forEach((id) => inFlightPropertiesRef.current.add(id));
+
+    await Promise.all(
+      propertyIds.map(async (propertyId) => {
+        try {
+          const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/properties/${propertyId}`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            const property = data.data || data.property || data;
+            if (property && (property.title || property.name || property._id)) {
+              setPropertyDetails((prev) => ({
+                ...prev,
+                [propertyId]: property,
+              }));
+              setCachedProperty(propertyId, property);
+            }
           }
+        } catch (e) {
+          console.error("[HostInbox] Error fetching property:", propertyId, e);
+        } finally {
+          // Always release, so a transient failure can be retried on a later
+          // pass instead of wedging that property as permanently "loading".
+          inFlightPropertiesRef.current.delete(propertyId);
         }
-      } catch (e) {
-        console.error("[HostInbox] Error fetching property:", propertyId, e);
-      }
-    }
+      })
+    );
     // Guest details are already stored in conversation participants (firstName, lastName)
   };
 
@@ -923,9 +981,10 @@ export default function HostInboxPage() {
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader2 className="w-6 h-6 animate-spin text-primaryGreen" />
-          </div>
+          // Skeleton rows rather than a bare spinner, and the same component
+          // /messages uses — the two inboxes now have one loading appearance.
+          // Only reached on a cold start; a cached list skips this entirely.
+          <ConversationRowsSkeleton rows={5} />
         ) : filteredConversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 px-4">
             <MessageCircle className="w-12 h-12 text-gray-300 mb-4" />
@@ -953,19 +1012,38 @@ export default function HostInboxPage() {
                   }`}
                   onClick={() => handleSelectConversation(conv)}
                 >
+                  {/* Guest name, avatar and timestamp come straight off the
+                      conversation, so they used to render while the property
+                      badge and preview beside them were still grey bars — a row
+                      that reads as half-broken rather than loading. They are
+                      gated on the same flag now, so a row is either entirely
+                      real or entirely placeholder, matching /messages. */}
                   <div className="flex gap-3">
-                    <Avatar className="h-12 w-12 flex-shrink-0">
-                      <AvatarImage src={getGuestAvatar(conv)} />
-                      <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
-                        {getGuestName(conv).split(" ").map((n) => n[0]).join("").toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    {propertyLoaded ? (
+                      <Avatar className="h-12 w-12 flex-shrink-0">
+                        <AvatarImage src={getGuestAvatar(conv)} />
+                        <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
+                          {getGuestName(conv).split(" ").map((n) => n[0]).join("").toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start">
-                        <span className="font-medium text-sm truncate">{getGuestName(conv)}</span>
-                        <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                          {formatTime(conv.lastMessage?.sentAt)}
-                        </span>
+                        {propertyLoaded ? (
+                          <>
+                            <span className="font-medium text-sm truncate">{getGuestName(conv)}</span>
+                            <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                              {formatTime(conv.lastMessage?.sentAt)}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-3 w-10 ml-2 flex-shrink-0" />
+                          </>
+                        )}
                       </div>
                       {propertyLoaded ? (
                         <div className="flex items-center gap-1.5 mt-1">
@@ -1000,7 +1078,10 @@ export default function HostInboxPage() {
                         </p>
                       )}
                     </div>
-                    {unreadCount > 0 && (
+                    {/* Gated too: the count comes off the conversation, so an
+                        otherwise all-skeleton row would show a live unread
+                        number floating beside grey bars. */}
+                    {propertyLoaded && unreadCount > 0 && (
                       <div className="flex items-center">
                         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primaryGreen text-white text-xs">
                           {unreadCount}
