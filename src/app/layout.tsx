@@ -7,7 +7,49 @@ import { Providers } from "@/components/providers";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UnreadCountProvider } from "@/contexts/UnreadCountContext";
 import { Toaster } from "sonner";
+import Script from "next/script";
 export const revalidate = 0;
+
+// Standalone chat widget bundle. Lives in the majestic-escape-rag-ai-chat-widget
+// repo; loaded here as a single <script> tag so chat-only changes never need a
+// user.website redeploy. See the widget repo's src/embed/ for source.
+//
+// In production, NEXT_PUBLIC_CHAT_WIDGET_URL is the absolute URL of the bundle
+// (e.g. https://chat.majesticescape.in/embed/widget.js).
+//
+// In dev, when the env var is unset, we use a tiny inline loader that picks the
+// widget host at runtime from the page's own hostname. This makes IP-based LAN
+// access (http://192.168.x.x:3000) work without per-machine env-var tweaks —
+// otherwise the script tag would point at localhost:3003, which on a phone
+// resolves to the phone itself and silently 404s.
+const EXPLICIT_WIDGET_URL = process.env.NEXT_PUBLIC_CHAT_WIDGET_URL;
+const DEV_WIDGET_PORT = process.env.NEXT_PUBLIC_CHAT_WIDGET_PORT ?? "3003";
+// The dev-only loader runs ONLY when NEXT_PUBLIC_CHAT_WIDGET_URL is unset.
+// On a public hostname (i.e. anything that isn't localhost / 127.0.0.1 / a
+// private LAN IP) we refuse to fall back — fetching `https://<prod-host>:3003`
+// would silently 404 and leave the chat invisible with no diagnostic. Instead
+// we log a console.error pointing at the exact env var to set so the misconfig
+// is obvious in production / staging.
+const DEV_LOADER = `(function(){
+  var hostname = window.location.hostname;
+  var isLocal = hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    /^192\\.168\\./.test(hostname) ||
+    /^10\\./.test(hostname) ||
+    /^172\\.(1[6-9]|2[0-9]|3[01])\\./.test(hostname);
+  if (!isLocal) {
+    console.error('[Majestic Chat] NEXT_PUBLIC_CHAT_WIDGET_URL is not set. The chat widget will not load on this domain. Set NEXT_PUBLIC_CHAT_WIDGET_URL to your widget service URL (e.g. https://chat.majesticescape.in/embed/widget.js) on the deployment platform of this site (Vercel → Settings → Variables) and redeploy.');
+    return;
+  }
+  // Dev path: cache-bust per page-load so a freshly rebuilt bundle is always
+  // picked up immediately. The /embed/widget.js Cache-Control of 5min + SWR
+  // is great for prod (set via EXPLICIT_WIDGET_URL above) but causes "why
+  // isn't my change showing up" confusion during local development.
+  var s = document.createElement('script');
+  s.src = window.location.protocol + '//' + hostname + ':${DEV_WIDGET_PORT}/embed/widget.js?t=' + Date.now();
+  s.defer = true;
+  document.head.appendChild(s);
+})();`;
 export const metadata = {
   title: "Majestic Escape | Book Hotels, Tours & Holiday Packages in India",
   description:
@@ -90,6 +132,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
           </AuthProvider>
         </Providers>
         <Toaster position="top-center" closeButton richColors />
+        {EXPLICIT_WIDGET_URL ? (
+          <Script src={EXPLICIT_WIDGET_URL} strategy="lazyOnload" />
+        ) : (
+          <Script id="chat-widget-loader" strategy="lazyOnload">
+            {DEV_LOADER}
+          </Script>
+        )}
       </body>
     </html>
   );

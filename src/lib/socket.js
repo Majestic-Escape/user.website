@@ -18,6 +18,42 @@ class SocketManager {
     this.connectionListeners = new Set();
     this.reconnectAttempt = 0;
     this.lastConnectTime = null;
+    // Set by disconnect() (logout). Guards the recovery listeners below so they
+    // never resurrect a socket the app deliberately tore down.
+    this.intentionallyDisconnected = false;
+    this._recoveryBound = false;
+  }
+
+  /**
+   * Recover connections the Socket.IO client will not recover by itself.
+   *
+   * Two cases, both of which left guests silently offline until they reloaded:
+   *
+   *   1. Backgrounded tabs. Browsers throttle timers in background tabs, so a
+   *      drop that happens while the user is elsewhere sits in backoff (up to
+   *      10s here) after they come back. Very common on mobile, where switching
+   *      apps backgrounds the tab.
+   *   2. Coming back online after losing network.
+   *
+   * The sibling `/support` socket in majestic-escape-rag-ai-chat-widget already
+   * does this; user.website's manager was missing it. Idempotent — Socket.IO
+   * ignores connect() on an already-connected socket.
+   */
+  _bindRecoveryListeners() {
+    if (this._recoveryBound || typeof window === "undefined") return;
+    this._recoveryBound = true;
+
+    const recover = () => {
+      if (this.intentionallyDisconnected) return;
+      if (!this.socket || this.socket.connected) return;
+      console.log("[SocketManager] Recovering connection (tab visible / back online)");
+      this.socket.connect();
+    };
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") recover();
+    });
+    window.addEventListener("online", recover);
   }
 
   /**
@@ -68,6 +104,11 @@ class SocketManager {
     this.token = token;
     this.connectionCount = 1;
     this.reconnectAttempt = 0;
+    // A fresh socket means a fresh session (first load, or logging back in
+    // after a disconnect()). Clear the latch or recovery would stay disabled
+    // for the rest of the tab's life.
+    this.intentionallyDisconnected = false;
+    this._bindRecoveryListeners();
     this._setConnectionState("connecting");
 
     // Detect mobile devices - they need polling fallback for stability
@@ -130,9 +171,19 @@ class SocketManager {
       // Handle different disconnect reasons
       switch (reason) {
         case "io server disconnect":
-          // Server forcefully disconnected - don't auto-reconnect
-          console.log("[SocketManager] Server disconnected us, not reconnecting");
-          this._setConnectionState("disconnected");
+          // The one reason Socket.IO will NOT auto-reconnect from. It fires on
+          // every majestic-chat deploy/restart, so leaving it here meant guests
+          // stayed silently offline — no live messages, no typing, no unread
+          // updates — until they happened to reload the page. Reconnect
+          // manually; `reconnection: true` does not cover this case.
+          // (The widget's /support socket already does exactly this.)
+          if (this.intentionallyDisconnected) {
+            this._setConnectionState("disconnected");
+            break;
+          }
+          console.log("[SocketManager] Server dropped us — reconnecting manually");
+          this._setConnectionState("connecting");
+          this.socket?.connect();
           break;
         case "io client disconnect":
           // We called disconnect() - intentional
@@ -275,6 +326,9 @@ class SocketManager {
    * Force disconnect (for logout, etc.)
    */
   disconnect() {
+    // Latched so the visibility/online listeners and the server-disconnect
+    // branch don't immediately undo an intentional teardown (logout).
+    this.intentionallyDisconnected = true;
     if (this.socket) {
       console.log("[SocketManager] Force disconnect");
       this.socket.disconnect();

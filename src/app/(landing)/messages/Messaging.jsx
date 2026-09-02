@@ -18,8 +18,6 @@ import {
   ChevronUp,
   ArrowLeft,
   X,
-  Calendar,
-  Users,
   Home,
   User,
   Shield,
@@ -34,6 +32,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { useUnreadCount } from "@/contexts/UnreadCountContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
+import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
+import {
+  getCachedConversations,
+  setCachedConversations,
+  readUserIdFromStoredToken,
+} from "@/lib/conversationsCache";
+import MessagesSkeleton from "./MessagesSkeleton";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -43,11 +50,28 @@ export default function MessagesPage() {
   const conversationIdFromUrl = searchParams.get('conversationId');
   const [token, setToken] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [conversations, setConversations] = useState([]);
+  // Read the session cache once, synchronously, before the first paint. The
+  // auth effect below sets `userId` too late to seed initial state, so we decode
+  // the same token here. On a revisit this means the list renders on frame one
+  // instead of flashing a loader while /api/chat/conversations round-trips.
+  const [bootstrap] = useState(() => {
+    const cachedUserId = readUserIdFromStoredToken();
+    return {
+      userId: cachedUserId,
+      // "guest" scopes this to /messages. The same userId has a separate,
+      // different list under "host" for /host/inbox — sharing a key would let
+      // one surface paint the other's threads.
+      conversations: getCachedConversations(cachedUserId, "guest") ?? [],
+    };
+  });
+
+  const [conversations, setConversations] = useState(bootstrap.conversations);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+  // Only block on a genuinely cold start. With cached conversations we render
+  // them immediately and revalidate in the background.
+  const [loading, setLoading] = useState(bootstrap.conversations.length === 0);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("connecting"); // 'connecting' | 'connected' | 'disconnected' | 'error'
@@ -57,7 +81,9 @@ export default function MessagesPage() {
   const [showReservation, setShowReservation] = useState(true);
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
   const [tripDetailsExpanded, setTripDetailsExpanded] = useState(true);
-  const [propertyDetails, setPropertyDetails] = useState({});
+  const [propertyDetails, setPropertyDetails] = useState(() => getInitialPropertyDetails());
+  // Property ids with a request currently in the air — see fetchPropertyDetails.
+  const inFlightPropertiesRef = useRef(new Set());
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [typingUsers, setTypingUsers] = useState(new Map()); // Map<conversationId, Set<userId>>
 
@@ -69,12 +95,16 @@ export default function MessagesPage() {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const selectedConversationRef = useRef(null);
-  const conversationsRef = useRef([]);
+  // Seeded from the same cache as state so `init()` can tell a cold start from
+  // a revalidate without depending on effect ordering.
+  const conversationsRef = useRef(bootstrap.conversations);
   const desktopInputRef = useRef(null);
   const mobileInputRef = useRef(null);
   const shouldRefocusRef = useRef(false);
   const typingTimeoutRef = useRef(null);
   const isTypingRef = useRef(false);
+  const isMobileViewRef = useRef(false);
+  const programmaticBackRef = useRef(false);
   const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
   // Keep refs in sync with state
@@ -85,6 +115,35 @@ export default function MessagesPage() {
   useEffect(() => {
     conversationsRef.current = conversations;
   }, [conversations]);
+
+  // Persist on every change rather than only after the initial fetch, so
+  // socket-driven updates (new message, read receipts, unread counts) are what
+  // the next visit paints — otherwise the cache would go stale the moment a
+  // message arrived and the instant render would show the wrong preview.
+  useEffect(() => {
+    if (userId && conversations.length > 0) {
+      setCachedConversations(userId, "guest", conversations);
+    }
+  }, [userId, conversations]);
+
+  useEffect(() => {
+    isMobileViewRef.current = isMobileView;
+  }, [isMobileView]);
+
+  // Handle browser back button on mobile: go to conversation list instead of leaving the page
+  useEffect(() => {
+    const handlePopState = () => {
+      if (programmaticBackRef.current) {
+        programmaticBackRef.current = false;
+        return;
+      }
+      if (isMobileViewRef.current && selectedConversationRef.current) {
+        setSelectedConversation(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Refocus input after message is sent
   useEffect(() => {
@@ -111,10 +170,20 @@ export default function MessagesPage() {
     }
   }, [selectedConversation?.id, loadingMessages, isMobileView]);
 
-  // Fetch property details for a conversation
+  // Fetch property details for a conversation.
+  //
+  // The `propertyDetails[propertyId]` guard alone was not enough: it reads a
+  // value captured in this closure, so when the list mounts and fires one call
+  // per conversation, several conversations sharing a property (a host with
+  // repeat threads, or the same listing enquired about twice) all saw an empty
+  // map and each issued its own request for the same id. `inFlightPropertiesRef`
+  // dedupes across those concurrent callers, so the list costs exactly one
+  // request per *distinct* property.
   const fetchPropertyDetails = async (propertyId) => {
     if (!propertyId || propertyDetails[propertyId]) return;
-    
+    if (inFlightPropertiesRef.current.has(propertyId)) return;
+
+    inFlightPropertiesRef.current.add(propertyId);
     try {
       const res = await fetch(`${API_BASE_URL}/properties/${propertyId}`);
       const json = await res.json();
@@ -123,9 +192,14 @@ export default function MessagesPage() {
           ...prev,
           [propertyId]: json.data
         }));
+        setCachedProperty(propertyId, json.data);
       }
     } catch (err) {
       console.error("Error fetching property:", err);
+    } finally {
+      // Always release, so a transient failure can be retried on the next
+      // render pass instead of wedging that property as permanently "loading".
+      inFlightPropertiesRef.current.delete(propertyId);
     }
   };
 
@@ -460,9 +534,11 @@ export default function MessagesPage() {
 
     async function init() {
       try {
-        setLoading(true);
-        console.log("[Messages] Fetching conversations...");
-        
+        // Revalidate silently when we already painted a cached list — flipping
+        // `loading` here would tear it down and reintroduce the very flash this
+        // cache exists to remove.
+        if (conversationsRef.current.length === 0) setLoading(true);
+
         const res = await fetch(`${chatUrl}/api/chat/conversations?role=guest`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -876,11 +952,22 @@ export default function MessagesPage() {
     if (conv.propertyId && !propertyDetails[conv.propertyId]) {
       fetchPropertyDetails(conv.propertyId);
     }
+    // Push a history entry on mobile so the browser back button returns to the list
+    if (isMobileViewRef.current) {
+      history.pushState({ conversationSelected: true }, '');
+    }
   };
 
   const handleBackToList = () => {
     setSelectedConversation(null);
+    // Sync browser history when navigating back via the arrow button
+    if (isMobileViewRef.current && history.state?.conversationSelected) {
+      programmaticBackRef.current = true;
+      history.back();
+    }
   };
+
+  const isPropertyLoaded = (conv) => Boolean(conv && propertyDetails[conv.propertyId]);
 
   // Get host name from property details - only first name for privacy
   const getHostName = (conv) => {
@@ -991,12 +1078,12 @@ export default function MessagesPage() {
     return typingSet && typingSet.size > 0;
   };
 
+  // Cold start only — with a cached list we render it immediately and
+  // revalidate behind the scenes, so this branch is skipped entirely on a
+  // revisit. Same component as page.jsx's Suspense fallback so there is one
+  // loading appearance for this route, not three.
   if (loading) {
-    return (
-      <div className="h-screen pt-12 md:pt-[76px] pb-16 md:pb-0 w-full flex items-center justify-center bg-white">
-        <Loader2 className="w-8 h-8 animate-spin text-primaryGreen" />
-      </div>
-    );
+    return <MessagesSkeleton />;
   }
 
 
@@ -1005,13 +1092,14 @@ export default function MessagesPage() {
     if (!selectedConversation || !showReservation) return null;
 
     const propInfo = getPropertyInfo(selectedConversation);
-    
+    const loaded = isPropertyLoaded(selectedConversation);
+
     return (
       <div className="w-[280px] border-l bg-white flex-shrink-0 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="px-3 h-[52px] border-b flex items-center justify-between flex-shrink-0">
           <h3 className="font-semibold text-sm">Reservation</h3>
-          <button 
+          <button
             onClick={() => setShowReservation(false)}
             className="p-1 hover:bg-gray-100 rounded-full"
           >
@@ -1026,8 +1114,10 @@ export default function MessagesPage() {
             <div className="absolute top-2 left-2 z-10 bg-primaryGreen text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
               ENQUIRY SENT
             </div>
-            {propInfo.image ? (
-              <Image
+            {!loaded ? (
+              <Skeleton className="w-full h-full" />
+            ) : propInfo.image ? (
+              <ImageWithSkeleton
                 src={propInfo.image}
                 alt={propInfo.title}
                 fill
@@ -1044,8 +1134,8 @@ export default function MessagesPage() {
           <div className="mb-3">
             <h4 className="font-semibold text-sm mb-1">Ready to book?</h4>
             <p className="text-xs text-gray-500 mb-2">Host lets guests book instantly.</p>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full h-9 text-sm border-gray-900 text-gray-900 hover:bg-gray-50"
               onClick={() => router.push(`/stay/${selectedConversation.propertyId}`)}
             >
@@ -1057,7 +1147,7 @@ export default function MessagesPage() {
 
           {/* Trip Details - Collapsible */}
           <div>
-            <button 
+            <button
               onClick={() => setTripDetailsExpanded(!tripDetailsExpanded)}
               className="w-full flex items-center justify-between py-1"
             >
@@ -1068,15 +1158,19 @@ export default function MessagesPage() {
             {tripDetailsExpanded && (
               <div className="space-y-3 mt-2">
                 {/* Property Info */}
-                <Link 
+                <Link
                   href={`/stay/${selectedConversation.propertyId}`}
                   className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors group"
                 >
                   <div className="flex-1">
-                    <p className="font-medium text-xs group-hover:text-primaryGreen">
-                      {propInfo.title}
-                    </p>
-                    <p className="text-[10px] text-gray-500">
+                    {loaded ? (
+                      <p className="font-medium text-xs group-hover:text-primaryGreen">
+                        {propInfo.title}
+                      </p>
+                    ) : (
+                      <Skeleton className="h-3 w-32" />
+                    )}
+                    <p className="text-[10px] text-gray-500 mt-0.5">
                       View listing
                     </p>
                   </div>
@@ -1085,42 +1179,25 @@ export default function MessagesPage() {
 
                 {/* Host Info */}
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50">
-                  <Avatar className="w-8 h-8">
-                    {propInfo.hostImage ? (
-                      <AvatarImage src={propInfo.hostImage} alt={propInfo.hostName} />
-                    ) : null}
-                    <AvatarFallback className="bg-primaryGreen text-white text-xs">
-                      {propInfo.hostName.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  {loaded ? (
+                    <Avatar className="w-8 h-8">
+                      {propInfo.hostImage ? (
+                        <AvatarImage src={propInfo.hostImage} alt={propInfo.hostName} />
+                      ) : null}
+                      <AvatarFallback className="bg-primaryGreen text-white text-xs">
+                        {propInfo.hostName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <Skeleton className="w-8 h-8 rounded-full flex-shrink-0" />
+                  )}
                   <div className="flex-1">
-                    <p className="font-medium text-xs">Hosted by {propInfo.hostName}</p>
-                    <p className="text-[10px] text-gray-500">Property host</p>
-                  </div>
-                </div>
-
-                {/* Dates placeholder */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs">
-                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                    <div>
-                      <p className="text-gray-500 text-[10px]">Check-in</p>
-                      <p className="font-medium">Add dates</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                    <div>
-                      <p className="text-gray-500 text-[10px]">Checkout</p>
-                      <p className="font-medium">Add dates</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <Users className="w-3.5 h-3.5 text-gray-400" />
-                    <div>
-                      <p className="text-gray-500 text-[10px]">Guests</p>
-                      <p className="font-medium">1 guest</p>
-                    </div>
+                    {loaded ? (
+                      <p className="font-medium text-xs">Hosted by {propInfo.hostName}</p>
+                    ) : (
+                      <Skeleton className="h-3 w-28" />
+                    )}
+                    <p className="text-[10px] text-gray-500 mt-0.5">Property host</p>
                   </div>
                 </div>
               </div>
@@ -1135,9 +1212,10 @@ export default function MessagesPage() {
   // Mobile Chat View
   if (isMobileView && selectedConversation) {
     const propInfo = getPropertyInfo(selectedConversation);
-    
+    const loaded = isPropertyLoaded(selectedConversation);
+
     return (
-      <div 
+      <div
         className="fixed inset-x-0 top-0 bg-white flex flex-col font-poppins z-[9999]"
         style={{
           height: mobileViewportHeight,
@@ -1151,16 +1229,24 @@ export default function MessagesPage() {
             <button onClick={handleBackToList} className="p-1 hover:bg-gray-100 rounded-full flex-shrink-0">
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <Avatar className="w-10 h-10 flex-shrink-0">
-              {propInfo.hostImage ? (
-                <AvatarImage src={propInfo.hostImage} alt={propInfo.hostName} />
-              ) : null}
-              <AvatarFallback className="bg-primaryGreen text-white">
-                {propInfo.hostName.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            {loaded ? (
+              <Avatar className="w-10 h-10 flex-shrink-0">
+                {propInfo.hostImage ? (
+                  <AvatarImage src={propInfo.hostImage} alt={propInfo.hostName} />
+                ) : null}
+                <AvatarFallback className="bg-primaryGreen text-white">
+                  {propInfo.hostName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
+            )}
             <div className="flex-1 min-w-0">
-              <h2 className="font-semibold text-sm truncate">{propInfo.hostName}</h2>
+              {loaded ? (
+                <h2 className="font-semibold text-sm truncate">{propInfo.hostName}</h2>
+              ) : (
+                <Skeleton className="h-4 w-24" />
+              )}
               {isConversationTyping(selectedConversation?.id) ? (
                 <p className="text-xs text-primaryGreen animate-pulse">Typing...</p>
               ) : (
@@ -1198,8 +1284,10 @@ export default function MessagesPage() {
                 <div className="flex gap-3">
                   {/* Property Image */}
                   <div className="relative h-16 w-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
-                    {propInfo.image ? (
-                      <Image
+                    {!loaded ? (
+                      <Skeleton className="w-full h-full" />
+                    ) : propInfo.image ? (
+                      <ImageWithSkeleton
                         src={propInfo.image}
                         alt={propInfo.title}
                         fill
@@ -1211,31 +1299,35 @@ export default function MessagesPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Property Details */}
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-sm truncate text-gray-900">
-                      {propInfo.title}
-                    </h4>
-                    {propInfo.type && (
+                    {loaded ? (
+                      <h4 className="font-semibold text-sm truncate text-gray-900">
+                        {propInfo.title}
+                      </h4>
+                    ) : (
+                      <Skeleton className="h-4 w-32" />
+                    )}
+                    {loaded && propInfo.type && (
                       <p className="text-xs text-gray-600 mt-0.5">
                         {propInfo.type}
                       </p>
                     )}
-                    {propInfo.location && (
+                    {loaded && propInfo.location && (
                       <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
                         <MapPin className="h-3 w-3" />
                         {propInfo.location}
                       </p>
                     )}
-                    {propInfo.price && (
+                    {loaded && propInfo.price && (
                       <p className="text-xs font-medium text-primaryGreen mt-1">
                         ₹{propInfo.price.toLocaleString()}/night
                       </p>
                     )}
                   </div>
                 </div>
-                
+
                 {/* View Property Button */}
                 <Link
                   href={`/stay/${selectedConversation.propertyId}`}
@@ -1424,14 +1516,16 @@ export default function MessagesPage() {
               <div className="flex-1 overflow-y-auto px-5 pb-8">
                 <h2 className="text-lg font-semibold font-bricolage mb-4">Trip details</h2>
                 
-                <Link 
+                <Link
                   href={`/stay/${selectedConversation.propertyId}`}
                   onClick={() => setShowDetailsModal(false)}
                   className="flex gap-3 p-3 border rounded-xl hover:bg-gray-50 transition-colors mb-6"
                 >
                   <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                    {propInfo.image ? (
-                      <Image
+                    {!loaded ? (
+                      <Skeleton className="w-full h-full" />
+                    ) : propInfo.image ? (
+                      <ImageWithSkeleton
                         src={propInfo.image}
                         alt={propInfo.title}
                         fill
@@ -1444,11 +1538,17 @@ export default function MessagesPage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">{propInfo.title}</p>
+                    {loaded ? (
+                      <p className="font-medium text-sm">{propInfo.title}</p>
+                    ) : (
+                      <Skeleton className="h-4 w-32" />
+                    )}
                     <p className="text-xs text-gray-500 mt-0.5">
                       <span className="text-primaryGreen">Enquiry sent</span>
                     </p>
-                    <p className="text-xs text-gray-500 truncate">{propInfo.type}</p>
+                    {loaded && propInfo.type && (
+                      <p className="text-xs text-gray-500 truncate">{propInfo.type}</p>
+                    )}
                     <p className="text-xs text-primaryGreen font-medium mt-1 flex items-center">
                       Show reservation <ChevronRight className="w-3 h-3 ml-0.5" />
                     </p>
@@ -1458,17 +1558,25 @@ export default function MessagesPage() {
                 <h3 className="text-base font-semibold mb-3">In this conversation</h3>
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-3">
-                    <Avatar className="w-11 h-11">
-                      {propInfo.hostImage ? (
-                        <AvatarImage src={propInfo.hostImage} alt={propInfo.hostName} />
-                      ) : null}
-                      <AvatarFallback className="bg-primaryGreen text-white">
-                        {propInfo.hostName.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    {loaded ? (
+                      <Avatar className="w-11 h-11">
+                        {propInfo.hostImage ? (
+                          <AvatarImage src={propInfo.hostImage} alt={propInfo.hostName} />
+                        ) : null}
+                        <AvatarFallback className="bg-primaryGreen text-white">
+                          {propInfo.hostName.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <Skeleton className="w-11 h-11 rounded-full flex-shrink-0" />
+                    )}
                     <div>
-                      <p className="font-medium text-sm">{propInfo.hostName}</p>
-                      <p className="text-xs text-gray-500">Host</p>
+                      {loaded ? (
+                        <p className="font-medium text-sm">{propInfo.hostName}</p>
+                      ) : (
+                        <Skeleton className="h-4 w-24" />
+                      )}
+                      <p className="text-xs text-gray-500 mt-0.5">Host</p>
                     </div>
                   </div>
                   
@@ -1599,6 +1707,7 @@ export default function MessagesPage() {
               {filteredConversations.map((conv) => {
                 const unreadCount = conv.unreadCount?.[userId] || 0;
                 const propInfo = getPropertyInfo(conv);
+                const propertyLoaded = isPropertyLoaded(conv);
 
                 return (
                   <Card
@@ -1611,50 +1720,78 @@ export default function MessagesPage() {
                     onClick={() => handleSelectConversation(conv)}
                   >
                     <div className="flex gap-3">
-                      <Avatar className="h-12 w-12 flex-shrink-0">
-                        <AvatarImage src={propInfo.hostImage} />
-                        <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
-                          {propInfo.hostName
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      {propertyLoaded ? (
+                        <Avatar className="h-12 w-12 flex-shrink-0">
+                          <AvatarImage src={propInfo.hostImage} />
+                          <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
+                            {propInfo.hostName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
-                          <span className="font-medium text-sm truncate">
-                            {propInfo.hostName}
-                          </span>
-                          <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                            {formatTime(conv.lastMessage?.sentAt)}
-                          </span>
+                          {propertyLoaded ? (
+                            <span className="font-medium text-sm truncate">
+                              {propInfo.hostName}
+                            </span>
+                          ) : (
+                            <Skeleton className="h-4 w-24" />
+                          )}
+                          {/* Gated on the same flag as the rest of the row.
+                              The timestamp comes straight off the conversation
+                              so it used to render while the name, property and
+                              avatar were still skeletons — which read as a
+                              half-broken row rather than a loading one. A row
+                              is now either entirely real or entirely
+                              placeholder. */}
+                          {propertyLoaded ? (
+                            <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                              {formatTime(conv.lastMessage?.sentAt)}
+                            </span>
+                          ) : (
+                            <Skeleton className="h-3 w-10 ml-2 flex-shrink-0" />
+                          )}
                         </div>
                         {/* Property Context Badge */}
-                        <div className="flex items-center gap-1.5 mt-1">
-                          {propInfo.image ? (
-                            <div className="relative h-5 w-5 rounded overflow-hidden flex-shrink-0">
-                              <Image
-                                src={propInfo.image}
-                                alt=""
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <Home className="h-4 w-4 text-primaryGreen flex-shrink-0" />
-                          )}
-                          <p className="text-xs text-primaryGreen font-medium truncate">
-                            {propInfo.title}
-                          </p>
-                        </div>
-                        {propInfo.location && (
+                        {propertyLoaded ? (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            {propInfo.image ? (
+                              <div className="relative h-5 w-5 rounded overflow-hidden flex-shrink-0">
+                                <ImageWithSkeleton
+                                  src={propInfo.image}
+                                  alt=""
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <Home className="h-4 w-4 text-primaryGreen flex-shrink-0" />
+                            )}
+                            <p className="text-xs text-primaryGreen font-medium truncate">
+                              {propInfo.title}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <Skeleton className="h-5 w-5 rounded flex-shrink-0" />
+                            <Skeleton className="h-3 w-32" />
+                          </div>
+                        )}
+                        {propertyLoaded && propInfo.location && (
                           <p className="text-[11px] text-gray-400 truncate flex items-center gap-1 mt-0.5">
                             <MapPin className="h-3 w-3" />
                             {propInfo.location}
                           </p>
                         )}
-                        {isConversationTyping(conv.id) ? (
+                        {!propertyLoaded ? (
+                          <Skeleton className="h-4 w-40 mt-1" />
+                        ) : isConversationTyping(conv.id) ? (
                           <p className="text-sm text-primaryGreen truncate mt-1 animate-pulse">Typing...</p>
                         ) : (
                           <p className="text-sm text-gray-600 truncate mt-1">
@@ -1662,7 +1799,10 @@ export default function MessagesPage() {
                           </p>
                         )}
                       </div>
-                      {unreadCount > 0 && (
+                      {/* Gated too: the count comes off the conversation, so an
+                          otherwise all-skeleton row would show a live unread
+                          number floating beside grey bars. */}
+                      {propertyLoaded && unreadCount > 0 && (
                         <div className="flex items-center">
                           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primaryGreen text-white text-xs">
                             {unreadCount}
@@ -1694,20 +1834,28 @@ export default function MessagesPage() {
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <Avatar className="h-10 w-10 flex-shrink-0">
-                <AvatarImage src={getPropertyInfo(selectedConversation).hostImage} />
-                <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
-                  {getPropertyInfo(selectedConversation).hostName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              {isPropertyLoaded(selectedConversation) ? (
+                <Avatar className="h-10 w-10 flex-shrink-0">
+                  <AvatarImage src={getPropertyInfo(selectedConversation).hostImage} />
+                  <AvatarFallback className="bg-primaryGreen/10 text-primaryGreen">
+                    {getPropertyInfo(selectedConversation).hostName
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+              )}
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold truncate">
-                  {getPropertyInfo(selectedConversation).hostName}
-                </h3>
+                {isPropertyLoaded(selectedConversation) ? (
+                  <h3 className="font-semibold truncate">
+                    {getPropertyInfo(selectedConversation).hostName}
+                  </h3>
+                ) : (
+                  <Skeleton className="h-4 w-24" />
+                )}
                 {isConversationTyping(selectedConversation?.id) ? (
                   <p className="text-sm text-primaryGreen animate-pulse">Typing...</p>
                 ) : (
@@ -1727,13 +1875,14 @@ export default function MessagesPage() {
                 )}
               </Button>
             </div>
-            
+
             {/* Property Context Card - Collapsible */}
             {showPropertyInfo && (
               <div className="px-4 pb-4">
                 {(() => {
                   const propInfo = getPropertyInfo(selectedConversation);
-                  
+                  const loaded = isPropertyLoaded(selectedConversation);
+
                   return (
                     <div className="bg-lightGreen/30 rounded-xl p-3">
                       <div className="flex items-center gap-2 mb-2">
@@ -1745,8 +1894,10 @@ export default function MessagesPage() {
                       <div className="flex gap-3">
                         {/* Property Image */}
                         <div className="relative h-16 w-20 md:h-20 md:w-28 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
-                          {propInfo.image ? (
-                            <Image
+                          {!loaded ? (
+                            <Skeleton className="w-full h-full" />
+                          ) : propInfo.image ? (
+                            <ImageWithSkeleton
                               src={propInfo.image}
                               alt={propInfo.title}
                               fill
@@ -1758,30 +1909,34 @@ export default function MessagesPage() {
                             </div>
                           )}
                         </div>
-                        
+
                         {/* Property Details */}
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-sm md:text-base truncate text-gray-900">
-                            {propInfo.title}
-                          </h4>
-                          {propInfo.type && (
+                          {loaded ? (
+                            <h4 className="font-semibold text-sm md:text-base truncate text-gray-900">
+                              {propInfo.title}
+                            </h4>
+                          ) : (
+                            <Skeleton className="h-4 w-32" />
+                          )}
+                          {loaded && propInfo.type && (
                             <p className="text-xs text-gray-600 mt-0.5">
                               {propInfo.type}
                             </p>
                           )}
-                          {propInfo.location && (
+                          {loaded && propInfo.location && (
                             <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
                               <MapPin className="h-3 w-3" />
                               {propInfo.location}
                             </p>
                           )}
-                          {propInfo.price && (
+                          {loaded && propInfo.price && (
                             <p className="text-xs font-medium text-primaryGreen mt-1">
                               ₹{propInfo.price.toLocaleString()}/night
                             </p>
                           )}
                         </div>
-                        
+
                         {/* View Property Link */}
                         <a
                           href={`/stay/${selectedConversation.propertyId}`}
