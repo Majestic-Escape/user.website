@@ -108,7 +108,7 @@ export default function PropertyDescription({ description, property }) {
       <div className="grid grid-cols-2 gap-4">
         <div className="border-b pb-6 mb-6">
           <h2 className="text-xl font-medium mb-6">Cancellation Policy</h2>
-          <p className="text-gray-800 mb-4">
+          <div className="text-gray-800 mb-4">
             {Object.entries(property?.cancellationType).map(([key, value]) =>
               value == true ? (
                 <div key={key} className="">
@@ -117,7 +117,7 @@ export default function PropertyDescription({ description, property }) {
                 </div>
               ) : null
             )}
-          </p>
+          </div>
           <Link href={"/cancellation-policy"} className="underline">
             Learn more
           </Link>
@@ -142,7 +142,7 @@ export default function PropertyDescription({ description, property }) {
         </div>
         <div className="border-b pb-6 mb-6">
           <h2 className="text-xl font-medium mb-6">Things to know</h2>
-          <p className="text-gray-800 mb-4">
+          <div className="text-gray-800 mb-4">
             <div className="">
               {" "}
               The check in time is{" "}
@@ -159,7 +159,7 @@ export default function PropertyDescription({ description, property }) {
                 : "TBD"}
               .
             </div>
-          </p>
+          </div>
           {/* <Link href={"/cancellation-policy"} className="underline">
             Learn more
           </Link> */}

@@ -5,11 +5,18 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { MongoClient } from 'mongodb'
 
-const uri = process.env.MONGODB_URI
-const client = new MongoClient(uri)
+// Lazily constructed so importing this module at build time (the page that
+// uses it is now statically prerendered) never touches MONGODB_URI. One
+// client per function instance is kept, so connection reuse is unchanged.
+let client
+function getClient() {
+  client ??= new MongoClient(process.env.MONGODB_URI)
+  return client
+}
 
 async function connectToDatabase() {
   try {
+    const client = getClient()
     await client.connect()
     return client.db('majestic_escape')
   } catch (error) {
@@ -96,6 +103,9 @@ export async function createListing(formData) {
     console.error('Error creating listing:', error)
     return { error: 'An error occurred while creating the listing' }
   } finally {
-    await client.close()
+    // Same lifecycle as before (close after each action); drop the instance
+    // so the next action starts from a fresh client.
+    await client?.close()
+    client = undefined
   }
 }

@@ -3,9 +3,12 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { clearSession } from "@/lib/session";
 
 export function useCheckToken() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const checkToken = async () => {
     try {
@@ -24,8 +27,9 @@ export function useCheckToken() {
 
         if (!response.ok) {
           if (result.code === "USER_BANNED") {
-            localStorage.clear();
-            sessionStorage.clear();
+            // Server says the session is dead: drop auth keys + query cache
+            // (device-local wishlist/filters are kept).
+            clearSession(queryClient);
 
             router.push("/login");
             toast.error("Your account has been banned.");
@@ -37,8 +41,7 @@ export function useCheckToken() {
           //   toast.error("Session expired, please login again.");
           // }
           if (result.code === "TOKEN_EXPIRED") {
-            localStorage.clear();
-            sessionStorage.clear();
+            clearSession(queryClient);
             router.push("/login");
             toast.error("Session expired, please login again.");
           }
