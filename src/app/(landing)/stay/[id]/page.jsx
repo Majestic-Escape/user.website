@@ -1,6 +1,24 @@
-// src/app/stay/[id]/page.jsx - NEW SERVER COMPONENT
-// You need to create this function
+// src/app/stay/[id]/page.jsx - server component for the stay detail page.
+//
+// Rendering/caching policy (see the ISR notes below): the route output for a
+// listing is generated on first visit, cached for an hour and served from the
+// edge, then refreshed in the background. The client re-fetches the listing
+// on mount (placeholderData in PropertyPageClient) and availability / fees /
+// booking totals are always fetched live, so nothing price- or
+// availability-critical depends on this cache.
+import { notFound } from "next/navigation";
 import PropertyPageClient from "./PropertyPageClient";
+
+// ISR: cache each listing's HTML + RSC payload for 1 hour (matches the Data
+// Cache window on fetchProperty below).
+export const revalidate = 3600;
+
+// Build nothing ahead of time; with `dynamicParams` (default true) each
+// listing is rendered on its first request and then cached. Without this a
+// dynamic segment stays fully dynamic and `revalidate` has no effect.
+export async function generateStaticParams() {
+  return [];
+}
 
 // Function to fetch property data (server-side)
 async function fetchProperty(id) {
@@ -12,14 +30,15 @@ async function fetchProperty(id) {
   const API_URL =
     process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
   const response = await fetch(`${API_URL}/properties/${id}`, {
-    // Add cache control if needed
     next: { revalidate: 3600 }, // Revalidate every hour
   });
 
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       `Failed to fetch property data (status: ${response.status})`,
     );
+    error.status = response.status;
+    throw error;
   }
 
   const result = await response.json();
@@ -28,8 +47,9 @@ async function fetchProperty(id) {
 
 // DYNAMIC METADATA FOR PROPERTY PAGE
 export async function generateMetadata({ params }) {
+  const { id } = await params;
   try {
-    const property = await fetchProperty(params.id);
+    const property = await fetchProperty(id);
     const siteUrl = process.env.NEXTAUTH_URL;
 
     return {
@@ -43,7 +63,7 @@ export async function generateMetadata({ params }) {
         description:
           property.description ||
           `Experience ${property.title} with Majestic Escape. ${property.basePrice ? `₹${property.basePrice} per night` : ""}`,
-        url: `${siteUrl}/stay/${params.id}`,
+        url: `${siteUrl}/stay/${id}`,
         siteName: "Majestic Escape",
         images: [
           {
@@ -71,6 +91,13 @@ export async function generateMetadata({ params }) {
       },
     };
   } catch (error) {
+    // Keep metadata consistent with the not-found render below. Note: because
+    // this segment sits under loading.tsx boundaries, the 200 shell has already
+    // streamed by the time notFound() propagates, so unknown ids render the
+    // not-found UI with <meta name="robots" content="noindex"> rather than a
+    // 404 status (a Next streaming limitation; previously this was a 200 error
+    // page without noindex).
+    if (error?.status === 404) notFound();
     console.error("Error generating metadata:", error);
     return {
       title: "Property | Majestic Escape",
@@ -81,26 +108,16 @@ export async function generateMetadata({ params }) {
 
 // Server component that fetches data and passes to client
 export default async function PropertyPage({ params }) {
+  const { id } = await params;
+  let property;
   try {
-    const property = await fetchProperty(params.id);
-    return <PropertyPageClient initialProperty={property} params={params} />;
+    property = await fetchProperty(id);
   } catch (error) {
-    // Handle error gracefully
-    return (
-      <div className="min-h-screen flex items-center justify-center pt-32">
-        <div className="text-center p-8 bg-red-50 rounded-lg shadow">
-          <h2 className="text-2xl font-bold text-red-700 mb-2">
-            Error loading property
-          </h2>
-          <p className="text-red-600">Try refreshing</p>
-          <a
-            href={`/stay/${params.id}`}
-            className="mt-4 inline-block px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-          >
-            Try Again
-          </a>
-        </div>
-      </div>
-    );
+    if (error?.status === 404) notFound();
+    // Any other failure must surface as an error (handled by ./error.jsx),
+    // never as a successful render: with ISR a rendered error page would be
+    // cached and served for an hour.
+    throw error;
   }
+  return <PropertyPageClient initialProperty={property} params={{ id }} />;
 }

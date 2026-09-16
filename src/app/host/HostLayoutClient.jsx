@@ -1,63 +1,45 @@
 "use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-// import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-// import { useCheckToken } from "@/services/useCheckToken";
-const queryClient = new QueryClient();
+
+// Host routes that must work without a token. Everything else under /host
+// renders the "not authorized" message until the user logs in; the dashboard
+// layouts additionally verify the token with the API (ProtectedRoute).
+const PUBLIC_HOST_PATHS = [
+  "/host/login",
+  "/host/register",
+  "/host/help-center",
+  "/host/resources",
+];
 
 const Layout = ({ children }) => {
-  // const { checkToken } = useCheckToken();
+  const pathname = usePathname();
+  const isPublic = PUBLIC_HOST_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
-  const auth = async () => {
-    const getLocalData = await localStorage.getItem("token");
-    const data = JSON.parse(getLocalData);
-    if (data) {
-      setIsAuth(true);
-      setLoading(false);
-    }
-    // await checkToken();
-  };
 
-  // const auth = async () => {
-  //   const saved = localStorage.getItem("token");
-  //   if (!saved) {
-  //     setIsAuth(false);
-  //     setLoading(false);
-  //     return;
-  //   }
-
-  //   const token = JSON.parse(saved);
-
-  //   try {
-  //     const res = await axios.get(
-  //       `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/validate-token`,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-
-  //     // Token is valid
-  //     setIsAuth(true);
-  //   } catch (err) {
-  //     process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
-  //   console.log("Token invalid:", err?.response?.data);
-  // }
-
-  //     // Token invalid → remove and logout
-  //     localStorage.removeItem("token");
-  //     setIsAuth(false);
-  //   }
-
-  //   setLoading(false);
-  // };
   useEffect(() => {
-    auth();
+    // Presence check only — real verification happens in ProtectedRoute.
+    let hasToken = false;
+    try {
+      hasToken = !!JSON.parse(localStorage.getItem("token"));
+    } catch {
+      hasToken = false;
+    }
+    setIsAuth(hasToken);
+    // Previously `loading` was only cleared when a token existed, so a
+    // logged-out visitor saw a spinner forever.
+    setLoading(false);
   }, []);
+
+  if (isPublic) {
+    return <main className="font-poppins">{children}</main>;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -81,14 +63,7 @@ const Layout = ({ children }) => {
     );
   }
 
-  return (
-    <>
-      <QueryClientProvider client={queryClient}>
-        <main className="font-poppins">{children}</main>
-        {/* <ReactQueryDevtools initialIsOpen={false} /> */}
-      </QueryClientProvider>
-    </>
-  );
+  return <main className="font-poppins">{children}</main>;
 };
 
 export default Layout;

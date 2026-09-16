@@ -2,13 +2,11 @@ import "./globals.css";
 import { bricolage, poppins } from "./fonts";
 import Analytics from "@/components/analytics/google-analytics";
 import { ReactNode } from "react";
-import { WishlistProvider } from "@/components/wishlist-context";
 import { Providers } from "@/components/providers";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UnreadCountProvider } from "@/contexts/UnreadCountContext";
 import { Toaster } from "sonner";
 import Script from "next/script";
-export const revalidate = 0;
 
 // Standalone chat widget bundle. Lives in the majestic-escape-rag-ai-chat-widget
 // repo; loaded here as a single <script> tag so chat-only changes never need a
@@ -125,9 +123,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <Providers>
           <AuthProvider>
             <UnreadCountProvider>
-            <WishlistProvider>
               <div>{children}</div>
-            </WishlistProvider>
             </UnreadCountProvider>
           </AuthProvider>
         </Providers>

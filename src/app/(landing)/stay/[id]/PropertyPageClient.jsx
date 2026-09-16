@@ -87,7 +87,11 @@ const fetchReview = async (propertyId, limit, skip) => {
   return result;
 };
 
-export default function PropertyPageClient() {
+// `initialProperty` is the server-fetched listing (see page.jsx). It seeds the
+// query as placeholder data so the page renders immediately on navigation
+// instead of showing a full-screen spinner while the client re-fetches; the
+// background refetch still runs, so data freshness is unchanged.
+export default function PropertyPageClient({ initialProperty }) {
   const params = useParams();
   const propertyId = params.id;
   const [limit, setLimit] = useState(20);
@@ -158,6 +162,7 @@ export default function PropertyPageClient() {
     queryKey: ["property", propertyId],
     queryFn: () => fetchProperty(propertyId),
     enabled: !!propertyId, // Only run if propertyId exists
+    placeholderData: initialProperty ?? undefined,
     // Optional: Add staleTime, cacheTime etc.
     // staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -348,7 +353,7 @@ export default function PropertyPageClient() {
           </>
         )}
       </Head>
-      <main className="min-h-screen pt-[80px] md:pt-52 desktop:pt-56 bg-white booking-widget">
+      <main className="min-h-screen pt-[80px] md:pt-52 desktop:pt-56 bg-white booking-widget me-fade-in">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Property Title */}
           <h1 className="text-xl lg:mt-4 md:text-2xl font-bricolage font-semibold mb-4 md:mb-6">
@@ -360,6 +365,7 @@ export default function PropertyPageClient() {
           <ImageGallery
             images={propertyData?.photos || []}
             isLoading={isPropertyLoading}
+            title={propertyData?.title}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mt-0 md:mt-8">

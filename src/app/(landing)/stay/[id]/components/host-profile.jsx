@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 // Simple Skeleton component (assuming it might be used elsewhere too)
@@ -118,6 +119,9 @@ export default function HostProfile({ propertyData }) {
   // if (isLoading) {
   //   return <HostProfileSkeleton />;
   // }
+  // Client-side navigation instead of window.location: keeps the app shell,
+  // auth context and query cache alive (no full reload).
+  const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
   const maxLength = 275;
@@ -306,7 +310,7 @@ export default function HostProfile({ propertyData }) {
                     onClick={async () => {
                       const token = localStorage.getItem("token");
                       if (!token) {
-                        window.location.href = "/login";
+                        router.push("/login");
                         return;
                       }
 
@@ -320,7 +324,7 @@ export default function HostProfile({ propertyData }) {
                         );
                         userId = payload.userId;
                       } catch (e) {
-                        window.location.href = "/login";
+                        router.push("/login");
                         return;
                       }
 
@@ -347,7 +351,7 @@ export default function HostProfile({ propertyData }) {
                           data.data?.conversationId &&
                           data.data?.hasMessages
                         ) {
-                          window.location.href = `/messages?conversationId=${data.data.conversationId}`;
+                          router.push(`/messages?conversationId=${data.data.conversationId}`);
                         } else {
                           // No existing conversation with messages - go to contact_host
                           const hostNameParam = encodeURIComponent(
@@ -368,7 +372,7 @@ export default function HostProfile({ propertyData }) {
                             propertyData?.host?.responseTime ||
                               "within an hour",
                           );
-                          window.location.href = `/contact_host/${propertyId}?hostId=${hostId}&hostName=${hostNameParam}&propertyName=${propName}&propertyImage=${propImage}&propertyType=${propType}&responseTime=${respTime}`;
+                          router.push(`/contact_host/${propertyId}?hostId=${hostId}&hostName=${hostNameParam}&propertyName=${propName}&propertyImage=${propImage}&propertyType=${propType}&responseTime=${respTime}`);
                         }
                       } catch (err) {
                         // On error, fall back to contact_host page
@@ -390,7 +394,7 @@ export default function HostProfile({ propertyData }) {
                         const respTime = encodeURIComponent(
                           propertyData?.host?.responseTime || "within an hour",
                         );
-                        window.location.href = `/contact_host/${propertyId}?hostId=${hostId}&hostName=${hostNameParam}&propertyName=${propName}&propertyImage=${propImage}&propertyType=${propType}&responseTime=${respTime}`;
+                        router.push(`/contact_host/${propertyId}?hostId=${hostId}&hostName=${hostNameParam}&propertyName=${propName}&propertyImage=${propImage}&propertyType=${propType}&responseTime=${respTime}`);
                       }
                     }}
                   >
