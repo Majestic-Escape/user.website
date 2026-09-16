@@ -7,7 +7,12 @@ import { useEffect, useState } from "react";
 // Host routes that must work without a token. Everything else under /host
 // renders the "not authorized" message until the user logs in; the dashboard
 // layouts additionally verify the token with the API (ProtectedRoute).
-const PUBLIC_HOST_PATHS = ["/host/register", "/host/help-center", "/host/resources"];
+const PUBLIC_HOST_PATHS = [
+  "/host/login",
+  "/host/register",
+  "/host/help-center",
+  "/host/resources",
+];
 
 const Layout = ({ children }) => {
   const pathname = usePathname();
