@@ -78,6 +78,22 @@ const cleanParams = (obj) =>
 // never worth a backend call (the API currently 500s on such ids).
 const isListingId = (id) => typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
 
+// Human text for the server's booking/payment codes (Batch S).
+const SERVER_MESSAGES = {
+  DATES_UNAVAILABLE: "Sorry, someone has already booked these dates.",
+  LISTING_INACTIVE: "This stay is no longer available for booking.",
+  PRICING_UNAVAILABLE: "Pricing for this stay is unavailable right now.",
+  PRICE_CHANGED: "The price for this stay has changed — please review and confirm again.",
+  AMOUNT_MISMATCH: "The price for this stay has changed — please review and confirm again.",
+  OVER_CAPACITY: "This stay cannot host that many guests.",
+  INVALID_DATES: "Please choose valid check-in and check-out dates.",
+  INVALID_GUESTS: "Please check the number of guests.",
+  BOOKING_NOT_PAYABLE: "This booking can no longer be paid. Please start again.",
+  ORDER_IN_PROGRESS: "Payment is already being set up — please try again in a moment.",
+};
+const serverErrorMessage = (body, fallback) =>
+  (body && (SERVER_MESSAGES[body.code] || body.message)) || fallback;
+
 const EMPTY_TOTALS = {
   nights: 0,
   subtotal: 0,
@@ -712,8 +728,11 @@ function BookPageContent() {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Booking failed: ${errorText}`);
+        // The server answers with a machine-readable code (Batch S):
+        // DATES_UNAVAILABLE, LISTING_INACTIVE, PRICING_UNAVAILABLE, … — hand it
+        // back so the caller can explain instead of "could not be created".
+        const errorBody = await response.json().catch(() => ({}));
+        return { success: false, status: response.status, ...errorBody };
       }
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
         console.log("trhis is how", response.json);
@@ -956,8 +975,15 @@ function BookPageContent() {
       }
 
       if (!booking || !booking.data?._id) {
-        toast.error("Booking could not be created. Please try again.");
+        toast.error(serverErrorMessage(booking, "Booking could not be created. Please try again."));
+        if (booking?.code === "PRICE_CHANGED" || booking?.code === "PRICING_UNAVAILABLE") {
+          queryClient.invalidateQueries({ queryKey: queryKeys.property(propertyId) });
+        }
         return; // stop here
+      }
+      if (booking.repriced) {
+        // The server moved our pending hold to the price we just confirmed.
+        queryClient.invalidateQueries({ queryKey: queryKeys.property(propertyId) });
       }
       const order_id = await createPaymentOrder(
         booking?.data?._id,
@@ -965,7 +991,11 @@ function BookPageContent() {
         property?._id,
       );
       if (!order_id?.data?.id) {
-        toast.error("Unable to initiate payment. Please try again.");
+        toast.error(serverErrorMessage(order_id, "Unable to initiate payment. Please try again."));
+        if (order_id?.code === "PRICE_CHANGED" || order_id?.code === "AMOUNT_MISMATCH") {
+          // Re-quote from the live listing; the next Confirm carries the new total.
+          queryClient.invalidateQueries({ queryKey: queryKeys.property(propertyId) });
+        }
         return;
       }
 
