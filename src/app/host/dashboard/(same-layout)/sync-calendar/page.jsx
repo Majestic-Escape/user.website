@@ -12,12 +12,11 @@ export default function AddCalendarForm() {
     const userId = await localStorage.get;
     e.preventDefault();
     try {
-      const res = await axios.post(`${API_URL}/calendarSync/saveCalendar`, {
-        propertyId,
-        userId,
-        url,
-        kind,
-      });
+      const res = await axios.post(
+        `${API_URL}/calendarSync/saveCalendar`,
+        { propertyId, userId, url, kind },
+        { headers: { Authorization: `Bearer ${readStoredToken()}` } },
+      );
       setMsg("Saved! " + JSON.stringify(res.data.calendar));
     } catch (err) {
       setMsg("Error: " + (err.response?.data?.message || err.message));
