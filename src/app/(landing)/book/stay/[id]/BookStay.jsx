@@ -8,6 +8,7 @@ import {
   QueryClient,
   QueryClientProvider,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +22,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { Star, ChevronLeft, Check } from "lucide-react";
 import Link from "next/link";
-import axios from "axios";
 
 import { toast } from "sonner";
 
@@ -33,6 +33,17 @@ import { toast } from "sonner";
 // }
 import { useAuth } from "@/contexts/AuthContext";
 import { readStoredToken } from "@/lib/session";
+import {
+  formatINR,
+  formatTime12h,
+  parseDate,
+  parseFiniteNumber,
+  parseInteger,
+} from "@/lib/format";
+import {
+  fetchLatestAvailability,
+  fetchLatestProperty,
+} from "@/lib/api/property";
 import { createPortal } from "react-dom";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -62,6 +73,76 @@ const fetchProperty = async (id) => {
   if (!result?.data) throw new Error("Property data missing in response");
   return result.data;
 };
+// Checkout dates arrive as YYYY-MM-DD. They are validated calendar-safely
+// (2026-02-31 / 2026-13-40 → null) but the instant kept is UTC midnight via
+// new Date("YYYY-MM-DD") — the wire format every existing booking and
+// /booking/check-dates already use, so server-side overlap checks stay
+// comparable with older bookings.
+const paramDate = (raw) =>
+  raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) && parseDate(raw)
+    ? new Date(raw)
+    : null;
+
+// Every booked night as "YYYY-MM-DD" (checkout day excluded) — the shape
+// /booking/check-dates returns and the stay widget compares against.
+const nightKeys = (from, to) => {
+  const keys = [];
+  for (let t = from.getTime(); t < to.getTime(); t += 86_400_000) {
+    keys.push(new Date(t).toISOString().slice(0, 10));
+  }
+  return keys;
+};
+
+// URLSearchParams turns undefined/null into the strings "undefined"/"null";
+// drop them instead so the summary page never renders them.
+const cleanParams = (obj) =>
+  Object.fromEntries(
+    Object.entries(obj)
+      .filter(([, v]) => v !== undefined && v !== null)
+      .map(([k, v]) => [k, String(v)]),
+  );
+
+const EMPTY_TOTALS = {
+  nights: 0,
+  subtotal: 0,
+  cleaningFee: 0,
+  serviceFee: 0,
+  taxes: 0,
+  nightlytax: 0,
+  total: 0,
+  pricingUnavailable: false,
+};
+
+// Pure pricing for a listing + validated night count. Service fee 12 % of
+// the subtotal, GST 5 % / 18 % by the ₹7,500 nightly threshold — the
+// formula is unchanged; the only new behaviour is `pricingUnavailable` when
+// basePrice is not a number (never ₹0 for missing data).
+const priceStay = (listing, nightsCount) => {
+  const nightlyRate = parseFiniteNumber(listing?.basePrice);
+  if (nightlyRate === null || nightlyRate < 0) {
+    return { ...EMPTY_TOTALS, pricingUnavailable: true };
+  }
+  if (!nightsCount) return EMPTY_TOTALS;
+  const cleaningFee = 0;
+  const subtotal = nightlyRate * nightsCount;
+  const serviceFee = Math.round(subtotal * 0.12); // 12% service fee like Airbnb
+  const gst =
+    nightlyRate <= 7500
+      ? Math.round(subtotal * 0.05) // 5% GST in India
+      : Math.round(subtotal * 0.18); // 18% GST in India
+  const taxes = gst + Math.round(serviceFee);
+  return {
+    nights: nightsCount,
+    subtotal,
+    cleaningFee,
+    serviceFee,
+    taxes,
+    nightlytax: taxes - serviceFee,
+    total: subtotal + cleaningFee + taxes,
+    pricingUnavailable: false,
+  };
+};
+
 function GuestModal({ onClose, children }) {
   if (typeof window === "undefined") return null;
 
@@ -82,16 +163,12 @@ function BookPageContent() {
   const params = useParams();
   const propertyId = params.id;
   const [isAuth, setIsAuth] = useState(false);
-  const checkinDate = searchParams.get("checkin");
   const [ban, setBan] = useState(false);
   const [guestSaving, setGuestSaving] = useState(false);
+  const queryClient = useQueryClient();
   const [date, setDate] = useState({
-    from: searchParams.get("checkin")
-      ? new Date(searchParams.get("checkin"))
-      : null,
-    to: searchParams.get("checkout")
-      ? new Date(searchParams.get("checkout"))
-      : null,
+    from: paramDate(searchParams.get("checkin")),
+    to: paramDate(searchParams.get("checkout")),
   });
   // The page is only meaningful with a valid stay window. Links from the
   // booking widget always carry one, but refreshes, shared links and bots
@@ -102,6 +179,12 @@ function BookPageContent() {
     !Number.isNaN(date.from.getTime()) &&
     !Number.isNaN(date.to.getTime()) &&
     date.to.getTime() > date.from.getTime();
+  // Charged nights come only from the validated dates (UTC midnights, so the
+  // difference is an exact number of days). The `?nights=` param is ignored
+  // for pricing — a URL can no longer turn five nights into one.
+  const nightsCount = hasValidDates
+    ? Math.round((date.to.getTime() - date.from.getTime()) / 86_400_000)
+    : 0;
   const [guestInfo, setGuestInfo] = useState([]);
   const [summaryRoute, setSummaryRoute] = useState(false);
   const [unavailableDates, setUnavailableDates] = useState([]);
@@ -110,15 +193,6 @@ function BookPageContent() {
     const data = JSON.parse(getLocalData);
     if (data) setIsAuth(true);
   };
-  function convertTo12HoursFormat(time24) {
-    // Split the time string into hours and minutes
-    let hours = time24;
-    // Determine AM or PM based on the 24-hour hour
-    let period = hours >= 12 ? "PM" : "AM";
-    // Convert the hour to 12-hour format
-    hours = hours % 12 || 12; // 0 becomes 12, otherwise use remainder
-    return `${hours}:00 ${period}`;
-  }
 
   const userData = async () => {
     const getLocalData = await localStorage.getItem("token");
@@ -183,11 +257,23 @@ function BookPageContent() {
   //   checkAvailableDates();
   // }, []);
 
-  const [guests, setGuests] = useState(searchParams.get("guests") || "1");
-  const [nights, setNights] = useState(searchParams.get("nights") || "0");
-  const adults = searchParams.get("adults");
-  const children = searchParams.get("children");
-  const infants = searchParams.get("infants");
+  // Guest counts from the URL, validated: adults ≥ 1, children / infants ≥ 0
+  // (absent = 0). Anything else blocks checkout instead of silently
+  // defaulting — these are persisted on the booking.
+  const adults = parseInteger(searchParams.get("adults"), 1);
+  const children = parseInteger(searchParams.get("children") ?? 0, 0);
+  const infants = parseInteger(searchParams.get("infants") ?? 0, 0);
+  const hasValidGuests =
+    adults !== null && children !== null && infants !== null;
+  const guests = hasValidGuests ? adults + children : null;
+  const nightsParam = searchParams.get("nights");
+  useEffect(() => {
+    if (hasValidDates && nightsParam !== null && nightsParam !== String(nightsCount)) {
+      console.warn(
+        `[checkout] ?nights=${nightsParam} disagrees with the dates; charging ${nightsCount} night(s)`,
+      );
+    }
+  }, [hasValidDates, nightsParam, nightsCount]);
   const propertyImg = searchParams.get("propertyImage");
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("bumd", propertyImg);
@@ -245,24 +331,24 @@ function BookPageContent() {
                   day: "numeric",
                 })}
               </span>
-              <span>₹{totals.subtotal.toLocaleString("en-IN")}</span>
+              <span>{money(totals.subtotal)}</span>
             </div>
 
             <div className="flex justify-between">
               <span>Service fee</span>
-              <span>₹{totals.serviceFee.toLocaleString("en-IN")}</span>
+              <span>{money(totals.serviceFee)}</span>
             </div>
 
             <div className="flex justify-between">
               <span>Taxes</span>
-              <span>₹{totals.nightlytax.toLocaleString("en-IN")}</span>
+              <span>{money(totals.nightlytax)}</span>
             </div>
 
             <hr />
 
             <div className="flex justify-between font-semibold">
               <span>Total (INR)</span>
-              <span>₹{totals.total.toLocaleString("en-IN")}</span>
+              <span>{money(totals.total)}</span>
             </div>
           </div>
         </div>
@@ -340,46 +426,20 @@ function BookPageContent() {
   };
 
   const calculateTotal = () => {
-    if (!property || !hasValidDates)
-      return {
-        nights: 0,
-        subtotal: 0,
-        cleaningFee: 0,
-        serviceFee: 0,
-        taxes: 0,
-        total: 0,
-      };
-
-    const nightlyRate = property.basePrice;
-    //|| 20000;
-    const cleaningFee = 0;
-    const nightsCount =
-      nights && Number(nights) > 0
-        ? Number(nights)
-        : Math.ceil(
-            (date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24),
-          );
-    const subtotal = nightlyRate * nightsCount;
-    const serviceFee = Math.round(subtotal * 0.12); // 12% service fee like Airbnb
-    let taxes;
-    if (nightlyRate <= 7500) {
-      taxes = Math.round(subtotal * 0.05) + Math.round(serviceFee); // 5% GST in India
-    } else if (nightlyRate > 7500) {
-      taxes = Math.round(subtotal * 0.18) + Math.round(serviceFee); // 18% GST in India
-    }
-
-    return {
-      nights: nightsCount,
-      subtotal,
-      cleaningFee,
-      serviceFee,
-      taxes,
-      nightlytax: taxes - serviceFee,
-      total: subtotal + cleaningFee + taxes,
-    };
+    if (!property || !hasValidDates) return EMPTY_TOTALS;
+    return priceStay(property, nightsCount);
   };
 
   const totals = calculateTotal();
+  // Money shown on this page comes from `totals`; when pricing is
+  // unavailable every figure is "—", never ₹0.
+  const money = (value) =>
+    totals.pricingUnavailable ? "—" : formatINR(value);
+  const checkoutBlocked = totals.pricingUnavailable
+    ? "Pricing for this stay is unavailable right now"
+    : !hasValidGuests
+      ? "Guest details in this link are invalid"
+      : null;
 
   function calculateAge(dobString) {
     const dob = new Date(dobString);
@@ -407,14 +467,14 @@ function BookPageContent() {
 
     // Initialize guest data arrays based on the number of adults and children
     const initialAdults = Array.from(
-      { length: parseInt(adults) },
+      { length: adults ?? 0 },
       (_, index) => ({
         name: index === 0 ? `${firstName} ${lastName}`.trim() : "",
         age: index === 0 ? dob : 18,
       }),
     );
 
-    const initialChildren = Array.from({ length: parseInt(children) }, () => ({
+    const initialChildren = Array.from({ length: children ?? 0 }, () => ({
       name: "",
       age: 3,
     }));
@@ -506,11 +566,46 @@ function BookPageContent() {
     setGuestSaving(true);
 
     try {
-      const dateCheck = await fetchDates();
-
-      if (dateCheck.includes(checkinDate)) {
+      if (checkoutBlocked) {
+        toast.error(checkoutBlocked);
+        return;
+      }
+      // Payment-time authority: re-fetch the listing and its blocked nights
+      // over the network (never from cache) and re-price. Browsing may be
+      // stale; what the customer is charged may not.
+      let fresh;
+      let blocked;
+      try {
+        [fresh, blocked] = await Promise.all([
+          fetchLatestProperty(propertyId),
+          fetchLatestAvailability(propertyId),
+        ]);
+      } catch (err) {
+        console.error("[checkout] re-verification failed", err);
+        toast.error("Couldn't verify availability. Please try again.");
+        return;
+      }
+      setUnavailableDates(blocked);
+      if (nightKeys(date.from, date.to).some((d) => blocked.includes(d))) {
         toast.error("Sorry, someone has already booked");
-        setGuestSaving(false);
+        return;
+      }
+      if (typeof fresh?.status === "string" && fresh.status !== "active") {
+        queryClient.setQueryData(["property", propertyId], fresh);
+        toast.error("This stay is no longer available for booking.");
+        return;
+      }
+      const freshTotals = priceStay(fresh, nightsCount);
+      if (freshTotals.pricingUnavailable) {
+        queryClient.setQueryData(["property", propertyId], fresh);
+        toast.error("Pricing for this stay is unavailable right now.");
+        return;
+      }
+      if (freshTotals.total !== totals.total) {
+        queryClient.setQueryData(["property", propertyId], fresh);
+        toast.error(
+          `The price for this stay has changed to ${formatINR(freshTotals.total)} — please review and confirm again.`,
+        );
         return;
       }
 
@@ -611,7 +706,7 @@ function BookPageContent() {
         body: JSON.stringify({
           userId: userId,
           guests: guests,
-          nights: nights,
+          nights: totals.nights,
           adults: adults,
           children: children,
           infants: infants,
@@ -909,7 +1004,8 @@ function BookPageContent() {
           const checkin = date.from.toISOString();
           const checkout = date.to.toISOString();
           const paymentId = response.razorpay_payment_id;
-          const summaryParams = new URLSearchParams({
+          const summaryParams = new URLSearchParams(
+            cleanParams({
             hostFirstName: property?.host?.firstName,
             hostLastName: property?.host?.lastName,
             bookingId: booking?.data?._id,
@@ -934,7 +1030,8 @@ function BookPageContent() {
             checkoutTime: property?.checkoutTime,
             instant: property?.bookingType?.manual ? false : true,
             bookingHistory: "false",
-          });
+            }),
+          );
 
           const verify = await verifyPayment(
             order_id?.data?.id, //orderid from server
@@ -1040,26 +1137,6 @@ function BookPageContent() {
       alert("Payment initialization failed. Please try again.");
     }
   };
-  async function fetchDates() {
-    try {
-      const response = await axios.get(
-        `${API_URL}/booking/check-dates/${propertyId}`,
-      );
-
-      if (response.status != 200) {
-        throw new Error(
-          `Failed to fetch host data (status: ${response.status})`,
-        );
-      }
-      if (process.env.NEXT_PUBLIC_ENV === "dev") {
-        console.log("oppo", response);
-      }
-      setUnavailableDates(response?.data?.data);
-      return response?.data?.data;
-    } catch (err) {
-      console.error(err);
-    }
-  }
   if (!hasValidDates) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-4 font-poppins">
@@ -1148,7 +1225,7 @@ function BookPageContent() {
       }`
     : "Location not specified";
   const propertyImage = property?.photos?.[0];
-  const propertyPrice = property?.basePrice;
+  const propertyPrice = parseFiniteNumber(property?.basePrice);
   const propertyRating = property?.rating || 0;
   const propertyReviews = property?.reviews?.length || 0;
   const propertyAmenities = property?.amenities?.map((a) => a.name);
@@ -1184,19 +1261,21 @@ function BookPageContent() {
                     {date.from.toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
+                      timeZone: "UTC",
                     })}{" "}
                     -{" "}
                     {date.to?.toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
+                      timeZone: "UTC",
                     })}
                   </p>
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">Guests</h3>
                   <p>
-                    {guests} guest{Number(guests) > 1 ? "s" : ""}
+                    {guests ?? "—"} guest{guests !== 1 ? "s" : ""}
                   </p>
                 </div>
               </div>
@@ -1207,11 +1286,11 @@ function BookPageContent() {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <h3 className="font-semibold mb-1">Check-in</h3>
-                    <p>{convertTo12HoursFormat(property?.checkinTime)}</p>
+                    <p>{formatTime12h(property?.checkinTime)}</p>
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">Check-out</h3>
-                    <p>{convertTo12HoursFormat(property?.checkoutTime)}</p>
+                    <p>{formatTime12h(property?.checkoutTime)}</p>
                   </div>
                 </div>
               </div>
@@ -1504,12 +1583,12 @@ function BookPageContent() {
                 onClick={async () => {
                   await fetchForm();
                 }}
-                disabled={summaryRoute || ban}
+                disabled={summaryRoute || ban || checkoutBlocked !== null}
                 className="w-full h-12 text-base bg-primaryGreen hover:bg-brightGreen"
               >
                 {ban
                   ? "You are banned from platform. Check your email"
-                  : `Pay ₹${totals.total.toLocaleString("en-IN")}`}
+                  : (checkoutBlocked ?? `Pay ${formatINR(totals.total)}`)}
               </Button>
               <div className="flex items-center justify-center px-4 mt-2 lg:mt-0">
                 {property.bookingType.manual ? (
@@ -1568,19 +1647,19 @@ function BookPageContent() {
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <span className="">
-                      ₹{propertyPrice.toLocaleString("en-IN")} x {totals.nights}{" "}
+                      {money(propertyPrice)} x {totals.nights}{" "}
                       night
                       {totals.nights > 1 ? "s" : ""}
                     </span>
-                    <span>₹{totals.subtotal.toLocaleString("en-IN")}</span>
+                    <span>{money(totals.subtotal)}</span>
                   </div>
                   <div className="hidden justify-between">
                     <span className="">Cleaning fee</span>
-                    <span>₹{totals.cleaningFee.toLocaleString("en-IN")}</span>
+                    <span>{money(totals.cleaningFee)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="">Taxes</span>
-                    <span>₹{totals.taxes.toLocaleString("en-IN")}</span>
+                    <span>{money(totals.taxes)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -1588,7 +1667,7 @@ function BookPageContent() {
                 <>
                   <div className="flex justify-between w-full font-semibold text-lg">
                     <div>Total (INR)</div>
-                    <div>₹{totals.total.toLocaleString("en-IN")}</div>
+                    <div>{money(totals.total)}</div>
                   </div>
                 </>
               </CardFooter>
@@ -1599,7 +1678,7 @@ function BookPageContent() {
                 >
                   Price Breakdown
                 </span>
-                {/* <span>₹{totals.taxes.toLocaleString("en-IN")}</span> */}
+                {/* <span>{money(totals.taxes)}</span> */}
               </div>
             </Card>
             {showPriceBreakdown && (

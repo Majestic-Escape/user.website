@@ -27,6 +27,7 @@ import Link from "next/link";
 import Invoice from "@/components/invoice";
 import moment from "moment-timezone";
 import Portal from "@/components/portal";
+import { formatDate, formatINR } from "@/lib/format";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const moderate = Number(process.env.NEXT_PUBLIC_MODERATE_POLICY_DAYS ?? 7);
 const flexible = Number(process.env.NEXT_PUBLIC_FLEXIBLE_POLICY_DAYS ?? 24);
@@ -736,11 +737,15 @@ const ManageBookings: React.FC = () => {
       </span>
     );
   };
-  const fmt = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  // Stay dates are UTC-midnight instants; show the calendar day as booked.
+  // Invalid/missing dates render "—" instead of throwing RangeError.
+  const stayDate = (value: unknown) =>
+    formatDate(
+      value,
+      { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" },
+      "—",
+      "en-US",
+    );
 
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("Invoice Data", invoiceData, payment);
@@ -928,7 +933,7 @@ const ManageBookings: React.FC = () => {
                       <div className="text-sm">
                         <div className="text-muted-foreground">Check in</div>
                         <div>
-                          {fmt.format(new Date(booking?.checkIn).getTime())}
+                          {stayDate(booking?.checkIn)}
                         </div>
                       </div>
                     </div>
@@ -937,7 +942,7 @@ const ManageBookings: React.FC = () => {
                       <div className="text-sm">
                         <div className="text-muted-foreground">Check out</div>
                         <div>
-                          {fmt.format(new Date(booking?.checkOut).getTime())}
+                          {stayDate(booking?.checkOut)}
                         </div>
                       </div>
                     </div>
@@ -971,7 +976,9 @@ const ManageBookings: React.FC = () => {
                   </div>
 
                   <div>
-                    <div className="font-medium">₹{booking?.price}</div>
+                    <div className="font-medium">
+                      {formatINR(booking?.price)}
+                    </div>
                     {/* <div className="text-sm text-muted-foreground">
                     Total {booking.nights} nights
                   </div> */}

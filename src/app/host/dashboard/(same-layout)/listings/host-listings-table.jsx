@@ -53,6 +53,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ImageCarouselPopup } from "./image-carousel-popup";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { formatDate, parseFiniteNumber } from "@/lib/format";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "https://server-me.vercel.app/api/v1";
@@ -333,11 +334,15 @@ export function HostListingsTable({ userEmail }) {
         accessorKey: "basePrice",
         header: () => <div className="text-right">Base Price</div>,
         cell: ({ row }) => {
-          const price = Number.parseFloat(row.getValue("basePrice"));
-          const formatted = new Intl.NumberFormat("en-IN", {
-            style: "currency",
-            currency: "INR",
-          }).format(price);
+          // Incomplete listings have no basePrice yet: show "—", not ₹NaN.
+          const price = parseFiniteNumber(row.getValue("basePrice"));
+          const formatted =
+            price === null
+              ? "—"
+              : new Intl.NumberFormat("en-IN", {
+                  style: "currency",
+                  currency: "INR",
+                }).format(price);
 
           return <div className="text-right font-medium">{formatted}</div>;
         },
@@ -364,7 +369,11 @@ export function HostListingsTable({ userEmail }) {
         header: "Created At",
         cell: ({ row }) => (
           <div className="text-center">
-            {new Date(row.getValue("createdAt")).toLocaleDateString()}
+            {formatDate(row.getValue("createdAt"), {
+              day: "numeric",
+              month: "numeric",
+              year: "numeric",
+            })}
           </div>
         ),
       },

@@ -16,6 +16,15 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { formatINR, formatTime12h, parseDate } from "@/lib/format";
+
+// Never renders "undefined"/"null"/"" for a missing query value.
+const show = (value) =>
+  value === undefined || value === null || value === "" ? "—" : value;
+const capitalize = (value) =>
+  typeof value === "string" && value
+    ? value.charAt(0).toUpperCase() + value.slice(1)
+    : "";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function BookingSummaryPage() {
@@ -56,37 +65,6 @@ export default function BookingSummaryPage() {
       };
     }
   }, []);
-
-  function parseDateSafe(value) {
-    if (!value) return null;
-
-    // If it's an integer (epoch ms)
-    if (/^\d+$/.test(value)) {
-      return new Date(Number(value));
-    }
-
-    // If it's an ISO string (YYYY-MM-DDTHH:mm:ss.sssZ)
-    const parsed = Date.parse(value);
-    if (!isNaN(parsed)) {
-      return new Date(parsed);
-    }
-
-    // If it's just YYYY-MM-DD (date only, no time)
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-    if (match) {
-      const [, y, m, d] = match;
-      return new Date(Number(y), Number(m) - 1, Number(d));
-    }
-
-    // ✅ Handle MM/DD/YYYY (like your case)
-    const usMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
-    if (usMatch) {
-      const [, m, d, y] = usMatch;
-      return new Date(Number(y), Number(m) - 1, Number(d));
-    }
-
-    return null; // Fallback
-  }
 
   useEffect(() => {
     const bookingId = searchParams.get("bookingId");
@@ -160,8 +138,10 @@ export default function BookingSummaryPage() {
     );
   }
 
-  const checkInDate = parseDateSafe(queryData?.checkin);
-  const checkOutDate = parseDateSafe(queryData?.checkout);
+  // checkin/checkout arrive as epoch-ms strings (UTC-midnight instants);
+  // parseDate returns null for "NaN"/"" instead of a 1970 date.
+  const checkInDate = parseDate(queryData?.checkin);
+  const checkOutDate = parseDate(queryData?.checkout);
   // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
   //   console.log("logiteh", propertyImage);
   // }
@@ -188,14 +168,15 @@ export default function BookingSummaryPage() {
     "November",
     "December",
   ];
-  const changeTime = (num) => {
-    return `${Number(num) - 12} p.m.`;
-  };
+  // Booking dates are stored as UTC-midnight instants; format the calendar
+  // day itself so it reads the same in every timezone.
   const fmt = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: "UTC",
   });
+  const fmtDate = (d) => (d ? fmt.format(d) : "—");
   return (
     <div className="min-h-screen font-poppins pt-8 md:pt-20">
       <header className="flow-root bg-offWhite shadow-sm bg-primaryGreen">
@@ -242,11 +223,11 @@ export default function BookingSummaryPage() {
                 />
                 <h3 className="mt-4 text-lg font-medium"></h3>
                 <p className="text-gray-600 text-sm">
-                  {queryData?.placeType?.charAt(0).toUpperCase() +
-                    queryData?.placeType.slice(1)}{" "}
-                  {queryData?.propertyType?.charAt(0).toUpperCase() +
-                    queryData?.propertyType.slice(1)}{" "}
-                  by {queryData?.hostFirstName} {queryData?.hostLastName}
+                  {capitalize(queryData?.placeType)}{" "}
+                  {capitalize(queryData?.propertyType)}{" "}
+                  {queryData?.hostFirstName || queryData?.hostLastName
+                    ? `by ${queryData?.hostFirstName ?? ""} ${queryData?.hostLastName ?? ""}`.trim()
+                    : null}
                 </p>
 
                 <div className="mt-4 text-sm"></div>
@@ -270,12 +251,10 @@ export default function BookingSummaryPage() {
                         {checkInDate?.getDate()}, {checkInDate?.getFullYear()}
                       </strong>
                       <br /> */}
-                      <strong>{fmt.format(checkInDate)}</strong>
+                      <strong>{fmtDate(checkInDate)}</strong>
                       <br />
                       Check-in :{" "}
-                      {queryData?.checkinTime > 12
-                        ? changeTime(queryData?.checkinTime)
-                        : `${queryData?.checkinTime} a.m.`}
+                      {formatTime12h(queryData?.checkinTime)}
                     </p>
                   </div>
                   <div>
@@ -286,45 +265,43 @@ export default function BookingSummaryPage() {
                         {checkOutDate?.getDate()}, {checkOutDate?.getFullYear()}
                       </strong>
                       <br /> */}
-                      <strong>{fmt.format(checkOutDate)}</strong>
+                      <strong>{fmtDate(checkOutDate)}</strong>
                       <br />
                       Check-out :{" "}
-                      {queryData?.checkoutTime > 12
-                        ? changeTime(queryData?.checkoutTime)
-                        : `${queryData?.checkoutTime} a.m.`}
+                      {formatTime12h(queryData?.checkoutTime)}
                     </p>
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-700">Total Nights</h4>
-                    <p className="text-gray-500">{queryData?.nights}</p>
+                    <p className="text-gray-500">{show(queryData?.nights)}</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-700">Total Guests</h4>
-                    <p className="text-gray-500">{queryData?.numberOfGuests}</p>
+                    <p className="text-gray-500">{show(queryData?.numberOfGuests)}</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-700">Adults</h4>
-                    <p className="text-gray-500">{queryData?.adults}</p>
+                    <p className="text-gray-500">{show(queryData?.adults)}</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-700">Children</h4>
-                    <p className="text-gray-500">{queryData?.children}</p>
+                    <p className="text-gray-500">{show(queryData?.children)}</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-700">Infants</h4>
-                    <p className="text-gray-500">{queryData?.infants}</p>
+                    <p className="text-gray-500">{show(queryData?.infants)}</p>
                   </div>
                 </div>
 
                 <div>
                   <h4 className="font-medium text-gray-700">Total Amount</h4>
                   <p className="text-gray-500">
-                    ₹{Number(queryData?.totalAmount)?.toLocaleString("en-IN")}
+                    {formatINR(queryData?.totalAmount)}
                   </p>
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-700">Booking Id</h4>
-                  <p className="text-gray-500">{queryData?.bookingId}</p>
+                  <p className="text-gray-500">{show(queryData?.bookingId)}</p>
                 </div>
 
                 {/* <button className="w-full border border-gray-300 py-2 rounded-lg">
@@ -336,10 +313,15 @@ export default function BookingSummaryPage() {
                   </h4>
                   <div className="text-gray-500 break-words max-w-full min-w-0">
                     <p className="text-gray-500">
-                      {queryData?.district ? queryData?.district : null}{" "}
-                      {queryData?.city ? queryData?.city : null},{" "}
-                      {queryData?.state ? queryData?.state : null},{" "}
-                      {queryData?.country ? queryData?.country : null}
+                      {[
+                        [queryData?.district, queryData?.city]
+                          .filter(Boolean)
+                          .join(" "),
+                        queryData?.state,
+                        queryData?.country,
+                      ]
+                        .filter(Boolean)
+                        .join(", ") || "—"}
                     </p>
                   </div>
                   {/* <button className="text-red-400 text-xs mt-1">

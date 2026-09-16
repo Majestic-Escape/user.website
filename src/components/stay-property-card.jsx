@@ -19,6 +19,7 @@ import { Heart, MapPin, Share } from "lucide-react";
 import { BookingPopup } from "@/components/booking-popup";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
+import { parseFiniteNumber } from "@/lib/format";
 
 // Navigation is done with real <Link> anchors (one behind each photo, one on
 // the text block) instead of a div onClick + router.push: they prefetch when
@@ -35,6 +36,8 @@ export default function StayCard({ property, includeTaxes }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { user } = useAuth();
   const stayHref = `/stay/${property?._id}`;
+  // Incomplete listings can arrive without a basePrice; never show ₹NaN.
+  const basePrice = parseFiniteNumber(property?.basePrice);
   const calculatePrice = (basePrice) => {
     const serviceFee = Math.round((basePrice * 14) / 100);
     const priceWithServiceFee = basePrice + serviceFee;
@@ -205,10 +208,13 @@ export default function StayCard({ property, includeTaxes }) {
             </p>
             <p className="text-gray-600">
               <span className="text-absoluteDark text-base font-semibold">
-                {formattedPrice.format(property?.basePrice)}&nbsp;
+                {basePrice === null
+                  ? "Price on request"
+                  : formattedPrice.format(basePrice)}
+                &nbsp;
               </span>
               {/* <Link href={`/stay/${property?._id}`}> */}
-              per night
+              {basePrice === null ? null : "per night"}
               {/* </Link> */}
             </p>
           </div>

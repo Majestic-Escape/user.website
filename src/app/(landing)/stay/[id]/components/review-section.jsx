@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { formatDate, parseFiniteNumber } from "@/lib/format";
 
 // Star count for a rating: `Array(NaN)` / `Array(4.5)` throw RangeError, so
 // clamp to a whole number in 0..5 (ratings may be missing or fractional).
@@ -426,8 +427,10 @@ export default function ReviewSection({
               ),
             )}
             <span className="text-sm text-gray-600 ml-2">
-              {Math.round(property?.averageRating)} rating of{" "}
-              {property?.reviewCount} reviews
+              {parseFiniteNumber(property?.averageRating) === null
+                ? "No"
+                : Math.round(parseFiniteNumber(property?.averageRating))}{" "}
+              rating of {parseFiniteNumber(property?.reviewCount) ?? 0} reviews
             </span>
           </div>
         </div>
@@ -450,9 +453,11 @@ export default function ReviewSection({
                   {r.user?.firstName ?? "Guest"}
                 </h4>
                 <p className="text-sm text-gray-500">
-                  {new Date(r.createdAt).getDate()}/
-                  {new Date(r.createdAt).getMonth()}/
-                  {new Date(r.createdAt).getFullYear()}
+                  {formatDate(r?.createdAt, {
+                    day: "numeric",
+                    month: "numeric",
+                    year: "numeric",
+                  })}
                 </p>
               </div>
               {/* <Image
