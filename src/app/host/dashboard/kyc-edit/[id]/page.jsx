@@ -153,7 +153,6 @@ export default function KycEdit({ params }) {
         ? await kycService.updateProperty(id, dataToSave)
         : await kycService.createKycHostData(dataToSave);
 
-      if (!id) setId(response._id);
       setFormData(response);
 
       // The dashboard gate is keyed by userId; invalidate every KYC entry.

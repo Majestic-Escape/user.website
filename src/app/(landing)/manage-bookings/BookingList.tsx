@@ -221,7 +221,7 @@ const ManageBookings: React.FC = () => {
   // Per-user cache keyed by userId (cleared on login/logout). Returning to
   // this page within a minute paints the list instantly; a tab refocus
   // revalidates it.
-  const { data: bookings = [], isPending: isLoading } = useQuery({
+  const { data: bookings = [], isPending: bookingsPending } = useQuery({
     queryKey: queryKeys.userBookings(userId),
     queryFn: async (): Promise<Booking[]> => {
       const token = readStoredToken();
@@ -242,8 +242,12 @@ const ManageBookings: React.FC = () => {
       const result = await response.json();
       return Array.isArray(result?.data) ? result.data : [];
     },
+    enabled: !!userId,
     ...USER,
   });
+  // Logged out (no userId) the query never runs, so it stays "pending";
+  // show the empty state instead of a skeleton forever.
+  const isLoading = !!userId && bookingsPending;
   const fetchData = () =>
     queryClient.invalidateQueries({ queryKey: queryKeys.userBookingsAll });
   useEffect(() => {

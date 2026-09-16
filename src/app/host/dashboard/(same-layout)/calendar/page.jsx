@@ -524,7 +524,6 @@ const FullCalendarPage = () => {
         }}
         onClose={() => {
           setConfirmDialogOpen(false);
-          setBookingToCancel(null);
         }}
       />
       <Card className="w-full mb-6">

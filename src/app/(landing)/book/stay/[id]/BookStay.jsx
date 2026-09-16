@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PUBLIC } from "@/lib/query-presets";
@@ -74,6 +74,10 @@ const cleanParams = (obj) =>
       .map(([k, v]) => [k, String(v)]),
   );
 
+// Listing ids are Mongo ObjectIds; anything else is "no such listing" and
+// never worth a backend call (the API currently 500s on such ids).
+const isListingId = (id) => typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+
 const EMPTY_TOTALS = {
   nights: 0,
   subtotal: 0,
@@ -137,6 +141,10 @@ function BookPageContent() {
   const [isAuth, setIsAuth] = useState(false);
   const [ban, setBan] = useState(false);
   const [guestSaving, setGuestSaving] = useState(false);
+  // Synchronous re-entry guard: two clicks in the same tick both see
+  // guestSaving === false (state updates are async), and the saving overlay
+  // mounts a render later — either would have created two bookings + orders.
+  const confirmInFlight = useRef(false);
   const queryClient = useQueryClient();
   const [date, setDate] = useState({
     from: paramDate(searchParams.get("checkin")),
@@ -269,9 +277,11 @@ function BookPageContent() {
     // separate, unconditional network fetch.
     queryKey: queryKeys.property(propertyId),
     queryFn: () => fetchProperty(propertyId),
-    enabled: !!propertyId,
+    enabled: isListingId(propertyId),
     ...PUBLIC,
   });
+  const listingMissing =
+    !isListingId(propertyId) || error?.status === 404 || error?.status === 400;
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("property", property);
   }
@@ -514,6 +524,7 @@ function BookPageContent() {
   //   }
   // };
   const handleConfirmGuestInfo = async () => {
+    if (confirmInFlight.current) return;
     const errors = {};
 
     // Validation logic (unchanged)
@@ -539,6 +550,7 @@ function BookPageContent() {
     }
 
     // Start loader
+    confirmInFlight.current = true;
     setGuestSaving(true);
 
     try {
@@ -592,6 +604,7 @@ function BookPageContent() {
       console.error(err);
       toast.error("Something went wrong. Try again!");
     } finally {
+      confirmInFlight.current = false;
       setGuestSaving(false); // remove loader
     }
   };
@@ -1161,6 +1174,31 @@ function BookPageContent() {
     );
   }
 
+  if (listingMissing) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4 font-poppins">
+        <div
+          role="status"
+          className="w-full max-w-md rounded-xl border border-lightGray bg-white p-8 text-center shadow-sm"
+        >
+          <h1 className="font-bricolage text-2xl font-semibold text-graphite">
+            This stay doesn&apos;t exist
+          </h1>
+          <p className="mt-3 text-sm text-stone">
+            The listing in this link could not be found. It may have been
+            removed, or the link is incomplete.
+          </p>
+          <Link
+            href="/"
+            className="mt-6 inline-flex items-center justify-center rounded-full bg-primaryGreen px-6 py-2.5 text-sm font-medium text-white hover:bg-brightGreen"
+          >
+            Browse stays
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -1548,7 +1586,8 @@ function BookPageContent() {
                   </button>
                   <button
                     onClick={handleConfirmGuestInfo}
-                    className="px-6 py-2 bg-primaryGreen text-white rounded hover:bg-brightGreen"
+                    disabled={guestSaving}
+                    className="px-6 py-2 bg-primaryGreen text-white rounded hover:bg-brightGreen disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     Confirm
                   </button>

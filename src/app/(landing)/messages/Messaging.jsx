@@ -293,8 +293,8 @@ export default function MessagesPage() {
               setShowPropertyInfo(false);
               // Scroll to bottom multiple times as keyboard animates
               const scrollToBottom = () => {
-                if (chatContainerRef.current) {
-                  chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+                if (messagesContainerRef.current) {
+                  messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
                 }
               };
               scrollToBottom();
@@ -325,8 +325,8 @@ export default function MessagesPage() {
         
         // Scroll to bottom immediately on focus
         const scrollToBottom = () => {
-          if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+          if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
           }
         };
         scrollToBottom();
