@@ -2,7 +2,6 @@ import "./globals.css";
 import { bricolage, poppins } from "./fonts";
 import Analytics from "@/components/analytics/google-analytics";
 import { ReactNode } from "react";
-import { WishlistProvider } from "@/components/wishlist-context";
 import { Providers } from "@/components/providers";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UnreadCountProvider } from "@/contexts/UnreadCountContext";
@@ -125,9 +124,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <Providers>
           <AuthProvider>
             <UnreadCountProvider>
-            <WishlistProvider>
               <div>{children}</div>
-            </WishlistProvider>
             </UnreadCountProvider>
           </AuthProvider>
         </Providers>

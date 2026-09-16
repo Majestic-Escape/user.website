@@ -3,6 +3,15 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useCheckToken } from "@/services/useCheckToken";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  SESSION_CLEARED_EVENT,
+  clearSession,
+  isRecentlyVerified,
+  markVerified,
+  readStoredToken,
+  runVerificationOnce,
+} from "@/lib/session";
 type User = {
   email: string;
   // Add other user properties as needed
@@ -115,6 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [openPriceModal, setOpenPriceModal] = useState(false);
   const [activeTab, setActiveTab] = useState("filters");
   const { checkToken } = useCheckToken();
+  const queryClient = useQueryClient();
 
   const [modalCheckDate, setModalCheckDate] = useState<{
     from: Date | undefined;
@@ -133,22 +143,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const allParams = searchParams.toString();
   const fullUrl = `${pathname}?${allParams}`;
   const [returnUrl, setReturnUrl] = useState<string>("");
+  // Route bookkeeping only — no network. The token check used to be awaited
+  // here on every pathname change, which put a POST on the critical path of
+  // every navigation; it now runs on load / focus with a TTL (see below).
   useEffect(() => {
-    const verify = async () => {
-      await checkToken();
-      if (pathname == "/") {
-        clearAllFilters();
+    if (pathname == "/") {
+      clearAllFilters();
+    }
+    if (pathname !== "/login" && pathname !== "/login-options") {
+      if (pathname == "/filter") {
+        setReturnUrl(encodeURIComponent(fullUrl));
+      } else {
+        setReturnUrl(encodeURIComponent(pathname));
       }
-      if (pathname !== "/login" && pathname !== "/login-options") {
-        if (pathname == "/filter") {
-          setReturnUrl(encodeURIComponent(fullUrl));
-        } else {
-          setReturnUrl(encodeURIComponent(pathname));
-        }
-      }
-    };
-    verify();
+    }
   }, [pathname]);
+
+  // Verify the stored token once per page load and again whenever the tab
+  // regains focus/visibility, at most once per TOKEN_VERIFY_TTL_MS for the
+  // same token. The API still rejects a bad token on every request; this only
+  // controls how fast the client notices a banned/expired session.
+  useEffect(() => {
+    const maybeCheckToken = () => {
+      const token = readStoredToken();
+      if (!token || isRecentlyVerified(token)) return;
+      runVerificationOnce("check-token", async () => {
+        const result = await checkToken();
+        // checkToken returns null/undefined when the server rejected the
+        // token (it has already torn the session down) or on network error.
+        if (result) markVerified(token);
+      }).catch(() => {});
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") maybeCheckToken();
+    };
+    maybeCheckToken();
+    window.addEventListener("focus", maybeCheckToken);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", maybeCheckToken);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep in-memory user state in step with a session torn down elsewhere
+  // (token expiry, ban, ProtectedRoute failure).
+  useEffect(() => {
+    const onCleared = () => setUser(null);
+    window.addEventListener(SESSION_CLEARED_EVENT, onCleared);
+    return () => window.removeEventListener(SESSION_CLEARED_EVENT, onCleared);
+  }, []);
 
   useEffect(() => {
     // Check for existing user in localStorage on initial load
@@ -180,6 +225,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = () => {
     setUser(null);
+    // Shared teardown (auth keys, query cache, verification memo), then the
+    // full wipe a manual logout has always done.
+    clearSession(queryClient);
     localStorage.clear();
     sessionStorage.clear();
 
@@ -276,9 +324,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     checkinType,
   ]);
 
-  useEffect(() => {
-    checkToken();
-  }, []);
   const value: AuthContextType = {
     user,
     login,
