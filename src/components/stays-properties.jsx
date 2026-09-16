@@ -45,7 +45,7 @@ export default function StaysProperties() {
       try {
         setLoading(true);
         const data = await propertyService.getFrontPageAllStays(selectedType);
-        setProperties(data.properties);
+        setProperties(Array.isArray(data?.properties) ? data.properties : []);
         setError(null);
       } catch (err) {
         setError(err.message);

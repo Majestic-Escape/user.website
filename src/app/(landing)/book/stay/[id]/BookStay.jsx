@@ -32,41 +32,35 @@ import { toast } from "sonner";
 //   }
 // }
 import { useAuth } from "@/contexts/AuthContext";
+import { readStoredToken } from "@/lib/session";
 import { createPortal } from "react-dom";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Function to fetch property data
+// Must throw on every failure path. It used to swallow errors (and silently
+// return undefined when there was no token), so react-query reported
+// "success" with no data and the page crashed on `Object.entries(undefined)`
+// — the "Application error" seen on checkout when logged out or during a
+// backend blip.
 const fetchProperty = async (id) => {
-  try {
-    if (!id) throw new Error("Property ID is missing");
-    const getLocalData = await localStorage.getItem("token");
-    const data = JSON.parse(getLocalData);
-    if (data) {
-      const response = await fetch(`${API_URL}/properties/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${data}`,
-        },
-      });
-      // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
-
-      if (!response.ok) {
-        console.error(
-          "Failed to fetch property:",
-          response.status,
-          await response.text(),
-        );
-        throw new Error(
-          `Failed to fetch property data (status: ${response.status})`,
-        );
-      }
-      const result = await response.json();
-      return result?.data;
-    }
-  } catch (err) {
-    console.error(err);
+  if (!id) throw new Error("Property ID is missing");
+  const token = readStoredToken();
+  if (!token) throw new Error("Not signed in");
+  const response = await fetch(`${API_URL}/properties/${id}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch property data (status: ${response.status})`,
+    );
   }
+  const result = await response.json();
+  if (!result?.data) throw new Error("Property data missing in response");
+  return result.data;
 };
 function GuestModal({ onClose, children }) {
   if (typeof window === "undefined") return null;
@@ -855,7 +849,7 @@ function BookPageContent() {
       const propertyHostId = await property.host;
       const propertyTitle = await property.title;
 
-      const found = Object.entries(property?.cancellationType).find(
+      const found = Object.entries(property?.cancellationType ?? {}).find(
         ([key, value]) => value === true,
       );
       const extract = JSON.stringify(found);
@@ -1125,6 +1119,27 @@ function BookPageContent() {
     );
   }
 
+  // Query resolved without a listing (shouldn't happen now that fetchProperty
+  // throws, but never render the checkout without one).
+  if (!property) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="text-center p-8 bg-red-50 rounded-lg shadow">
+          <h2 className="text-2xl font-bold text-red-700 mb-2">
+            Error loading property
+          </h2>
+          <p className="text-red-600">Try refreshing</p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-primaryGreen text-white rounded hover:bg-brightGreen"
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // Extract property details
   const propertyTitle = property?.title || "Property";
   const propertyLocation = property?.address
@@ -1132,7 +1147,7 @@ function BookPageContent() {
         property.address.country || ""
       }`
     : "Location not specified";
-  const propertyImage = property?.photos[0];
+  const propertyImage = property?.photos?.[0];
   const propertyPrice = property?.basePrice;
   const propertyRating = property?.rating || 0;
   const propertyReviews = property?.reviews?.length || 0;
@@ -1142,7 +1157,7 @@ function BookPageContent() {
     "No parties",
     "No pets",
   ];
-  const found = Object.entries(property?.cancellationType).find(
+  const found = Object.entries(property?.cancellationType ?? {}).find(
     ([key, value]) => value === true,
   );
 

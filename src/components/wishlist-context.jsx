@@ -2,6 +2,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { isArray, isPlainObject, readJSON } from '@/lib/storage';
 
 const WishlistContext = createContext();
 
@@ -15,14 +16,22 @@ export function WishlistProvider({ children }) {
   // Load from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedStaysWishlist = localStorage.getItem('staysWishlist');
-      const savedExperiencesWishlist = localStorage.getItem('experiencesWishlist');
-      const savedFolders = localStorage.getItem('folders');
-      
+      // Tolerant reads with shape validation: a corrupt or legacy value used
+      // to throw here (root provider) or later in the navbar (`folders` that
+      // isn't an object, a folder without `items`), killing every route.
+      const savedFolders = readJSON(localStorage, 'folders', {}, isPlainObject);
+      const folders = {};
+      for (const [name, folder] of Object.entries(savedFolders)) {
+        if (!isPlainObject(folder)) continue;
+        folders[name] = {
+          ...folder,
+          items: isArray(folder.items) ? folder.items : [],
+        };
+      }
       const newWishlists = {
-        stays: savedStaysWishlist ? JSON.parse(savedStaysWishlist) : [],
-        experiences: savedExperiencesWishlist ? JSON.parse(savedExperiencesWishlist) : [],
-        folders: savedFolders ? JSON.parse(savedFolders) : {}
+        stays: readJSON(localStorage, 'staysWishlist', [], isArray),
+        experiences: readJSON(localStorage, 'experiencesWishlist', [], isArray),
+        folders,
       };
       
       setWishlists(newWishlists);

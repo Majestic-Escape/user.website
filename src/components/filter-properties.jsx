@@ -11,7 +11,7 @@ import { MobileNavbar } from "@/components/stays-mobile-navbar";
 import { SheetProvider } from "@/components/providers/sheet-provider";
 
 export default function FilterProperties({
-  properties,
+  properties: propertiesProp,
   from,
   to,
   guests,
@@ -40,9 +40,9 @@ export default function FilterProperties({
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("new pr", properties);
   }
-  if (!properties) {
-    setLoading(true);
-  }
+  // A missing/odd payload is an empty result, not an eternal skeleton (and
+  // never call setState during render).
+  const properties = Array.isArray(propertiesProp) ? propertiesProp : [];
   if (loading) {
     return (
       <div className="grid grid-cols-1 max-w-[1760px]  px-4 sm:px-6 lg:px-[72px] py-8 sm:py-16 lg:py-[128px]  bg-white mx-auto sm:grid-cols-2 lg:grid-cols-4 gap-6">

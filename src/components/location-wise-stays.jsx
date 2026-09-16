@@ -103,9 +103,11 @@ const LocationCard = ({ name, staysNearby, image, countData }) => {
 
 const LocationWisestays = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [windowWidth, setWindowWidth] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 1024,
-  );
+  // Always start from the server's value (desktop) and measure in an effect.
+  // Reading window.innerWidth during the first client render produced a
+  // different tree than the prerendered HTML on phones → hydration error on
+  // every mobile home load.
+  const [windowWidth, setWindowWidth] = useState(1024);
   const [countData, setCountData] = useState([]);
   const fetchCount = async (cities) => {
     try {
@@ -140,6 +142,7 @@ const LocationWisestays = () => {
       setWindowWidth(window.innerWidth);
     };
 
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -173,7 +176,7 @@ const LocationWisestays = () => {
       return (
         <div className="grid grid-cols-2 gap-4">
           {visibleDestinations.map((destination) => (
-            <LocationCard {...destination} countData={countData} />
+            <LocationCard key={destination.id ?? destination.name} {...destination} countData={countData} />
           ))}
         </div>
       );
@@ -184,7 +187,7 @@ const LocationWisestays = () => {
         return (
           <div className="grid grid-cols-4 gap-4">
             {visibleDestinations.map((destination) => (
-              <LocationCard {...destination} countData={countData} />
+              <LocationCard key={destination.id ?? destination.name} {...destination} countData={countData} />
             ))}
           </div>
         );
@@ -251,7 +254,7 @@ const LocationWisestays = () => {
                 className="flex-shrink-0 "
                 style={{ width: `${100 / itemsPerView}%` }}
               >
-                <LocationCard {...destination} countData={countData} />
+                <LocationCard key={destination.id ?? destination.name} {...destination} countData={countData} />
               </div>
             ))}
           </div>

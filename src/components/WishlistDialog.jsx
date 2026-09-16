@@ -55,7 +55,7 @@ export const WishlistDialog = ({ isOpen, onClose, property }) => {
       location: property.location,
       price: property.price,
       dates: property.dates,
-      image: property?.photos[0],
+      image: property?.photos?.[0],
       itemType: property.itemType || "stays",
     };
     addToWishlist(wishlistItem, folderId);
@@ -94,7 +94,7 @@ export const WishlistDialog = ({ isOpen, onClose, property }) => {
               <Image
                 width={64}
                 height={64}
-                src={property?.photos[0]}
+                src={property?.photos?.[0]}
                 alt="Property"
                 className="w-16 h-16 rounded-lg object-cover"
               />

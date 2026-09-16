@@ -74,7 +74,7 @@ export default function ShareDialog({
         <Image
           width={48}
           height={48}
-          src={property?.photos[0]}
+          src={property?.photos?.[0]}
           alt={property.title || property.name || ""}
           className="w-12 h-12 rounded-md object-cover"
         />

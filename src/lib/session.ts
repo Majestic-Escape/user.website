@@ -11,6 +11,7 @@
 // logout / expiry so the next account on the same browser never sees it.
 
 import type { QueryClient } from "@tanstack/react-query";
+import { removeByPrefix } from "./storage";
 
 // Keys that hold auth or per-user state. Everything else in storage
 // (wishlist, search filters, modal flags…) is device-local UX state that must
@@ -18,6 +19,9 @@ import type { QueryClient } from "@tanstack/react-query";
 // timed out mid-search is a bad experience.
 const AUTH_LOCAL_STORAGE_KEYS = ["token", "userId", "user", "userInfo"];
 const AUTH_SESSION_STORAGE_KEYS = ["messages_last_init", "hostinbox_last_init"];
+// Per-user conversation snapshots (lib/conversationsCache.js), keyed by role.
+// They are userId-stamped, but nothing user-scoped should survive a teardown.
+const AUTH_SESSION_STORAGE_PREFIXES = ["me:conversationsCache:"];
 
 // Fired on `window` after a session is torn down so in-memory state
 // (AuthContext's `user`) can reset without importing the context here.
@@ -87,6 +91,8 @@ export function clearSession(queryClient?: QueryClient | null) {
   try {
     for (const key of AUTH_LOCAL_STORAGE_KEYS) localStorage.removeItem(key);
     for (const key of AUTH_SESSION_STORAGE_KEYS) sessionStorage.removeItem(key);
+    for (const prefix of AUTH_SESSION_STORAGE_PREFIXES)
+      removeByPrefix(sessionStorage, prefix);
   } catch {
     // Storage can throw in private mode / when blocked; nothing else to do.
   }

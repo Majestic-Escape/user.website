@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useCheckToken } from "@/services/useCheckToken";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { isPlainObject, readJSON } from "@/lib/storage";
 import {
   SESSION_CLEARED_EVENT,
   clearSession,
@@ -198,16 +199,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    // Check for existing user in localStorage on initial load
-    const storedUser = localStorage.getItem("user");
+    // Check for existing user in localStorage on initial load. Tolerant
+    // reads: a corrupt value here used to throw inside the root provider and
+    // take every route down.
+    const storedUser = readJSON<User | null>(
+      localStorage,
+      "user",
+      null,
+      (v): v is User => isPlainObject(v) && typeof v.email === "string",
+    );
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      setUser(storedUser);
     }
 
-    // Load saved filters from localStorage if needed
-    const savedFilters = sessionStorage.getItem("filterState");
-    if (savedFilters) {
-      const filters = JSON.parse(savedFilters);
+    // Load saved filters from sessionStorage if needed
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const filters = readJSON<Record<string, any> | null>(
+      sessionStorage,
+      "filterState",
+      null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (v): v is Record<string, any> => isPlainObject(v),
+    );
+    if (filters) {
       // Set all filter states from saved data
       setPriceRange(filters.priceRange || [501, 83000]);
       setRooms(filters.rooms || { bedrooms: 0, beds: 0, bathrooms: 0 });
@@ -221,6 +235,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = (userData: User) => {
+    // Drop anything cached for a previous account before the new one renders
+    // (signing in as someone else without a reload must never reuse cache).
+    queryClient.clear();
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
   };

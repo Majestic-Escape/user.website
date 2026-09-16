@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { addDays } from "date-fns";
+
+const capitalize = (s) =>
+  typeof s === "string" && s.length ? s[0].toUpperCase() + s.slice(1) : "";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BookingWidget from "./booking-widget";
 import PropertyHighlights from "./property-highlights";
@@ -29,7 +32,7 @@ export default function PropertyListing({
     to: addDays(new Date(), 1),
   });
   const [guests, setGuests] = useState({
-    adults: Math.min(propertyDetails.guests, 2),
+    adults: Math.min(Number(propertyDetails?.guests) || 1, 2),
     children: 0,
     infants: 0,
     pets: 0,
@@ -55,9 +58,14 @@ export default function PropertyListing({
     setPerNightPrice,
   } = useAuth();
 
-  setModalCheckDate(date);
-
-  setPerNightPrice(propertyDetails?.basePrice);
+  // Sync the shared booking context from an effect — doing it during render
+  // updates AuthProvider while this component renders (React warning, and a
+  // re-render loop risk).
+  useEffect(() => {
+    setModalCheckDate(date);
+    setPerNightPrice(propertyDetails?.basePrice);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, propertyDetails?.basePrice]);
   const handleGuestChange = (type, value) => {
     setGuests((prev) => ({
       ...prev,
@@ -74,7 +82,7 @@ export default function PropertyListing({
     setShowGuestsDropdown(!showGuestsDropdown);
     if (showCalendar) setShowCalendar(false);
   };
-  const obj = propertyDetails.bookingType;
+  const obj = propertyDetails?.bookingType ?? {};
   const manual = Object.keys(obj).filter((key) => obj[key]);
   return (
     <div className="max-w-7xl  mx-auto relative">
@@ -82,10 +90,8 @@ export default function PropertyListing({
         <div className="md:col-span-2">
           <div className="border-b pb-6 mb-6">
             <div className="flex items-center gap-4 mt-6">
-              {propertyDetails?.placeType[0].toUpperCase() +
-                propertyDetails?.placeType.slice(1)}{" "}
-              {propertyDetails?.propertyType[0].toUpperCase() +
-                propertyDetails?.propertyType.slice(1)}{" "}
+              {capitalize(propertyDetails?.placeType)}{" "}
+              {capitalize(propertyDetails?.propertyType)}{" "}
               in {propertyDetails?.address?.city},{" "}
               {propertyDetails?.address?.state}
             </div>

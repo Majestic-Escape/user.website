@@ -227,15 +227,18 @@ const ManageBookings: React.FC = () => {
           },
         );
         const result = await response.json();
-        setBookings(result.data);
+        setBookings(Array.isArray(result?.data) ? result.data : []);
       } catch (err) {
         console.error(err);
+      } finally {
+        setIsLoading(false);
       }
+    } else {
+      setIsLoading(false);
     }
   };
   useEffect(() => {
     fetchData();
-    setIsLoading(false);
   }, []);
   useEffect(() => {
     if (showInvoice) {

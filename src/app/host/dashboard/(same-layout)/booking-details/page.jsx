@@ -163,12 +163,10 @@ export default function Page() {
                 />
                 <h3 className="mt-4 text-lg font-medium">{}</h3>
                 <p className="text-gray-600 text-sm">
-                  {fetchedData?.propertyId?.placeType.charAt(0).toUpperCase() +
-                    fetchedData?.propertyId?.placeType.slice(1)}{" "}
-                  {fetchedData?.propertyId?.propertyType
-                    .charAt(0)
-                    .toUpperCase() +
-                    fetchedData?.propertyId?.propertyType.slice(1)}{" "}
+                  {(fetchedData?.propertyId?.placeType?.charAt(0)?.toUpperCase() ?? "") +
+                    (fetchedData?.propertyId?.placeType?.slice(1) ?? "")}{" "}
+                  {(fetchedData?.propertyId?.propertyType?.charAt(0)?.toUpperCase() ?? "") +
+                    (fetchedData?.propertyId?.propertyType?.slice(1) ?? "")}{" "}
                   by {fetchedData?.userId?.firstName}{" "}
                   {fetchedData?.userId?.hostLastName}
                 </p>

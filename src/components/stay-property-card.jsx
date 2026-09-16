@@ -113,10 +113,13 @@ export default function StayCard({ property, includeTaxes }) {
     console.log(property);
   }
 
+  // Listings can arrive with missing text fields (incomplete or legacy
+  // documents); never let one bad card take down the whole grid.
   function convertToUpperCase(item) {
-    const newItem = item[0]?.toUpperCase() + item.slice(1);
-    return newItem;
+    if (typeof item !== "string" || item.length === 0) return "";
+    return item[0].toUpperCase() + item.slice(1);
   }
+  const photos = Array.isArray(property?.photos) ? property.photos : [];
   return (
     <div
       id={`property-${property?._id}`}
@@ -134,7 +137,7 @@ export default function StayCard({ property, includeTaxes }) {
       >
         <Carousel className="w-full" setApi={setApi}>
           <CarouselContent>
-            {property?.photos.map((image, idx) => (
+            {photos.map((image, idx) => (
               <CarouselItem key={idx}>
                 {/* Duplicate of the text link below; hidden from AT/tab order. */}
                 <Link
@@ -165,7 +168,7 @@ export default function StayCard({ property, includeTaxes }) {
         </div> */}
 
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-          {property?.photos.map((_, idx) => (
+          {photos.map((_, idx) => (
             <button
               key={idx}
               onClick={(e) => {

@@ -71,7 +71,11 @@ export default function BookingWidget({
   setDate,
 }: BookingWidgetProps) {
   const { openPriceModal, setOpenPriceModal, setBookingQuery } = useAuth();
-  const [totalPrice, setTotalPrice] = useState<number>(pricePerNight);
+  // Incomplete listings can arrive without a basePrice. Never show ₹0 or
+  // NaN for those: render "Price on request" and keep Reserve disabled.
+  const hasPrice = Number.isFinite(pricePerNight);
+  const safePrice = hasPrice ? pricePerNight : 0;
+  const [totalPrice, setTotalPrice] = useState<number>(safePrice);
   const [nightsCount, setNightsCount] = useState<number>(1);
   const [calendarOpen, setCalendarOpen] = useState<boolean>(false);
   const [isAuth, setIsAuth] = useState<boolean>(false);
@@ -162,9 +166,9 @@ export default function BookingWidget({
         (date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24),
       );
       setNightsCount(nights);
-      setTotalPrice(pricePerNight * nights);
+      setTotalPrice(safePrice * nights);
     }
-  }, [date, pricePerNight]);
+  }, [date, safePrice]);
   useEffect(() => {
     if (!openPriceModal) return;
 
@@ -239,7 +243,9 @@ export default function BookingWidget({
     //   to = addDays(to, 1);
     // }
 
-    while (true) {
+    // Bounded: if a listing is blocked for every day of the next year this
+    // used to spin forever and hang the tab; give up and return today.
+    for (let attempts = 0; attempts < 366; attempts++) {
       const fromStr = format(from, "yyyy-MM-dd");
       const toStr = format(to, "yyyy-MM-dd");
 
@@ -263,8 +269,13 @@ export default function BookingWidget({
     setDate({ from: new Date(from), to: new Date(to) });
   }, [unavailableDates]);
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
-    console.log("logite", propertyImages[0]);
+    console.log("logite", propertyImages?.[0]);
   }
+  const priceLabel = hasPrice
+    ? `₹${pricePerNight.toLocaleString("en-IN")}`
+    : "Price on request";
+  const totalLabel = hasPrice ? `₹${totalPrice.toLocaleString("en-IN")}` : "—";
+
   const calculatePriceWithTax = (basePrice: number) => {
     const serviceFee = Math.round((basePrice * 14) / 100);
     const priceWithServiceFee = basePrice + serviceFee;
@@ -380,7 +391,7 @@ export default function BookingWidget({
 
     return range.some((d) => unavailableDates.includes(d));
   }
-  const filename = propertyImages[0].split("/").pop();
+  const filename = propertyImages?.[0]?.split("/").pop() ?? "";
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("bailan", filename);
   }
@@ -464,9 +475,11 @@ export default function BookingWidget({
               <div className="flex justify-between items-center mb-4">
                 <div>
                   <span className="text-2xl font-semibold font-bricolage">
-                    ₹{pricePerNight.toLocaleString("en-IN")}
+                    {priceLabel}
                   </span>
-                  <span className="text-gray-600"> per night</span>
+                  {hasPrice ? (
+                    <span className="text-gray-600"> per night</span>
+                  ) : null}
                 </div>
                 <div
                   onClick={() => setOpenPriceModal(false)}
@@ -779,8 +792,15 @@ export default function BookingWidget({
                 </PopoverContent>
               </Popover>
 
-              <div onClick={() => createReserveRecord()}>
-                {isAuth || isValid ? (
+              <div onClick={() => hasPrice && createReserveRecord()}>
+                {!hasPrice ? (
+                  <Button
+                    disabled
+                    className="w-full flex justify-center items-center text-center py-3 px bg-gray-300 text-base font-bricolage text-gray-600 h-10 rounded-lg font-medium"
+                  >
+                    Price on request
+                  </Button>
+                ) : isAuth || isValid ? (
                   activation ? (
                     date?.from && date?.to ? (
                       hasDateOverlap() ? (
@@ -870,12 +890,12 @@ export default function BookingWidget({
                   <div className="mt-4 space-y-2">
                     <div className="flex justify-between ">
                       <div className=" text-sm ">
-                        ₹{pricePerNight.toLocaleString("en-IN")} x {nightsCount}{" "}
+                        {priceLabel} x {nightsCount}{" "}
                         night
                         {nightsCount !== 1 ? "s" : ""}
                       </div>
                       <div className="text-sm">
-                        ₹{totalPrice.toLocaleString("en-IN")}
+                        {totalLabel}
                       </div>
                     </div>
 
@@ -893,7 +913,7 @@ export default function BookingWidget({
 
                     <div className="flex justify-between pt-4 border-t ">
                       <div>Total before taxes</div>
-                      <div>₹{totalPrice.toLocaleString("en-IN")}</div>
+                      <div>{totalLabel}</div>
                     </div>
                   </div>
                 </>
@@ -930,9 +950,11 @@ export default function BookingWidget({
               <div className="flex justify-between items-center mb-4">
                 <div>
                   <span className="text-2xl font-semibold font-bricolage">
-                    ₹{pricePerNight.toLocaleString("en-IN")}
+                    {priceLabel}
                   </span>
-                  <span className="text-gray-600"> per night</span>
+                  {hasPrice ? (
+                    <span className="text-gray-600"> per night</span>
+                  ) : null}
                 </div>
                 <div
                   onClick={() => setOpenPriceModal(false)}
@@ -1250,8 +1272,15 @@ export default function BookingWidget({
                 </PopoverContent>
               </Popover>
 
-              <div onClick={() => createReserveRecord()}>
-                {isAuth || isValid ? (
+              <div onClick={() => hasPrice && createReserveRecord()}>
+                {!hasPrice ? (
+                  <Button
+                    disabled
+                    className="w-full flex justify-center items-center text-center py-3 px bg-gray-300 text-base font-bricolage text-gray-600 h-10 rounded-lg font-medium"
+                  >
+                    Price on request
+                  </Button>
+                ) : isAuth || isValid ? (
                   activation ? (
                     date?.from && date?.to ? (
                       hasDateOverlap() ? (
@@ -1342,12 +1371,12 @@ export default function BookingWidget({
                   <div className="mt-4 space-y-2">
                     <div className="flex justify-between ">
                       <div className=" text-sm ">
-                        ₹{pricePerNight.toLocaleString("en-IN")} x {nightsCount}{" "}
+                        {priceLabel} x {nightsCount}{" "}
                         night
                         {nightsCount !== 1 ? "s" : ""}
                       </div>
                       <div className="text-sm">
-                        ₹{totalPrice.toLocaleString("en-IN")}
+                        {totalLabel}
                       </div>
                     </div>
 
@@ -1365,7 +1394,7 @@ export default function BookingWidget({
 
                     <div className="flex justify-between pt-4 border-t ">
                       <div>Total before taxes</div>
-                      <div>₹{totalPrice.toLocaleString("en-IN")}</div>
+                      <div>{totalLabel}</div>
                     </div>
                   </div>
                 </>

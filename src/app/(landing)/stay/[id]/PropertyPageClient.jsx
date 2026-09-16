@@ -142,7 +142,9 @@ export default function PropertyPageClient({ initialProperty }) {
         if (process.env.NEXT_PUBLIC_ENV === "dev") {
           console.log("bbbbbbb", response);
         }
-        setUnavailableDates(response.data.data);
+        setUnavailableDates(
+          Array.isArray(response?.data?.data) ? response.data.data : [],
+        );
       } catch (err) {
         console.error(err);
       } finally {

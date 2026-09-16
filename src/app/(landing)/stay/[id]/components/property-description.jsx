@@ -47,7 +47,7 @@ export default function PropertyDescription({ description, property }) {
 
   // Filter the amenities using the dynamic prop (matching by id)
   const matchedAmenities = allAmenities.filter((amenity) =>
-    property?.occupancy.includes(amenity.id)
+    property?.occupancy?.includes(amenity.id)
   );
   const changeTime = (num) => {
     return `${Number(num) - 12} p.m.`;
@@ -109,7 +109,7 @@ export default function PropertyDescription({ description, property }) {
         <div className="border-b pb-6 mb-6">
           <h2 className="text-xl font-medium mb-6">Cancellation Policy</h2>
           <div className="text-gray-800 mb-4">
-            {Object.entries(property?.cancellationType).map(([key, value]) =>
+            {Object.entries(property?.cancellationType ?? {}).map(([key, value]) =>
               value == true ? (
                 <div key={key} className="">
                   {" "}

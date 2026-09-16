@@ -12,6 +12,13 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
+// Star count for a rating: `Array(NaN)` / `Array(4.5)` throw RangeError, so
+// clamp to a whole number in 0..5 (ratings may be missing or fractional).
+const starCount = (rating) => {
+  const n = Math.round(Number(rating));
+  return Number.isFinite(n) ? Math.min(5, Math.max(0, n)) : 0;
+};
 export default function ReviewSection({
   reviews,
   isLoading,
@@ -413,11 +420,11 @@ export default function ReviewSection({
             Customer Reviews
           </h2>
           <div className="flex items-center gap-2 text-yellow-500 mt-1">
-            {Array(Math.round(property?.averageRating))
-              .fill(0)
-              .map((_, i) => (
+            {Array.from({ length: starCount(property?.averageRating) }).map(
+              (_, i) => (
                 <StarIcon key={i} className="w-5 h-5 fill-yellow-500" />
-              ))}
+              ),
+            )}
             <span className="text-sm text-gray-600 ml-2">
               {Math.round(property?.averageRating)} rating of{" "}
               {property?.reviewCount} reviews
@@ -432,7 +439,7 @@ export default function ReviewSection({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {reviews.data.slice(prev, next).map((r, i) => (
+        {(reviews?.data ?? []).slice(prev, next).map((r, i) => (
           <div
             key={i}
             className="bg-gray-50 p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-2 relative"
@@ -440,7 +447,7 @@ export default function ReviewSection({
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-semibold text-gray-800">
-                  {r.user.firstName}
+                  {r.user?.firstName ?? "Guest"}
                 </h4>
                 <p className="text-sm text-gray-500">
                   {new Date(r.createdAt).getDate()}/
@@ -457,11 +464,9 @@ export default function ReviewSection({
             </div>
 
             <div className="flex text-yellow-500">
-              {Array(r.rating)
-                .fill(0)
-                .map((_, i) => (
-                  <StarIcon key={i} className="w-4 h-4 fill-yellow-500" />
-                ))}
+              {Array.from({ length: starCount(r.rating) }).map((_, i) => (
+                <StarIcon key={i} className="w-4 h-4 fill-yellow-500" />
+              ))}
             </div>
             <p className="text-sm text-gray-700">{r.content}</p>
           </div>

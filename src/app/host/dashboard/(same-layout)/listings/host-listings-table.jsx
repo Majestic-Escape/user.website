@@ -144,7 +144,7 @@ export function HostListingsTable({ userEmail }) {
     setLoading(true);
     try {
       const response = await getUserPropertyListings(userEmail, page);
-      setData(response?.listings);
+      setData(Array.isArray(response?.listings) ? response.listings : []);
     } catch (error) {
       console.error("Failed to fetch listings:", error);
       // You might want to show an error message to the user here
