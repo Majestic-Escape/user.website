@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { kycService } from "@/services/kycService";
 import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -92,9 +93,10 @@ export default function KycEdit({ params }) {
 
       // await propertyService.updateKyc(formData?.hostId);
 
-      queryClient.invalidateQueries({
-        queryKey: ["KYCStatus", auth.user.email],
-      });
+      // The dashboard gate is keyed by userId; invalidate every KYC entry.
+
+
+      queryClient.invalidateQueries({ queryKey: queryKeys.kycStatusAll });
 
       toast.success("KYC submitted successfully.");
 
@@ -154,9 +156,10 @@ export default function KycEdit({ params }) {
       if (!id) setId(response._id);
       setFormData(response);
 
-      queryClient.invalidateQueries({
-        queryKey: ["KYCStatus", auth.user.email],
-      });
+      // The dashboard gate is keyed by userId; invalidate every KYC entry.
+
+
+      queryClient.invalidateQueries({ queryKey: queryKeys.kycStatusAll });
     } catch (error) {
       toast.success("Updated your KYC profile");
     } finally {

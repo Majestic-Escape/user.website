@@ -6,6 +6,9 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { toast, Toaster } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { PUBLIC } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
 import FilterModal from "@/components/ui/modal";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -29,12 +32,13 @@ export default function FarmHouse({ locationName }) {
   const checkinType = searchParams.get("checkinType");
   const pets = searchParams.get("pets");
   const amenities = searchParams.get("amenities");
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
   const { modalFilter, openModal, closeModal, toggleModal } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
-  const [pagination, setPagination] = useState(null);
   const LIMIT = 16;
+  // The full query string is the cache key, so every filter (not just the
+  // five the old effect listed) triggers a fresh search, and coming back to
+  // the same search paints from cache.
+  const paramsString = searchParams.toString();
 
   const array = amenities
     ? amenities
@@ -47,10 +51,14 @@ export default function FarmHouse({ locationName }) {
     console.log("arry", array);
   }
 
-  useEffect(() => {
-    async function fetchDates() {
-      try {
-        setLoading(true);
+  const {
+    data: result,
+    isPending: loading,
+    isPlaceholderData,
+    isFetching,
+  } = useQuery({
+    queryKey: queryKeys.search(paramsString, currentPage),
+    queryFn: async () => {
         const response = await axios.get(
           `${API_URL}/properties/search-properties`,
           {
@@ -79,21 +87,22 @@ export default function FarmHouse({ locationName }) {
         if (process.env.NEXT_PUBLIC_ENV === "dev") {
           console.log("Available properties:", response.data.data);
         }
-        setData(response.data.data);
-        setPagination(response.data.pagination);
-      } catch (err) {
-        console.error("Frontend fetch error:", err);
-        // Show different error messages based on error type
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchDates();
-  }, [from, to, guests, location, property, currentPage]);
+        return {
+          data: Array.isArray(response.data?.data) ? response.data.data : [],
+          pagination: response.data?.pagination ?? null,
+        };
+    },
+    ...PUBLIC,
+    staleTime: 2 * 60 * 1000,
+    // Page changes keep the previous rows on screen (dimmed) instead of a
+    // full-height spinner.
+    placeholderData: keepPreviousData,
+  });
+  const data = result?.data ?? [];
+  const pagination = result?.pagination ?? null;
   useEffect(() => {
     setCurrentPage(1);
-  }, [location, from, to, guests, property]);
+  }, [paramsString]);
   const { setAddPropertyType } = useAuth();
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("now", data);
@@ -116,7 +125,13 @@ export default function FarmHouse({ locationName }) {
           {modalFilter && (
             <div className="fixed inset-0 bg-black bg-opacity-40 z-40"></div>
           )}
-          <div className="px-2">
+          <div
+            className={
+              isPlaceholderData || isFetching
+                ? "px-2 opacity-60 transition-opacity"
+                : "px-2 transition-opacity"
+            }
+          >
             <FilterProperties
               properties={data}
               from={from}

@@ -54,6 +54,13 @@ import { ImageCarouselPopup } from "./image-carousel-popup";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { formatDate, parseFiniteNumber } from "@/lib/format";
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { USER } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "https://server-me.vercel.app/api/v1";
@@ -121,7 +128,6 @@ const SkeletonRow = ({ columns }) => (
 );
 
 export function HostListingsTable({ userEmail }) {
-  const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -131,7 +137,6 @@ export function HostListingsTable({ userEmail }) {
   const [relistDialogOpen, setRelistDialogOpen] = useState(false);
   const [listingToRelist, setListingToRelist] = useState(null);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [imagePopupOpen, setImagePopupOpen] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
   const [selectedPropertyName, setSelectedPropertyName] = useState("");
@@ -141,37 +146,44 @@ export function HostListingsTable({ userEmail }) {
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("gogog", userEmail);
   }
-  const fetchListings = useCallback(async () => {
-    setLoading(true);
-    try {
+  // Cached per host + page (USER preset). Dashboard → listings → dashboard
+  // no longer refetches on every visit; page changes keep the previous rows
+  // (dimmed) instead of skeletons. Mutations invalidate hostListingsAll.
+  const queryClient = useQueryClient();
+  const {
+    data = [],
+    isPending: loading,
+    isPlaceholderData,
+    isFetching,
+  } = useQuery({
+    queryKey: queryKeys.hostListings(userEmail, page),
+    queryFn: async () => {
       const response = await getUserPropertyListings(userEmail, page);
-      setData(Array.isArray(response?.listings) ? response.listings : []);
-    } catch (error) {
-      console.error("Failed to fetch listings:", error);
-      // You might want to show an error message to the user here
-    } finally {
-      setLoading(false);
-    }
-  }, [userEmail, page]);
-
-  useEffect(() => {
-    fetchListings();
-  }, [fetchListings, userEmail]);
+      return Array.isArray(response?.listings) ? response.listings : [];
+    },
+    enabled: !!userEmail,
+    ...USER,
+    placeholderData: keepPreviousData,
+  });
+  const fetchListings = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: queryKeys.hostListingsAll }),
+    [queryClient],
+  );
 
   const handleImageClick = useCallback((images, propertyName) => {
     setSelectedImages(images);
     setSelectedPropertyName(propertyName);
     setImagePopupOpen(true);
   }, []);
+  // Opening a confirmation dialog used to refetch the whole table; the
+  // refetch now happens once, after the mutation succeeds.
   const handleRelistClick = useCallback((listing) => {
     setListingToRelist(listing);
     setRelistDialogOpen(true);
-    fetchListings();
   }, []);
   const handleDelistClick = useCallback((listing) => {
     setListingToDelist(listing);
     setDelistDialogOpen(true);
-    fetchListings();
   }, []);
 
   const handleConfirmDelist = useCallback(async () => {
@@ -202,7 +214,14 @@ export function HostListingsTable({ userEmail }) {
         // );
         setDelistDialogOpen(false);
         setListingToDelist(null);
+        // Only after the 2xx: this table, the listing itself, and the public
+        // feed/search results that no longer include it.
         fetchListings();
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.property(listingToDelist._id),
+        });
+        queryClient.invalidateQueries({ queryKey: queryKeys.frontStaysAll });
+        queryClient.invalidateQueries({ queryKey: queryKeys.searchAll });
         toast.success("Listing delisted successfully");
       } catch (error) {
         console.error("Failed to delist listing:", error);
@@ -210,7 +229,7 @@ export function HostListingsTable({ userEmail }) {
         // You might want to show an error message to the user here
       }
     }
-  }, [listingToDelist]);
+  }, [listingToDelist, fetchListings, queryClient]);
 
   const handleConfirmRelist = useCallback(async () => {
     if (listingToRelist) {
@@ -244,14 +263,19 @@ export function HostListingsTable({ userEmail }) {
         setRelistDialogOpen(false);
         setListingToRelist(null);
         fetchListings();
-        toast.success("Listing delisted successfully");
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.property(listingToRelist._id),
+        });
+        queryClient.invalidateQueries({ queryKey: queryKeys.frontStaysAll });
+        queryClient.invalidateQueries({ queryKey: queryKeys.searchAll });
+        toast.success("Listing relisted successfully");
       } catch (error) {
         console.error("Failed to delist listing:", error);
         toast.error("Failed to delist listing");
         // You might want to show an error message to the user here
       }
     }
-  }, [listingToRelist]);
+  }, [listingToRelist, fetchListings, queryClient]);
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("all the ", selectedListing);
   }
@@ -607,7 +631,13 @@ export function HostListingsTable({ userEmail }) {
                   </TableRow>
                 ))}
               </TableHeader>
-              <TableBody>
+              <TableBody
+                className={
+                  isPlaceholderData || isFetching
+                    ? "opacity-60 transition-opacity"
+                    : "transition-opacity"
+                }
+              >
                 {loading ? (
                   Array.from({ length: 10 }).map((_, index) => (
                     <SkeletonRow key={index} columns={columns} />

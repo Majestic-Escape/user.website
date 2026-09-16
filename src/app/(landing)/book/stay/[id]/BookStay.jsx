@@ -2,14 +2,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
-import {
-  QueryClient,
-  QueryClientProvider,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PUBLIC } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,7 +29,6 @@ import { toast } from "sonner";
 //   }
 // }
 import { useAuth } from "@/contexts/AuthContext";
-import { readStoredToken } from "@/lib/session";
 import {
   formatINR,
   formatTime12h,
@@ -43,36 +39,12 @@ import {
 import {
   fetchLatestAvailability,
   fetchLatestProperty,
+  fetchProperty,
 } from "@/lib/api/property";
 import { createPortal } from "react-dom";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Function to fetch property data
-// Must throw on every failure path. It used to swallow errors (and silently
-// return undefined when there was no token), so react-query reported
-// "success" with no data and the page crashed on `Object.entries(undefined)`
-// — the "Application error" seen on checkout when logged out or during a
-// backend blip.
-const fetchProperty = async (id) => {
-  if (!id) throw new Error("Property ID is missing");
-  const token = readStoredToken();
-  if (!token) throw new Error("Not signed in");
-  const response = await fetch(`${API_URL}/properties/${id}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch property data (status: ${response.status})`,
-    );
-  }
-  const result = await response.json();
-  if (!result?.data) throw new Error("Property data missing in response");
-  return result.data;
-};
 // Checkout dates arrive as YYYY-MM-DD. They are validated calendar-safely
 // (2026-02-31 / 2026-13-40 → null) but the instant kept is UTC midnight via
 // new Date("YYYY-MM-DD") — the wire format every existing booking and
@@ -292,9 +264,13 @@ function BookPageContent() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["property", propertyId],
+    // Shares the stay page's cache entry: arriving from the listing costs
+    // zero extra /properties/:id calls. The pre-payment re-check below is a
+    // separate, unconditional network fetch.
+    queryKey: queryKeys.property(propertyId),
     queryFn: () => fetchProperty(propertyId),
     enabled: !!propertyId,
+    ...PUBLIC,
   });
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("property", property);
@@ -1042,6 +1018,14 @@ function BookPageContent() {
 
           const hostEmail = await property.hostEmail;
           if (verify) {
+            // Payment confirmed: the listing's calendar and the traveller's
+            // bookings list are stale now.
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.checkDates(propertyId),
+            });
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.userBookingsAll,
+            });
             setSummaryRoute(true);
             window.scrollTo(0, 0);
             if (property.bookingType.manual) {
@@ -1720,19 +1704,10 @@ function BookPageContent() {
   );
 }
 
-// Main component that creates a QueryClient and provides it to the BookPageContent
+// Uses the app-wide QueryClient from components/providers.tsx (a page-local
+// client used to throw the listing away on every visit).
 export default function BookPage() {
-  // Create a client
-  const queryClientRef = useRef(null);
-  if (!queryClientRef.current) {
-    queryClientRef.current = new QueryClient();
-  }
-
-  return (
-    <QueryClientProvider client={queryClientRef.current}>
-      <BookPageContent />
-    </QueryClientProvider>
-  );
+  return <BookPageContent />;
 }
 
 function BookingPageSkeleton() {

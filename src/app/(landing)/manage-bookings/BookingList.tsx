@@ -28,6 +28,10 @@ import Invoice from "@/components/invoice";
 import moment from "moment-timezone";
 import Portal from "@/components/portal";
 import { formatDate, formatINR } from "@/lib/format";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { USER } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
+import { readStoredToken } from "@/lib/session";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const moderate = Number(process.env.NEXT_PUBLIC_MODERATE_POLICY_DAYS ?? 7);
 const flexible = Number(process.env.NEXT_PUBLIC_FLEXIBLE_POLICY_DAYS ?? 24);
@@ -182,7 +186,15 @@ const FilterDialog = ({
 };
 
 const ManageBookings: React.FC = () => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const queryClient = useQueryClient();
+  const userId: string | null = (() => {
+    try {
+      const raw = localStorage.getItem("userId");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
   const [activeTab, setActiveTab] = useState<string>("all");
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [showInvoice, setShowInvoice] = useState<boolean>(false);
@@ -206,41 +218,34 @@ const ManageBookings: React.FC = () => {
     minPrice: "",
     maxPrice: "",
   });
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  const fetchData = async (): Promise<void> => {
-    if (typeof window === "undefined") return;
-
-    const getLocalData = await localStorage.getItem("token");
-    const data = getLocalData ? JSON.parse(getLocalData) : null;
-    const userData = await localStorage.getItem("userId");
-    const userId = userData ? JSON.parse(userData) : null;
-    if (data) {
-      try {
-        const response = await fetch(
-          `${API_URL}/booking/data?userId=${userId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${data}`,
-              "Content-Type": "application/json",
-            },
+  // Per-user cache keyed by userId (cleared on login/logout). Returning to
+  // this page within a minute paints the list instantly; a tab refocus
+  // revalidates it.
+  const { data: bookings = [], isPending: isLoading } = useQuery({
+    queryKey: queryKeys.userBookings(userId),
+    queryFn: async (): Promise<Booking[]> => {
+      const token = readStoredToken();
+      if (!token) return [];
+      const response = await fetch(
+        `${API_URL}/booking/data?userId=${userId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
-        );
-        const result = await response.json();
-        setBookings(Array.isArray(result?.data) ? result.data : []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoading(false);
+        },
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch bookings (status: ${response.status})`);
       }
-    } else {
-      setIsLoading(false);
-    }
-  };
-  useEffect(() => {
-    fetchData();
-  }, []);
+      const result = await response.json();
+      return Array.isArray(result?.data) ? result.data : [];
+    },
+    ...USER,
+  });
+  const fetchData = () =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.userBookingsAll });
   useEffect(() => {
     if (showInvoice) {
       const scrollY = window.scrollY;
@@ -406,6 +411,7 @@ const ManageBookings: React.FC = () => {
     hostEmail: string,
     userName: string,
     hostName: string,
+    propertyId?: string,
   ): Promise<void> => {
     try {
       if (typeof window === "undefined") return;
@@ -432,7 +438,17 @@ const ManageBookings: React.FC = () => {
           return;
         }
         toast.success("Successfully send the cancellation email");
+        // Only after the 2xx: the list, this booking, and the listing's
+        // availability calendar are all stale now.
         fetchData();
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.bookingById(bookingId),
+        });
+        if (propertyId) {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.checkDates(propertyId),
+          });
+        }
       }
     } catch (err) {
       console.error(err);
@@ -1051,6 +1067,7 @@ const ManageBookings: React.FC = () => {
                                 `${bookingToCancel.hostId!.firstName} ${
                                   bookingToCancel.hostId!.lastName
                                 }`,
+                                bookingToCancel.propertyId?._id,
                               );
                               setCancelDialogOpen(false);
                               setBookingToCancel(null);

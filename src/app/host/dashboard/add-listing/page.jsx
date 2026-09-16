@@ -19,6 +19,7 @@ import { Loader2 } from "lucide-react";
 
 // Import useQueryClient from TanStack Query
 import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const offer = process.env.HOST_COMMISSION_OFFER;
 export default function HostOnboarding() {
@@ -246,9 +247,13 @@ export default function HostOnboarding() {
         if (!id) setId(response._id);
         setFormData(response);
 
-        // Invalidate cached listing status so that any component using it re-fetches new data
+        // Only after the save resolved: the listing-stage card and the host's
+        // listings table both show this draft.
         queryClient?.invalidateQueries({
-          queryKey: ["listingStatus", auth?.user?.email],
+          queryKey: queryKeys.listingStatusAll,
+        });
+        queryClient?.invalidateQueries({
+          queryKey: queryKeys.hostListingsAll,
         });
       }
     } catch (error) {
@@ -331,9 +336,12 @@ export default function HostOnboarding() {
         status: "processing",
       });
 
-      // Invalidate the cached listing status on final submission.
+      // Only after the submit resolved.
       queryClient?.invalidateQueries({
-        queryKey: ["listingStatus", auth?.user?.email],
+        queryKey: queryKeys.listingStatusAll,
+      });
+      queryClient?.invalidateQueries({
+        queryKey: queryKeys.hostListingsAll,
       });
 
       toast.success("Listing submitted successfully.");

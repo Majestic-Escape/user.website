@@ -237,9 +237,9 @@ export const WishlistDialog = ({ isOpen, onClose, property }) => {
             {selectedFolderView && (
               <FolderContentsDialog
                 isOpen={true}
-                onClose={() => setSelectedFolder(null)}
-                folderName={selectedFolder.name}
-                items={selectedFolder.items}
+                onClose={() => setSelectedFolderView(null)}
+                folderName={selectedFolderView.name}
+                items={selectedFolderView.items}
               />
             )}
           </div>

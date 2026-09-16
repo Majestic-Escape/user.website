@@ -26,13 +26,15 @@ function authHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// Latest listing document, or throws (ApiError with `status` for HTTP
-// failures, plain Error for network failures).
-export async function fetchLatestProperty(id) {
+// Listing document, or throws (ApiError with `status` for HTTP failures,
+// plain Error for network failures). The public and Bearer responses are
+// byte-identical (checked), so one React Query entry — queryKeys.property(id)
+// — serves the stay page, checkout and any other reader.
+export async function fetchProperty(id, { fresh = false } = {}) {
   if (!id) throw new Error("Property ID is missing");
   const response = await fetch(`${API_URL}/properties/${id}`, {
     method: "GET",
-    cache: "no-store",
+    ...(fresh ? { cache: "no-store" } : {}),
     headers: { "Content-Type": "application/json", ...authHeaders() },
   });
   if (!response.ok) {
@@ -44,6 +46,11 @@ export async function fetchLatestProperty(id) {
   const result = await response.json();
   if (!result?.data) throw new Error("Property data missing in response");
   return result.data;
+}
+
+// Unconditional network hit for the pre-payment re-check.
+export function fetchLatestProperty(id) {
+  return fetchProperty(id, { fresh: true });
 }
 
 // Latest blocked nights for a listing as "YYYY-MM-DD" strings (the server

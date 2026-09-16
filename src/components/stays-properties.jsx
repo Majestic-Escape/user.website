@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { PUBLIC } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
 import PropertyCard from "./stay-property-card";
 import StayCardSkeleton from "./stay-card-skeleton";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,17 +22,29 @@ import {
 } from "lucide-react";
 // import { useCheckToken } from "@/services/useCheckToken";
 export default function StaysProperties() {
-  const [properties, setProperties] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [includeTaxes, setIncludeTaxes] = useState(true);
   const [showMore, setShowMore] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [isChecked, setIsChecked] = useState(false);
   const router = useRouter();
 
+  // Cached across navigations (home → stay → home paints instantly from the
+  // shared QueryClient instead of showing 8 skeletons and refetching).
+  const {
+    data: properties = [],
+    isPending: loading,
+    isError: error,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.frontStays(selectedType),
+    queryFn: async () => {
+      const data = await propertyService.getFrontPageAllStays(selectedType);
+      return Array.isArray(data?.properties) ? data.properties : [];
+    },
+    ...PUBLIC,
+  });
   const handleRefresh = () => {
-    window.location.reload();
+    refetch();
   };
   // const { checkToken } = useCheckToken();
 
@@ -39,23 +54,6 @@ export default function StaysProperties() {
   //   };
   //   verify();
   // }, []);
-
-  useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        setLoading(true);
-        const data = await propertyService.getFrontPageAllStays(selectedType);
-        setProperties(Array.isArray(data?.properties) ? data.properties : []);
-        setError(null);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProperties();
-  }, [selectedType]);
 
   if (loading) {
     return (
