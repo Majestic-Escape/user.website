@@ -7,7 +7,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { UnreadCountProvider } from "@/contexts/UnreadCountContext";
 import { Toaster } from "sonner";
 import Script from "next/script";
-export const revalidate = 0;
 
 // Standalone chat widget bundle. Lives in the majestic-escape-rag-ai-chat-widget
 // repo; loaded here as a single <script> tag so chat-only changes never need a

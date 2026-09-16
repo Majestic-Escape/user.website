@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useCheckToken } from "@/services/useCheckToken";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   SESSION_CLEARED_EVENT,
@@ -138,10 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     Number(perNightPrice),
   );
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const allParams = searchParams.toString();
-  const fullUrl = `${pathname}?${allParams}`;
   const [returnUrl, setReturnUrl] = useState<string>("");
   // Route bookkeeping only — no network. The token check used to be awaited
   // here on every pathname change, which put a POST on the critical path of
@@ -152,7 +149,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     if (pathname !== "/login" && pathname !== "/login-options") {
       if (pathname == "/filter") {
-        setReturnUrl(encodeURIComponent(fullUrl));
+        // Read the query from the URL here rather than via useSearchParams():
+        // that hook in a root-layout provider forces every route to bail out
+        // of static prerendering. Same "path?query" shape as before, and this
+        // effect only ever ran on pathname changes, so timing is unchanged.
+        const query = window.location.search.slice(1);
+        setReturnUrl(encodeURIComponent(`${pathname}?${query}`));
       } else {
         setReturnUrl(encodeURIComponent(pathname));
       }
