@@ -4,7 +4,6 @@ import Navbar from "@/components/ui/nav-stays";
 import Oldbar from "@/components/ui/navbar";
 import FooterWrapper from "@/components/footer-wrapper";
 import { BottomNavigation } from "@/components/bottom-navigation";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { Toaster } from "sonner";
 import { MobileNavbar } from "@/components/stays-mobile-navbar";
@@ -12,7 +11,6 @@ import FilterModal from "@/components/ui/modal";
 import { PriceNavigation } from "@/components/ui/price-navigation";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-const queryClient = new QueryClient();
 
 export default function Layout({ children }) {
   const { modalFilter, setModalFilter, openModal, closeModal, toggleModal } =
@@ -85,7 +83,7 @@ export default function Layout({ children }) {
 
   const isMobile = useMediaQuery("(max-width: 640px)");
   return (
-    <QueryClientProvider client={queryClient}>
+    <>
       <div className="font-poppins">
         <div>
           {isStayDetailPage || mainPage || isFilter || isLocation ? (
@@ -110,6 +108,6 @@ export default function Layout({ children }) {
           ) : null}
         </div>
       </div>
-    </QueryClientProvider>
+    </>
   );
 }

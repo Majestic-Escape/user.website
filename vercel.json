@@ -1,4 +1,7 @@
 {
+  "regions": [
+    "bom1"
+  ],
   "redirects": [
     {
       "source": "/blog/1",

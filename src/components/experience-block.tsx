@@ -5,7 +5,18 @@ import Image from "next/image";
 import { Check, Dot, X } from "lucide-react";
 import Heading from "@/components/ui/heading";
 import { toast } from "sonner";
-import { useSearchParams } from "next/navigation";
+
+// Reads one query-string value after mount. Deliberately not useSearchParams():
+// that hook would make /experiences bail out of static prerendering and ship
+// only the loading skeleton as HTML. Both consumers tolerate a null first
+// render (utm_source defaults to "direct"; utm_campaign only drives a scroll).
+function useClientSearchParam(name: string): string | null {
+  const [value, setValue] = useState<string | null>(null);
+  useEffect(() => {
+    setValue(new URLSearchParams(window.location.search).get(name));
+  }, [name]);
+  return value;
+}
 
 type ImageTextSectionProps = {
   images: string[];
@@ -608,8 +619,7 @@ function ImageTextSection({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalActivityOpen, setIsModalActivityOpen] = useState(false);
   const [experienceType, setExperienceType] = useState("");
-  const searchParams = useSearchParams();
-  const utm_source = searchParams.get("utm_source");
+  const utm_source = useClientSearchParam("utm_source");
 
   const next = () => {
     setIndex((prev) => (prev + 1) % images.length);
@@ -743,8 +753,7 @@ const campaignMap: Record<string, number> = {
   rann: 6,
 };
 export default function Component() {
-  const searchParams = useSearchParams();
-  const utm_campaign = searchParams.get("utm_campaign");
+  const utm_campaign = useClientSearchParam("utm_campaign");
 
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);

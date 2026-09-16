@@ -19,8 +19,11 @@ import { Heart, MapPin, Share } from "lucide-react";
 import { BookingPopup } from "@/components/booking-popup";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
+// Navigation is done with real <Link> anchors (one behind each photo, one on
+// the text block) instead of a div onClick + router.push: they prefetch when
+// scrolled into view, support middle/ctrl-click and keyboard, and the
+// carousel arrows / dots no longer accidentally open the listing.
 export default function StayCard({ property, includeTaxes }) {
   const { isInWishlist, wishlists } = useWishlist();
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
@@ -30,8 +33,8 @@ export default function StayCard({ property, includeTaxes }) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [api, setApi] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const router = useRouter();
   const { user } = useAuth();
+  const stayHref = `/stay/${property?._id}`;
   const calculatePrice = (basePrice) => {
     const serviceFee = Math.round((basePrice * 14) / 100);
     const priceWithServiceFee = basePrice + serviceFee;
@@ -124,7 +127,6 @@ export default function StayCard({ property, includeTaxes }) {
             : ""
         }
       `}
-      onClick={() => router.push(`/stay/${property?._id}`)}
     >
       <div
         className="relative cursor-pointer"
@@ -134,13 +136,23 @@ export default function StayCard({ property, includeTaxes }) {
           <CarouselContent>
             {property?.photos.map((image, idx) => (
               <CarouselItem key={idx}>
-                <Image
-                  src={image}
-                  width={400}
-                  height={400}
-                  alt={`${property?.title} - Image ${idx + 1}`}
-                  className="aspect-square w-full h-auto object-cover object-center rounded-lg"
-                />
+                {/* Duplicate of the text link below; hidden from AT/tab order. */}
+                <Link
+                  href={stayHref}
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  draggable={false}
+                  className="block"
+                >
+                  <Image
+                    src={image}
+                    width={400}
+                    height={400}
+                    alt={`${property?.title} - Image ${idx + 1}`}
+                    className="aspect-square w-full h-auto object-cover object-center rounded-lg"
+                    draggable={false}
+                  />
+                </Link>
               </CarouselItem>
             ))}
           </CarouselContent>
@@ -169,7 +181,10 @@ export default function StayCard({ property, includeTaxes }) {
           ))}
         </div>
       </div>
-      <div className="mt-1 sm:mt-2 cursor-pointer">
+      <Link
+        href={stayHref}
+        className="block mt-1 sm:mt-2 cursor-pointer rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen"
+      >
         <div className="flex items-center justify-between mb-1">
           <div className="w-full">
             <h3 className=" mt-1 font-medium  text-graphite w-full overflow-hidden">
@@ -224,7 +239,7 @@ export default function StayCard({ property, includeTaxes }) {
             </button> */}
           </div>
         </div>
-      </div>
+      </Link>
 
       <ShareDialog
         isOpen={isShareDialogOpen}

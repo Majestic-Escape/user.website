@@ -31,10 +31,13 @@ import {
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
+import { clearSession } from "@/lib/session";
 import { UserDropdownMenu } from "../../../../components/host-dropdown-menu";
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const pathname = usePathname();
   const routes = pathname.split("/").filter(Boolean);
@@ -47,7 +50,8 @@ export default function DashboardLayout({ children }) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    // Same teardown as every other logout path (auth keys + query cache).
+    clearSession(queryClient);
     router.push("/host/login");
   };
 

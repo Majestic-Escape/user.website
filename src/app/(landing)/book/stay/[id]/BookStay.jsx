@@ -99,6 +99,15 @@ function BookPageContent() {
       ? new Date(searchParams.get("checkout"))
       : null,
   });
+  // The page is only meaningful with a valid stay window. Links from the
+  // booking widget always carry one, but refreshes, shared links and bots
+  // can land here without it — never crash on that, show a way back instead.
+  const hasValidDates =
+    date.from instanceof Date &&
+    date.to instanceof Date &&
+    !Number.isNaN(date.from.getTime()) &&
+    !Number.isNaN(date.to.getTime()) &&
+    date.to.getTime() > date.from.getTime();
   const [guestInfo, setGuestInfo] = useState([]);
   const [summaryRoute, setSummaryRoute] = useState(false);
   const [unavailableDates, setUnavailableDates] = useState([]);
@@ -337,7 +346,7 @@ function BookPageContent() {
   };
 
   const calculateTotal = () => {
-    if (!property)
+    if (!property || !hasValidDates)
       return {
         nights: 0,
         subtotal: 0,
@@ -1056,6 +1065,30 @@ function BookPageContent() {
     } catch (err) {
       console.error(err);
     }
+  }
+  if (!hasValidDates) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4 font-poppins">
+        <div
+          role="status"
+          className="w-full max-w-md rounded-xl border border-lightGray bg-white p-8 text-center shadow-sm"
+        >
+          <h1 className="font-bricolage text-2xl font-semibold text-graphite">
+            Choose your dates first
+          </h1>
+          <p className="mt-3 text-sm text-stone">
+            This booking link is missing a valid check-in and check-out. Pick
+            your dates on the listing page and we&apos;ll bring you right back.
+          </p>
+          <Link
+            href={`/stay/${propertyId}`}
+            className="mt-6 inline-flex items-center justify-center rounded-full bg-primaryGreen px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brightGreen active:scale-95 motion-reduce:active:scale-100"
+          >
+            Back to listing
+          </Link>
+        </div>
+      </div>
+    );
   }
   if (isLoading) {
     return <BookingPageSkeleton />;
