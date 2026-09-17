@@ -1,4 +1,11 @@
 import axios from "axios";
+import { readStoredToken } from "@/lib/session";
+
+// Bearer header when a session exists (empty otherwise).
+const authHeaders = () => {
+  const token = readStoredToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -61,6 +68,8 @@ export const propertyService = {
       );
     }
   },
+  // Listing mutations are host-owned on the server (Batch S); the token was
+  // never sent on these calls before. Harmless against the old backend.
   createProperty: async (propertyData) => {
     // console.group("proper", propertyData);
     delete propertyData._id;
@@ -69,6 +78,7 @@ export const propertyService = {
       const response = await axios.post(
         `${API_BASE_URL}/properties/create-listing-property/`,
         propertyData,
+        { headers: authHeaders() },
       );
       return response.data;
     } catch (error) {
@@ -84,6 +94,7 @@ export const propertyService = {
       const response = await axios.put(
         `${API_BASE_URL}/properties/update-listing-property/${id}?submit=${submit}&status=${status}`,
         propertyData,
+        { headers: authHeaders() },
       );
       return response.data;
     } catch (error) {
@@ -97,6 +108,8 @@ export const propertyService = {
     try {
       const response = await axios.patch(
         `${API_BASE_URL}/properties/update-kyc-property/${id}`,
+        undefined,
+        { headers: authHeaders() },
       );
       return response.data;
     } catch (error) {
