@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import confetti from "canvas-confetti";
 import { use } from "react";
+import { loginHref } from "@/lib/auth-return";
 
 export default function KycEdit({ params }) {
   const { id } = use(params);
@@ -265,7 +266,7 @@ export default function KycEdit({ params }) {
   };
 
   useEffect(() => {
-    if (!auth) redirect("/login");
+    if (!auth) redirect(loginHref());
   }, [auth]);
 
   if (process.env.NEXT_PUBLIC_ENV === "dev") {

@@ -5,6 +5,7 @@ import AccountHeader from "./account-header";
 import AccountSidebar from "./account-sidebar";
 import Link from "next/link";
 import { readStoredToken } from "@/lib/session";
+import LoginLink from "@/components/login-link";
 
 interface LayoutProps {
   children: ReactNode;
@@ -34,11 +35,11 @@ export default function AccountLayout({ children }: LayoutProps) {
     return (
       <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
         You are not authorized to access this page. &nbsp;{" "}
-        <Link href="/login">
+        <LoginLink>
           <u>
             <b>Click Here</b>
           </u>
-        </Link>
+        </LoginLink>
         &nbsp; to log in now to access.
       </div>
     );

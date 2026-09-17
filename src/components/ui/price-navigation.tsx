@@ -29,6 +29,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { formatINR, parseFiniteNumber } from "@/lib/format";
+import { goToLogin, checkoutPathFor } from "@/lib/auth-return";
 
 export function PriceNavigation() {
   const {
@@ -138,8 +139,7 @@ export function PriceNavigation() {
           <Button
             className="w-full flex justify-center items-center text-center py-8 px-2 bg-primaryGreen text-2xl font-bricolage hover:bg-brightGreen text-white h-10 rounded-[42px] font-medium"
             onClick={() => {
-              const returnUrl = encodeURIComponent(pathname);
-              router.push(`/login?returnUrl=${returnUrl}`);
+              goToLogin(router, checkoutPathFor(bookingQuery?.propertyId, bookingQuery));
               return;
               // toast.error("You need to signup or login to reserve");
             }}

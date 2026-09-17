@@ -42,6 +42,7 @@ import {
   fetchProperty,
 } from "@/lib/api/property";
 import { createPortal } from "react-dom";
+import LoginLink from "@/components/login-link";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Function to fetch property data
@@ -1463,6 +1464,10 @@ function BookPageContent() {
                     <span className="text-red-500 pr-2">Note: </span> Enter
                     names as per Government ID
                   </span>
+                  <p className="-mt-4 pb-4 text-xs text-gray-500">
+                    <span className="text-red-500" aria-hidden="true">*</span>{" "}
+                    Required fields
+                  </p>
                   {guestData.adults.length > 0 && (
                     <div className="mb-6">
                       <h3 className="text-lg font-medium mb-4">
@@ -1479,6 +1484,7 @@ function BookPageContent() {
                               {index === 0
                                 ? "Primary Guest Name"
                                 : `Adult ${index + 1} Name`}
+                              <span className="text-red-500" aria-hidden="true"> *</span>
                             </label>
                             <input
                               type="text"
@@ -1513,6 +1519,7 @@ function BookPageContent() {
                           <div>
                             <label className="block text-sm font-medium mb-1">
                               Age
+                              <span className="text-red-500" aria-hidden="true"> *</span>
                             </label>
                             <input
                               type="number"
@@ -1562,6 +1569,7 @@ function BookPageContent() {
                           <div>
                             <label className="block text-sm font-medium mb-1">
                               Child {index + 1} Name
+                              <span className="text-red-500" aria-hidden="true"> *</span>
                             </label>
                             <input
                               type="text"
@@ -1590,6 +1598,7 @@ function BookPageContent() {
                           <div>
                             <label className="block text-sm font-medium mb-1">
                               Age
+                              <span className="text-red-500" aria-hidden="true"> *</span>
                             </label>
                             <input
                               type="number"
@@ -1781,11 +1790,11 @@ function BookPageContent() {
   return (
     <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
       You are not authorized to access this page. &nbsp;{" "}
-      <Link href="/login">
+      <LoginLink>
         <u>
           <b>Click Here</b>
         </u>
-      </Link>
+      </LoginLink>
       &nbsp; to log in now to access.
     </div>
   );

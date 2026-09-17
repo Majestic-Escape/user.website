@@ -41,6 +41,7 @@ import {
   readUserIdFromStoredToken,
 } from "@/lib/conversationsCache";
 import MessagesSkeleton from "./MessagesSkeleton";
+import { goToLogin } from "@/lib/auth-return";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -480,7 +481,7 @@ export default function MessagesPage() {
   useEffect(() => {
     let storedToken = localStorage.getItem("token");
     if (!storedToken) {
-      router.push("/login?returnUrl=/messages");
+      goToLogin(router);
       return;
     }
     
@@ -494,7 +495,7 @@ export default function MessagesPage() {
       const payload = JSON.parse(atob(storedToken.split(".")[1]));
       setUserId(payload.userId);
     } catch (e) {
-      router.push("/login");
+      goToLogin(router);
     }
   }, [router]);
 

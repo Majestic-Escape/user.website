@@ -12,6 +12,7 @@ import Link from "next/link";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DatePicker } from "@/components/date-picker";
 import { format, differenceInCalendarDays } from "date-fns";
+import { goToLogin } from "@/lib/auth-return";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -207,7 +208,7 @@ export default function ContactHostPage() {
   useEffect(() => {
     let storedToken = localStorage.getItem("token");
     if (!storedToken) {
-      router.push(`/login?returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+      goToLogin(router);
       return;
     }
     
@@ -226,7 +227,7 @@ export default function ContactHostPage() {
       }
     } catch (e) {
       console.error("Invalid token");
-      router.push("/login");
+      goToLogin(router);
     }
   }, [router]);
 
