@@ -49,6 +49,7 @@ interface BookingWidgetProps {
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
+import { goToLogin, checkoutPathFor } from "@/lib/auth-return";
 export default function BookingWidget({
   propertyId,
   manual,
@@ -341,8 +342,23 @@ export default function BookingWidget({
       }
       if (!data) {
         // toast.error("You need to signup or login to reserve.");
-        const returnUrl = encodeURIComponent(pathname);
-        router.push(`/login?returnUrl=${returnUrl}`);
+        // Sign in, then land on this checkout (dates and guests included);
+        // without dates, back on the listing.
+        goToLogin(
+          router,
+          checkoutPathFor(propertyId, {
+            checkin: date?.from ? format(date.from, "yyyy-MM-dd") : undefined,
+            checkout: date?.to ? format(date.to, "yyyy-MM-dd") : undefined,
+            guests: getTotalGuests(),
+            nights: nightsCount,
+            adults: guests.adults,
+            children: guests.children,
+            infants: guests.infants,
+            checkinTime,
+            checkoutTime,
+            propertyImage: filename,
+          }),
+        );
         return;
       }
 

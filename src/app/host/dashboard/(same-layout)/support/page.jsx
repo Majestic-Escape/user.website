@@ -63,10 +63,10 @@ export default function SupportPage() {
             <CardContent>
               <p className="mb-4 text-sm text-muted-foreground">Get in touch with our support team via email.</p>
               <Link
-              href="mailto:support@majesticescape.in" 
+              href="mailto:info@majesticescape.in" 
               className="bg-primaryGreen text-sm hover:to-brightGreen px-3 w-full rounded-3xl text-white py-2"
               >
-                support@majesticescape.in
+                info@majesticescape.in
               </Link>
             </CardContent>
           </Card>

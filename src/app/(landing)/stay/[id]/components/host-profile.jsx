@@ -25,6 +25,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { goToLogin } from "@/lib/auth-return";
+import { usePendingAction } from "@/hooks/use-pending-action";
 
 // Simple Skeleton component (assuming it might be used elsewhere too)
 export function Skeleton({ className, ...props }) {
@@ -154,6 +156,101 @@ export default function HostProfile({ propertyData }) {
   // }
 
   // If not loading and no error, but hostData is somehow null/undefined (shouldn't happen with RQ enabled flag, but good practice)
+  // "Message host": opens the existing conversation or the contact page.
+  // Signed-out visitors are sent to /login and this replays on return.
+  const messageHost = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      // Sign in, then come back here and message the host.
+      goToLogin(router, undefined, { name: "message-host" });
+      return;
+    }
+
+    // Parse token to get userId
+    let parsedToken;
+    let userId;
+    try {
+      parsedToken = JSON.parse(token);
+      const payload = JSON.parse(
+        atob(parsedToken.split(".")[1]),
+      );
+      userId = payload.userId;
+    } catch (e) {
+      goToLogin(router, undefined, { name: "message-host" });
+      return;
+    }
+
+    const chatUrl =
+      process.env.NEXT_PUBLIC_CHAT_URL ||
+      "http://localhost:3001";
+    const propertyId = propertyData._id;
+    const hostId = propertyData.host._id;
+
+    try {
+      // Check if conversation already exists AND has messages
+      const res = await fetch(
+        `${chatUrl}/api/chat/conversations/check?propertyId=${propertyId}&hostId=${hostId}&guestId=${userId}`,
+        {
+          headers: { Authorization: `Bearer ${parsedToken}` },
+        },
+      );
+      const data = await res.json();
+
+      // Only go to messages if conversation exists AND has messages
+      if (
+        data.success &&
+        data.data?.exists &&
+        data.data?.conversationId &&
+        data.data?.hasMessages
+      ) {
+        router.push(`/messages?conversationId=${data.data.conversationId}`);
+      } else {
+        // No existing conversation with messages - go to contact_host
+        const hostNameParam = encodeURIComponent(
+          (propertyData?.host?.firstName || "") +
+            " " +
+            (propertyData?.host?.lastName || ""),
+        );
+        const propName = encodeURIComponent(
+          propertyData?.title || "Property",
+        );
+        const propImage = encodeURIComponent(
+          propertyData?.images?.[0] || "",
+        );
+        const propType = encodeURIComponent(
+          propertyData?.propertyType || "Entire home",
+        );
+        const respTime = encodeURIComponent(
+          propertyData?.host?.responseTime ||
+            "within an hour",
+        );
+        router.push(`/contact_host/${propertyId}?hostId=${hostId}&hostName=${hostNameParam}&propertyName=${propName}&propertyImage=${propImage}&propertyType=${propType}&responseTime=${respTime}`);
+      }
+    } catch (err) {
+      // On error, fall back to contact_host page
+      console.error("Error checking conversation:", err);
+      const hostNameParam = encodeURIComponent(
+        (propertyData?.host?.firstName || "") +
+          " " +
+          (propertyData?.host?.lastName || ""),
+      );
+      const propName = encodeURIComponent(
+        propertyData?.title || "Property",
+      );
+      const propImage = encodeURIComponent(
+        propertyData?.images?.[0] || "",
+      );
+      const propType = encodeURIComponent(
+        propertyData?.propertyType || "Entire home",
+      );
+      const respTime = encodeURIComponent(
+        propertyData?.host?.responseTime || "within an hour",
+      );
+      router.push(`/contact_host/${propertyId}?hostId=${hostId}&hostName=${hostNameParam}&propertyName=${propName}&propertyImage=${propImage}&propertyType=${propType}&responseTime=${respTime}`);
+    }
+  };
+  usePendingAction("message-host", messageHost, !!propertyData?.host && !isOwnListing);
+
   if (!propertyData?.host) {
     return (
       <div className="text-center text-gray-500 py-10">
@@ -307,96 +404,7 @@ export default function HostProfile({ propertyData }) {
                 {!isOwnListing && (
                   <Button
                     className="w-full bg-primaryGreen hover:bg-brightGreen font-normal text-white rounded-lg text-sm"
-                    onClick={async () => {
-                      const token = localStorage.getItem("token");
-                      if (!token) {
-                        router.push("/login");
-                        return;
-                      }
-
-                      // Parse token to get userId
-                      let parsedToken;
-                      let userId;
-                      try {
-                        parsedToken = JSON.parse(token);
-                        const payload = JSON.parse(
-                          atob(parsedToken.split(".")[1]),
-                        );
-                        userId = payload.userId;
-                      } catch (e) {
-                        router.push("/login");
-                        return;
-                      }
-
-                      const chatUrl =
-                        process.env.NEXT_PUBLIC_CHAT_URL ||
-                        "http://localhost:3001";
-                      const propertyId = propertyData._id;
-                      const hostId = propertyData.host._id;
-
-                      try {
-                        // Check if conversation already exists AND has messages
-                        const res = await fetch(
-                          `${chatUrl}/api/chat/conversations/check?propertyId=${propertyId}&hostId=${hostId}&guestId=${userId}`,
-                          {
-                            headers: { Authorization: `Bearer ${parsedToken}` },
-                          },
-                        );
-                        const data = await res.json();
-
-                        // Only go to messages if conversation exists AND has messages
-                        if (
-                          data.success &&
-                          data.data?.exists &&
-                          data.data?.conversationId &&
-                          data.data?.hasMessages
-                        ) {
-                          router.push(`/messages?conversationId=${data.data.conversationId}`);
-                        } else {
-                          // No existing conversation with messages - go to contact_host
-                          const hostNameParam = encodeURIComponent(
-                            (propertyData?.host?.firstName || "") +
-                              " " +
-                              (propertyData?.host?.lastName || ""),
-                          );
-                          const propName = encodeURIComponent(
-                            propertyData?.title || "Property",
-                          );
-                          const propImage = encodeURIComponent(
-                            propertyData?.images?.[0] || "",
-                          );
-                          const propType = encodeURIComponent(
-                            propertyData?.propertyType || "Entire home",
-                          );
-                          const respTime = encodeURIComponent(
-                            propertyData?.host?.responseTime ||
-                              "within an hour",
-                          );
-                          router.push(`/contact_host/${propertyId}?hostId=${hostId}&hostName=${hostNameParam}&propertyName=${propName}&propertyImage=${propImage}&propertyType=${propType}&responseTime=${respTime}`);
-                        }
-                      } catch (err) {
-                        // On error, fall back to contact_host page
-                        console.error("Error checking conversation:", err);
-                        const hostNameParam = encodeURIComponent(
-                          (propertyData?.host?.firstName || "") +
-                            " " +
-                            (propertyData?.host?.lastName || ""),
-                        );
-                        const propName = encodeURIComponent(
-                          propertyData?.title || "Property",
-                        );
-                        const propImage = encodeURIComponent(
-                          propertyData?.images?.[0] || "",
-                        );
-                        const propType = encodeURIComponent(
-                          propertyData?.propertyType || "Entire home",
-                        );
-                        const respTime = encodeURIComponent(
-                          propertyData?.host?.responseTime || "within an hour",
-                        );
-                        router.push(`/contact_host/${propertyId}?hostId=${hostId}&hostName=${hostNameParam}&propertyName=${propName}&propertyImage=${propImage}&propertyType=${propType}&responseTime=${respTime}`);
-                      }
-                    }}
+                    onClick={messageHost}
                   >
                     <MessageCircle className="w-4 h-4 mr-2" />
                     Message host

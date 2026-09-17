@@ -29,6 +29,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadCount } from "@/contexts/UnreadCountContext";
+import { loginHref } from "@/lib/auth-return";
 
 const navItems = [
   { name: "Home", href: "/", icon: HomeIcon },
@@ -131,6 +132,9 @@ export function BottomNavigation() {
               <Link
                 key={item.name}
                 href={item.href}
+                // Sign-in via /login-options: remember this page so the
+                // login form brings the visitor back here.
+                onClick={item.href === "/login-options" ? () => loginHref() : undefined}
                 className={cn(
                   "inline-flex flex-col items-center justify-center px-2 hover:bg-gray-50 group",
                   pathname === item.href

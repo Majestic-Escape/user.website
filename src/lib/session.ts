@@ -12,6 +12,7 @@
 
 import type { QueryClient } from "@tanstack/react-query";
 import { removeByPrefix } from "./storage";
+import { clearReturnState } from "./auth-return";
 
 // Keys that hold auth or per-user state. Everything else in storage
 // (wishlist, search filters, modal flags…) is device-local UX state that must
@@ -98,5 +99,6 @@ export function clearSession(queryClient?: QueryClient | null) {
   }
   queryClient?.clear();
   resetVerification();
+  clearReturnState();
   window.dispatchEvent(new Event(SESSION_CLEARED_EVENT));
 }

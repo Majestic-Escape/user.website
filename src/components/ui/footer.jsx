@@ -202,7 +202,7 @@ export default function Footer() {
               </div>
               {/*Desktop*/}{" "}
               <div className="md:hidden desktop:block flex desktop:flex space-x-6 mt-4 sm:my-16 mb-16 md:pb-0">
-                <Link href="mailto:support@majesticescape.in" target="_blank">
+                <Link href="mailto:info@majesticescape.in" target="_blank">
                   <Image
                     src="/icons/mail.png"
                     width={24}
@@ -307,7 +307,7 @@ export default function Footer() {
                 </div>
               </div>
               <div className="flex desktop:flex space-x-6 mt-4 sm:mt-0">
-                <Link href="mailto:support@majesticescape.in" target="_blank">
+                <Link href="mailto:info@majesticescape.in" target="_blank">
                   <Image
                     src="/icons/mail.png"
                     width={24}
