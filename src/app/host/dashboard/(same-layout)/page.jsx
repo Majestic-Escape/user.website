@@ -38,6 +38,7 @@ import {
 import Link from "next/link";
 import ListingStageCard from "./ListingStageCard";
 import axios from "axios";
+import { authHeaders } from "@/lib/session";
 import { useQuery } from "@tanstack/react-query";
 import { MAY_NOT_EXIST } from "@/lib/query-presets";
 import { queryKeys } from "@/lib/query-keys";
@@ -50,6 +51,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 // (no retries, no error card). Anything else is a real failure.
 const fetchKycForm = async (userId) => {
   const response = await axios.get(`${API_BASE_URL}/kyc/form/${userId}`, {
+    headers: authHeaders(),
     validateStatus: (status) => status === 200 || status === 404,
   });
   if (response.status === 404) return null;

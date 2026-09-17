@@ -87,6 +87,14 @@ export function readStoredToken(): string | null {
   }
 }
 
+// Authorization header for the signed-in user's own API calls (profile,
+// KYC, uploads). Empty when logged out, so a request still goes out and the
+// backend answers 401 instead of the client crashing.
+export function authHeaders(): Record<string, string> {
+  const token = readStoredToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export function clearSession(queryClient?: QueryClient | null) {
   if (typeof window === "undefined") return;
   try {

@@ -1,5 +1,6 @@
 "use client";
 import axios from "axios";
+import { authHeaders } from "@/lib/session";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -9,6 +10,7 @@ export const kycService = {
       const params = type ? { type } : {};
       const response = await axios.get(`${API_BASE_URL}/kyc`, {
         params,
+        headers: authHeaders(),
       });
       return response.data;
     } catch (error) {
@@ -17,7 +19,9 @@ export const kycService = {
   },
   getFormData: async (id) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/kyc/form/${id}`);
+      const response = await axios.get(`${API_BASE_URL}/kyc/form/${id}`, {
+        headers: authHeaders(),
+      });
       if (process.env.ENV == "dev") {
         if (process.env.NEXT_PUBLIC_ENV === "dev") {
           console.log("cap", response.status);
@@ -34,7 +38,9 @@ export const kycService = {
   },
   getFormDataById: async (id) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/kyc/form-kyc/${id}`);
+      const response = await axios.get(`${API_BASE_URL}/kyc/form-kyc/${id}`, {
+        headers: authHeaders(),
+      });
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
         console.log("cap am", response);
       }
@@ -53,7 +59,9 @@ export const kycService = {
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
         console.log("we have just got", id);
       }
-      const response = await axios.get(`${API_BASE_URL}/kyc/user/${id}`);
+      const response = await axios.get(`${API_BASE_URL}/kyc/user/${id}`, {
+        headers: authHeaders(),
+      });
 
       if (response.status == 200) {
         if (process.env.NEXT_PUBLIC_ENV === "dev") {
@@ -71,7 +79,9 @@ export const kycService = {
   },
   getPropertyById: async (id) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/kyc/${id}`);
+      const response = await axios.get(`${API_BASE_URL}/kyc/${id}`, {
+        headers: authHeaders(),
+      });
 
       return response.data;
     } catch (error) {
@@ -105,7 +115,7 @@ export const kycService = {
       const response = await fetch(`${API_BASE_URL}/kyc/form`, {
         method: "POST",
         headers: {
-          // Authorization: `Bearer ${data}`,
+          ...authHeaders(),
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -157,7 +167,8 @@ export const kycService = {
       }
       const response = await axios.put(
         `${API_BASE_URL}/kyc/update-form/${id}`,
-        propertyData
+        propertyData,
+        { headers: authHeaders() }
       );
       return response.data;
     } catch (error) {
@@ -173,6 +184,7 @@ export const kycService = {
         `${API_BASE_URL}/user/kyc/${userEmail}`,
         {
           params: { page, limit },
+          headers: authHeaders(),
         }
       );
       return response.data;
@@ -186,6 +198,7 @@ export const kycService = {
     try {
       const response = await axios.get(`${API_BASE_URL}/verify-kyc/${id}`, {
         params: { hostEmail },
+        headers: authHeaders(),
       });
       return response.data;
     } catch (error) {
