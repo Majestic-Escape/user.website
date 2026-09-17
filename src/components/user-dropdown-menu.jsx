@@ -20,9 +20,9 @@ export function UserDropdownMenu() {
 
   const handleLogout = () => {
     logout();
-    // localStorage.clear();
-    // sessionStorage.clear();
-    // router.push("/login"); // Redirect to home page after logout
+    // Same destination as the host menu and the mobile navigation; without
+    // it the account pages stayed on screen with the signed-out data.
+    router.push("/login");
   };
 
   // if (!user) {
