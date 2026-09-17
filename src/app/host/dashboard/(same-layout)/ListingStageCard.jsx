@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { USER } from "@/lib/query-presets";
 import { queryKeys } from "@/lib/query-keys";
+import { authHeaders } from "@/lib/session";
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -87,8 +88,10 @@ export default function ListingStageCard() {
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: queryKeys.listingStatus(auth?.user?.email),
     queryFn: async () => {
+      // The stage is the host's own data: the backend gates it on the session.
       const response = await fetch(
-        `${API_URL}/prop-listing/status?email=${auth.user.email}`
+        `${API_URL}/prop-listing/status?email=${encodeURIComponent(auth.user.email)}`,
+        { headers: authHeaders() },
       );
       if (!response.ok) {
         throw new Error("Network response was not ok");
