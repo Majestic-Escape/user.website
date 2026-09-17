@@ -8,6 +8,7 @@ import PropertyCard from "./stay-property-card";
 import StayCardSkeleton from "./stay-card-skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { propertyService } from "../services/propertyService";
+import { normalizeFrontStays } from "@/lib/catalogue";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
@@ -30,6 +31,9 @@ export default function StaysProperties() {
 
   // Cached across navigations (home → stay → home paints instantly from the
   // shared QueryClient instead of showing 8 skeletons and refetching).
+  // Batch P: the home/stays pages hydrate this key from a server snapshot,
+  // so on a fresh load the cards are already in the HTML and this only
+  // refetches once the snapshot is older than staleTime.
   const {
     data: properties = [],
     isPending: loading,
@@ -39,7 +43,7 @@ export default function StaysProperties() {
     queryKey: queryKeys.frontStays(selectedType),
     queryFn: async () => {
       const data = await propertyService.getFrontPageAllStays(selectedType);
-      return Array.isArray(data?.properties) ? data.properties : [];
+      return normalizeFrontStays(data);
     },
     ...PUBLIC,
   });

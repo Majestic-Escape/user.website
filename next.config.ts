@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    // Batch P: optimised listing photos stay cached for 31 days instead of
+    // the 60-second default → fewer re-transformations of the same photo.
+    minimumCacheTTL: 2678400,
     remotePatterns: [
       {
         protocol: "https",

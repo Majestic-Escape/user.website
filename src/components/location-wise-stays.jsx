@@ -6,71 +6,17 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PUBLIC_LONG } from "@/lib/query-presets";
 import { queryKeys } from "@/lib/query-keys";
+import { destinations } from "@/lib/data/destinations";
+import { COUNT_STAYS_PATH, normalizeCountStays } from "@/lib/catalogue";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 
 import SubHeading from "@/components/ui/sub-heading";
 import Heading from "@/components/ui/heading";
 import Link from "next/link";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-const destinations = [
-  {
-    id: 1,
-    name: "Panjim",
-    staysNearby: 19,
-    image: "/images/spots/panjim.png?height=200&width=300",
-    //"/images/spots/baga.png?height=200&width=300",
-  },
-  {
-    id: 2,
-    name: "Ujjain",
-    staysNearby: 10,
-    image: "/images/spots/ujjain.jpg?height=200&width=300",
-  },
-  {
-    id: 3,
-    name: "Nashik",
-    staysNearby: 6,
-    image: "/images/spots/nashik.jpg?height=200&width=300",
-  },
-  {
-    id: 4,
-    name: "Mapusa",
-    staysNearby: 8,
-    image: "/images/spots/margao.jpg?height=200&width=300",
-  },
-  {
-    id: 5,
-    name: "Margao",
-    staysNearby: 15,
-    image: "/images/spots/mapusa.jpg?height=200&width=300",
-  },
-  {
-    id: 6,
-    name: "Lucknow",
-    staysNearby: 15,
-    image: "/images/spots/lucknow.jpg?height=200&width=300",
-  },
-  {
-    id: 7,
-    name: "Varanasi",
-    staysNearby: 32,
-    image: "/images/spots/Varanasi.jpg?height=200&width=300",
-  },
-  {
-    id: 8,
-    name: "Ayodhya",
-    staysNearby: 32,
-    image: "/images/spots/ayodhya.jpg?height=200&width=300",
-  },
-  {
-    id: 9,
-    name: "Kutch",
-    staysNearby: 32,
-    image: "/images/spots/kutch.jpg?height=200&width=300",
-  },
-];
-
-const LocationCard = ({ name, staysNearby, image, countData }) => {
+// Batch P: the destination list lives in lib/data/destinations (shared with
+// the server prefetch so both sides build the same countstays request).
+const LocationCard = ({ name, staysNearby, image, image2x, countData }) => {
   const actualStaysNearby = countData?.filter(
     (item) => item?.city?.toLowerCase() == name?.toLowerCase(),
   );
@@ -88,7 +34,12 @@ const LocationCard = ({ name, staysNearby, image, countData }) => {
         <div className="flex flex-col overflow-hidden ">
           <img
             src={image}
+            srcSet={`${image} 1x, ${image2x} 2x`}
             alt={name}
+            width={300}
+            height={200}
+            loading="lazy"
+            decoding="async"
             className=" h-[100px] md:h-[200px] w-auto object-cover rounded-lg"
           />
           <h3 className="mt-2 text-sm leading-tight font-semibold text-graphite whitespace-nowrap overflow-hidden text-ellipsis">
@@ -117,14 +68,12 @@ const LocationWisestays = () => {
   const { data: countData = [] } = useQuery({
     queryKey: queryKeys.countStays,
     queryFn: async () => {
-      const cities = destinations.map((item) => item.name);
-      const response = await fetch(
-        `${API_BASE_URL}/properties/countstays?city=${cities}`,
-        { method: "GET", headers: { "Content-Type": "application/json" } },
-      );
+      const response = await fetch(`${API_BASE_URL}${COUNT_STAYS_PATH}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
       if (!response.ok) throw new Error(`countstays ${response.status}`);
-      const result = await response.json();
-      return Array.isArray(result?.data) ? result.data : [];
+      return normalizeCountStays(await response.json());
     },
     ...PUBLIC_LONG,
   });
