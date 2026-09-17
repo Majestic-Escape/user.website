@@ -90,6 +90,8 @@ const SERVER_MESSAGES = {
   INVALID_GUESTS: "Please check the number of guests.",
   BOOKING_NOT_PAYABLE: "This booking can no longer be paid. Please start again.",
   ORDER_IN_PROGRESS: "Payment is already being set up — please try again in a moment.",
+  MAINTENANCE: "Bookings are briefly paused for maintenance — please try again in a few minutes.",
+  UNDER_REVIEW: "Payment received. Our team is reviewing this booking and will confirm it by e-mail shortly.",
 };
 const serverErrorMessage = (body, fallback) =>
   (body && (SERVER_MESSAGES[body.code] || body.message)) || fallback;
@@ -1071,11 +1073,21 @@ function BookPageContent() {
             });
             setSummaryRoute(true);
             window.scrollTo(0, 0);
+            if (verify?.booking?.needsAttention) {
+              // The server recorded the payment but could not honour the
+              // booking as-is (e.g. the dates were taken while the gateway
+              // page was open); a human is deciding. No confirmation calls.
+              toast(SERVER_MESSAGES.UNDER_REVIEW, { duration: 8000 });
+              summaryParams.set("instant", "false");
+              router.push(`/booking-summary?${summaryParams.toString()}`);
+              return;
+            }
+            let update;
             if (property.bookingType.manual) {
               if (process.env.NEXT_PUBLIC_ENV === "dev") {
                 console.log("not selected");
               }
-              const update = await updateBookingStatus(
+              update = await updateBookingStatus(
                 booking?.data?._id,
                 // hostEmail,
                 property.bookingType.manual,
@@ -1102,7 +1114,7 @@ function BookPageContent() {
                 booking?.data?._id,
                 property?.title,
               );
-              await updateBookingStatus(
+              update = await updateBookingStatus(
                 booking?.data?._id,
                 // hostEmail,
                 property.bookingType.manual,
@@ -1122,6 +1134,12 @@ function BookPageContent() {
               // );
             }
 
+            if (update?.code === "UNDER_REVIEW") {
+              // A concurrent webhook won the payment and the booking was
+              // queued for review after our verify response was built.
+              toast(SERVER_MESSAGES.UNDER_REVIEW, { duration: 8000 });
+              summaryParams.set("instant", "false");
+            }
             router.push(`/booking-summary?${summaryParams.toString()}`);
           }
 
