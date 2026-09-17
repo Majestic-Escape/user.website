@@ -6,7 +6,10 @@ import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { LIVE } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
+import { readStoredToken } from "@/lib/session";
 import Link from "next/link";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -52,6 +55,7 @@ export default function Ratings() {
   };
 
   const router = useRouter();
+  const queryClient = useQueryClient();
   const verifyToken = async (emailToken) => {
     try {
       const getLocalData = await localStorage.getItem("token");
@@ -82,28 +86,25 @@ export default function Ratings() {
     if (data) setIsAuth(true);
   };
 
+  // Throws on every failure path: react-query used to report "success" with
+  // undefined data when the token was missing or the API failed, and the
+  // page then rendered against nothing.
   const getBookingId = async (bookingId) => {
-    try {
-      const getLocalData = await localStorage.getItem("token");
-      const data = JSON.parse(getLocalData);
-      if (data) {
-        const response = await fetch(`${API_URL}/booking/${bookingId}`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${data}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (!response.ok) {
-          return;
-        }
-        const result = await response.json();
-
-        return result.data;
-      }
-    } catch (err) {
-      console.error(err);
+    const token = readStoredToken();
+    if (!token) throw new Error("Not signed in");
+    const response = await fetch(`${API_URL}/booking/${bookingId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch booking (status: ${response.status})`);
     }
+    const result = await response.json();
+    if (!result?.data) throw new Error("Booking data missing in response");
+    return result.data;
   };
   useEffect(() => {
     auth();
@@ -125,11 +126,10 @@ export default function Ratings() {
     isFetching: isBookingFetching,
     isError: isBookingError,
   } = useQuery({
-    queryKey: ["bookingId", bookingId],
+    queryKey: queryKeys.bookingById(bookingId),
     queryFn: () => getBookingId(bookingId),
     enabled: !!bookingId, // Only run if propertyId exists
-    // Optional: Add staleTime, cacheTime etc.
-    // staleTime: 5 * 60 * 1000, // 5 minutes
+    ...LIVE,
   });
 
   const today = new Date();
@@ -167,8 +167,21 @@ export default function Ratings() {
         });
         if (!response.ok) {
           toast.error("Failed to submit review");
+          return;
         }
         toast.success("Submitted review");
+        // Only after the 2xx: the stay page's cached reviews and this
+        // booking (now marked reviewed) are stale.
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.reviewsAll(bookingData?.propertyId?._id),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.property(bookingData?.propertyId?._id),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.bookingById(bookingId),
+        });
+        queryClient.invalidateQueries({ queryKey: queryKeys.userBookingsAll });
         router.push(`/stay/${bookingData?.propertyId?._id}`);
       }
     } catch (err) {
@@ -190,6 +203,14 @@ export default function Ratings() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
+      </div>
+    );
+  }
+  if (isBookingError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center font-poppins pt-24 text-center px-4">
+        We couldn't load this booking. Please refresh, or open the link from
+        your email again.
       </div>
     );
   }

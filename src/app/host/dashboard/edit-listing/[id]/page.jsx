@@ -2,6 +2,9 @@
 "use client";
 import { use, useEffect, useState } from "react";
 import { redirect, useRouter } from "next/navigation";
+import confetti from "canvas-confetti";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -27,6 +30,14 @@ import Link from "next/link";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function EditListing({ params }) {
   const { id } = use(params);
+  const queryClient = useQueryClient();
+  // After a confirmed save: the stay page, the host's listings table and the
+  // listing-stage card all read this listing.
+  const invalidateListing = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.property(id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.hostListingsAll });
+    queryClient.invalidateQueries({ queryKey: queryKeys.listingStatusAll });
+  };
   const router = useRouter();
   const auth = useAuth();
   const { propertyIsActive, setPropertyIsActive } = useAuth();
@@ -167,6 +178,7 @@ export default function EditListing({ params }) {
         dataToSave,
       );
       setFormData(response);
+      invalidateListing();
       // toast.success("Progress saved successfully");
     } catch (error) {
       toast.error("Failed to save progress. Please try again.");
@@ -188,6 +200,7 @@ export default function EditListing({ params }) {
       });
 
       toast.dismiss(toastId);
+      invalidateListing();
 
       let successMessage;
       if (newStatus === "processing") {

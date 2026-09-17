@@ -44,6 +44,15 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Invoice from "../../../../../components/invoice";
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { LIVE } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
+import { readJSON } from "@/lib/storage";
+import { readStoredToken } from "@/lib/session";
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 // Mock data for reservations
@@ -111,7 +120,6 @@ export default function ReservationsPage() {
     // pdf.save("examplepdf.pdf");
   };
   const router = useRouter();
-  const [bookings, setBookings] = useState();
   const [localState, setLocalState] = useState();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState(null);
@@ -121,7 +129,9 @@ export default function ReservationsPage() {
   const [page, setPage] = React.useState(1);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const skip = (page - 1) * rowsPerPage;
-  const [count, setCount] = React.useState(0);
+  const queryClient = useQueryClient();
+  const hostId =
+    typeof window === "undefined" ? null : readJSON(localStorage, "userId", null);
   const getDate = (item) => {
     const month = new Date(item).getMonth();
     const year = new Date(item).getFullYear();
@@ -132,54 +142,70 @@ export default function ReservationsPage() {
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("boolean mssg", mssg);
   }
-  const fetchData = async () => {
-    const getLocalData = await localStorage.getItem("token");
-    const data = JSON.parse(getLocalData);
-    const hostData = await localStorage.getItem("userId");
-    const hostId = JSON.parse(hostData);
-    const from = date.from ? date.from.toLocaleDateString() : null;
-    const to = date.to ? date.to.toLocaleDateString() : null;
-    if (process.env.NEXT_PUBLIC_ENV === "dev") {
-      console.log(from, to);
-    }
-    setMssg(false);
-    if (data) {
-      try {
-        const response = await fetch(
-          `${API_URL}/booking/analytics-filter?search=${searchValue}&status=${status}&from=${from}&to=${to}&hostId=${hostId}&limit=${rowsPerPage}&skip=${skip}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${data}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        const result = await response.json();
-        if (process.env.NEXT_PUBLIC_ENV === "dev") {
-          console.log("aaaaaaa", result);
-        }
-        console.log("aaaaaaa", result);
-
-        const mssg = await result.error;
-        if (mssg == "toDate") {
-          toast.error("Cannot select same date twice");
-          setMssg(true);
-        }
-        if (response.status != 200) {
-          return;
-        }
-
-        if (process.env.NEXT_PUBLIC_ENV === "dev") {
-          console.log(result);
-        }
-        setCount(result.total);
-        const final = await result.data;
-
-        setBookings(final);
-      } catch (err) {
-        console.error(err);
+  // Reservations are LIVE data: a cached page paints instantly while the
+  // list always revalidates (and again on tab focus). Filter/page changes
+  // keep the previous rows on screen. Mutations invalidate hostBookingsAll.
+  const from = date.from ? date.from.toLocaleDateString() : null;
+  const to = date.to ? date.to.toLocaleDateString() : null;
+  const filters = { searchValue, status, from, to, rowsPerPage, skip };
+  const { data: bookingsResult } = useQuery({
+    queryKey: queryKeys.hostBookings(hostId, filters),
+    queryFn: async () => {
+      const token = readStoredToken();
+      if (!token) return { data: [], total: 0, error: null };
+      const response = await fetch(
+        `${API_URL}/booking/analytics-filter?search=${searchValue}&status=${status}&from=${from}&to=${to}&hostId=${hostId}&limit=${rowsPerPage}&skip=${skip}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      const result = await response.json().catch(() => ({}));
+      // The API answers 400 + { error: "toDate" } for an invalid range; that
+      // is a message for the user, not a failure to retry.
+      if (result?.error === "toDate") {
+        return { data: [], total: 0, error: "toDate" };
       }
+      if (!response.ok) {
+        throw new Error(`Failed to fetch bookings (status: ${response.status})`);
+      }
+      return {
+        data: Array.isArray(result?.data) ? result.data : [],
+        total: result?.total ?? 0,
+        error: null,
+      };
+    },
+    enabled: !!hostId,
+    ...LIVE,
+    placeholderData: keepPreviousData,
+  });
+  const bookings = bookingsResult?.data;
+  const count = bookingsResult?.total ?? 0;
+  useEffect(() => {
+    if (bookingsResult?.error === "toDate") {
+      toast.error("Cannot select same date twice");
+      setMssg(true);
+    } else if (bookingsResult) {
+      setMssg(false);
+    }
+  }, [bookingsResult]);
+  // After a confirmed mutation: this list, the active-bookings widget, the
+  // booking itself and the listing's availability calendar are all stale.
+  const fetchData = (propertyId, bookingId) => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.hostBookingsAll });
+    queryClient.invalidateQueries({ queryKey: queryKeys.activeBookingsAll });
+    if (bookingId) {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.bookingById(bookingId),
+      });
+    }
+    if (propertyId) {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.checkDates(propertyId),
+      });
     }
   };
   const getPayment = async (bookingId) => {
@@ -211,9 +237,6 @@ export default function ReservationsPage() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [page, rowsPerPage, searchValue, status, date]);
 
   const sendConfirmationToUser = async (
     bookingId,
@@ -246,7 +269,7 @@ export default function ReservationsPage() {
           return;
         }
         toast.success("Successfully send the approval email");
-        fetchData();
+        fetchData(selectedBooking?.propertyId?._id, bookingId);
         return response;
       }
     } catch (err) {
@@ -285,7 +308,7 @@ export default function ReservationsPage() {
           return;
         }
         toast.success("Successfully send the rejection email");
-        fetchData();
+        fetchData(selectedBooking?.propertyId?._id, bookingId);
         return response;
       }
     } catch (err) {
@@ -333,7 +356,7 @@ export default function ReservationsPage() {
           return;
         }
         toast.success("Successfully send the cancellation email");
-        fetchData();
+        fetchData(selectedBooking?.propertyId?._id, bookingId);
         return response;
       }
     } catch (err) {

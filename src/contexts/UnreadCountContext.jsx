@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { usePathname } from "next/navigation";
 import { socketManager } from "@/lib/socket";
 import { useAuth } from "@/contexts/AuthContext";
+import { readStoredToken } from "@/lib/session";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
@@ -64,15 +65,14 @@ export function UnreadCountProvider({ children }) {
     lastFetchTimeRef.current = now;
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
+      const parsed = readStoredToken();
+      if (!parsed) {
         setHostUnread(0);
         setGuestUnread(0);
         setIsLoading(false);
         return;
       }
 
-      const parsed = JSON.parse(token);
       const headers = { Authorization: `Bearer ${parsed}` };
 
       // Single API call returns both host and guest counts
@@ -116,15 +116,8 @@ export function UnreadCountProvider({ children }) {
   useEffect(() => {
     if (!user) return;
 
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    let parsed;
-    try {
-      parsed = JSON.parse(token);
-    } catch {
-      return;
-    }
+    const parsed = readStoredToken();
+    if (!parsed) return;
 
     const socket = socketManager.getSocket(parsed);
     if (!socket) return;

@@ -127,13 +127,13 @@ export function LocationForm({ updateFormData, formData }) {
     );
 
 
-    autocompleteRef.current = new google.maps.places.Autocomplete(
+    autocompleteRef.current = new window.google.maps.places.Autocomplete(
   document.getElementById("address-input"),
   {
     componentRestrictions: { country: "IN" },
-    bounds: new google.maps.LatLngBounds(
-      new google.maps.LatLng(14.8, 73.6),
-      new google.maps.LatLng(15.8, 74.3)
+    bounds: new window.google.maps.LatLngBounds(
+      new window.google.maps.LatLng(14.8, 73.6),
+      new window.google.maps.LatLng(15.8, 74.3)
     ),
     strictBounds: false,
   }

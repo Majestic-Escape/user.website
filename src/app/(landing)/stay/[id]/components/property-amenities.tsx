@@ -50,11 +50,11 @@ interface PropertyAmenitiesProps {
 
 export default function PropertyAmenities({
   manual,
-  amenities,
+  amenities = [],
   showAmenitiesDialog,
   setShowAmenitiesDialog,
-  rules,
-  custom,
+  rules = [],
+  custom = [],
   safety,
 }: PropertyAmenitiesProps) {
   if (process.env.NEXT_PUBLIC_ENV === "dev") {

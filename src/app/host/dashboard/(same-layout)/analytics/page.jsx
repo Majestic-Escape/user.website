@@ -45,6 +45,25 @@ import {
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useEffect, useRef } from "react";
+import {
+  formatDate,
+  formatINR,
+  parseDate,
+  parseFiniteNumber,
+} from "@/lib/format";
+
+// Counts are summed only when they are real numbers (a missing `guests`
+// used to turn every total into NaN).
+const count = (value) => parseFiniteNumber(value) ?? 0;
+const stayDate = (value) =>
+  formatDate(
+    value,
+    { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" },
+    "—",
+    "en-US",
+  );
+const fullName = (user) =>
+  `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "—";
 
 // Mock data for revenue insights (extended for longer periods)
 const revenueData = {
@@ -258,7 +277,12 @@ const AnalyticsPage = () => {
     const today = new Date();
     switch (range) {
       case "1d":
-        setDateRange({ from: new Date(today.setHours(0, 0, 0, 0)), to: today });
+        {
+          // setHours() mutates `today`; keep the range end at "now".
+          const startOfToday = new Date(today);
+          startOfToday.setHours(0, 0, 0, 0);
+          setDateRange({ from: startOfToday, to: new Date() });
+        }
         break;
       case "1w":
         setDateRange({ from: subDays(today, 7), to: today });
@@ -290,7 +314,7 @@ const AnalyticsPage = () => {
   function totalGuests() {
     let sum = 0;
     bookings?.forEach((item) => {
-      sum += Number(item?.guests);
+      sum += count(item?.guests);
     });
     return sum;
   }
@@ -298,7 +322,7 @@ const AnalyticsPage = () => {
   function totalAdults() {
     let sum = 0;
     bookings?.forEach((item) => {
-      sum += Number(item?.adults);
+      sum += count(item?.adults);
     });
     return sum;
   }
@@ -306,7 +330,7 @@ const AnalyticsPage = () => {
   function totalChildren() {
     let sum = 0;
     bookings?.forEach((item) => {
-      sum += Number(item?.children);
+      sum += count(item?.children);
     });
     return sum;
   }
@@ -341,7 +365,7 @@ const AnalyticsPage = () => {
       let sum = 0;
       let sumBook = 0;
       final?.forEach((item) => {
-        sum += Number(item?.guests);
+        sum += count(item?.guests);
         sumBook += 1;
       });
       const months = [
@@ -400,7 +424,7 @@ const AnalyticsPage = () => {
       let sum = 0;
       let sumBook = 0;
       final?.forEach((item) => {
-        sum += Number(item?.guests);
+        sum += count(item?.guests);
         sumBook += 1;
       });
 
@@ -437,7 +461,7 @@ const AnalyticsPage = () => {
       let sum = 0;
       let sumBook = 0;
       final?.forEach((item) => {
-        sum += Number(item?.guests);
+        sum += count(item?.guests);
         sumBook += 1;
       });
       return {
@@ -457,7 +481,8 @@ const AnalyticsPage = () => {
   }, [propertyPieData]);
 
   function calculateAge(dobString) {
-    const dob = new Date(dobString);
+    const dob = parseDate(dobString);
+    if (!dob) return "—";
     const today = new Date();
 
     let age = today.getFullYear() - dob.getFullYear();
@@ -900,7 +925,7 @@ const AnalyticsPage = () => {
                   fill="#8884d8"
                   dataKey={`booking`}
                   label={({ name, percent }) =>
-                    `${name.slice(0, 11)}... ${(percent * 100).toFixed(0)}%`
+                    `${name?.slice(0, 11) ?? ""}... ${Number.isFinite(percent) ? (percent * 100).toFixed(0) : 0}%`
                   }
                 >
                   {propertyPieData.map((entry, index) => (
@@ -974,7 +999,7 @@ const AnalyticsPage = () => {
                   fill="#8884d8"
                   dataKey={`guests`}
                   label={({ name, percent }) =>
-                    `${name.slice(0, 11)}... ${(percent * 100).toFixed(0)}%`
+                    `${name?.slice(0, 11) ?? ""}... ${Number.isFinite(percent) ? (percent * 100).toFixed(0) : 0}%`
                   }
                 >
                   {propertyPieData.map((entry, index) => (
@@ -1052,49 +1077,25 @@ const AnalyticsPage = () => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span
-                          title={
-                            booking?.userId.firstName +
-                            " " +
-                            booking?.userId.lastName
-                          }
-                        >
-                          {checkLength(
-                            booking?.userId.firstName +
-                              " " +
-                              booking?.userId.lastName,
-                          )}
+                        <span title={fullName(booking?.userId)}>
+                          {checkLength(fullName(booking?.userId))}
                         </span>
                       </TableCell>
                       <TableCell>
                         {calculateAge(booking?.userId?.dob)}
                       </TableCell>
-                      <TableCell>{booking?.guests}</TableCell>
-                      <TableCell>{booking?.adults}</TableCell>
-                      <TableCell>{booking?.children}</TableCell>
+                      <TableCell>{booking?.guests ?? "—"}</TableCell>
+                      <TableCell>{booking?.adults ?? "—"}</TableCell>
+                      <TableCell>{booking?.children ?? "—"}</TableCell>
 
                       <TableCell>
-                        {new Date(booking?.checkIn).toLocaleDateString(
-                          "en-US",
-                          {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          },
-                        )}
+                        {stayDate(booking?.checkIn)}
                       </TableCell>
                       <TableCell>
-                        {new Date(booking?.checkOut).toLocaleDateString(
-                          "en-US",
-                          {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          },
-                        )}
+                        {stayDate(booking?.checkOut)}
                       </TableCell>
                       <TableCell>
-                        ₹{booking?.price?.toLocaleString("en-IN")}
+                        {formatINR(booking?.price)}
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -1120,8 +1121,9 @@ const AnalyticsPage = () => {
             <div className="mt-4 flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">
-                  Showing {start + 1}–{Math.min(end, bookings?.length)} of{" "}
-                  {bookings?.length}
+                  Showing {(bookings?.length ?? 0) === 0 ? 0 : start + 1}–
+                  {Math.min(end, bookings?.length ?? 0)} of{" "}
+                  {bookings?.length ?? 0}
                 </p>
               </div>
               <div className="flex flex-column items-end gap-2">

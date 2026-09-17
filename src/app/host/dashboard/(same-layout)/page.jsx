@@ -37,13 +37,43 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import ListingStageCard from "./ListingStageCard";
-import { kycService } from "../../../../services/kycService";
-import { useEffect } from "react";
+import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
+import { MAY_NOT_EXIST } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
+import { readJSON } from "@/lib/storage";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+// A host who has not started KYC legitimately has no record: 404 → null
+// (no retries, no error card). Anything else is a real failure.
+const fetchKycForm = async (userId) => {
+  const response = await axios.get(`${API_BASE_URL}/kyc/form/${userId}`, {
+    validateStatus: (status) => status === 200 || status === 404,
+  });
+  if (response.status === 404) return null;
+  return response.data?.data ?? null;
+};
 // import { useCheckToken } from "@/services/useCheckToken";
 export default function Dashboard() {
-  const [exist, setExist] = useState(false);
-  const [form, setForm] = useState();
-  const [loading, setLoading] = useState(true);
+  const userId =
+    typeof window === "undefined" ? null : readJSON(localStorage, "userId", null);
+  // Cached per host (MAY_NOT_EXIST): the dashboard renders immediately and
+  // only the KYC card waits; a revisit paints the card straight from cache.
+  // kyc / kyc-edit invalidate queryKeys.kycStatusAll after a successful save.
+  const {
+    data: form = null,
+    isPending: kycPending,
+    isError: kycError,
+    refetch: refetchKyc,
+  } = useQuery({
+    queryKey: queryKeys.kycStatus(userId),
+    queryFn: () => fetchKycForm(userId),
+    enabled: !!userId,
+    ...MAY_NOT_EXIST,
+  });
+  const exist = !!form;
 
   // const { checkToken } = useCheckToken();
 
@@ -53,37 +83,6 @@ export default function Dashboard() {
   //   };
   //   verify();
   // }, []);
-  useEffect(() => {
-    const checkIfKycProcessStarted = async () => {
-      try {
-        const getUserId = await localStorage.getItem("userId");
-        const userId = JSON.parse(getUserId);
-        if (userId) {
-          const response = await kycService.getFormData(userId);
-
-          if (process.env.NEXT_PUBLIC_ENV === "dev") {
-            console.log("doomd", response);
-          }
-          setExist(true);
-          setForm(response.data);
-          return result.data;
-        }
-      } catch (error) {
-        console.error("Could not get data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkIfKycProcessStarted();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
-      </div>
-    );
-  }
   return (
     <div className="space-y-4 pb-16 grid grid-cols-1">
       <div
@@ -95,7 +94,37 @@ export default function Dashboard() {
           <ListingStageCard />
         </div>
 
-        {exist && form?.status == "processing" ? (
+        {userId && kycPending ? (
+          <Card className="bg-white">
+            <CardHeader>
+              <Skeleton className="h-6 w-40" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Skeleton className="h-4 w-64" />
+              <Skeleton className="h-10 w-48 rounded-md" />
+            </CardContent>
+          </Card>
+        ) : kycError ? (
+          // A failed status check must not show "Start KYC" to a host who
+          // may already be verified.
+          <Card className="bg-white">
+            <CardHeader>
+              <CardTitle>KYC status unavailable</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                We couldn't load your KYC status right now.
+              </p>
+              <button
+                type="button"
+                onClick={() => refetchKyc()}
+                className="rounded-md bg-primaryGreen px-4 py-2 text-sm font-medium text-white hover:bg-brightGreen"
+              >
+                Try again
+              </button>
+            </CardContent>
+          </Card>
+        ) : exist && form?.status == "processing" ? (
           <>
             {/* <Card className=" bg-white border-green-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

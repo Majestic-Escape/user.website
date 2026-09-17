@@ -28,6 +28,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { formatINR, parseFiniteNumber } from "@/lib/format";
 
 export function PriceNavigation() {
   const {
@@ -68,6 +69,9 @@ export function PriceNavigation() {
       options,
     )} – ${to.toLocaleDateString("en-IN", options)}`;
   }
+  // Listings without a basePrice show "Price on request" and cannot be
+  // reserved from this bar (never ₹NaN / ₹0).
+  const perNight = parseFiniteNumber(perNightPrice);
   const nights =
     modalCheckDate?.from && modalCheckDate?.to
       ? Math.ceil(
@@ -97,10 +101,9 @@ export function PriceNavigation() {
           }}
         >
           <div className="text-xl font-semibold text-gray-900">
-            ₹
-            {nights == 1
-              ? Number(perNightPrice).toLocaleString("en-IN")
-              : (nights * Number(perNightPrice))?.toLocaleString("en-IN")}
+            {perNight === null
+              ? "Price on request"
+              : formatINR(nights == 1 ? perNight : nights * perNight)}
           </div>
 
           <div className="text-base text-gray-600 underline">
@@ -108,7 +111,14 @@ export function PriceNavigation() {
             {formatDateRange(modalCheckDate?.from, modalCheckDate?.to)}
           </div>
         </div>
-        {isAuth ? (
+        {perNight === null ? (
+          <Button
+            disabled
+            className="w-full flex justify-center items-center text-center py-8 px-2 bg-gray-300 text-xl font-bricolage text-gray-600 h-10 rounded-[42px] font-medium"
+          >
+            Price on request
+          </Button>
+        ) : isAuth ? (
           <Link
             href={{
               pathname: `/book/stay/${bookingQuery?.propertyId}`,
