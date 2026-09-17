@@ -704,7 +704,7 @@ function BookPageContent() {
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
         console.log("bat", subTotal);
       }
-      const response = await fetch(`${API_URL}/booking/`, {
+      const response = await fetch(`${API_URL}/booking`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

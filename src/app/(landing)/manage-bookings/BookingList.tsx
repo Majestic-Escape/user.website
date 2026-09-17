@@ -1051,7 +1051,9 @@ const ManageBookings: React.FC = () => {
                         >
                           Cancel
                         </Button>
-                        {bookingToCancel && (
+                        {/* One dialog for the selected card only: rendering it
+                            inside every card stacked N identical open dialogs. */}
+                        {bookingToCancel && bookingToCancel._id === booking._id && (
                           <ConfirmCancelDialog
                             choice={"Cancel"}
                             open={cancelDialogOpen}

@@ -165,7 +165,7 @@ const FullCalendarPage = () => {
         ? addDays(new Date(checkout), 2)
         : addDays(new Date(checkin), 2);
 
-      const response = await fetch(`${API_URL}/booking/`, {
+      const response = await fetch(`${API_URL}/booking`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
