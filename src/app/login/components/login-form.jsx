@@ -21,6 +21,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
+import { safeReturnPath, takeReturnPath } from "@/lib/auth-return";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -43,9 +44,7 @@ export default function LoginForm() {
   // const params = useSearchParams();
   // const returnUrl = params.get("returnUrl");
   // console.log("nnic", returnUrl);
-  const decodedReturnUrl = returnUrl ? decodeURIComponent(returnUrl) : "/";
   const router = useRouter();
-  console.log("what we found", returnUrl, decodedReturnUrl);
   useEffect(() => {
     const handleResize = () => {
       const keyboardHeight = window.visualViewport.height - window.innerHeight;
@@ -197,11 +196,12 @@ export default function LoginForm() {
       login({ email });
       toast.success("Welcome. You are now signed in.");
       setIsRedirecting(true);
+      // Continue where the visitor was: ?returnUrl, else the destination
+      // remembered when they were sent here, else the page the header link
+      // was on, else home. Only same-origin, non-auth paths are followed.
+      const target = takeReturnPath(safeReturnPath(returnUrl) ?? "/");
       setTimeout(() => {
-        decodedReturnUrl == "/login" || decodedReturnUrl == "/register"
-          ? router.push("/")
-          : router.push(decodedReturnUrl);
-        // router.push("/stays");
+        router.push(target);
       }, 800);
       // router.push("/stays");
     } catch (error) {

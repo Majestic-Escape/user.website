@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { TextReveal } from "@/components/text-reveal";
 import axios from "axios";
+import { authHeaders } from "@/lib/session";
 import { toast } from "sonner";
 
 import {
@@ -194,7 +195,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
 
     try {
       const res = await axios.post(`${API_URL}/uploads/`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { "Content-Type": "multipart/form-data", ...authHeaders() },
       });
 
       const newPhotos = res.data.urls.map((url: string) => ({
@@ -330,6 +331,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
   const removePhoto = async (id: string, url: string) => {
     await axios.delete(`${API_URL}/uploads/delete`, {
       data: { url },
+      headers: authHeaders(),
     });
 
     const updatedPhotos = photos.filter((photo) => photo.id !== id);

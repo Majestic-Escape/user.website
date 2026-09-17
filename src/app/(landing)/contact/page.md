@@ -38,7 +38,7 @@ export default function ContactPage() {
               <div>
                 <p className="font-medium">Email</p>
                 <p className="text-muted-foreground">
-                  support@majesticescape.in
+                  info@majesticescape.in
                 </p>
               </div>
             </div>

@@ -15,6 +15,7 @@ import {
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
+import { takeReturnPath } from "@/lib/auth-return";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "https://server-me.vercel.app/api/v1";
@@ -199,7 +200,7 @@ export default function RegisterPage() {
       localStorage.setItem("userId", JSON.stringify(data.userId));
       login({ email: formData.email });
       toast.success("Registration successful! Welcome aboard.");
-      router.push("/stays");
+      router.push(takeReturnPath("/stays"));
     } catch (error) {
       console.error("Network error while verifying OTP:", error);
       toast.error("Network error. Please check your internet connection.");

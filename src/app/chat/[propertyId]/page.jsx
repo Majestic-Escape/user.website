@@ -25,6 +25,7 @@ import ProtectedRoute from "@/components/protected-route";
 import MobileChatContainer from "@/components/mobile-chat-container";
 import MobileChatInput from "@/components/mobile-chat-input";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
+import { goToLogin } from "@/lib/auth-return";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
@@ -171,7 +172,7 @@ export default function ChatPage({ params }) {
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     if (!storedToken) {
-      router.push("/login");
+      goToLogin(router);
       return;
     }
 
@@ -182,7 +183,7 @@ export default function ChatPage({ params }) {
       setUserId(payload.userId);
     } catch (e) {
       console.error("Invalid token:", e);
-      router.push("/login");
+      goToLogin(router);
     }
   }, [router]);
 

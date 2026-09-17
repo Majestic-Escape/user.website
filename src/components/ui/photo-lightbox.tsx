@@ -12,14 +12,17 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RemoveScroll } from "react-remove-scroll";
+import { hideOthers } from "aria-hidden";
 
 // Full-screen photo viewer shared by the traveler stay page, the host listings
 // table and the admin property view.
 //
 // Why it is built the way it is:
 // - Radix Dialog primitives (not the shadcn DialogContent wrapper, which
-//   hard-codes a centred max-w-lg card) give us focus trap, Escape, aria
-//   roles, return-focus and body scroll-lock for free.
+//   hard-codes a centred max-w-lg card) give us Escape, aria roles and
+//   return-focus for free. It runs non-modal so the floating chat widget
+//   stays usable over the gallery; see LightboxShell for what that costs.
 // - Embla drives the stage: real touch swipe with physics, keyboard/arrow
 //   navigation and a slide transition, all with zero extra dependencies.
 // - Only the current slide and its ±2 neighbours mount an <img>. Neighbours
@@ -58,6 +61,12 @@ function prefersReducedMotion() {
 
 // Marker stored in history.state for the entry the open lightbox owns.
 const HISTORY_MARKER = "meLightbox";
+// Events from inside the chat widget's shadow DOM reach the document
+// retargeted to its host element.
+const CHAT_WIDGET_TAG = "majestic-chat-widget";
+function isInChatWidget(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest(CHAT_WIDGET_TAG) !== null;
+}
 
 export default function PhotoLightbox({
   images,
@@ -115,25 +124,83 @@ export default function PhotoLightbox({
   if (count === 0) return null;
 
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="me-dialog-fade fixed inset-0 z-[9999] bg-black" />
+        {/* Non-modal Radix renders no Overlay: the stage carries the black. */}
         <DialogPrimitive.Content
           // No description element; silence the Radix warning explicitly.
           aria-describedby={undefined}
-          className="me-dialog-fade fixed inset-0 z-[9999] flex flex-col text-white outline-none"
+          // Talking to the chat widget must not close the gallery: not the
+          // tap on its launcher, and not an Escape typed into its input.
+          onInteractOutside={(event) => {
+            if (isInChatWidget(event.target)) event.preventDefault();
+          }}
+          onEscapeKeyDown={(event) => {
+            if (isInChatWidget(event.target)) event.preventDefault();
+          }}
+          className="me-dialog-fade fixed inset-0 z-[9999] flex flex-col bg-black text-white outline-none"
         >
           <DialogPrimitive.Title className="sr-only">
             {title ? `${title} photos` : "Photo gallery"}
           </DialogPrimitive.Title>
-          {/* Mounted only while open, so index/rotation state resets per open. */}
-          <LightboxStage
-            images={images}
-            initialIndex={clampIndex(initialIndex, count)}
-          />
+          <LightboxShell>
+            {/* Mounted only while open, so index/rotation state resets per open. */}
+            <LightboxStage
+              images={images}
+              initialIndex={clampIndex(initialIndex, count)}
+            />
+          </LightboxShell>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
+  );
+}
+
+// What a modal Radix dialog would have given us, minus the parts that break
+// the floating chat widget. Modal Radix puts `pointer-events: none` on <body>
+// and, worse, its focus trap yanks focus back into the dialog whenever the
+// chat's input (in the widget's shadow DOM, outside the dialog) is focused —
+// typing into the chat over an open gallery went nowhere. So the dialog is
+// non-modal and this shell re-adds the useful parts itself:
+// - body scroll lock (react-remove-scroll, the same package Radix uses);
+// - aria-hidden on everything except the gallery and the chat widget;
+// - a Tab cycle inside the gallery, which only sees keys typed inside it.
+function LightboxShell({ children }: { children: React.ReactNode }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const chat = document.querySelector(CHAT_WIDGET_TAG);
+    return hideOthers(chat ? [el, chat] : el);
+  }, []);
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Tab" || !ref.current) return;
+    const focusable = Array.from(
+      ref.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((node) => node.offsetWidth > 0 || node.offsetHeight > 0);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || !ref.current.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (active === last || !ref.current.contains(active))) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
+  return (
+    <RemoveScroll className="flex flex-1 flex-col min-h-0">
+      <div ref={ref} className="flex flex-1 flex-col min-h-0" onKeyDown={onKeyDown}>
+        {children}
+      </div>
+    </RemoveScroll>
   );
 }
 

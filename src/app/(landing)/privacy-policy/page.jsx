@@ -109,9 +109,9 @@ export default function PrivacyPolicy() {
                       {" "}
                       <a
                         className="underline"
-                        href="mailto:support@majesticescape.in"
+                        href="mailto:info@majesticescape.in"
                       >
-                        support@majesticescape.in
+                        info@majesticescape.in
                       </a>
                     </dd>
                   </div>

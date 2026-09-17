@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useRouter } from "next/navigation"
+import { goToLogin } from "@/lib/auth-return";
 
 interface BookingPopupProps {
   isOpen: boolean
@@ -22,7 +23,7 @@ export function BookingPopup({ isOpen, onClose }: BookingPopupProps) {
   const router = useRouter()
 
   const handleSignIn = () => {
-    router.push("/login")
+    goToLogin(router)
     onClose()
   }
 

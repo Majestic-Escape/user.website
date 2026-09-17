@@ -225,9 +225,9 @@ export default function MaharashtraRules() {
                     <dd className="mt-1 text-sm text-primary sm:mt-0 sm:col-span-2">
                       <a
                         className="underline"
-                        href="mailto:support@majesticescape.in"
+                        href="mailto:info@majesticescape.in"
                       >
-                        support@majesticescape.in
+                        info@majesticescape.in
                       </a>
                     </dd>
                   </div>

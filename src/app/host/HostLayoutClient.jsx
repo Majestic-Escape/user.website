@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import LoginLink from "@/components/login-link";
 
 // Host routes that must work without a token. Everything else under /host
 // renders the "not authorized" message until the user logs in; the dashboard
@@ -52,11 +53,11 @@ const Layout = ({ children }) => {
       <>
         <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
           You are not authorized to access this page. &nbsp;{" "}
-          <Link href="/login">
+          <LoginLink>
             <u>
               <b>Click Here</b>
             </u>
-          </Link>
+          </LoginLink>
           &nbsp; to log in now to access.
         </div>
       </>

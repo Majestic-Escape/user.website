@@ -216,7 +216,7 @@ export default function Navbar() {
       <Link
         href={{
           pathname: "/login",
-          query: returnUrl,
+          query: returnUrl ? { returnUrl: decodeURIComponent(returnUrl) } : undefined,
         }}
         className="bg-primaryGreen font-medium hover:bg-brightGreen px-5 rounded-3xl text-white py-2"
         variant="default"

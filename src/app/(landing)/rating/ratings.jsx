@@ -11,6 +11,7 @@ import { LIVE } from "@/lib/query-presets";
 import { queryKeys } from "@/lib/query-keys";
 import { readStoredToken } from "@/lib/session";
 import Link from "next/link";
+import LoginLink from "@/components/login-link";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function Ratings() {
@@ -219,11 +220,11 @@ export default function Ratings() {
     return (
       <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
         You are not authorized to access this page. &nbsp;{" "}
-        <Link href="/login">
+        <LoginLink>
           <u>
             <b>Click Here</b>
           </u>
-        </Link>
+        </LoginLink>
         &nbsp; to log in now to access.
       </div>
     );

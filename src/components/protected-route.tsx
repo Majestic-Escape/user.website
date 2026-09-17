@@ -10,6 +10,7 @@ import {
   readStoredToken,
   runVerificationOnce,
 } from '@/lib/session'
+import { goToLogin } from '@/lib/auth-return'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -38,7 +39,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     const token = readStoredToken()
     if (!token) {
       setStatus('denied')
-      router.push('/login')
+      goToLogin(router)
       return
     }
     if (isRecentlyVerified(token)) {
@@ -61,7 +62,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         // Token is invalid or expired - tear the session down and redirect
         clearSession(queryClient)
         setStatus('denied')
-        router.push('/login')
+        goToLogin(router)
       } else {
         setStatus('unavailable')
       }

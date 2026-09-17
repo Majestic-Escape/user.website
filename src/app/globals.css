@@ -339,3 +339,12 @@ body {
     }
   }
 }
+
+/* The floating chat widget (a <majestic-chat-widget> custom element appended
+   to <body>) must stay usable while a modal dialog is open: Radix locks the
+   page with `body { pointer-events: none }`, which the widget would inherit
+   and its launcher would render but ignore taps (seen with the photo gallery
+   open). Its own stacking puts it above every dialog. */
+majestic-chat-widget {
+  pointer-events: auto;
+}

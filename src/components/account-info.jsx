@@ -1,5 +1,6 @@
 "use client";
 
+import { authHeaders } from "@/lib/session";
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -112,7 +113,9 @@ export default function AccountInfo() {
   const { data: fetchedProfile } = useQuery({
     queryKey: queryKeys.account(email),
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/accounts?email=${email}`);
+      const res = await fetch(`${API_URL}/accounts?email=${encodeURIComponent(email)}`, {
+        headers: authHeaders(),
+      });
       if (!res.ok) {
         throw new Error(`Failed to fetch profile (status: ${res.status})`);
       }
@@ -191,13 +194,17 @@ export default function AccountInfo() {
     try {
       let update = false;
       if (avatarUrl.length != 0) {
-        await axios.delete(`${API_URL}/uploads/delete`, {
-          data: { url: avatarUrl },
-        });
-        update = true;
-        if (process.env.NEXT_PUBLIC_ENV === "dev") {
-          console.log("Deleted");
+        // Best effort: a picture that cannot be removed (still referenced
+        // elsewhere, legacy object) must not block choosing a new one.
+        try {
+          await axios.delete(`${API_URL}/uploads/delete`, {
+            data: { url: avatarUrl },
+            headers: authHeaders(),
+          });
+        } catch (deleteError) {
+          console.error("Previous profile image not removed", deleteError);
         }
+        update = true;
       }
 
       const formData = new FormData();
@@ -208,7 +215,7 @@ export default function AccountInfo() {
         `${API_URL}/uploads/profile?userId=${userId}`,
         formData,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { "Content-Type": "multipart/form-data", ...authHeaders() },
         }
       );
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
@@ -235,6 +242,7 @@ export default function AccountInfo() {
       if (avatarUrl.length != 0) {
         const response = await axios.delete(`${API_URL}/uploads/delete`, {
           data: { url: avatarUrl },
+          headers: authHeaders(),
         });
         if (response.status != 200) {
           throw new Error(`Failed to delete image`);
@@ -331,11 +339,12 @@ export default function AccountInfo() {
 
     try {
       const res = await fetch(
-        `${API_URL}/accounts?email=${profileData.email}`,
+        `${API_URL}/accounts?email=${encodeURIComponent(profileData.email)}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            ...authHeaders(),
           },
           body: JSON.stringify(formData),
         }

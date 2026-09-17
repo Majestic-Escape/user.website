@@ -76,11 +76,11 @@ export default function LocalRules() {
                         24 hours.
                       </p>
                       <Link
-                        href="mailto:support@majesticescape.in"
+                        href="mailto:info@majesticescape.in"
                         target="_blank"
                         className="w-full bg-primaryGreen py-2 px-3 rounded-3xl hover:bg-brightGreen transition-colors text-sm text-white"
                       >
-                        support@majesticescape.in
+                        info@majesticescape.in
                       </Link>
                     </div>
                   </CardContent>
@@ -536,9 +536,9 @@ export default function LocalRules() {
                     <dd className="mt-1 text-sm text-primary sm:mt-0 sm:col-span-2">
                       <a
                         className="underline"
-                        href="mailto:support@majesticescape.in"
+                        href="mailto:info@majesticescape.in"
                       >
-                        support@majesticescape.in
+                        info@majesticescape.in
                       </a>
                     </dd>
                   </div>
