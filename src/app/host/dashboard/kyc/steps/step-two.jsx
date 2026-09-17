@@ -22,6 +22,7 @@ import { FileInput } from "@/components/ui/file-input";
 import { Icons } from "@/components/ui/icons";
 import { toast } from "sonner";
 import axios from "axios";
+import { authHeaders } from "@/lib/session";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const updateHostFormDocVerificationStatus = async (doc) => {
@@ -29,11 +30,15 @@ const updateHostFormDocVerificationStatus = async (doc) => {
     const user = await localStorage.getItem("userId");
     const userId = JSON.parse(user);
     if (userId) {
-      const response = await axios.patch(`${API_BASE_URL}/kyc/verify-status`, {
-        userId: userId, // from localStorage
-        isVerified: true,
-        documentType: doc,
-      });
+      const response = await axios.patch(
+        `${API_BASE_URL}/kyc/verify-status`,
+        {
+          userId: userId, // from localStorage
+          isVerified: true,
+          documentType: doc,
+        },
+        { headers: authHeaders() }
+      );
       if (response.status == 200) {
         toast.success("Updated Form");
         return;
@@ -64,6 +69,7 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
   );
   const fileInputRef = useRef(null);
   const [showDialog, setShowDialog] = useState(false);
+  const [needsReview, setNeedsReview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [image, setImage] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
@@ -190,7 +196,7 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // Authorization: `Bearer ${data}`,
+            ...authHeaders(),
           },
           body: JSON.stringify({
             email: email,
@@ -207,15 +213,19 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
         const resData = await response.json();
         if (!response.ok) {
           const msg =
-            resData?.message ||
-            resData?.error ||
-            "Server error. Please try again.";
+            response.status === 429 && resData?.retryAfterSeconds
+              ? `Too many verification attempts. Please try again in ${resData.retryAfterSeconds} seconds.`
+              : resData?.message ||
+                resData?.error ||
+                "Server error. Please try again.";
 
           toast.error(msg);
           throw new Error(msg);
         }
 
-        // if (response.status == 200) {
+        // The backend decides the verdict: "verified", or "needs_review"
+        // when our team has to look at the document manually.
+        setNeedsReview(resData?.verdict === "needs_review");
         updateHostFormDocVerificationStatus(doc);
         setTimeout(() => {
           setDocumentInfo((prev) => ({ ...prev, isVerified: true }));
@@ -223,7 +233,6 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
           setIsUploading(false);
           setShowDialog(true);
         }, 2000);
-        // }
       } catch (error) {
         console.error("Upload failed:", error);
         // toast.error("Network error. Please try again.");
@@ -389,13 +398,19 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Verification Successful</DialogTitle>
+            <DialogTitle>
+              {needsReview ? "Check completed" : "Verification Successful"}
+            </DialogTitle>
           </DialogHeader>
           <div className="flex items-center justify-center py-4">
-            <Icons.CheckCircle className="h-16 w-16 text-green-500" />
+            <Icons.CheckCircle
+              className={`h-16 w-16 ${needsReview ? "text-amber-500" : "text-green-500"}`}
+            />
           </div>
           <p className="text-center text-lg">
-            Your document has been successfully verified.
+            {needsReview
+              ? "Your document has been received and needs a manual review by our team. You can continue with the next steps; we will complete your KYC once it is approved."
+              : "Your document has been successfully verified."}
           </p>
           <DialogFooter>
             <Button

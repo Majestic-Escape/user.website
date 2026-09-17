@@ -21,6 +21,7 @@ import {
 import { Icons } from "@/components/ui/icons";
 import axios from "axios";
 import { toast } from "sonner";
+import { authHeaders } from "@/lib/session";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const updateHostFormDocVerificationStatus = async (gstInfo) => {
@@ -35,7 +36,8 @@ const updateHostFormDocVerificationStatus = async (gstInfo) => {
           panNumber: `******${gstInfo.panNumber.slice(-4)}`,
           gstNumber: `******${gstInfo.gstNumber.slice(-4)}`,
           isVerified: true,
-        }
+        },
+        { headers: authHeaders() }
       );
       if (response.status == 200) {
         toast.success("Updated Form");
@@ -78,11 +80,15 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
         const data = JSON.parse(getLocalData);
 
         if (data) {
-          const response = await axios.post(`${API_BASE_URL}/kyc/verify/gst`, {
-            userId: data,
-            panNumber: gstInfo.rePanNumber,
-            gstNumber: gstInfo.gstNumber,
-          });
+          const response = await axios.post(
+            `${API_BASE_URL}/kyc/verify/gst`,
+            {
+              userId: data,
+              panNumber: gstInfo.rePanNumber,
+              gstNumber: gstInfo.gstNumber,
+            },
+            { headers: authHeaders() }
+          );
           if (process.env.NEXT_PUBLIC_ENV === "dev") {
             console.log("gst reached");
           }
@@ -130,7 +136,11 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
         toast.error("Cross check pan number in both input fields.");
       }
     } catch (error) {
-      const backendMsg = error?.response?.data?.message;
+      const data = error?.response?.data;
+      const backendMsg =
+        error?.response?.status === 429 && data?.retryAfterSeconds
+          ? `Too many verification attempts. Please try again in ${data.retryAfterSeconds} seconds.`
+          : data?.message;
 
       toast.error(backendMsg || "Server error. Please try again.");
     } finally {

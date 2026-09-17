@@ -253,7 +253,10 @@ export default function KYC() {
       }, 2100);
     } catch (error) {
       console.error("this", error);
-      toast.error("Something went wrong. Please try again.");
+      // The backend explains why the KYC could not be completed yet (for
+      // example a document under manual review); show that instead of a
+      // generic failure.
+      toast.error(error?.message || "Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
