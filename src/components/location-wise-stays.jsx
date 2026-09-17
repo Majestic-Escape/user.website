@@ -3,6 +3,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { PUBLIC_LONG } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 
 import SubHeading from "@/components/ui/sub-heading";
@@ -103,43 +106,34 @@ const LocationCard = ({ name, staysNearby, image, countData }) => {
 
 const LocationWisestays = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [windowWidth, setWindowWidth] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 1024,
-  );
-  const [countData, setCountData] = useState([]);
-  const fetchCount = async (cities) => {
-    try {
+  // Always start from the server's value (desktop) and measure in an effect.
+  // Reading window.innerWidth during the first client render produced a
+  // different tree than the prerendered HTML on phones → hydration error on
+  // every mobile home load.
+  const [windowWidth, setWindowWidth] = useState(1024);
+  // Destination counts change slowly; cached for 30 min so returning to the
+  // home page never refetches them. A failure just leaves the counts empty
+  // (as before) — the cards still render.
+  const { data: countData = [] } = useQuery({
+    queryKey: queryKeys.countStays,
+    queryFn: async () => {
+      const cities = destinations.map((item) => item.name);
       const response = await fetch(
         `${API_BASE_URL}/properties/countstays?city=${cities}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
+        { method: "GET", headers: { "Content-Type": "application/json" } },
       );
-      if (!response.ok) {
-        return;
-      }
+      if (!response.ok) throw new Error(`countstays ${response.status}`);
       const result = await response.json();
-      // console.log("ree", result.data);
-      const final = await result.data;
-      setCountData(final);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  useEffect(() => {
-    const cities = [];
-    destinations.forEach((item) => cities.push(item.name));
-    fetchCount(cities);
-  }, []);
+      return Array.isArray(result?.data) ? result.data : [];
+    },
+    ...PUBLIC_LONG,
+  });
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
     };
 
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -173,7 +167,7 @@ const LocationWisestays = () => {
       return (
         <div className="grid grid-cols-2 gap-4">
           {visibleDestinations.map((destination) => (
-            <LocationCard {...destination} countData={countData} />
+            <LocationCard key={destination.id ?? destination.name} {...destination} countData={countData} />
           ))}
         </div>
       );
@@ -184,7 +178,7 @@ const LocationWisestays = () => {
         return (
           <div className="grid grid-cols-4 gap-4">
             {visibleDestinations.map((destination) => (
-              <LocationCard {...destination} countData={countData} />
+              <LocationCard key={destination.id ?? destination.name} {...destination} countData={countData} />
             ))}
           </div>
         );
@@ -251,7 +245,7 @@ const LocationWisestays = () => {
                 className="flex-shrink-0 "
                 style={{ width: `${100 / itemsPerView}%` }}
               >
-                <LocationCard {...destination} countData={countData} />
+                <LocationCard key={destination.id ?? destination.name} {...destination} countData={countData} />
               </div>
             ))}
           </div>

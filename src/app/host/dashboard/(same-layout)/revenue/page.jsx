@@ -45,6 +45,23 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
 import { useEffect } from "react";
+import { formatDate, formatINR, parseFiniteNumber } from "@/lib/format";
+
+// Sums only amounts that are real numbers; records that can't be summed are
+// counted so the UI can say so instead of showing NaN.
+const addAmount = (acc, value) => {
+  const n = parseFiniteNumber(value);
+  if (n === null) acc.skipped += 1;
+  else acc.sum += n;
+  return acc;
+};
+const payoutDate = (value) =>
+  formatDate(
+    value,
+    { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" },
+    "—",
+    "en-US",
+  );
 
 // Mock data for revenue insights (extended for longer periods)
 const revenueData = {
@@ -161,6 +178,7 @@ const AnalyticsPage = () => {
   const [days, setDays] = useState("");
   const [property, setProperty] = useState();
   const [total, setTotal] = useState(0);
+  const [skippedAmounts, setSkippedAmounts] = useState(0);
   const [status, setStatus] = useState("all");
   const [bookings, setBookings] = useState();
   const [searchTerm, setSearchTerm] = useState("");
@@ -319,7 +337,13 @@ const AnalyticsPage = () => {
     const today = new Date();
     switch (range) {
       case "1d":
-        setDateRange({ from: today.setHours(0, 0, 0, 0), to: today });
+        {
+          // setHours() returns a number and mutates `today`; keep both ends
+          // as Date objects.
+          const startOfToday = new Date(today);
+          startOfToday.setHours(0, 0, 0, 0);
+          setDateRange({ from: startOfToday, to: today });
+        }
         setDays("Toady");
         break;
       case "1w":
@@ -392,12 +416,13 @@ const AnalyticsPage = () => {
           new Date(item?.createdAt).toLocaleDateString() ==
           date.toLocaleDateString()
       );
-      let sum = 0;
+      const acc = { sum: 0, skipped: 0 };
       let sumBook = 0;
       final?.forEach((item) => {
-        sum += Number(item?.amount);
+        addAmount(acc, item?.amount);
         sumBook += 1;
       });
+      const sum = acc.sum;
       const months = [
         "Jan",
         "Feb",
@@ -451,12 +476,13 @@ const AnalyticsPage = () => {
           `${new Date(newDate).getMonth()}/${new Date(newDate).getFullYear()}`
       );
 
-      let sum = 0;
+      const acc = { sum: 0, skipped: 0 };
       let sumBook = 0;
       final?.forEach((item) => {
-        sum += Number(item?.amount);
+        addAmount(acc, item?.amount);
         sumBook += 1;
       });
+      const sum = acc.sum;
 
       return {
         order: i + 1,
@@ -494,14 +520,14 @@ const AnalyticsPage = () => {
           );
         }
       });
-      let sum = 0;
-      let sumBook = 0;
+      const acc = { sum: 0, skipped: 0 };
       final?.forEach((item) => {
-        sum += Number(item?.amount);
+        addAmount(acc, item?.amount);
       });
       return {
         order: i + 1,
-        sum: sum,
+        sum: acc.sum,
+        skipped: acc.skipped,
         name: propTitle,
       };
     });
@@ -557,6 +583,9 @@ const AnalyticsPage = () => {
   useEffect(() => {
     const add = propertyPieData.reduce((acc, item) => acc + item.sum, 0);
     setTotal(add);
+    setSkippedAmounts(
+      propertyPieData.reduce((acc, item) => acc + (item.skipped ?? 0), 0),
+    );
   }, [propertyPieData]);
 
   const exportCheckinDate = dateRange.from.toLocaleString("en-US", {
@@ -835,7 +864,7 @@ const AnalyticsPage = () => {
                   fill="#8884d8"
                   dataKey={`sum`}
                   label={({ name, percent }) =>
-                    `${name?.slice(0, 11)}... ${(percent * 100).toFixed(0)}%`
+                    `${name?.slice(0, 11) ?? ""}... ${Number.isFinite(percent) ? (percent * 100).toFixed(0) : 0}%`
                   }
                 >
                   {propertyPieData.map((entry, index) => (
@@ -912,33 +941,18 @@ const AnalyticsPage = () => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {booking?.bookingId?.userId?.firstName +
-                      " " +
-                      booking?.bookingId?.userId?.lastName}
+                    {`${booking?.bookingId?.userId?.firstName ?? ""} ${booking?.bookingId?.userId?.lastName ?? ""}`.trim() ||
+                      "—"}
                   </TableCell>
 
                   <TableCell>
-                    {new Date(booking?.bookingId?.checkIn).toLocaleDateString(
-                      "en-US",
-                      {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      }
-                    )}
+                    {payoutDate(booking?.bookingId?.checkIn)}
                   </TableCell>
                   <TableCell>
-                    {new Date(booking?.bookingId?.checkOut).toLocaleDateString(
-                      "en-US",
-                      {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      }
-                    )}
+                    {payoutDate(booking?.bookingId?.checkOut)}
                   </TableCell>
                   <TableCell>
-                    ₹{booking?.amount?.toLocaleString("en-IN")}
+                    {formatINR(booking?.amount)}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -962,9 +976,16 @@ const AnalyticsPage = () => {
           <div className="mt-4 flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">
-                Showing {start + 1}–{Math.min(end, bookings?.length)} of{" "}
-                {bookings?.length}
+                Showing {(bookings?.length ?? 0) === 0 ? 0 : start + 1}–
+                {Math.min(end, bookings?.length ?? 0)} of{" "}
+                {bookings?.length ?? 0}
               </p>
+              {skippedAmounts > 0 ? (
+                <p className="text-xs text-amber-700">
+                  {skippedAmounts} record{skippedAmounts === 1 ? "" : "s"} could
+                  not be summed (missing amount).
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-column items-end gap-2">
               <Button

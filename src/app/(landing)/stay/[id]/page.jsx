@@ -20,6 +20,18 @@ export async function generateStaticParams() {
   return [];
 }
 
+// Listing ids are Mongo ObjectIds. Anything else ("abc", a mistyped
+// 25-char id, …) can never resolve to a listing, so it is a 404 decided here
+// without a backend round-trip. This also shields the page from the API,
+// which currently answers such ids with a 500 (an uncaught Mongoose
+// CastError — tracked for Batch S) that used to surface as a raw 500 page.
+const OBJECT_ID = /^[0-9a-fA-F]{24}$/;
+const isListingId = (id) => typeof id === "string" && OBJECT_ID.test(id);
+
+// Status codes that mean "there is no such listing" as opposed to "the API
+// failed": 404 (missing) and 400 (malformed id, once the API validates it).
+const NOT_FOUND_STATUSES = new Set([400, 404]);
+
 // Function to fetch property data (server-side)
 async function fetchProperty(id) {
   if (!id) throw new Error("Property ID is missing");
@@ -31,6 +43,9 @@ async function fetchProperty(id) {
     process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
   const response = await fetch(`${API_URL}/properties/${id}`, {
     next: { revalidate: 3600 }, // Revalidate every hour
+    // A hung backend must become an error (error.jsx / 500) within a bounded
+    // time instead of holding the render until the platform kills it.
+    signal: AbortSignal.timeout(10_000),
   });
 
   if (!response.ok) {
@@ -48,6 +63,7 @@ async function fetchProperty(id) {
 // DYNAMIC METADATA FOR PROPERTY PAGE
 export async function generateMetadata({ params }) {
   const { id } = await params;
+  if (!isListingId(id)) notFound();
   try {
     const property = await fetchProperty(id);
     const siteUrl = process.env.NEXTAUTH_URL;
@@ -97,7 +113,7 @@ export async function generateMetadata({ params }) {
     // not-found UI with <meta name="robots" content="noindex"> rather than a
     // 404 status (a Next streaming limitation; previously this was a 200 error
     // page without noindex).
-    if (error?.status === 404) notFound();
+    if (NOT_FOUND_STATUSES.has(error?.status)) notFound();
     console.error("Error generating metadata:", error);
     return {
       title: "Property | Majestic Escape",
@@ -109,11 +125,12 @@ export async function generateMetadata({ params }) {
 // Server component that fetches data and passes to client
 export default async function PropertyPage({ params }) {
   const { id } = await params;
+  if (!isListingId(id)) notFound();
   let property;
   try {
     property = await fetchProperty(id);
   } catch (error) {
-    if (error?.status === 404) notFound();
+    if (NOT_FOUND_STATUSES.has(error?.status)) notFound();
     // Any other failure must surface as an error (handled by ./error.jsx),
     // never as a successful render: with ISR a rendered error page would be
     // cached and served for an hour.

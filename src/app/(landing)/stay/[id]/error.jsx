@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useParams } from "next/navigation";
+import { startTransition, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 
 // Error boundary for the stay page. page.jsx throws when the listing can't be
 // fetched (instead of rendering an error page as a 200, which ISR would cache
@@ -9,6 +9,15 @@ import { useParams } from "next/navigation";
 // re-renders the segment so a transient backend blip can be retried in place.
 export default function StayError({ error, reset }) {
   const params = useParams();
+  const router = useRouter();
+  // reset() alone re-renders against the same failed server payload; a
+  // router.refresh() re-fetches the segment so a transient backend blip can
+  // actually be retried in place.
+  const retry = () =>
+    startTransition(() => {
+      router.refresh();
+      reset();
+    });
 
   useEffect(() => {
     console.error("Error loading property:", error);
@@ -24,7 +33,7 @@ export default function StayError({ error, reset }) {
         <div className="mt-4 flex items-center justify-center gap-3">
           <button
             type="button"
-            onClick={() => reset()}
+            onClick={retry}
             className="inline-block px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
           >
             Try Again

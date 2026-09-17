@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useState } from "react";
 import AccountHeader from "./account-header";
 import AccountSidebar from "./account-sidebar";
 import Link from "next/link";
+import { readStoredToken } from "@/lib/session";
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,13 +13,11 @@ interface LayoutProps {
 export default function AccountLayout({ children }: LayoutProps) {
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
-  const authenticate = async () => {
-    const getLocalData = await localStorage.getItem("token");
-    const data = getLocalData ? JSON.parse(getLocalData) : null;
-    if (data) {
-      setIsAuth(true);
-      setLoading(false);
-    }
+  const authenticate = () => {
+    // Presence check only (the API enforces auth). Previously `loading` was
+    // never cleared without a token, leaving a spinner forever when logged out.
+    setIsAuth(!!readStoredToken());
+    setLoading(false);
   };
 
   useEffect(() => {

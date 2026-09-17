@@ -1,7 +1,10 @@
 "use client";
 import "../../../booking.css";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { LIVE, PUBLIC } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
+import { fetchProperty } from "@/lib/api/property";
 import { useMemo, useEffect, useState } from "react"; // Added useMemo and useEffect
 import Head from "next/head";
 // Import your components
@@ -14,29 +17,12 @@ import ReviewSection from "./components/review-section";
 // Import the skeleton for HostProfile if you want a more granular loading state,
 // but the refactored HostProfile handles its own skeleton.
 // import { HostProfileSkeleton } from "./components/host-profile";
-import axios from "axios";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // --- API Fetching Functions ---
 
-// Function to fetch property data
-const fetchProperty = async (id) => {
-  if (!id) throw new Error("Property ID is missing");
-  const response = await fetch(`${API_URL}/properties/${id}`);
-  if (!response.ok) {
-    console.error(
-      "Failed to fetch property:",
-      response.status,
-      await response.text(),
-    );
-    throw new Error(
-      `Failed to fetch property data (status: ${response.status})`,
-    );
-  }
-  const result = await response.json();
-
-  return result.data;
-};
+// Property data comes from the shared fetcher in lib/api/property.js so the
+// stay page and checkout read the same cache entry.
 
 // Function to fetch host data (moved here from HostProfile)
 // const fetchHostData = async (hostIdStr) => {
@@ -99,8 +85,6 @@ export default function PropertyPageClient({ initialProperty }) {
   // --- Query 1: Fetch Property Data ---
   const [next, setNext] = useState(2);
   const [prev, setPrev] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [unavailableDates, setUnavailableDates] = useState([]);
 
   const handleNext = () => {
     if (process.env.NEXT_PUBLIC_ENV === "dev") {
@@ -126,31 +110,26 @@ export default function PropertyPageClient({ initialProperty }) {
       refetchReview();
     }
   };
-  useEffect(() => {
-    async function fetchDates() {
-      setLoading(true);
-      try {
-        const response = await axios.get(
-          `${API_URL}/booking/check-dates/${propertyId}`,
-        );
-
-        if (response.status != 200) {
-          throw new Error(
-            `Failed to fetch host data (status: ${response.status})`,
-          );
-        }
-        if (process.env.NEXT_PUBLIC_ENV === "dev") {
-          console.log("bbbbbbb", response);
-        }
-        setUnavailableDates(response.data.data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+  // Availability is LIVE: a cached list paints the calendar instantly on a
+  // revisit, but it is never treated as fresh — it always revalidates (and
+  // again on tab focus). Payment re-checks it over the network regardless.
+  // `loading` drives the calendar spinner: true only until the first list
+  // arrives (a cached revisit paints the calendar immediately).
+  const { data: unavailableDates = [], isPending: loading } = useQuery({
+    queryKey: queryKeys.checkDates(propertyId),
+    queryFn: async () => {
+      const response = await fetch(
+        `${API_URL}/booking/check-dates/${propertyId}`,
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch availability (status: ${response.status})`);
       }
-    }
-    fetchDates();
-  }, [propertyId]);
+      const result = await response.json();
+      return Array.isArray(result?.data) ? result.data : [];
+    },
+    enabled: !!propertyId,
+    ...LIVE,
+  });
 
   const {
     data: propertyData,
@@ -159,12 +138,16 @@ export default function PropertyPageClient({ initialProperty }) {
     isFetching: isPropertyFetching,
     isError: isPropertyError,
   } = useQuery({
-    queryKey: ["property", propertyId],
+    queryKey: queryKeys.property(propertyId),
     queryFn: () => fetchProperty(propertyId),
     enabled: !!propertyId, // Only run if propertyId exists
-    placeholderData: initialProperty ?? undefined,
-    // Optional: Add staleTime, cacheTime etc.
-    // staleTime: 5 * 60 * 1000, // 5 minutes
+    // The server-rendered listing seeds the cache (no skeleton), but it is
+    // marked stale so one background revalidation still runs on a cold
+    // visit — the ISR page can be up to an hour old. Revisits within
+    // staleTime paint from the cache with no request.
+    initialData: initialProperty ?? undefined,
+    initialDataUpdatedAt: 0,
+    ...PUBLIC,
   });
 
   // --- Derive Host ID and Normalize ---
@@ -206,11 +189,12 @@ export default function PropertyPageClient({ initialProperty }) {
     isError: isReviewError,
     refetch: refetchReview,
   } = useQuery({
-    queryKey: ["review", propertyId, limit, skip],
+    queryKey: queryKeys.reviews(propertyId, limit, skip),
     queryFn: () => fetchReview(propertyId, limit, skip),
     enabled: !!propertyId, // Only run if propertyId exists
-    // Optional: Add staleTime, cacheTime etc.
-    // staleTime: 5 * 60 * 1000, // 5 minutes
+    ...PUBLIC,
+    // Paging keeps the previous reviews on screen instead of a skeleton.
+    placeholderData: keepPreviousData,
   });
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("rev", unavailableDates);

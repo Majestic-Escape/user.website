@@ -2,13 +2,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
-import {
-  QueryClient,
-  QueryClientProvider,
-  useQuery,
-} from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PUBLIC } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,7 +19,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { Star, ChevronLeft, Check } from "lucide-react";
 import Link from "next/link";
-import axios from "axios";
 
 import { toast } from "sonner";
 
@@ -32,42 +29,114 @@ import { toast } from "sonner";
 //   }
 // }
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  formatINR,
+  formatTime12h,
+  parseDate,
+  parseFiniteNumber,
+  parseInteger,
+} from "@/lib/format";
+import {
+  fetchLatestAvailability,
+  fetchLatestProperty,
+  fetchProperty,
+} from "@/lib/api/property";
 import { createPortal } from "react-dom";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Function to fetch property data
-const fetchProperty = async (id) => {
-  try {
-    if (!id) throw new Error("Property ID is missing");
-    const getLocalData = await localStorage.getItem("token");
-    const data = JSON.parse(getLocalData);
-    if (data) {
-      const response = await fetch(`${API_URL}/properties/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${data}`,
-        },
-      });
-      // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
+// Checkout dates arrive as YYYY-MM-DD. They are validated calendar-safely
+// (2026-02-31 / 2026-13-40 → null) but the instant kept is UTC midnight via
+// new Date("YYYY-MM-DD") — the wire format every existing booking and
+// /booking/check-dates already use, so server-side overlap checks stay
+// comparable with older bookings.
+const paramDate = (raw) =>
+  raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) && parseDate(raw)
+    ? new Date(raw)
+    : null;
 
-      if (!response.ok) {
-        console.error(
-          "Failed to fetch property:",
-          response.status,
-          await response.text(),
-        );
-        throw new Error(
-          `Failed to fetch property data (status: ${response.status})`,
-        );
-      }
-      const result = await response.json();
-      return result?.data;
-    }
-  } catch (err) {
-    console.error(err);
+// Every booked night as "YYYY-MM-DD" (checkout day excluded) — the shape
+// /booking/check-dates returns and the stay widget compares against.
+const nightKeys = (from, to) => {
+  const keys = [];
+  for (let t = from.getTime(); t < to.getTime(); t += 86_400_000) {
+    keys.push(new Date(t).toISOString().slice(0, 10));
   }
+  return keys;
 };
+
+// URLSearchParams turns undefined/null into the strings "undefined"/"null";
+// drop them instead so the summary page never renders them.
+const cleanParams = (obj) =>
+  Object.fromEntries(
+    Object.entries(obj)
+      .filter(([, v]) => v !== undefined && v !== null)
+      .map(([k, v]) => [k, String(v)]),
+  );
+
+// Listing ids are Mongo ObjectIds; anything else is "no such listing" and
+// never worth a backend call (the API currently 500s on such ids).
+const isListingId = (id) => typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+
+// Human text for the server's booking/payment codes (Batch S).
+const SERVER_MESSAGES = {
+  DATES_UNAVAILABLE: "Sorry, someone has already booked these dates.",
+  LISTING_INACTIVE: "This stay is no longer available for booking.",
+  PRICING_UNAVAILABLE: "Pricing for this stay is unavailable right now.",
+  PRICE_CHANGED: "The price for this stay has changed — please review and confirm again.",
+  AMOUNT_MISMATCH: "The price for this stay has changed — please review and confirm again.",
+  OVER_CAPACITY: "This stay cannot host that many guests.",
+  INVALID_DATES: "Please choose valid check-in and check-out dates.",
+  INVALID_GUESTS: "Please check the number of guests.",
+  BOOKING_NOT_PAYABLE: "This booking can no longer be paid. Please start again.",
+  ORDER_IN_PROGRESS: "Payment is already being set up — please try again in a moment.",
+  MAINTENANCE: "Bookings are briefly paused for maintenance — please try again in a few minutes.",
+  UNDER_REVIEW: "Payment received. Our team is reviewing this booking and will confirm it by e-mail shortly.",
+};
+const serverErrorMessage = (body, fallback) =>
+  (body && (SERVER_MESSAGES[body.code] || body.message)) || fallback;
+
+const EMPTY_TOTALS = {
+  nights: 0,
+  subtotal: 0,
+  cleaningFee: 0,
+  serviceFee: 0,
+  taxes: 0,
+  nightlytax: 0,
+  total: 0,
+  pricingUnavailable: false,
+};
+
+// Pure pricing for a listing + validated night count. Service fee 12 % of
+// the subtotal, GST 5 % / 18 % by the ₹7,500 nightly threshold — the
+// formula is unchanged; the only new behaviour is `pricingUnavailable` when
+// basePrice is not a number (never ₹0 for missing data).
+const priceStay = (listing, nightsCount) => {
+  const nightlyRate = parseFiniteNumber(listing?.basePrice);
+  if (nightlyRate === null || nightlyRate < 0) {
+    return { ...EMPTY_TOTALS, pricingUnavailable: true };
+  }
+  if (!nightsCount) return EMPTY_TOTALS;
+  const cleaningFee = 0;
+  const subtotal = nightlyRate * nightsCount;
+  const serviceFee = Math.round(subtotal * 0.12); // 12% service fee like Airbnb
+  const gst =
+    nightlyRate <= 7500
+      ? Math.round(subtotal * 0.05) // 5% GST in India
+      : Math.round(subtotal * 0.18); // 18% GST in India
+  const taxes = gst + Math.round(serviceFee);
+  return {
+    nights: nightsCount,
+    subtotal,
+    cleaningFee,
+    serviceFee,
+    taxes,
+    nightlytax: taxes - serviceFee,
+    total: subtotal + cleaningFee + taxes,
+    pricingUnavailable: false,
+  };
+};
+
 function GuestModal({ onClose, children }) {
   if (typeof window === "undefined") return null;
 
@@ -88,16 +157,16 @@ function BookPageContent() {
   const params = useParams();
   const propertyId = params.id;
   const [isAuth, setIsAuth] = useState(false);
-  const checkinDate = searchParams.get("checkin");
   const [ban, setBan] = useState(false);
   const [guestSaving, setGuestSaving] = useState(false);
+  // Synchronous re-entry guard: two clicks in the same tick both see
+  // guestSaving === false (state updates are async), and the saving overlay
+  // mounts a render later — either would have created two bookings + orders.
+  const confirmInFlight = useRef(false);
+  const queryClient = useQueryClient();
   const [date, setDate] = useState({
-    from: searchParams.get("checkin")
-      ? new Date(searchParams.get("checkin"))
-      : null,
-    to: searchParams.get("checkout")
-      ? new Date(searchParams.get("checkout"))
-      : null,
+    from: paramDate(searchParams.get("checkin")),
+    to: paramDate(searchParams.get("checkout")),
   });
   // The page is only meaningful with a valid stay window. Links from the
   // booking widget always carry one, but refreshes, shared links and bots
@@ -108,6 +177,12 @@ function BookPageContent() {
     !Number.isNaN(date.from.getTime()) &&
     !Number.isNaN(date.to.getTime()) &&
     date.to.getTime() > date.from.getTime();
+  // Charged nights come only from the validated dates (UTC midnights, so the
+  // difference is an exact number of days). The `?nights=` param is ignored
+  // for pricing — a URL can no longer turn five nights into one.
+  const nightsCount = hasValidDates
+    ? Math.round((date.to.getTime() - date.from.getTime()) / 86_400_000)
+    : 0;
   const [guestInfo, setGuestInfo] = useState([]);
   const [summaryRoute, setSummaryRoute] = useState(false);
   const [unavailableDates, setUnavailableDates] = useState([]);
@@ -116,15 +191,6 @@ function BookPageContent() {
     const data = JSON.parse(getLocalData);
     if (data) setIsAuth(true);
   };
-  function convertTo12HoursFormat(time24) {
-    // Split the time string into hours and minutes
-    let hours = time24;
-    // Determine AM or PM based on the 24-hour hour
-    let period = hours >= 12 ? "PM" : "AM";
-    // Convert the hour to 12-hour format
-    hours = hours % 12 || 12; // 0 becomes 12, otherwise use remainder
-    return `${hours}:00 ${period}`;
-  }
 
   const userData = async () => {
     const getLocalData = await localStorage.getItem("token");
@@ -189,11 +255,23 @@ function BookPageContent() {
   //   checkAvailableDates();
   // }, []);
 
-  const [guests, setGuests] = useState(searchParams.get("guests") || "1");
-  const [nights, setNights] = useState(searchParams.get("nights") || "0");
-  const adults = searchParams.get("adults");
-  const children = searchParams.get("children");
-  const infants = searchParams.get("infants");
+  // Guest counts from the URL, validated: adults ≥ 1, children / infants ≥ 0
+  // (absent = 0). Anything else blocks checkout instead of silently
+  // defaulting — these are persisted on the booking.
+  const adults = parseInteger(searchParams.get("adults"), 1);
+  const children = parseInteger(searchParams.get("children") ?? 0, 0);
+  const infants = parseInteger(searchParams.get("infants") ?? 0, 0);
+  const hasValidGuests =
+    adults !== null && children !== null && infants !== null;
+  const guests = hasValidGuests ? adults + children : null;
+  const nightsParam = searchParams.get("nights");
+  useEffect(() => {
+    if (hasValidDates && nightsParam !== null && nightsParam !== String(nightsCount)) {
+      console.warn(
+        `[checkout] ?nights=${nightsParam} disagrees with the dates; charging ${nightsCount} night(s)`,
+      );
+    }
+  }, [hasValidDates, nightsParam, nightsCount]);
   const propertyImg = searchParams.get("propertyImage");
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("bumd", propertyImg);
@@ -212,10 +290,16 @@ function BookPageContent() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["property", propertyId],
+    // Shares the stay page's cache entry: arriving from the listing costs
+    // zero extra /properties/:id calls. The pre-payment re-check below is a
+    // separate, unconditional network fetch.
+    queryKey: queryKeys.property(propertyId),
     queryFn: () => fetchProperty(propertyId),
-    enabled: !!propertyId,
+    enabled: isListingId(propertyId),
+    ...PUBLIC,
   });
+  const listingMissing =
+    !isListingId(propertyId) || error?.status === 404 || error?.status === 400;
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("property", property);
   }
@@ -251,24 +335,24 @@ function BookPageContent() {
                   day: "numeric",
                 })}
               </span>
-              <span>₹{totals.subtotal.toLocaleString("en-IN")}</span>
+              <span>{money(totals.subtotal)}</span>
             </div>
 
             <div className="flex justify-between">
               <span>Service fee</span>
-              <span>₹{totals.serviceFee.toLocaleString("en-IN")}</span>
+              <span>{money(totals.serviceFee)}</span>
             </div>
 
             <div className="flex justify-between">
               <span>Taxes</span>
-              <span>₹{totals.nightlytax.toLocaleString("en-IN")}</span>
+              <span>{money(totals.nightlytax)}</span>
             </div>
 
             <hr />
 
             <div className="flex justify-between font-semibold">
               <span>Total (INR)</span>
-              <span>₹{totals.total.toLocaleString("en-IN")}</span>
+              <span>{money(totals.total)}</span>
             </div>
           </div>
         </div>
@@ -346,46 +430,20 @@ function BookPageContent() {
   };
 
   const calculateTotal = () => {
-    if (!property || !hasValidDates)
-      return {
-        nights: 0,
-        subtotal: 0,
-        cleaningFee: 0,
-        serviceFee: 0,
-        taxes: 0,
-        total: 0,
-      };
-
-    const nightlyRate = property.basePrice;
-    //|| 20000;
-    const cleaningFee = 0;
-    const nightsCount =
-      nights && Number(nights) > 0
-        ? Number(nights)
-        : Math.ceil(
-            (date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24),
-          );
-    const subtotal = nightlyRate * nightsCount;
-    const serviceFee = Math.round(subtotal * 0.12); // 12% service fee like Airbnb
-    let taxes;
-    if (nightlyRate <= 7500) {
-      taxes = Math.round(subtotal * 0.05) + Math.round(serviceFee); // 5% GST in India
-    } else if (nightlyRate > 7500) {
-      taxes = Math.round(subtotal * 0.18) + Math.round(serviceFee); // 18% GST in India
-    }
-
-    return {
-      nights: nightsCount,
-      subtotal,
-      cleaningFee,
-      serviceFee,
-      taxes,
-      nightlytax: taxes - serviceFee,
-      total: subtotal + cleaningFee + taxes,
-    };
+    if (!property || !hasValidDates) return EMPTY_TOTALS;
+    return priceStay(property, nightsCount);
   };
 
   const totals = calculateTotal();
+  // Money shown on this page comes from `totals`; when pricing is
+  // unavailable every figure is "—", never ₹0.
+  const money = (value) =>
+    totals.pricingUnavailable ? "—" : formatINR(value);
+  const checkoutBlocked = totals.pricingUnavailable
+    ? "Pricing for this stay is unavailable right now"
+    : !hasValidGuests
+      ? "Guest details in this link are invalid"
+      : null;
 
   function calculateAge(dobString) {
     const dob = new Date(dobString);
@@ -413,14 +471,14 @@ function BookPageContent() {
 
     // Initialize guest data arrays based on the number of adults and children
     const initialAdults = Array.from(
-      { length: parseInt(adults) },
+      { length: adults ?? 0 },
       (_, index) => ({
         name: index === 0 ? `${firstName} ${lastName}`.trim() : "",
         age: index === 0 ? dob : 18,
       }),
     );
 
-    const initialChildren = Array.from({ length: parseInt(children) }, () => ({
+    const initialChildren = Array.from({ length: children ?? 0 }, () => ({
       name: "",
       age: 3,
     }));
@@ -484,6 +542,7 @@ function BookPageContent() {
   //   }
   // };
   const handleConfirmGuestInfo = async () => {
+    if (confirmInFlight.current) return;
     const errors = {};
 
     // Validation logic (unchanged)
@@ -509,14 +568,50 @@ function BookPageContent() {
     }
 
     // Start loader
+    confirmInFlight.current = true;
     setGuestSaving(true);
 
     try {
-      const dateCheck = await fetchDates();
-
-      if (dateCheck.includes(checkinDate)) {
+      if (checkoutBlocked) {
+        toast.error(checkoutBlocked);
+        return;
+      }
+      // Payment-time authority: re-fetch the listing and its blocked nights
+      // over the network (never from cache) and re-price. Browsing may be
+      // stale; what the customer is charged may not.
+      let fresh;
+      let blocked;
+      try {
+        [fresh, blocked] = await Promise.all([
+          fetchLatestProperty(propertyId),
+          fetchLatestAvailability(propertyId),
+        ]);
+      } catch (err) {
+        console.error("[checkout] re-verification failed", err);
+        toast.error("Couldn't verify availability. Please try again.");
+        return;
+      }
+      setUnavailableDates(blocked);
+      if (nightKeys(date.from, date.to).some((d) => blocked.includes(d))) {
         toast.error("Sorry, someone has already booked");
-        setGuestSaving(false);
+        return;
+      }
+      if (typeof fresh?.status === "string" && fresh.status !== "active") {
+        queryClient.setQueryData(["property", propertyId], fresh);
+        toast.error("This stay is no longer available for booking.");
+        return;
+      }
+      const freshTotals = priceStay(fresh, nightsCount);
+      if (freshTotals.pricingUnavailable) {
+        queryClient.setQueryData(["property", propertyId], fresh);
+        toast.error("Pricing for this stay is unavailable right now.");
+        return;
+      }
+      if (freshTotals.total !== totals.total) {
+        queryClient.setQueryData(["property", propertyId], fresh);
+        toast.error(
+          `The price for this stay has changed to ${formatINR(freshTotals.total)} — please review and confirm again.`,
+        );
         return;
       }
 
@@ -527,6 +622,7 @@ function BookPageContent() {
       console.error(err);
       toast.error("Something went wrong. Try again!");
     } finally {
+      confirmInFlight.current = false;
       setGuestSaving(false); // remove loader
     }
   };
@@ -608,7 +704,7 @@ function BookPageContent() {
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
         console.log("bat", subTotal);
       }
-      const response = await fetch(`${API_URL}/booking/`, {
+      const response = await fetch(`${API_URL}/booking`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -617,7 +713,7 @@ function BookPageContent() {
         body: JSON.stringify({
           userId: userId,
           guests: guests,
-          nights: nights,
+          nights: totals.nights,
           adults: adults,
           children: children,
           infants: infants,
@@ -634,8 +730,11 @@ function BookPageContent() {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Booking failed: ${errorText}`);
+        // The server answers with a machine-readable code (Batch S):
+        // DATES_UNAVAILABLE, LISTING_INACTIVE, PRICING_UNAVAILABLE, … — hand it
+        // back so the caller can explain instead of "could not be created".
+        const errorBody = await response.json().catch(() => ({}));
+        return { success: false, status: response.status, ...errorBody };
       }
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
         console.log("trhis is how", response.json);
@@ -855,7 +954,7 @@ function BookPageContent() {
       const propertyHostId = await property.host;
       const propertyTitle = await property.title;
 
-      const found = Object.entries(property?.cancellationType).find(
+      const found = Object.entries(property?.cancellationType ?? {}).find(
         ([key, value]) => value === true,
       );
       const extract = JSON.stringify(found);
@@ -878,8 +977,15 @@ function BookPageContent() {
       }
 
       if (!booking || !booking.data?._id) {
-        toast.error("Booking could not be created. Please try again.");
+        toast.error(serverErrorMessage(booking, "Booking could not be created. Please try again."));
+        if (booking?.code === "PRICE_CHANGED" || booking?.code === "PRICING_UNAVAILABLE") {
+          queryClient.invalidateQueries({ queryKey: queryKeys.property(propertyId) });
+        }
         return; // stop here
+      }
+      if (booking.repriced) {
+        // The server moved our pending hold to the price we just confirmed.
+        queryClient.invalidateQueries({ queryKey: queryKeys.property(propertyId) });
       }
       const order_id = await createPaymentOrder(
         booking?.data?._id,
@@ -887,7 +993,11 @@ function BookPageContent() {
         property?._id,
       );
       if (!order_id?.data?.id) {
-        toast.error("Unable to initiate payment. Please try again.");
+        toast.error(serverErrorMessage(order_id, "Unable to initiate payment. Please try again."));
+        if (order_id?.code === "PRICE_CHANGED" || order_id?.code === "AMOUNT_MISMATCH") {
+          // Re-quote from the live listing; the next Confirm carries the new total.
+          queryClient.invalidateQueries({ queryKey: queryKeys.property(propertyId) });
+        }
         return;
       }
 
@@ -915,7 +1025,8 @@ function BookPageContent() {
           const checkin = date.from.toISOString();
           const checkout = date.to.toISOString();
           const paymentId = response.razorpay_payment_id;
-          const summaryParams = new URLSearchParams({
+          const summaryParams = new URLSearchParams(
+            cleanParams({
             hostFirstName: property?.host?.firstName,
             hostLastName: property?.host?.lastName,
             bookingId: booking?.data?._id,
@@ -940,7 +1051,8 @@ function BookPageContent() {
             checkoutTime: property?.checkoutTime,
             instant: property?.bookingType?.manual ? false : true,
             bookingHistory: "false",
-          });
+            }),
+          );
 
           const verify = await verifyPayment(
             order_id?.data?.id, //orderid from server
@@ -951,13 +1063,31 @@ function BookPageContent() {
 
           const hostEmail = await property.hostEmail;
           if (verify) {
+            // Payment confirmed: the listing's calendar and the traveller's
+            // bookings list are stale now.
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.checkDates(propertyId),
+            });
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.userBookingsAll,
+            });
             setSummaryRoute(true);
             window.scrollTo(0, 0);
+            if (verify?.booking?.needsAttention) {
+              // The server recorded the payment but could not honour the
+              // booking as-is (e.g. the dates were taken while the gateway
+              // page was open); a human is deciding. No confirmation calls.
+              toast(SERVER_MESSAGES.UNDER_REVIEW, { duration: 8000 });
+              summaryParams.set("instant", "false");
+              router.push(`/booking-summary?${summaryParams.toString()}`);
+              return;
+            }
+            let update;
             if (property.bookingType.manual) {
               if (process.env.NEXT_PUBLIC_ENV === "dev") {
                 console.log("not selected");
               }
-              const update = await updateBookingStatus(
+              update = await updateBookingStatus(
                 booking?.data?._id,
                 // hostEmail,
                 property.bookingType.manual,
@@ -984,7 +1114,7 @@ function BookPageContent() {
                 booking?.data?._id,
                 property?.title,
               );
-              await updateBookingStatus(
+              update = await updateBookingStatus(
                 booking?.data?._id,
                 // hostEmail,
                 property.bookingType.manual,
@@ -1004,6 +1134,12 @@ function BookPageContent() {
               // );
             }
 
+            if (update?.code === "UNDER_REVIEW") {
+              // A concurrent webhook won the payment and the booking was
+              // queued for review after our verify response was built.
+              toast(SERVER_MESSAGES.UNDER_REVIEW, { duration: 8000 });
+              summaryParams.set("instant", "false");
+            }
             router.push(`/booking-summary?${summaryParams.toString()}`);
           }
 
@@ -1046,26 +1182,6 @@ function BookPageContent() {
       alert("Payment initialization failed. Please try again.");
     }
   };
-  async function fetchDates() {
-    try {
-      const response = await axios.get(
-        `${API_URL}/booking/check-dates/${propertyId}`,
-      );
-
-      if (response.status != 200) {
-        throw new Error(
-          `Failed to fetch host data (status: ${response.status})`,
-        );
-      }
-      if (process.env.NEXT_PUBLIC_ENV === "dev") {
-        console.log("oppo", response);
-      }
-      setUnavailableDates(response?.data?.data);
-      return response?.data?.data;
-    } catch (err) {
-      console.error(err);
-    }
-  }
   if (!hasValidDates) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-4 font-poppins">
@@ -1106,7 +1222,53 @@ function BookPageContent() {
     );
   }
 
+  if (listingMissing) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4 font-poppins">
+        <div
+          role="status"
+          className="w-full max-w-md rounded-xl border border-lightGray bg-white p-8 text-center shadow-sm"
+        >
+          <h1 className="font-bricolage text-2xl font-semibold text-graphite">
+            This stay doesn&apos;t exist
+          </h1>
+          <p className="mt-3 text-sm text-stone">
+            The listing in this link could not be found. It may have been
+            removed, or the link is incomplete.
+          </p>
+          <Link
+            href="/"
+            className="mt-6 inline-flex items-center justify-center rounded-full bg-primaryGreen px-6 py-2.5 text-sm font-medium text-white hover:bg-brightGreen"
+          >
+            Browse stays
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="text-center p-8 bg-red-50 rounded-lg shadow">
+          <h2 className="text-2xl font-bold text-red-700 mb-2">
+            Error loading property
+          </h2>
+          <p className="text-red-600">Try refreshing</p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-primaryGreen text-white rounded hover:bg-brightGreen"
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Query resolved without a listing (shouldn't happen now that fetchProperty
+  // throws, but never render the checkout without one).
+  if (!property) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center p-8 bg-red-50 rounded-lg shadow">
@@ -1132,8 +1294,8 @@ function BookPageContent() {
         property.address.country || ""
       }`
     : "Location not specified";
-  const propertyImage = property?.photos[0];
-  const propertyPrice = property?.basePrice;
+  const propertyImage = property?.photos?.[0];
+  const propertyPrice = parseFiniteNumber(property?.basePrice);
   const propertyRating = property?.rating || 0;
   const propertyReviews = property?.reviews?.length || 0;
   const propertyAmenities = property?.amenities?.map((a) => a.name);
@@ -1142,7 +1304,7 @@ function BookPageContent() {
     "No parties",
     "No pets",
   ];
-  const found = Object.entries(property?.cancellationType).find(
+  const found = Object.entries(property?.cancellationType ?? {}).find(
     ([key, value]) => value === true,
   );
 
@@ -1169,19 +1331,21 @@ function BookPageContent() {
                     {date.from.toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
+                      timeZone: "UTC",
                     })}{" "}
                     -{" "}
                     {date.to?.toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
+                      timeZone: "UTC",
                     })}
                   </p>
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">Guests</h3>
                   <p>
-                    {guests} guest{Number(guests) > 1 ? "s" : ""}
+                    {guests ?? "—"} guest{guests !== 1 ? "s" : ""}
                   </p>
                 </div>
               </div>
@@ -1192,11 +1356,11 @@ function BookPageContent() {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <h3 className="font-semibold mb-1">Check-in</h3>
-                    <p>{convertTo12HoursFormat(property?.checkinTime)}</p>
+                    <p>{formatTime12h(property?.checkinTime)}</p>
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">Check-out</h3>
-                    <p>{convertTo12HoursFormat(property?.checkoutTime)}</p>
+                    <p>{formatTime12h(property?.checkoutTime)}</p>
                   </div>
                 </div>
               </div>
@@ -1470,7 +1634,8 @@ function BookPageContent() {
                   </button>
                   <button
                     onClick={handleConfirmGuestInfo}
-                    className="px-6 py-2 bg-primaryGreen text-white rounded hover:bg-brightGreen"
+                    disabled={guestSaving}
+                    className="px-6 py-2 bg-primaryGreen text-white rounded hover:bg-brightGreen disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     Confirm
                   </button>
@@ -1489,12 +1654,12 @@ function BookPageContent() {
                 onClick={async () => {
                   await fetchForm();
                 }}
-                disabled={summaryRoute || ban}
+                disabled={summaryRoute || ban || checkoutBlocked !== null}
                 className="w-full h-12 text-base bg-primaryGreen hover:bg-brightGreen"
               >
                 {ban
                   ? "You are banned from platform. Check your email"
-                  : `Pay ₹${totals.total.toLocaleString("en-IN")}`}
+                  : (checkoutBlocked ?? `Pay ${formatINR(totals.total)}`)}
               </Button>
               <div className="flex items-center justify-center px-4 mt-2 lg:mt-0">
                 {property.bookingType.manual ? (
@@ -1553,19 +1718,19 @@ function BookPageContent() {
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <span className="">
-                      ₹{propertyPrice.toLocaleString("en-IN")} x {totals.nights}{" "}
+                      {money(propertyPrice)} x {totals.nights}{" "}
                       night
                       {totals.nights > 1 ? "s" : ""}
                     </span>
-                    <span>₹{totals.subtotal.toLocaleString("en-IN")}</span>
+                    <span>{money(totals.subtotal)}</span>
                   </div>
                   <div className="hidden justify-between">
                     <span className="">Cleaning fee</span>
-                    <span>₹{totals.cleaningFee.toLocaleString("en-IN")}</span>
+                    <span>{money(totals.cleaningFee)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="">Taxes</span>
-                    <span>₹{totals.taxes.toLocaleString("en-IN")}</span>
+                    <span>{money(totals.taxes)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -1573,7 +1738,7 @@ function BookPageContent() {
                 <>
                   <div className="flex justify-between w-full font-semibold text-lg">
                     <div>Total (INR)</div>
-                    <div>₹{totals.total.toLocaleString("en-IN")}</div>
+                    <div>{money(totals.total)}</div>
                   </div>
                 </>
               </CardFooter>
@@ -1584,7 +1749,7 @@ function BookPageContent() {
                 >
                   Price Breakdown
                 </span>
-                {/* <span>₹{totals.taxes.toLocaleString("en-IN")}</span> */}
+                {/* <span>{money(totals.taxes)}</span> */}
               </div>
             </Card>
             {showPriceBreakdown && (
@@ -1626,19 +1791,10 @@ function BookPageContent() {
   );
 }
 
-// Main component that creates a QueryClient and provides it to the BookPageContent
+// Uses the app-wide QueryClient from components/providers.tsx (a page-local
+// client used to throw the listing away on every visit).
 export default function BookPage() {
-  // Create a client
-  const queryClientRef = useRef(null);
-  if (!queryClientRef.current) {
-    queryClientRef.current = new QueryClient();
-  }
-
-  return (
-    <QueryClientProvider client={queryClientRef.current}>
-      <BookPageContent />
-    </QueryClientProvider>
-  );
+  return <BookPageContent />;
 }
 
 function BookingPageSkeleton() {
