@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { propertyService } from "@/services/propertyService";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
+import { loginHref } from "@/lib/auth-return";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function EditListing({ params }) {
   const { id } = use(params);
@@ -280,7 +281,7 @@ export default function EditListing({ params }) {
     }));
   };
   useEffect(() => {
-    if (window && !auth.user) redirect("/login");
+    if (window && !auth.user) redirect(loginHref());
   }, [auth.user]);
 
   // if (!show) {

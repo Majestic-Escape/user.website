@@ -20,6 +20,7 @@ import { Loader2 } from "lucide-react";
 // Import useQueryClient from TanStack Query
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import { loginHref } from "@/lib/auth-return";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const offer = process.env.HOST_COMMISSION_OFFER;
 export default function HostOnboarding() {
@@ -378,7 +379,7 @@ export default function HostOnboarding() {
   };
 
   useEffect(() => {
-    if (!auth) redirect("/login");
+    if (!auth) redirect(loginHref());
     if (process.env.NEXT_PUBLIC_ENV === "dev") {
       console.log("User not found");
     }

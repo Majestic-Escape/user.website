@@ -17,6 +17,7 @@ import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { formatINR, formatTime12h, parseDate } from "@/lib/format";
+import LoginLink from "@/components/login-link";
 
 // Never renders "undefined"/"null"/"" for a missing query value.
 const show = (value) =>
@@ -128,11 +129,11 @@ export default function BookingSummaryPage() {
     return (
       <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
         You are not authorized to access this page. &nbsp;{" "}
-        <Link href="/login">
+        <LoginLink>
           <u>
             <b>Click Here</b>
           </u>
-        </Link>
+        </LoginLink>
         &nbsp; to log in now to access.
       </div>
     );
@@ -392,9 +393,9 @@ export default function BookingSummaryPage() {
                     <dd className="mt-1 text-sm text-primary sm:mt-0 sm:col-span-2">
                       <a
                         className="underline"
-                        href="mailto:support@majesticescape.in"
+                        href="mailto:info@majesticescape.in"
                       >
-                        support@majesticescape.in
+                        info@majesticescape.in
                       </a>
                     </dd>
                   </div>

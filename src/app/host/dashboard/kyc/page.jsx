@@ -21,6 +21,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import confetti from "canvas-confetti";
+import { loginHref } from "@/lib/auth-return";
 
 export default function KYC() {
   const auth = useAuth();
@@ -267,7 +268,7 @@ export default function KYC() {
   };
 
   useEffect(() => {
-    if (!auth) redirect("/login");
+    if (!auth) redirect(loginHref());
   }, [auth]);
 
   // const handleSaveAndExit = () => {
