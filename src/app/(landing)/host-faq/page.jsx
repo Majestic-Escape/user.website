@@ -92,11 +92,11 @@ export default function Component() {
           incase they are unresponsive or the issue remains unresolved, contact
           our 24/7 customer support at{" "}
           <Link
-            href="mailto:support@majesticescape.in"
+            href="mailto:info@majesticescape.in"
             target="_blank"
             className="text-primaryGreen hover:text-brightGreen underline transition-colors"
           >
-            support@majesticescape.in
+            info@majesticescape.in
           </Link>{" "}
           or call us at{" "}
           <Link

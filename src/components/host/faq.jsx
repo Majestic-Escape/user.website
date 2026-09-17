@@ -85,11 +85,11 @@ Clear, realistic images help build trust with potential guests and improve the o
           issues related to safety, security, or major property problems,
           contact our emergency support team immediately at{" "}
           <Link
-            href="mailto:support@majesticescape.in"
+            href="mailto:info@majesticescape.in"
             target="_blank"
             className="text-primaryGreen hover:text-brightGreen underline transition-colors"
           >
-            support@majesticescape.in
+            info@majesticescape.in
           </Link>{" "}
           or call us at{" "}
           <Link
