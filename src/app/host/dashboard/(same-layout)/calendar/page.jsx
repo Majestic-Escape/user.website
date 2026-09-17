@@ -13,6 +13,7 @@ import {
 } from "date-fns";
 
 import axios from "axios";
+import { readStoredToken } from "@/lib/session";
 import { ChevronLeft, ChevronRight, Upload, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -117,10 +118,11 @@ const FullCalendarPage = () => {
   const createSecret = async () => {
     try {
       const kind = "export";
-      const res = await axios.post(`${API_URL}/calendarSync/saveCalendar`, {
-        propertyId,
-        kind,
-      });
+      const res = await axios.post(
+        `${API_URL}/calendarSync/saveCalendar`,
+        { propertyId, kind },
+        { headers: { Authorization: `Bearer ${readStoredToken()}` } },
+      );
 
       // ✅ Axios automatically throws on error, so no need for res.ok
       const final = res.data;
@@ -297,11 +299,11 @@ const FullCalendarPage = () => {
     const url = iCalUrl;
 
     try {
-      const res = await axios.post(`${API_URL}/calendarSync/saveCalendar`, {
-        propertyId,
-        url,
-        kind,
-      });
+      const res = await axios.post(
+        `${API_URL}/calendarSync/saveCalendar`,
+        { propertyId, url, kind },
+        { headers: { Authorization: `Bearer ${readStoredToken()}` } },
+      );
       if (!res.data.success) {
         toast.error(
           res.data.message ||

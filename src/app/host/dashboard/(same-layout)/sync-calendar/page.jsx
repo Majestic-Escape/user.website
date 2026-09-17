@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import axios from "axios";
+import { readStoredToken } from "@/lib/session";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function AddCalendarForm() {
   const propertyId = "687e34b0d2bf3b6dfff1b109";
@@ -12,12 +13,11 @@ export default function AddCalendarForm() {
     const userId = await localStorage.get;
     e.preventDefault();
     try {
-      const res = await axios.post(`${API_URL}/calendarSync/saveCalendar`, {
-        propertyId,
-        userId,
-        url,
-        kind,
-      });
+      const res = await axios.post(
+        `${API_URL}/calendarSync/saveCalendar`,
+        { propertyId, userId, url, kind },
+        { headers: { Authorization: `Bearer ${readStoredToken()}` } },
+      );
       setMsg("Saved! " + JSON.stringify(res.data.calendar));
     } catch (err) {
       setMsg("Error: " + (err.response?.data?.message || err.message));
