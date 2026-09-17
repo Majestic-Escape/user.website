@@ -1,9 +1,28 @@
 import React, { forwardRef, useEffect, useState } from "react";
 import Image from "next/image";
+import {
+  formatDate,
+  parseDate,
+  parseFiniteNumber,
+  parseInteger,
+} from "@/lib/format";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Receipt amounts keep their two-decimal look; a missing/invalid amount is
+// "—", never "₹NaN.00" or "₹0.00".
+const inr2 = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+const money = (value) => {
+  const n = parseFiniteNumber(value);
+  return n === null ? "—" : inr2.format(n);
+};
 const Invoice = ({ payment, invoiceData }) => {
   const getDate = (date) => {
-    const newDate = new Date(date);
+    const newDate = parseDate(date);
+    if (!newDate) return "—";
     const options = {
       year: "numeric",
       month: "long",
@@ -17,11 +36,6 @@ const Invoice = ({ payment, invoiceData }) => {
 
     return newDate.toLocaleString("en-US", options);
   };
-  const fmt = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
   const changeUpperCase = (data) => {
     return data
       ?.trim()
@@ -42,6 +56,31 @@ const Invoice = ({ payment, invoiceData }) => {
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("ul", payment);
   }
+  // Per-night is derived from the stored subtotal and nights; nights are
+  // never back-computed from money. Anything missing renders as "—".
+  const subTotal = parseFiniteNumber(invoiceData?.subTotal);
+  const nights = parseInteger(invoiceData?.nights, 1);
+  const perNight =
+    subTotal !== null && nights !== null ? subTotal / nights : null;
+  const serviceFee = subTotal !== null ? Math.round(subTotal * 0.12) : null;
+  const gst = subTotal !== null ? calTax(subTotal, subTotal * 0.12) : null;
+  const price = parseFiniteNumber(invoiceData?.price);
+  // Stay dates are UTC-midnight instants: show the calendar day as booked.
+  const stayDate = (v) =>
+    formatDate(
+      v,
+      { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" },
+      "—",
+      "en-US",
+    );
+  const listing = invoiceData?.propertyId ?? {};
+  const host = invoiceData?.hostId ?? {};
+  const adults = Array.isArray(invoiceData?.guestData?.adults)
+    ? invoiceData.guestData.adults
+    : [];
+  const children = Array.isArray(invoiceData?.guestData?.children)
+    ? invoiceData.guestData.children
+    : [];
 
   return (
     <div className="min-h-screen  flex justify-center py-10">
@@ -57,7 +96,13 @@ const Invoice = ({ payment, invoiceData }) => {
               <span className="font-medium text-gray-700">
                 {invoiceData._id}
               </span>{" "}
-              • {fmt.format(new Date(invoiceData.createdAt))}
+              •{" "}
+              {formatDate(
+                invoiceData?.createdAt,
+                { month: "short", day: "numeric", year: "numeric" },
+                "—",
+                "en-US",
+              )}
             </p>
           </div>
           <Image
@@ -73,45 +118,35 @@ const Invoice = ({ payment, invoiceData }) => {
         <div className="mb-6 flex justify-between">
           <div>
             <h2 className="text-lg font-semibold text-gray-800">
-              {invoiceData.propertyId.title}
+              {listing.title ?? "—"}
             </h2>
             <p className="text-sm text-gray-500">
-              {/* {invoiceData.nights} night in{" "} */}
-              {invoiceData?.propertyId?.address?.street
-                ? invoiceData?.propertyId?.address?.street
-                : null}
-              , {invoiceData?.propertyId?.address?.district}
+              {[listing.address?.street, listing.address?.district]
+                .filter(Boolean)
+                .join(", ")}
             </p>
             <p className="text-sm text-gray-500">
-              {invoiceData?.propertyId?.address?.city
-                ? invoiceData?.propertyId?.address?.city
-                : null}
-              ,{" "}
-              {invoiceData?.propertyId?.address?.state
-                ? invoiceData?.propertyId?.address?.state
-                : null}
+              {[listing.address?.city, listing.address?.state]
+                .filter(Boolean)
+                .join(", ")}
             </p>
-            <p className="text-sm text-gray-500">
-              {" "}
-              {invoiceData?.propertyId?.address?.pincode}
-            </p>
+            <p className="text-sm text-gray-500">{listing.address?.pincode}</p>
             <br />
             <p className="text-sm text-gray-500 mt-1">
-              {fmt.format(new Date(invoiceData.checkIn))} &nbsp;–&nbsp;{" "}
-              {fmt.format(new Date(invoiceData.checkOut))}
+              {stayDate(invoiceData?.checkIn)} &nbsp;–&nbsp;{" "}
+              {stayDate(invoiceData?.checkOut)}
             </p>
             <p className="text-sm text-gray-500">
-              {changeUpperCase(invoiceData.propertyId.placeType)} &nbsp;
-              {changeUpperCase(invoiceData.propertyId.propertyType)} •{" "}
-              {invoiceData.propertyId.beds} bed •{" "}
-              {invoiceData.propertyId.guests} guest
+              {changeUpperCase(listing.placeType)} &nbsp;
+              {changeUpperCase(listing.propertyType)} •{" "}
+              {listing.beds ?? "—"} bed •{" "}
+              {listing.guests ?? "—"} guest
             </p>
             <p className="text-sm text-gray-500 mt-1">
               Hosted by{" "}
               <span className="font-medium">
-                {changeUpperCase(invoiceData.hostId.firstName) +
-                  " " +
-                  changeUpperCase(invoiceData.hostId.lastName)}
+                {`${changeUpperCase(host.firstName) ?? ""} ${changeUpperCase(host.lastName) ?? ""}`.trim() ||
+                  "—"}
               </span>
             </p>
             <div className="mt-2">
@@ -140,22 +175,22 @@ const Invoice = ({ payment, invoiceData }) => {
         <div className="mb-6 border-t border-b py-4">
           <p className="text-sm text-gray-800">
             <span className="font-semibold">Traveler:</span>
-            <div key={invoiceData.guestData?.adults[0]?.age}>
-              {changeUpperCase(invoiceData.guestData?.adults[0]?.name)},{" "}
-              {invoiceData.guestData?.adults[0]?.age} (booked by)
-            </div>
-            {invoiceData.guestData?.adults.slice(1).map((item, index) => (
-              <div key={item.age || index}>
-                {changeUpperCase(item?.name).trim()}, {item?.age}
+            {adults[0] ? (
+              <div>
+                {changeUpperCase(adults[0]?.name) ?? "—"},{" "}
+                {adults[0]?.age ?? "—"} (booked by)
+              </div>
+            ) : null}
+            {adults.slice(1).map((item, index) => (
+              <div key={`adult-${index}`}>
+                {changeUpperCase(item?.name)?.trim() ?? "—"}, {item?.age ?? "—"}
               </div>
             ))}
-            {invoiceData.guestData?.children
-              ? invoiceData.guestData?.children.map((item, index) => (
-                  <div key={item.name || index}>
-                    {changeUpperCase(item.name)}, {item.age}
-                  </div>
-                ))
-              : null}
+            {children.map((item, index) => (
+              <div key={`child-${index}`}>
+                {changeUpperCase(item?.name) ?? "—"}, {item?.age ?? "—"}
+              </div>
+            ))}
           </p>
         </div>
 
@@ -182,31 +217,22 @@ If you cancel at anytime before 24 hours before check-in, you receive a full ref
           <div className="text-sm text-gray-700 space-y-1">
             <div className="flex justify-between">
               <span>
-                ₹{invoiceData.subTotal.toLocaleString()}.00 ×{" "}
-                {invoiceData.nights} night
+                {money(perNight)} × {nights ?? "—"} night
+                {nights !== null && nights !== 1 ? "s" : ""}
               </span>
-              <span>₹{invoiceData.subTotal.toLocaleString()}.00</span>
+              <span>{money(subTotal)}</span>
             </div>
             <div className="flex justify-between">
               <span>Majestic Escape service fee</span>
-              <span>
-                ₹{Math.round(invoiceData.subTotal * 0.12).toLocaleString()}.00
-              </span>
+              <span>{money(serviceFee)}</span>
             </div>
             <div className="flex justify-between">
               <span>Taxes (GST)</span>
-              <span>
-                ₹
-                {calTax(
-                  invoiceData.subTotal,
-                  invoiceData.subTotal * 0.12,
-                ).toLocaleString()}
-                .00
-              </span>
+              <span>{money(gst)}</span>
             </div>
             <div className="border-t mt-2 pt-2 flex justify-between font-semibold">
               <span>Total (INR)</span>
-              <span>₹{invoiceData.price.toLocaleString()}.00</span>
+              <span>{money(price)}</span>
             </div>
           </div>
         </div>
@@ -217,12 +243,10 @@ If you cancel at anytime before 24 hours before check-in, you receive a full ref
           <div className="text-sm text-gray-700 space-y-1">
             <p>{changeUpperCase(payment?.paymentMethod)}</p>
             <p>{getDate(payment?.createdAt)}</p>
-            <p className="font-medium">
-              ₹{invoiceData.price.toLocaleString()}.00
-            </p>
+            <p className="font-medium">{money(price)}</p>
             <div className="flex justify-between font-semibold border-t pt-2 mt-2">
               <span>Amount paid (INR)</span>
-              <span>₹{invoiceData.price.toLocaleString()}.00</span>
+              <span>{money(price)}</span>
             </div>
           </div>
         </div>

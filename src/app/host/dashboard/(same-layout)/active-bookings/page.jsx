@@ -42,6 +42,11 @@ import { Calendar as CalendarIcon, MoreHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { LIVE } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
+import { readJSON } from "@/lib/storage";
+import { readStoredToken } from "@/lib/session";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 // Mock data for reservations
 const reservations = [];
@@ -75,7 +80,6 @@ export default function ReservationsPage() {
     }
   };
   const router = useRouter();
-  const [bookings, setBookings] = useState();
   const [localState, setLocalState] = useState();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState(null);
@@ -89,41 +93,52 @@ export default function ReservationsPage() {
     const newDate = new Date(Date.UTC(year, month, day));
     return newDate.toISOString();
   };
-  const fetchData = async () => {
-    const getLocalData = await localStorage.getItem("token");
-    const data = JSON.parse(getLocalData);
-
-    const from = getDate(date.from);
-    const to = getDate(date.to);
-    if (process.env.NEXT_PUBLIC_ENV === "dev") {
-      console.log(from, to);
-    }
-    if (data) {
-      try {
-        const response = await fetch(
-          `${API_URL}/booking/filter-active-bookings`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${data}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        const result = await response.json();
-        if (process.env.NEXT_PUBLIC_ENV === "dev") {
-          console.log(result);
-        }
-        const final = await result.data;
-        setBookings(final);
-      } catch (err) {
-        console.error(err);
+  // The endpoint is scoped by the token (no filter params), so the search /
+  // status / date state no longer triggers refetches. LIVE: cached rows
+  // paint instantly and always revalidate.
+  const queryClient = useQueryClient();
+  const hostId =
+    typeof window === "undefined" ? null : readJSON(localStorage, "userId", null);
+  const { data: bookings } = useQuery({
+    queryKey: queryKeys.activeBookings(hostId),
+    queryFn: async () => {
+      const token = readStoredToken();
+      if (!token) return [];
+      const response = await fetch(
+        `${API_URL}/booking/filter-active-bookings`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch active bookings (status: ${response.status})`);
       }
+      const result = await response.json();
+      return Array.isArray(result?.data) ? result.data : [];
+    },
+    enabled: !!hostId,
+    ...LIVE,
+  });
+  // After a confirmed mutation: both host lists, the booking, and the
+  // listing's availability calendar.
+  const fetchData = (propertyId, bookingId) => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.activeBookingsAll });
+    queryClient.invalidateQueries({ queryKey: queryKeys.hostBookingsAll });
+    if (bookingId) {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.bookingById(bookingId),
+      });
+    }
+    if (propertyId) {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.checkDates(propertyId),
+      });
     }
   };
-  useEffect(() => {
-    fetchData();
-  }, [searchValue, status, date]);
 
   const sendConfirmationToUser = async (
     bookingId,
@@ -156,7 +171,7 @@ export default function ReservationsPage() {
           return;
         }
         toast.success("Successfully send the approval email");
-        fetchData();
+        fetchData(selectedBooking?.propertyId?._id, bookingId);
         return response;
       }
     } catch (err) {
@@ -195,7 +210,7 @@ export default function ReservationsPage() {
           return;
         }
         toast.success("Successfully send the rejection email");
-        fetchData();
+        fetchData(selectedBooking?.propertyId?._id, bookingId);
         return response;
       }
     } catch (err) {
@@ -233,7 +248,7 @@ export default function ReservationsPage() {
           return;
         }
         toast.success("Successfully send the cancellation email");
-        fetchData();
+        fetchData(selectedBooking?.propertyId?._id, bookingId);
         return response;
       }
     } catch (err) {

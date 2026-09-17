@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export default function InfoDialog({ isOpen, onClose, property }) {
     const dialogRef = useRef(null);

@@ -10,6 +10,9 @@ export default function ShareDialog({ isOpen, onClose, property }) {
   const [mounted, setMounted] = useState(false);
   const dialogRef = useRef(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  // Declared so the share handlers below don't throw; not rendered yet.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [modalText, setModalText] = useState("");
 
   useEffect(() => {
     setMounted(true);

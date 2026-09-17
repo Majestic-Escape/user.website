@@ -49,7 +49,7 @@ export default function Step3SelfieCapture({ updateFormData, formData }) {
       canvas.height = videoRef.current.videoHeight;
       canvas.getContext("2d").drawImage(videoRef.current, 0, 0);
       const imageDataUrl = canvas.toDataURL("image/jpeg");
-      W(imageDataUrl);
+      setCapturedImage(imageDataUrl);
       updateFormData({ selfie: imageDataUrl });
       stopCamera();
     }

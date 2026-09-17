@@ -11,11 +11,11 @@ import FilterModal from "@/components/ui/modal";
 import { PriceNavigation } from "@/components/ui/price-navigation";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 export default function Layout({ children }) {
   const { modalFilter, setModalFilter, openModal, closeModal, toggleModal } =
     useAuth();
-  const [matches, setMatches] = useState(false);
   const pathname = usePathname();
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -66,20 +66,6 @@ export default function Layout({ children }) {
   const mainPage = pathname == "/";
   const isFilter = pathname.startsWith("/filter");
   const isLocation = pathname.startsWith("/location/");
-
-  function useMediaQuery(query) {
-    useEffect(() => {
-      const media = window.matchMedia(query);
-      setMatches(media.matches);
-
-      const listener = () => setMatches(media.matches);
-      media.addEventListener("change", listener);
-
-      return () => media.removeEventListener("change", listener);
-    }, [query]);
-
-    return matches;
-  }
 
   const isMobile = useMediaQuery("(max-width: 640px)");
   return (

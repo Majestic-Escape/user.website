@@ -19,6 +19,7 @@ import { Heart, MapPin, Share } from "lucide-react";
 import { BookingPopup } from "@/components/booking-popup";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
+import { parseFiniteNumber } from "@/lib/format";
 
 // Navigation is done with real <Link> anchors (one behind each photo, one on
 // the text block) instead of a div onClick + router.push: they prefetch when
@@ -35,6 +36,8 @@ export default function StayCard({ property, includeTaxes }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { user } = useAuth();
   const stayHref = `/stay/${property?._id}`;
+  // Incomplete listings can arrive without a basePrice; never show ₹NaN.
+  const basePrice = parseFiniteNumber(property?.basePrice);
   const calculatePrice = (basePrice) => {
     const serviceFee = Math.round((basePrice * 14) / 100);
     const priceWithServiceFee = basePrice + serviceFee;
@@ -113,10 +116,13 @@ export default function StayCard({ property, includeTaxes }) {
     console.log(property);
   }
 
+  // Listings can arrive with missing text fields (incomplete or legacy
+  // documents); never let one bad card take down the whole grid.
   function convertToUpperCase(item) {
-    const newItem = item[0]?.toUpperCase() + item.slice(1);
-    return newItem;
+    if (typeof item !== "string" || item.length === 0) return "";
+    return item[0].toUpperCase() + item.slice(1);
   }
+  const photos = Array.isArray(property?.photos) ? property.photos : [];
   return (
     <div
       id={`property-${property?._id}`}
@@ -134,7 +140,7 @@ export default function StayCard({ property, includeTaxes }) {
       >
         <Carousel className="w-full" setApi={setApi}>
           <CarouselContent>
-            {property?.photos.map((image, idx) => (
+            {photos.map((image, idx) => (
               <CarouselItem key={idx}>
                 {/* Duplicate of the text link below; hidden from AT/tab order. */}
                 <Link
@@ -165,7 +171,7 @@ export default function StayCard({ property, includeTaxes }) {
         </div> */}
 
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-          {property?.photos.map((_, idx) => (
+          {photos.map((_, idx) => (
             <button
               key={idx}
               onClick={(e) => {
@@ -202,10 +208,13 @@ export default function StayCard({ property, includeTaxes }) {
             </p>
             <p className="text-gray-600">
               <span className="text-absoluteDark text-base font-semibold">
-                {formattedPrice.format(property?.basePrice)}&nbsp;
+                {basePrice === null
+                  ? "Price on request"
+                  : formattedPrice.format(basePrice)}
+                &nbsp;
               </span>
               {/* <Link href={`/stay/${property?._id}`}> */}
-              per night
+              {basePrice === null ? null : "per night"}
               {/* </Link> */}
             </p>
           </div>

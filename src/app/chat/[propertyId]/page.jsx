@@ -193,7 +193,7 @@ export default function ChatPage({ params }) {
     async function fetchProperty() {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/property/${propertyId}`
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/properties/${propertyId}`
         );
         if (res.ok) {
           const data = await res.json();

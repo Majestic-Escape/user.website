@@ -17,6 +17,10 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import axios from "axios";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { USER } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
+import { readJSON } from "@/lib/storage";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const states = [
   // 28 States
@@ -101,30 +105,27 @@ export default function AccountInfo() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const fileInputRef = useRef(null);
   const dropdownRef = useRef(null);
-  // Fetch profile information when the user's email is available
-  useEffect(() => {
-    if (!auth?.user?.email) return;
-
-    const fetchProfileInfo = async () => {
-      try {
-        const res = await fetch(`${API_URL}/accounts?email=${auth.user.email}`);
-        if (!res.ok) {
-          throw new Error("Network response was not ok");
-        }
-        const data = await res.json();
-        if (process.env.NEXT_PUBLIC_ENV === "dev") {
-          console.log("Fetched Data:", data);
-        }
-
-        setProfileData(data);
-        setAvatarUrl(data.profilePicture);
-      } catch (error) {
-        console.error("Error fetching profile info:", error);
+  // Profile is cached per email (USER preset) so re-opening the account
+  // page paints instantly; the editable form state below is seeded from it.
+  const queryClient = useQueryClient();
+  const email = auth?.user?.email;
+  const { data: fetchedProfile } = useQuery({
+    queryKey: queryKeys.account(email),
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/accounts?email=${email}`);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch profile (status: ${res.status})`);
       }
-    };
-
-    fetchProfileInfo();
-  }, [auth?.user?.email]);
+      return res.json();
+    },
+    enabled: !!email,
+    ...USER,
+  });
+  useEffect(() => {
+    if (!fetchedProfile) return;
+    setProfileData(fetchedProfile);
+    setAvatarUrl(fetchedProfile.profilePicture);
+  }, [fetchedProfile]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -347,6 +348,27 @@ export default function AccountInfo() {
       const updatedData = await res.json();
       toast.success("Profile updated successfully!");
       setProfileData((prev) => ({ ...prev, ...updatedData })); // Update local state with the latest profile data
+      // Only after the 2xx: refresh the cached profile and the login snapshot
+      // the navbar reads, so the new name shows everywhere without a reload.
+      queryClient.setQueryData(queryKeys.account(email), (prev) => ({
+        ...(prev ?? {}),
+        ...updatedData,
+      }));
+      try {
+        const snapshot = readJSON(localStorage, "user", null);
+        if (snapshot && typeof snapshot === "object") {
+          localStorage.setItem(
+            "user",
+            JSON.stringify({
+              ...snapshot,
+              firstName: updatedData?.firstName ?? snapshot.firstName,
+              lastName: updatedData?.lastName ?? snapshot.lastName,
+            }),
+          );
+        }
+      } catch {
+        // storage unavailable; the navbar picks the name up at next login
+      }
     } catch (error) {
       console.error("Error saving profile:", error);
       toast.error("Failed to save profile.");

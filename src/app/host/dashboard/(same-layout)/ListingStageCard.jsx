@@ -12,6 +12,8 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
+import { USER } from "@/lib/query-presets";
+import { queryKeys } from "@/lib/query-keys";
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -83,7 +85,7 @@ export default function ListingStageCard() {
   const auth = useAuth();
 
   const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ["listingStatus", auth?.user?.email],
+    queryKey: queryKeys.listingStatus(auth?.user?.email),
     queryFn: async () => {
       const response = await fetch(
         `${API_URL}/prop-listing/status?email=${auth.user.email}`
@@ -94,7 +96,9 @@ export default function ListingStageCard() {
       return response.json();
     },
     enabled: !!auth?.user?.email, // Only run the query if the user exists.
-    refetchOnWindowFocus: true, // Optionally, refetch when the window regains focus.
+    // USER preset: cached for a minute (dashboard → listings → dashboard no
+    // longer refetches), revalidated on focus and by add/edit-listing.
+    ...USER,
     // Uncomment the line below to poll every 5 seconds, if needed.
     // refetchInterval: 5000,
   });
