@@ -57,8 +57,17 @@ export default function DashboardLayout({ children }) {
 
   return (
     <ProtectedRoute>
-      <div className="md:hidden block">
-        <header className=" w-full z-10 bg-white border-b flex justify-between h-16 py-2 shrink-0 items-center gap-2 transition-[width,height] ease-linear pr-6 group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+      {/* One tree for every width. The mobile header, the desktop sidebar/
+          header and the bottom navigation switch on `md:`; the page itself
+          (`children`) is mounted exactly once. Rendering it twice (a hidden
+          mobile copy and a hidden desktop copy) doubled every page's effects
+          and network calls. */}
+      <SidebarProvider>
+        <div className="hidden md:contents">
+          <AppSidebar />
+        </div>
+        <SidebarInset>
+        <header className="md:hidden w-full z-10 bg-white border-b flex justify-between h-16 py-2 shrink-0 items-center gap-2 transition-[width,height] ease-linear pr-6 group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex w-full justify-between  items-center gap-2 px-4">
             <Breadcrumb>
               <BreadcrumbList>
@@ -73,19 +82,16 @@ export default function DashboardLayout({ children }) {
                     <BreadcrumbSeparator />
                   </>
                 )}
-
                 <BreadcrumbItem>
                   <BreadcrumbPage>{displayText}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-
             <div className=" flex justify-end gap-x-4 ">
               {/* <MessageCircle className="text-gray-500" /> */}
               {/* <BellDotIcon className="text-gray-500" /> */}
             </div>
           </div>
-
           <div className="items-center gap-x-2 hidden md:flex">
             <Link
               href={"/inbox"}
@@ -109,7 +115,6 @@ export default function DashboardLayout({ children }) {
               <Headphones className="w-5 h-5" />
             </Link>
             <Separator orientation="vertical" className="mr-2 h-4" />
-
             <Button
               className="bg-primaryGreen  text-white hover:bg-brightGreen  rounded-full px-6"
               onClick={handleLogout}
@@ -118,20 +123,7 @@ export default function DashboardLayout({ children }) {
             </Button>
           </div>
         </header>
-
-        <main
-          className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min p-8"
-          style={{ maxWidth: "100vw" }}
-        >
-          {children}
-        </main>
-        <HostBottomNavigation />
-      </div>
-      <div className="hidden md:block">
-        <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset>
-            <header className="w-full z-10 bg-white border-b flex justify-between h-16 py-2 shrink-0 items-center gap-2 transition-[width,height] ease-linear pr-6 group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+            <header className="w-full z-10 bg-white border-b hidden md:flex justify-between h-16 py-2 shrink-0 items-center gap-2 transition-[width,height] ease-linear pr-6 group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
               <div className="flex justify-between  items-center gap-2 px-4">
                 <SidebarTrigger className="-ml-1" />
                 <Separator orientation="vertical" className="mr-2 h-4" />
@@ -156,7 +148,6 @@ export default function DashboardLayout({ children }) {
                   </BreadcrumbList>
                 </Breadcrumb>
               </div>
-
               <div className="items-center gap-x-2 hidden md:flex">
                 {/* <Link href={"/inbox"} className="hover:text-primaryGreen   text-brightGreen" size="icon">
           <MessageSquare className="w-5 h-5" />
@@ -167,7 +158,6 @@ export default function DashboardLayout({ children }) {
         <Link href="/host/help-center"  className="hover:text-primaryGreen   text-brightGreen" size="icon">
         <Headphones className="w-5 h-5" />
         </Link> */}
-
                 <Separator orientation="vertical" className="mr-2 h-4" />
                 <Button
                   onClick={switchToTraveling}
@@ -175,20 +165,20 @@ export default function DashboardLayout({ children }) {
                 >
                   Switch to Traveling
                 </Button>
-
                 <UserDropdownMenu />
               </div>
             </header>
-
-            <main
-              className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min p-8"
-              style={{ maxWidth: "100vw" }}
-            >
-              {children}
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
-      </div>
+          <main
+            className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min p-8"
+            style={{ maxWidth: "100vw" }}
+          >
+            {children}
+          </main>
+          <div className="md:hidden">
+            <HostBottomNavigation />
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
     </ProtectedRoute>
   );
 }
