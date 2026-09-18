@@ -42,7 +42,9 @@ async function fetchProperty(id) {
   const API_URL =
     process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
   const response = await fetch(`${API_URL}/properties/${id}`, {
-    next: { revalidate: 3600 }, // Revalidate every hour
+    // Revalidate every hour, or as soon as the backend reports a change to
+    // this listing (Batch P: POST /api/revalidate with `listing:<id>`).
+    next: { revalidate: 3600, tags: ["listings", `listing:${id}`] },
     // A hung backend must become an error (error.jsx / 500) within a bounded
     // time instead of holding the render until the platform kills it.
     signal: AbortSignal.timeout(10_000),
