@@ -22,6 +22,96 @@ class SocketManager {
     // never resurrect a socket the app deliberately tore down.
     this.intentionallyDisconnected = false;
     this._recoveryBound = false;
+    // Rooms that were joined on the previous connection and must be re-joined
+    // on the next one. Socket.IO's connection-state recovery does not restore
+    // rooms behind the Redis adapter (production), so this is the only thing
+    // that brings a thread back to life after a transport drop.
+    this.pendingRejoin = new Set();
+    this._onConnect = this._onConnect.bind(this);
+    this._onDisconnect = this._onDisconnect.bind(this);
+    this._onError = this._onError.bind(this);
+  }
+
+  /**
+   * The manager's own socket listeners. Registered by getSocket() and
+   * re-attached on every reuse: a consumer that calls socket.off("connect")
+   * without a handler wipes every listener for that event, ours included, and
+   * the singleton would then never notice a reconnect again (state stuck in
+   * "connecting", no manual reconnect after a server restart, no room
+   * rejoin). Idempotent — Socket.IO's emitter adds a function once per call,
+   * so we check before adding.
+   */
+  _ensureListeners() {
+    if (!this.socket) return;
+    const has = (event, fn) => this.socket.listeners(event).includes(fn);
+    if (!has("connect", this._onConnect)) this.socket.on("connect", this._onConnect);
+    if (!has("disconnect", this._onDisconnect)) this.socket.on("disconnect", this._onDisconnect);
+    if (!has("error", this._onError)) this.socket.on("error", this._onError);
+  }
+
+  _onConnect() {
+    this.reconnectAttempt = 0;
+    this.lastConnectTime = Date.now();
+    console.log(`[SocketManager] Connected! Socket ID: ${this.socket?.id}`);
+    this._setConnectionState("connected");
+
+    // Rejoin all rooms after reconnection
+    this._rejoinRooms();
+  }
+
+  _onDisconnect(reason) {
+    const connectedDuration = this.lastConnectTime
+      ? Math.round((Date.now() - this.lastConnectTime) / 1000)
+      : 0;
+    console.log(`[SocketManager] Disconnected after ${connectedDuration}s. Reason: ${reason}`);
+
+    // Remember the rooms so the next connection re-joins them; the server
+    // forgot them with the old socket.
+    this.joinedRooms.forEach((room) => this.pendingRejoin.add(room));
+    this.joinedRooms.clear();
+
+    // Handle different disconnect reasons
+    switch (reason) {
+      case "io server disconnect":
+        // The one reason Socket.IO will NOT auto-reconnect from. It fires on
+        // every majestic-chat deploy/restart, so leaving it here meant guests
+        // stayed silently offline — no live messages, no typing, no unread
+        // updates — until they happened to reload the page. Reconnect
+        // manually; `reconnection: true` does not cover this case.
+        // (The widget's /support socket already does exactly this.)
+        if (this.intentionallyDisconnected) {
+          this._setConnectionState("disconnected");
+          break;
+        }
+        console.log("[SocketManager] Server dropped us — reconnecting manually");
+        this._setConnectionState("connecting");
+        this.socket?.connect();
+        break;
+      case "io client disconnect":
+        // We called disconnect() - intentional
+        console.log("[SocketManager] Client initiated disconnect");
+        this._setConnectionState("disconnected");
+        break;
+      case "transport close":
+      case "transport error":
+        // Network issue - will auto-reconnect
+        console.log("[SocketManager] Transport issue, will reconnect automatically");
+        this._setConnectionState("connecting");
+        break;
+      case "ping timeout":
+        // Server didn't respond to ping - will auto-reconnect
+        console.log("[SocketManager] Ping timeout, will reconnect automatically");
+        this._setConnectionState("connecting");
+        break;
+      default:
+        // Unknown reason - let reconnection handle it
+        console.log(`[SocketManager] Unknown disconnect reason: ${reason}`);
+        this._setConnectionState("connecting");
+    }
+  }
+
+  _onError(error) {
+    console.error("[SocketManager] Socket error:", error);
   }
 
   /**
@@ -90,6 +180,7 @@ class SocketManager {
     if (this.socket && this.token === token) {
       this.connectionCount++;
       console.log(`[SocketManager] Reusing existing socket, count: ${this.connectionCount}`);
+      this._ensureListeners();
       return this.socket;
     }
 
@@ -99,6 +190,7 @@ class SocketManager {
       this.socket.disconnect();
       this.socket = null;
       this.joinedRooms.clear();
+      this.pendingRejoin.clear();
     }
 
     this.token = token;
@@ -139,72 +231,25 @@ class SocketManager {
       multiplex: true,
     });
 
-    // Track connection state
-    this.socket.on("connect", () => {
-      this.reconnectAttempt = 0;
-      this.lastConnectTime = Date.now();
-      console.log(`[SocketManager] Connected! Socket ID: ${this.socket.id}`);
-      this._setConnectionState("connected");
-      
-      // Rejoin all rooms after reconnection
-      this._rejoinRooms();
-    });
+    // Track connection state (see _ensureListeners for why these are named)
+    this._ensureListeners();
 
     this.socket.on("connect_error", (error) => {
       console.warn(`[SocketManager] Connection error: ${error.message}`);
-      // Stay in connecting state - let reconnection handle it
+      // A rejection by the server's auth middleware (expired / invalidated /
+      // malformed token) is final: Socket.IO drops its subscriptions
+      // (socket.active === false) and will not retry on its own, so
+      // "connecting" would be a lie the badge shows forever. Report it as an
+      // error; the recovery listeners still attempt connect() when the tab
+      // regains focus or the network returns, and a new login supplies a new
+      // token through getSocket().
+      if (this.socket && !this.socket.active) {
+        this._setConnectionState("error");
+        return;
+      }
+      // Transport-level failures keep reconnecting with backoff.
       if (this.connectionState !== "connecting") {
         this._setConnectionState("connecting");
-      }
-    });
-
-    // Handle disconnect with detailed logging
-    this.socket.on("disconnect", (reason) => {
-      const connectedDuration = this.lastConnectTime 
-        ? Math.round((Date.now() - this.lastConnectTime) / 1000) 
-        : 0;
-      console.log(`[SocketManager] Disconnected after ${connectedDuration}s. Reason: ${reason}`);
-      
-      // Clear joined rooms - they need to be rejoined after reconnect
-      this.joinedRooms.clear();
-      
-      // Handle different disconnect reasons
-      switch (reason) {
-        case "io server disconnect":
-          // The one reason Socket.IO will NOT auto-reconnect from. It fires on
-          // every majestic-chat deploy/restart, so leaving it here meant guests
-          // stayed silently offline — no live messages, no typing, no unread
-          // updates — until they happened to reload the page. Reconnect
-          // manually; `reconnection: true` does not cover this case.
-          // (The widget's /support socket already does exactly this.)
-          if (this.intentionallyDisconnected) {
-            this._setConnectionState("disconnected");
-            break;
-          }
-          console.log("[SocketManager] Server dropped us — reconnecting manually");
-          this._setConnectionState("connecting");
-          this.socket?.connect();
-          break;
-        case "io client disconnect":
-          // We called disconnect() - intentional
-          console.log("[SocketManager] Client initiated disconnect");
-          this._setConnectionState("disconnected");
-          break;
-        case "transport close":
-        case "transport error":
-          // Network issue - will auto-reconnect
-          console.log("[SocketManager] Transport issue, will reconnect automatically");
-          this._setConnectionState("connecting");
-          break;
-        case "ping timeout":
-          // Server didn't respond to ping - will auto-reconnect
-          console.log("[SocketManager] Ping timeout, will reconnect automatically");
-          this._setConnectionState("connecting");
-          break;
-        default:
-          // Unknown reason - let reconnection handle it
-          console.log(`[SocketManager] Unknown disconnect reason: ${reason}`);
-          this._setConnectionState("connecting");
       }
     });
 
@@ -229,23 +274,20 @@ class SocketManager {
       this._setConnectionState("error");
     });
 
-    // Handle errors
-    this.socket.on("error", (error) => {
-      console.error("[SocketManager] Socket error:", error);
-    });
-
     return this.socket;
   }
 
   /**
-   * Rejoin all previously joined rooms after reconnection
+   * Rejoin every room of the previous connection (plus any join queued while
+   * we were offline) on the new one.
    */
   _rejoinRooms() {
     if (!this.socket || !this.socket.connected) return;
-    
-    const roomsToRejoin = new Set(this.joinedRooms);
+
+    const roomsToRejoin = new Set([...this.pendingRejoin, ...this.joinedRooms]);
+    this.pendingRejoin.clear();
     this.joinedRooms.clear();
-    
+
     roomsToRejoin.forEach(roomKey => {
       const conversationId = roomKey.replace('conversation:', '');
       console.log(`[SocketManager] Rejoining room: ${conversationId}`);
@@ -254,17 +296,16 @@ class SocketManager {
   }
 
   /**
-   * Join a conversation room (with client-side deduplication).
+   * Join a conversation room (with client-side deduplication). Without a
+   * socket yet (a page can have its list before the app has acquired one) or
+   * while disconnected, the join is queued and issued on the next connect.
    */
   joinRoom(conversationId) {
-    if (!this.socket || !conversationId) return;
-    
-    // Only join if socket is connected
-    if (!this.socket.connected) {
-      // Queue the join for when socket connects
+    if (!conversationId) return;
+
+    if (!this.socket || !this.socket.connected) {
       const roomKey = `conversation:${conversationId}`;
-      // Pre-add to joinedRooms so it gets rejoined on connect
-      this.joinedRooms.add(roomKey);
+      this.pendingRejoin.add(roomKey);
       console.log(`[SocketManager] Queued room join for: ${conversationId}`);
       return;
     }
@@ -287,10 +328,11 @@ class SocketManager {
    * Leave a conversation room.
    */
   leaveRoom(conversationId) {
-    if (!this.socket || !conversationId) return;
+    if (!conversationId) return;
 
     const roomKey = `conversation:${conversationId}`;
-    if (!this.joinedRooms.has(roomKey)) {
+    this.pendingRejoin.delete(roomKey);
+    if (!this.socket || !this.joinedRooms.has(roomKey)) {
       return; // Not in room
     }
 
@@ -335,6 +377,7 @@ class SocketManager {
       this.socket = null;
       this.token = null;
       this.joinedRooms.clear();
+      this.pendingRejoin.clear();
       this.connectionCount = 0;
       this._setConnectionState("disconnected");
     }
