@@ -5,6 +5,7 @@ import { useCheckToken } from "@/services/useCheckToken";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { isPlainObject, readJSON } from "@/lib/storage";
+import { socketManager } from "@/lib/socket";
 import {
   SESSION_CLEARED_EVENT,
   clearSession,
@@ -244,6 +245,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = () => {
     setUser(null);
+    // The chat socket carries this user's identity and room subscriptions;
+    // tear it down with the session so a signed-out tab stops receiving the
+    // account's messages and unread pushes.
+    socketManager.disconnect();
     // Shared teardown (auth keys, query cache, verification memo), then the
     // full wipe a manual logout has always done.
     clearSession(queryClient);
