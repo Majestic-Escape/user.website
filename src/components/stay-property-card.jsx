@@ -150,14 +150,22 @@ export default function StayCard({ property, includeTaxes }) {
                   draggable={false}
                   className="block"
                 >
-                  <Image
-                    src={image}
-                    width={400}
-                    height={400}
-                    alt={`${property?.title} - Image ${idx + 1}`}
-                    className="aspect-square w-full h-auto object-cover object-center rounded-lg"
-                    draggable={false}
-                  />
+                  {/* Batch P: only the visible slide and its neighbours carry an
+                      image — a card with 14 photos used to request all 14 on
+                      load. Empty slides keep embla's snaps and dots stable. */}
+                  {Math.abs(idx - currentImageIndex) <= 1 ? (
+                    <Image
+                      src={image}
+                      width={400}
+                      height={400}
+                      quality={70}
+                      alt={`${property?.title} - Image ${idx + 1}`}
+                      className="aspect-square w-full h-auto object-cover object-center rounded-lg"
+                      draggable={false}
+                    />
+                  ) : (
+                    <div aria-hidden="true" className="aspect-square w-full rounded-lg bg-gray-100" />
+                  )}
                 </Link>
               </CarouselItem>
             ))}

@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+// Partner logos are pre-generated static WebP files served as-is (Batch P).
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -104,8 +106,10 @@ export default function Footer() {
                     <div className="hidden desktop:block desktop:flex items-center  pt-38">
                       {" "}
                       {/* <Link href={"https://evokeexperiences.in/"}> */}
-                      <Image
-                        src="/images/govt/evoke.png"
+                      <img
+                        src="/images/govt/gen/evoke-300.webp"
+                        loading="lazy"
+                        decoding="async"
                         width={150}
                         height={150}
                         alt="mail icon"
@@ -113,8 +117,10 @@ export default function Footer() {
                       />
                       {/* </Link>
                       <Link href={"https://nidhi.tourism.gov.in/"}> */}
-                      <Image
-                        src="/images/govt/nidhi.png"
+                      <img
+                        src="/images/govt/gen/nidhi-300.webp"
+                        loading="lazy"
+                        decoding="async"
                         width={100}
                         height={100}
                         alt="mail icon"
@@ -122,8 +128,10 @@ export default function Footer() {
                       />
                       {/* </Link>{" "}
                       <Link href={"https://goa-tourism.com/"}> */}
-                      <Image
-                        src="/images/govt/goa-tourism.png"
+                      <img
+                        src="/images/govt/gen/goa-tourism-300.webp"
+                        loading="lazy"
+                        decoding="async"
                         width={100}
                         height={100}
                         alt="mail icon"
@@ -131,16 +139,20 @@ export default function Footer() {
                       />
                       {/* </Link>
                       <Link href={"https://forest.goa.gov.in/"}> */}
-                      <Image
-                        src="/images/govt/goa-forest-dept.png"
+                      <img
+                        src="/images/govt/gen/goa-forest-dept-300.webp"
+                        loading="lazy"
+                        decoding="async"
                         width={100}
                         height={100}
                         alt="mail icon"
                         className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 "
                       />
                       {/* </Link> */}
-                      <Image
-                        src="/images/govt/rann_utsav.png"
+                      <img
+                        src="/images/govt/gen/rann_utsav-300.webp"
+                        loading="lazy"
+                        decoding="async"
                         width={150}
                         height={150}
                         alt="mail icon"
@@ -151,8 +163,10 @@ export default function Footer() {
                   {/*Mobile*/}
                   <div className="flex md:flex-start desktop:hidden md:items-center pt-38 ">
                     {/* <Link href={"https://forest.goa.gov.in/"}> */}
-                    <Image
-                      src="/images/govt/goa-forest-dept.png"
+                    <img
+                      src="/images/govt/gen/goa-forest-dept-300.webp"
+                      loading="lazy"
+                      decoding="async"
                       width={100}
                       height={100}
                       alt="mail icon"
@@ -160,8 +174,10 @@ export default function Footer() {
                     />
                     {/* </Link>{" "}
                     <Link href={"https://goa-tourism.com/"}> */}
-                    <Image
-                      src="/images/govt/goa-tourism.png"
+                    <img
+                      src="/images/govt/gen/goa-tourism-300.webp"
+                      loading="lazy"
+                      decoding="async"
                       width={100}
                       height={100}
                       alt="mail icon"
@@ -169,8 +185,10 @@ export default function Footer() {
                     />
                     {/* </Link>
                     <Link href={"https://nidhi.tourism.gov.in/"}> */}
-                    <Image
-                      src="/images/govt/nidhi.png"
+                    <img
+                      src="/images/govt/gen/nidhi-300.webp"
+                      loading="lazy"
+                      decoding="async"
                       width={100}
                       height={100}
                       alt="mail icon"
@@ -180,16 +198,20 @@ export default function Footer() {
                   </div>
                   <div className="desktop:hidden flex justify-center">
                     {" "}
-                    <Image
-                      src="/images/govt/rann_utsav.png"
+                    <img
+                      src="/images/govt/gen/rann_utsav-300.webp"
+                      loading="lazy"
+                      decoding="async"
                       width={100}
                       height={100}
                       alt="mail icon"
                       className=""
                     />
                     {/* <Link href={"https://evokeexperiences.in/"}> */}
-                    <Image
-                      src="/images/govt/evoke.png"
+                    <img
+                      src="/images/govt/gen/evoke-300.webp"
+                      loading="lazy"
+                      decoding="async"
                       width={100}
                       height={100}
                       alt="mail icon"
@@ -258,8 +280,10 @@ export default function Footer() {
                   <div className="">
                     <div className="flex items-center  pt-38">
                       {/* <Link href={"https://goa-tourism.com/"}> */}
-                      <Image
-                        src="/images/govt/goa-tourism.png"
+                      <img
+                        src="/images/govt/gen/goa-tourism-300.webp"
+                        loading="lazy"
+                        decoding="async"
                         width={100}
                         height={100}
                         alt="mail icon"
@@ -267,8 +291,10 @@ export default function Footer() {
                       />
                       {/* </Link>{" "} hover:scale-105*/}
                       {/* <Link href={"https://nidhi.tourism.gov.in/"}> */}
-                      <Image
-                        src="/images/govt/nidhi.png"
+                      <img
+                        src="/images/govt/gen/nidhi-300.webp"
+                        loading="lazy"
+                        decoding="async"
                         width={100}
                         height={100}
                         alt="mail icon"
@@ -276,8 +302,10 @@ export default function Footer() {
                       />
                       {/* </Link>{" "}
                       <Link href={"https://evokeexperiences.in/"}> */}
-                      <Image
-                        src="/images/govt/evoke.png"
+                      <img
+                        src="/images/govt/gen/evoke-300.webp"
+                        loading="lazy"
+                        decoding="async"
                         width={150}
                         height={150}
                         alt="mail icon"
@@ -285,16 +313,20 @@ export default function Footer() {
                       />
                       {/* </Link>
                       <Link href={"https://forest.goa.gov.in/"}> */}
-                      <Image
-                        src="/images/govt/goa-forest-dept.png"
+                      <img
+                        src="/images/govt/gen/goa-forest-dept-300.webp"
+                        loading="lazy"
+                        decoding="async"
                         width={100}
                         height={100}
                         alt="mail icon"
                         className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 hover:scale-105"
                       />
                       {/* </Link> */}
-                      <Image
-                        src="/images/govt/rann_utsav.png"
+                      <img
+                        src="/images/govt/gen/rann_utsav-300.webp"
+                        loading="lazy"
+                        decoding="async"
                         width={150}
                         height={150}
                         alt="mail icon"

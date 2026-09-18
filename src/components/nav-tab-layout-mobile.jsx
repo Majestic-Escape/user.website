@@ -5,13 +5,13 @@ import { Tabs, MobileTabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { name: "Stays", href: "/stays", icon: "/images/mobile/house1.png" },
+  { name: "Stays", href: "/stays", icon: "/images/mobile/gen/house1-140.webp" },
   {
     name: "Experiences",
     href: "/experiences",
-    icon: "/images/mobile/compass.png",
+    icon: "/images/mobile/gen/compass-140.webp",
   },
-  { name: "Services", href: "/services", icon: "/images/mobile/service1.png" },
+  { name: "Services", href: "/services", icon: "/images/mobile/gen/service1-140.webp" },
 ];
 
 export default function MobileNavTabLayout() {
