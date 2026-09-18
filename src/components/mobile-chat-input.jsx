@@ -19,9 +19,21 @@ export default function MobileChatInput({
   placeholder = "Type a message...",
   className = "",
   autoFocus = false,
+  // Optional: rendered above the input row (e.g. the reply preview bar).
+  topSlot = null,
+  // Optional: lets the page focus the input (reply-to focuses synchronously).
+  inputRef: externalRef = null,
+  maxLength,
 }) {
   const inputRef = useRef(null);
   const containerRef = useRef(null);
+  const setInputRef = useCallback(
+    (el) => {
+      inputRef.current = el;
+      if (externalRef) externalRef.current = el;
+    },
+    [externalRef]
+  );
 
   // Auto-focus on mount if requested
   useEffect(() => {
@@ -76,12 +88,15 @@ export default function MobileChatInput({
     }
   }, [value, disabled, isSending, onSend]);
 
+  // The page handler runs first; when it consumed the key (Enter → its own
+  // send, Escape → cancel reply) we must not send a second time.
   const handleKeyDown = useCallback((e) => {
+    onKeyDown?.(e);
+    if (e.defaultPrevented) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
-    onKeyDown?.(e);
   }, [handleSend, onKeyDown]);
 
   const handleChange = useCallback((e) => {
@@ -104,12 +119,14 @@ export default function MobileChatInput({
       className={`p-4 border-t bg-white flex-shrink-0 ${className}`} 
       style={{ width: '100%', touchAction: 'none' }}
     >
+      {topSlot}
       <div className="flex items-center gap-2 w-full">
         <input
-          ref={inputRef}
+          ref={setInputRef}
           type="text"
           placeholder={placeholder}
           value={value}
+          maxLength={maxLength}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}

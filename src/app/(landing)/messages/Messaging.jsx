@@ -35,6 +35,15 @@ import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
+import { toast } from "sonner";
+import SwipeToReply from "@/components/chat/SwipeToReply";
+import QuotedMessage from "@/components/chat/QuotedMessage";
+import ReplyPreviewBar from "@/components/chat/ReplyPreviewBar";
+import SendStatus from "@/components/chat/SendStatus";
+import { useReplyTo } from "@/hooks/useReplyTo";
+import { useSendLifecycle } from "@/hooks/useSendLifecycle";
+import { useConnectionBadge } from "@/hooks/useConnectionBadge";
+import { MAX_MESSAGE_LENGTH } from "@/lib/chat/reply";
 import {
   getCachedConversations,
   setCachedConversations,
@@ -107,6 +116,54 @@ export default function MessagesPage() {
   const isMobileViewRef = useRef(false);
   const programmaticBackRef = useRef(false);
   const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
+
+  // Bumped on every RE-connect so the open thread is re-fetched and merged
+  // (echoes missed while offline, outside the socket's recovery window).
+  const [reconnectTick, setReconnectTick] = useState(0);
+  const hasConnectedOnceRef = useRef(false);
+
+  // Header badge: silent for the initial handshake / an already-connected
+  // singleton; only a lost connection is shown.
+  const connectionBadge = useConnectionBadge();
+  const composerBlocked = connectionBadge === "offline" || connectionBadge === "error";
+
+  // Quote / reply. The two branches (mobile / desktop) mount one composer each
+  // — the refs are cross-named historically, so take whichever is live.
+  const otherFirstName = propertyDetails[selectedConversation?.propertyId]?.host?.firstName || "Host";
+  const { replyTo, startReply, cancelReply, restoreReply, scrollToMessage, onComposerKeyDown, labelFor } = useReplyTo({
+    conversationId: selectedConversation?.id,
+    userId,
+    otherName: otherFirstName,
+    getInput: () => desktopInputRef.current || mobileInputRef.current,
+    getScroller: () => messagesContainerRef.current,
+  });
+
+  // Send lifecycle: optimistic bubble → ack; definitive rejections restore the
+  // draft, anything ambiguous keeps the bubble retryable under the same id.
+  const {
+    send: sendViaLifecycle,
+    retry: retrySend,
+    discard: discardSend,
+    notifyServerMessage,
+    reconcileHistory,
+  } = useSendLifecycle({
+    userId,
+    conversationId: selectedConversation?.id,
+    getSocket: () => (socketRef.current && socketRef.current.connected ? socketRef.current : null),
+    messages,
+    setMessages,
+    onRejected: ({ text, replyTo: ref, code, error }) => {
+      toast.error(error || "Message not sent");
+      setNewMessage((cur) => (cur ? cur : text));
+      if (code !== "MESSAGE_NOT_FOUND" && ref) restoreReply(ref);
+    },
+  });
+  // Socket handlers are bound once inside init(); reach the latest hook
+  // functions through refs so they never go stale.
+  const notifyServerMessageRef = useRef(notifyServerMessage);
+  notifyServerMessageRef.current = notifyServerMessage;
+  const reconcileHistoryRef = useRef(reconcileHistory);
+  reconcileHistoryRef.current = reconcileHistory;
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -586,6 +643,8 @@ export default function MessagesPage() {
         });
 
         const handleConnect = () => {
+          if (hasConnectedOnceRef.current) setReconnectTick((t) => t + 1);
+          hasConnectedOnceRef.current = true;
           const guestConvs = (data.data || []).filter((conv) => {
             const participant = conv.participants.find(
               (p) => p.userId === userId
@@ -612,12 +671,14 @@ export default function MessagesPage() {
           
           if (!isGuestConversation) return;
           
+          notifyServerMessageRef.current?.(msgData.message);
+
           if (currentConversation && msgData.conversationId === currentConversation.id) {
             setMessages(prev => {
               // Check if message already exists by id OR by clientMessageId (for optimistic updates)
               const existingIndex = prev.findIndex(m => 
                 m.id === msgData.message.id || 
-                (msgData.message.clientMessageId && m.id === msgData.message.clientMessageId)
+                (msgData.message.clientMessageId && (m.id === msgData.message.clientMessageId || m.clientMessageId === msgData.message.clientMessageId))
               );
               
               if (existingIndex !== -1) {
@@ -760,10 +821,11 @@ export default function MessagesPage() {
         const data = await res.json();
         
         if (data.success && data.data) {
-          const sortedMessages = (data.data.data || []).sort((a, b) => 
+          const sortedMessages = (data.data.data || []).sort((a, b) =>
             new Date(a.createdAt) - new Date(b.createdAt)
           );
-          setMessages(sortedMessages);
+          sortedMessages.forEach((m) => notifyServerMessageRef.current?.(m));
+          setMessages(reconcileHistoryRef.current ? reconcileHistoryRef.current(sortedMessages) : sortedMessages);
         }
 
         if (socketRef.current) {
@@ -778,6 +840,39 @@ export default function MessagesPage() {
 
     loadMessages();
   }, [selectedConversation?.id, token, chatUrl, userId]);
+
+  // After a reconnect, re-fetch the open thread and merge it into what is on
+  // screen: server copies replace optimistic ones (by id / clientMessageId),
+  // missed messages are appended, unresolved local sends are kept.
+  const reconnectConversationId = selectedConversation?.id;
+  useEffect(() => {
+    if (!reconnectTick || !reconnectConversationId || !token) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `${chatUrl}/api/chat/conversations/${reconnectConversationId}/messages?limit=50`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        if (cancelled || !data.success || !data.data) return;
+        const fetched = data.data.data || [];
+        fetched.forEach((m) => notifyServerMessageRef.current?.(m));
+        setMessages((prev) => {
+          const byKey = new Map();
+          const keyOf = (m) => m.clientMessageId || m.id;
+          for (const m of prev) byKey.set(keyOf(m), m);
+          for (const m of fetched) byKey.set(keyOf(m), m);
+          return [...byKey.values()].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        });
+      } catch (err) {
+        console.error("Reconnect refetch error:", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [reconnectTick, reconnectConversationId, token, chatUrl]);
 
   // Track messages we've already marked as read to prevent infinite loops
   const markedAsReadRef = useRef(new Set());
@@ -896,37 +991,12 @@ export default function MessagesPage() {
 
     setSending(true);
     const text = newMessage.trim();
-    const clientMessageId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-
-    const optimisticMsg = {
-      id: clientMessageId,
-      conversationId: selectedConversation.id,
-      senderId: userId,
-      content: { text },
-      type: "text",
-      createdAt: new Date().toISOString(),
-      status: "sending",
-      readBy: [],
-    };
-    setMessages(prev => [...prev, optimisticMsg]);
+    const quoted = replyTo;
+    cancelReply();
 
     try {
-      if (socketRef.current && connectionStatus === "connected") {
-        socketRef.current.emit(
-          "message:send",
-          {
-            conversationId: selectedConversation.id,
-            content: { text },
-            type: "text",
-            clientMessageId,
-          },
-          (response) => {
-            if (!response.success) {
-              setMessages(prev => prev.filter(m => m.id !== clientMessageId));
-            }
-          }
-        );
-      }
+      // Optimistic bubble + emit with ack timeout; see useSendLifecycle
+      sendViaLifecycle({ text, replyTo: quoted });
 
       // Mark that we should refocus after message is cleared
       shouldRefocusRef.current = true;
@@ -1343,10 +1413,10 @@ export default function MessagesPage() {
         </div>
 
         {/* Messages */}
-        <div 
+        <div
           ref={messagesContainerRef}
           data-chat-messages="true"
-          className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+          className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 bg-gray-50"
           style={{
             minHeight: 0,
             overscrollBehavior: "contain",
@@ -1419,20 +1489,35 @@ export default function MessagesPage() {
                             </AvatarFallback>
                           </Avatar>
                         )}
-                        <div
-                          className={`inline-block ${
-                            isOwn
-                              ? "bg-primaryGreen text-white"
-                              : "bg-white shadow-sm border border-gray-100"
-                          } rounded-2xl px-4 py-2`}
-                          style={{ maxWidth: '75%' }}
+                        <SwipeToReply
+                          messageId={message.id}
+                          own={isOwn}
+                          authorName={isOwn ? "you" : propInfo.hostName}
+                          onReply={() => startReply(message)}
                         >
-                          <p className="text-sm whitespace-pre-wrap break-words">
-                            {message.content?.text}
-                          </p>
-                        </div>
+                          <div
+                            className={`inline-block max-w-full ${
+                              isOwn
+                                ? "bg-primaryGreen text-white"
+                                : "bg-white shadow-sm border border-gray-100"
+                            } rounded-2xl px-4 py-2`}
+                          >
+                            {message.replyTo && (
+                              <QuotedMessage
+                                replyTo={message.replyTo}
+                                own={isOwn}
+                                authorLabel={labelFor(message.replyTo.senderId)}
+                                onJump={scrollToMessage}
+                              />
+                            )}
+                            <p className="text-sm whitespace-pre-wrap break-words">
+                              {message.content?.text}
+                            </p>
+                          </div>
+                        </SwipeToReply>
                       </div>
-                      
+                      {isOwn && <SendStatus message={message} onRetry={retrySend} onDiscard={discardSend} />}
+
                       {/* Read by indicator - only for latest read message */}
                       {isOwn && readByName && (
                         <p className="text-[11px] text-gray-400 mt-1 mr-1">
@@ -1455,12 +1540,22 @@ export default function MessagesPage() {
           style={{ touchAction: 'none' }}
           onTouchMove={(e) => e.preventDefault()}
         >
+          <ReplyPreviewBar
+            replyTo={replyTo}
+            authorLabel={replyTo ? labelFor(replyTo.senderId) : ""}
+            onCancel={cancelReply}
+            length={newMessage.length}
+          />
           <div className="flex items-center gap-2">
             <Input
               ref={desktopInputRef}
               value={newMessage}
+              maxLength={MAX_MESSAGE_LENGTH}
               onChange={(e) => handleInputChange(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+              onKeyDown={(e) => {
+                if (onComposerKeyDown(e)) return;
+                if (e.key === 'Enter' && !e.shiftKey) sendMessage();
+              }}
               onFocus={() => {
                 // Scroll to bottom when keyboard opens
                 const scrollToBottom = () => {
@@ -1479,7 +1574,7 @@ export default function MessagesPage() {
                 setTimeout(scrollToBottom, 500);
               }}
               placeholder="Type a message..."
-              disabled={sending || connectionStatus !== "connected"}
+              disabled={sending || composerBlocked}
               className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
             />
             <Button
@@ -1623,19 +1718,19 @@ export default function MessagesPage() {
         <div className="p-4 border-b bg-white">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bricolage font-semibold">Messages</h2>
-            {connectionStatus === "connecting" && (
+            {(connectionBadge === "connecting" || connectionBadge === "reconnecting") && (
               <Badge variant="outline" className="text-blue-500 border-blue-500">
                 <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                Connecting
+                {connectionBadge === "reconnecting" ? "Reconnecting…" : "Connecting"}
               </Badge>
             )}
-            {connectionStatus === "error" && (
+            {connectionBadge === "error" && (
               <Badge variant="outline" className="text-red-500 border-red-500">
                 <WifiOff className="w-3 h-3 mr-1" />
                 Error
               </Badge>
             )}
-            {connectionStatus === "disconnected" && (
+            {connectionBadge === "offline" && (
               <Badge variant="outline" className="text-orange-500 border-orange-500">
                 <WifiOff className="w-3 h-3 mr-1" />
                 Offline
@@ -1965,7 +2060,7 @@ export default function MessagesPage() {
           {/* Messages - Scrollable */}
           <div
             ref={messagesContainerRef}
-            className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+            className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 bg-gray-50"
           >
             {loadingMessages ? (
               <div className="flex items-center justify-center h-32">
@@ -2036,20 +2131,35 @@ export default function MessagesPage() {
                               </AvatarFallback>
                             </Avatar>
                           )}
-                          <div
-                            className={`inline-block ${
-                              isOwn
-                                ? "bg-primaryGreen text-white"
-                                : "bg-white shadow-sm border border-gray-100"
-                            } rounded-2xl px-4 py-2`}
-                            style={{ maxWidth: '75%' }}
+                          <SwipeToReply
+                            messageId={message.id}
+                            own={isOwn}
+                            authorName={isOwn ? "you" : propInfo.hostName}
+                            onReply={() => startReply(message)}
                           >
-                            <p className="text-sm whitespace-pre-wrap break-words">
-                              {message.content?.text}
-                            </p>
-                          </div>
+                            <div
+                              className={`inline-block max-w-full ${
+                                isOwn
+                                  ? "bg-primaryGreen text-white"
+                                  : "bg-white shadow-sm border border-gray-100"
+                              } rounded-2xl px-4 py-2`}
+                            >
+                              {message.replyTo && (
+                                <QuotedMessage
+                                  replyTo={message.replyTo}
+                                  own={isOwn}
+                                  authorLabel={labelFor(message.replyTo.senderId)}
+                                  onJump={scrollToMessage}
+                                />
+                              )}
+                              <p className="text-sm whitespace-pre-wrap break-words">
+                                {message.content?.text}
+                              </p>
+                            </div>
+                          </SwipeToReply>
                         </div>
-                        
+                        {isOwn && <SendStatus message={message} onRetry={retrySend} onDiscard={discardSend} />}
+
                         {/* Read by indicator - only for latest read message */}
                         {isOwn && readByName && (
                           <p className="text-[11px] text-gray-400 mt-1 mr-1">
@@ -2072,14 +2182,22 @@ export default function MessagesPage() {
             style={{ touchAction: 'none' }}
             onTouchMove={(e) => e.preventDefault()}
           >
+            <ReplyPreviewBar
+              replyTo={replyTo}
+              authorLabel={replyTo ? labelFor(replyTo.senderId) : ""}
+              onCancel={cancelReply}
+              length={newMessage.length}
+            />
             <div className="flex items-center gap-2">
               <input
                 ref={mobileInputRef}
                 type="text"
                 placeholder="Type a message..."
                 value={newMessage}
+                maxLength={MAX_MESSAGE_LENGTH}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={(e) => {
+                  if (onComposerKeyDown(e)) return;
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     sendMessage();
@@ -2097,7 +2215,7 @@ export default function MessagesPage() {
                   setTimeout(doScroll, 400);
                   setTimeout(doScroll, 500);
                 }}
-                disabled={sending || connectionStatus !== "connected"}
+                disabled={sending || composerBlocked}
                 className="flex-1 h-10 px-4 bg-gray-100 rounded-full text-base outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
                 autoComplete="off"
                 autoCorrect="on"

@@ -36,6 +36,15 @@ import {
   readUserIdFromStoredToken,
 } from "@/lib/conversationsCache";
 import ConversationRowsSkeleton from "@/components/conversation-row-skeleton";
+import { toast } from "sonner";
+import SwipeToReply from "@/components/chat/SwipeToReply";
+import QuotedMessage from "@/components/chat/QuotedMessage";
+import ReplyPreviewBar from "@/components/chat/ReplyPreviewBar";
+import SendStatus from "@/components/chat/SendStatus";
+import { useReplyTo } from "@/hooks/useReplyTo";
+import { useSendLifecycle } from "@/hooks/useSendLifecycle";
+import { useConnectionBadge } from "@/hooks/useConnectionBadge";
+import { MAX_MESSAGE_LENGTH } from "@/lib/chat/reply";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
@@ -84,9 +93,54 @@ export default function HostInboxPage() {
   const chatContainerRef = useRef(null);
   const tokenRef = useRef(null);
   const desktopInputRef = useRef(null);
+  const mobileInputRef = useRef(null);
   const shouldRefocusRef = useRef(false);
   const typingTimeoutRef = useRef(null);
   const isTypingRef = useRef(false);
+
+  // Bumped on every RE-connect so the open thread is re-fetched and merged.
+  const [reconnectTick, setReconnectTick] = useState(0);
+  const hasConnectedOnceRef = useRef(false);
+
+  // Header badge: silent for the initial handshake / an already-connected
+  // singleton; only a lost connection is shown.
+  const connectionBadge = useConnectionBadge();
+  const composerBlocked = connectionBadge === "offline" || connectionBadge === "error";
+
+  // Quote / reply
+  const guestFirstNameForReply =
+    selectedConversation?.participants?.find((p) => p.role === "guest")?.firstName || "Guest";
+  const { replyTo, startReply, cancelReply, restoreReply, scrollToMessage, onComposerKeyDown, labelFor } = useReplyTo({
+    conversationId: selectedConversation?.id,
+    userId: currentUserId,
+    otherName: guestFirstNameForReply,
+    getInput: () => desktopInputRef.current || mobileInputRef.current,
+    getScroller: () => chatContainerRef.current,
+  });
+
+  // Send lifecycle (optimistic bubble, ack classification, same-id retries)
+  const {
+    send: sendViaLifecycle,
+    retry: retrySend,
+    discard: discardSend,
+    notifyServerMessage,
+    reconcileHistory,
+  } = useSendLifecycle({
+    userId: currentUserId,
+    conversationId: selectedConversation?.id,
+    getSocket: () => (socketRef.current && socketRef.current.connected ? socketRef.current : null),
+    messages,
+    setMessages,
+    onRejected: ({ text, replyTo: ref, code, error }) => {
+      toast.error(error || "Message not sent");
+      setNewMessage((cur) => (cur ? cur : text));
+      if (code !== "MESSAGE_NOT_FOUND" && ref) restoreReply(ref);
+    },
+  });
+  const notifyServerMessageRef = useRef(notifyServerMessage);
+  notifyServerMessageRef.current = notifyServerMessage;
+  const reconcileHistoryRef = useRef(reconcileHistory);
+  reconcileHistoryRef.current = reconcileHistory;
 
   // Refocus desktop input after message is sent
   useEffect(() => {
@@ -288,6 +342,8 @@ export default function HostInboxPage() {
 
     const handleConnect = () => {
       console.log("[HostInbox] Socket connected");
+      if (hasConnectedOnceRef.current) setReconnectTick((t) => t + 1);
+      hasConnectedOnceRef.current = true;
       // Join all conversation rooms
       conversationsRef.current.forEach((conv) => {
         socketManager.joinRoom(conv.id);
@@ -313,11 +369,13 @@ export default function HostInboxPage() {
       
       if (!isHostConversation) return;
 
+      notifyServerMessageRef.current?.(message);
+
       if (selectedConversationRef.current?.id === conversationId) {
         setMessages((prev) => {
-          const existingIndex = prev.findIndex(m => 
-            m.id === message.id || 
-            (message.clientMessageId && m.id === message.clientMessageId)
+          const existingIndex = prev.findIndex(m =>
+            m.id === message.id ||
+            (message.clientMessageId && (m.id === message.clientMessageId || m.clientMessageId === message.clientMessageId))
           );
           
           if (existingIndex !== -1) {
@@ -583,7 +641,9 @@ export default function HostInboxPage() {
         if (data.success && data.data) {
           const loadedMessages = data.data.data || data.data;
           const messagesArray = Array.isArray(loadedMessages) ? loadedMessages : [];
-          setMessages(messagesArray.reverse());
+          const ordered = messagesArray.reverse();
+          ordered.forEach((m) => notifyServerMessageRef.current?.(m));
+          setMessages(reconcileHistoryRef.current ? reconcileHistoryRef.current(ordered) : ordered);
         }
       } catch (error) {
         console.error("Error loading messages:", error);
@@ -594,6 +654,41 @@ export default function HostInboxPage() {
 
     loadMessages();
   }, [selectedConversation?.id]);
+
+  // After a reconnect, re-fetch the open thread and merge it into what is on
+  // screen (server copies win by id / clientMessageId; local unresolved sends
+  // are kept).
+  const reconnectConversationId = selectedConversation?.id;
+  useEffect(() => {
+    if (!reconnectTick || !reconnectConversationId || !tokenRef.current) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(
+          `${CHAT_URL}/api/chat/conversations/${reconnectConversationId}/messages?limit=50`,
+          { headers: { Authorization: `Bearer ${tokenRef.current}` } }
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        if (cancelled || !data.success || !data.data) return;
+        const loaded = data.data.data || data.data;
+        const fetched = Array.isArray(loaded) ? loaded : [];
+        fetched.forEach((m) => notifyServerMessageRef.current?.(m));
+        setMessages((prev) => {
+          const byKey = new Map();
+          const keyOf = (m) => m.clientMessageId || m.id;
+          for (const m of prev) byKey.set(keyOf(m), m);
+          for (const m of fetched) byKey.set(keyOf(m), m);
+          return [...byKey.values()].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        });
+      } catch (error) {
+        console.error("Reconnect refetch error:", error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [reconnectTick, reconnectConversationId]);
 
   // Auto-scroll to bottom on new messages
   const prevMessagesLengthRef = useRef(0);
@@ -726,23 +821,13 @@ export default function HostInboxPage() {
     emitTypingStop();
 
     setIsSending(true);
-    const clientMessageId = `${Date.now()}-${Math.random()}`;
+    const text = newMessage.trim();
+    const quoted = replyTo;
+    cancelReply();
 
     try {
-      socketRef.current.emit(
-        "message:send",
-        {
-          conversationId: selectedConversation.id,
-          content: { text: newMessage.trim() },
-          type: "text",
-          clientMessageId,
-        },
-        (response) => {
-          if (!response.success) {
-            console.error("Failed to send message:", response.error);
-          }
-        }
-      );
+      // Optimistic bubble + emit with ack timeout; see useSendLifecycle
+      sendViaLifecycle({ text, replyTo: quoted });
 
       // Mark that we should refocus after message is cleared
       if (!isMobileView) {
@@ -764,6 +849,7 @@ export default function HostInboxPage() {
   };
 
   const handleKeyDown = (e) => {
+    if (onComposerKeyDown(e)) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -918,19 +1004,19 @@ export default function HostInboxPage() {
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bricolage font-semibold">Guest Inquiries</h2>
-          {connectionStatus === "connecting" && (
+          {(connectionBadge === "connecting" || connectionBadge === "reconnecting") && (
             <Badge variant="outline" className="text-blue-500 border-blue-500">
               <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-              Connecting
+              {connectionBadge === "reconnecting" ? "Reconnecting…" : "Connecting"}
             </Badge>
           )}
-          {connectionStatus === "error" && (
+          {connectionBadge === "error" && (
             <Badge variant="outline" className="text-red-500 border-red-500">
               <WifiOff className="w-3 h-3 mr-1" />
               Error
             </Badge>
           )}
-          {connectionStatus === "disconnected" && (
+          {connectionBadge === "offline" && (
             <Badge variant="outline" className="text-orange-500 border-orange-500">
               <WifiOff className="w-3 h-3 mr-1" />
               Offline
@@ -1212,7 +1298,7 @@ export default function HostInboxPage() {
           ref={chatContainerRef}
           data-chat-messages={isMobile ? "true" : undefined}
           data-chat-container={isMobile ? "true" : undefined}
-          className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+          className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 bg-gray-50"
           onScroll={handleScroll}
           style={isMobile ? { 
             overscrollBehavior: "contain",
@@ -1251,13 +1337,28 @@ export default function HostInboxPage() {
                         </div>
                       )}
                       <div className={`flex ${isOwn ? "justify-end" : "justify-start"} w-full`}>
-                        <div
-                          className={`inline-block ${isOwn ? "bg-primaryGreen text-white" : "bg-white shadow-sm border border-gray-100"} rounded-2xl px-4 py-2`}
-                          style={{ maxWidth: '75%' }}
+                        <SwipeToReply
+                          messageId={message.id}
+                          own={isOwn}
+                          authorName={isOwn ? "you" : guestFirstName}
+                          onReply={() => startReply(message)}
                         >
-                          <p className="text-sm whitespace-pre-wrap break-words">{message.content.text}</p>
-                        </div>
+                          <div
+                            className={`inline-block max-w-full ${isOwn ? "bg-primaryGreen text-white" : "bg-white shadow-sm border border-gray-100"} rounded-2xl px-4 py-2`}
+                          >
+                            {message.replyTo && (
+                              <QuotedMessage
+                                replyTo={message.replyTo}
+                                own={isOwn}
+                                authorLabel={labelFor(message.replyTo.senderId)}
+                                onJump={scrollToMessage}
+                              />
+                            )}
+                            <p className="text-sm whitespace-pre-wrap break-words">{message.content?.text}</p>
+                          </div>
+                        </SwipeToReply>
                       </div>
+                      {isOwn && <SendStatus message={message} onRetry={retrySend} onDiscard={discardSend} />}
                       {isOwn && isLatestReadMessage && (
                         <p className="text-[11px] text-gray-400 mt-1 mr-1">Read by {guestFirstName}</p>
                       )}
@@ -1286,14 +1387,21 @@ export default function HostInboxPage() {
   // Render desktop input
   const renderDesktopInput = () => (
     <div className="p-4 border-t bg-white flex-shrink-0">
+      <ReplyPreviewBar
+        replyTo={replyTo}
+        authorLabel={replyTo ? labelFor(replyTo.senderId) : ""}
+        onCancel={cancelReply}
+        length={newMessage.length}
+      />
       <div className="flex items-center gap-2">
         <Input
           ref={desktopInputRef}
           placeholder="Type a message..."
           value={newMessage}
+          maxLength={MAX_MESSAGE_LENGTH}
           onChange={(e) => handleInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          disabled={isSending || connectionStatus !== "connected"}
+          disabled={isSending || composerBlocked}
           className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
         />
         <Button
@@ -1334,10 +1442,20 @@ export default function HostInboxPage() {
           onChange={handleInputChange}
           onSend={handleSendMessage}
           onKeyDown={handleKeyDown}
-          disabled={connectionStatus !== "connected"}
+          disabled={composerBlocked}
           isSending={isSending}
           placeholder="Type a message..."
           autoFocus={false}
+          inputRef={mobileInputRef}
+          maxLength={MAX_MESSAGE_LENGTH}
+          topSlot={
+            <ReplyPreviewBar
+              replyTo={replyTo}
+              authorLabel={replyTo ? labelFor(replyTo.senderId) : ""}
+              onCancel={cancelReply}
+              length={newMessage.length}
+            />
+          }
         />
       </MobileChatContainer>
     );
