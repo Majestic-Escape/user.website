@@ -5,18 +5,18 @@ import { usePathname } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const tabs = [
-  { name: "Stays", id: "1", href: "/stays", icon: "/images/mobile/house1.png" },
+  { name: "Stays", id: "1", href: "/stays", icon: "/images/mobile/gen/house1-140.webp" },
   {
     name: "Experiences",
     id: "2",
     href: "/experiences",
-    icon: "/images/mobile/compass.png",
+    icon: "/images/mobile/gen/compass-140.webp",
   },
   {
     name: "Services",
     id: "3",
     href: "/services",
-    icon: "/images/mobile/service1.png",
+    icon: "/images/mobile/gen/service1-140.webp",
   },
 ];
 
