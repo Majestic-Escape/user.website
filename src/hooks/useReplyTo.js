@@ -23,12 +23,19 @@ import { buildReplySnapshot, canQuote, replyAuthorLabel } from "@/lib/chat/reply
 export function useReplyTo({ conversationId, userId, otherName, getInput, getScroller }) {
   const [replyTo, setReplyTo] = useState(null);
   const flashTimer = useRef(null);
+  const flashedRef = useRef(null);
 
   useEffect(() => {
     setReplyTo(null);
   }, [conversationId]);
 
-  useEffect(() => () => clearTimeout(flashTimer.current), []);
+  useEffect(
+    () => () => {
+      clearTimeout(flashTimer.current);
+      flashedRef.current?.classList.remove("me-reply-flash");
+    },
+    []
+  );
 
   const labelFor = useCallback((senderId) => replyAuthorLabel(senderId, userId, otherName), [userId, otherName]);
 
@@ -73,11 +80,16 @@ export function useReplyTo({ conversationId, userId, otherName, getInput, getScr
       }
       const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
       el.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
+      clearTimeout(flashTimer.current);
+      if (flashedRef.current && flashedRef.current !== el) flashedRef.current.classList.remove("me-reply-flash");
+      flashedRef.current = el;
       el.classList.remove("me-reply-flash");
       void el.offsetWidth; // restart the animation if it is already running
       el.classList.add("me-reply-flash");
-      clearTimeout(flashTimer.current);
-      flashTimer.current = setTimeout(() => el.classList.remove("me-reply-flash"), 1300);
+      flashTimer.current = setTimeout(() => {
+        el.classList.remove("me-reply-flash");
+        if (flashedRef.current === el) flashedRef.current = null;
+      }, 1300);
     },
     [getScroller]
   );

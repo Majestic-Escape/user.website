@@ -34,7 +34,7 @@ export default function ReplyPreviewBar({ replyTo, authorLabel, onCancel, length
             onClick={onCancel}
             onMouseDown={(e) => e.preventDefault()}
             onTouchEnd={cancel}
-            className="-mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen"
+            className="-mr-1 flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>

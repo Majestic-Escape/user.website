@@ -128,7 +128,7 @@ export default function HostInboxPage() {
   } = useSendLifecycle({
     userId: currentUserId,
     conversationId: selectedConversation?.id,
-    getSocket: () => (socketRef.current && socketRef.current.connected ? socketRef.current : null),
+    getSocket: () => socketRef.current || null,
     messages,
     setMessages,
     onRejected: ({ text, replyTo: ref, code, error }) => {

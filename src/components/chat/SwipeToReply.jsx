@@ -34,7 +34,7 @@ const rubber = (dx) => Math.min(MAX, dx <= THRESHOLD ? dx : THRESHOLD + (dx - TH
 export default function SwipeToReply({ messageId, own, authorName, onReply, children }) {
   const slideRef = useRef(null);
   const hintRef = useRef(null);
-  const g = useRef({ state: "idle", pointerId: null, pointers: 0, x0: 0, y0: 0, dx: 0, buzzed: false, dragEndedAt: 0 });
+  const g = useRef({ state: "idle", pointerId: null, x0: 0, y0: 0, dx: 0, buzzed: false, dragEndedAt: 0 });
 
   const reset = () => {
     const s = slideRef.current;
@@ -59,14 +59,13 @@ export default function SwipeToReply({ messageId, own, authorName, onReply, chil
 
   const onPointerDown = (e) => {
     const st = g.current;
-    st.pointers += 1;
-    if (st.pointers > 1) {
-      // pinch / second finger: never a reply
+    if (!e.isPrimary) {
+      // a second finger (pinch): whatever was in progress is not a reply
       if (st.state !== "idle") reset();
       st.state = "cancelled";
       return;
     }
-    if (!e.isPrimary || e.button !== 0 || e.pointerType === "mouse") return;
+    if (e.button !== 0 || e.pointerType === "mouse") return;
     if (e.clientX < EDGE) return;
     if (e.target.closest?.("[data-reply-button]")) return;
     st.state = "pending";
@@ -125,9 +124,9 @@ export default function SwipeToReply({ messageId, own, authorName, onReply, chil
 
   const finish = (e, allowReply) => {
     const st = g.current;
-    st.pointers = Math.max(0, st.pointers - 1);
     if (st.pointerId !== e.pointerId) {
-      if (st.pointers === 0 && st.state === "cancelled") st.state = "idle";
+      // a non-primary finger lifting; the primary's own up/cancel resets
+      if (st.state === "cancelled" && e.isPrimary) st.state = "idle";
       return;
     }
     const fire = allowReply && st.state === "dragging" && st.dx >= THRESHOLD;

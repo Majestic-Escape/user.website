@@ -30,8 +30,10 @@ import { replyPayloadFor } from "@/lib/chat/reply";
  * sends from before a reload come back as unconfirmed bubbles.
  *
  * `messages`/`setMessages` are the page's own state; `getSocket` returns the
- * live socket (or null while disconnected — then the send is simply unconfirmed
- * until the user retries).
+ * socket object (connected or not — socket.io buffers an emit made while
+ * disconnected and flushes it on reconnect, so the 15 s ack window still has a
+ * chance to succeed; only when there is no socket at all does the send go
+ * straight to "unconfirmed").
  */
 export function useSendLifecycle({ userId, conversationId, getSocket, messages, setMessages, onRejected }) {
   const messagesRef = useRef(messages);
