@@ -35,6 +35,15 @@ import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
+import { toast } from "sonner";
+import SwipeToReply from "@/components/chat/SwipeToReply";
+import QuotedMessage from "@/components/chat/QuotedMessage";
+import ReplyPreviewBar from "@/components/chat/ReplyPreviewBar";
+import SendStatus from "@/components/chat/SendStatus";
+import { useReplyTo } from "@/hooks/useReplyTo";
+import { useSendLifecycle } from "@/hooks/useSendLifecycle";
+import { useConnectionBadge } from "@/hooks/useConnectionBadge";
+import { MAX_MESSAGE_LENGTH } from "@/lib/chat/reply";
 import {
   getCachedConversations,
   setCachedConversations,
@@ -108,6 +117,54 @@ export default function MessagesPage() {
   const programmaticBackRef = useRef(false);
   const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
+  // Bumped on every RE-connect so the open thread is re-fetched and merged
+  // (echoes missed while offline, outside the socket's recovery window).
+  const [reconnectTick, setReconnectTick] = useState(0);
+  const hasConnectedOnceRef = useRef(false);
+
+  // Header badge: silent for the initial handshake / an already-connected
+  // singleton; only a lost connection is shown.
+  const connectionBadge = useConnectionBadge();
+  const composerBlocked = connectionBadge === "offline" || connectionBadge === "error";
+
+  // Quote / reply. The two branches (mobile / desktop) mount one composer each
+  // — the refs are cross-named historically, so take whichever is live.
+  const otherFirstName = propertyDetails[selectedConversation?.propertyId]?.host?.firstName || "Host";
+  const { replyTo, startReply, cancelReply, restoreReply, scrollToMessage, onComposerKeyDown, labelFor } = useReplyTo({
+    conversationId: selectedConversation?.id,
+    userId,
+    otherName: otherFirstName,
+    getInput: () => desktopInputRef.current || mobileInputRef.current,
+    getScroller: () => messagesContainerRef.current,
+  });
+
+  // Send lifecycle: optimistic bubble → ack; definitive rejections restore the
+  // draft, anything ambiguous keeps the bubble retryable under the same id.
+  const {
+    send: sendViaLifecycle,
+    retry: retrySend,
+    discard: discardSend,
+    notifyServerMessage,
+    reconcileHistory,
+  } = useSendLifecycle({
+    userId,
+    conversationId: selectedConversation?.id,
+    getSocket: () => socketRef.current || null,
+    messages,
+    setMessages,
+    onRejected: ({ text, replyTo: ref, code, error }) => {
+      toast.error(error || "Message not sent");
+      setNewMessage((cur) => (cur ? cur : text));
+      if (code !== "MESSAGE_NOT_FOUND" && ref) restoreReply(ref);
+    },
+  });
+  // Socket handlers are bound once inside init(); reach the latest hook
+  // functions through refs so they never go stale.
+  const notifyServerMessageRef = useRef(notifyServerMessage);
+  notifyServerMessageRef.current = notifyServerMessage;
+  const reconcileHistoryRef = useRef(reconcileHistory);
+  reconcileHistoryRef.current = reconcileHistory;
+
   // Keep refs in sync with state
   useEffect(() => {
     selectedConversationRef.current = selectedConversation;
@@ -115,6 +172,16 @@ export default function MessagesPage() {
 
   useEffect(() => {
     conversationsRef.current = conversations;
+  }, [conversations]);
+
+  // Join every conversation's room whenever the list changes. The shared
+  // socket is normally connected before this page has its list (and before
+  // its "connect" handler exists), so joining from the connect event alone
+  // left every thread but the open one silent: no live previews or unread
+  // counts in the list until the next reconnect. The manager dedupes joins
+  // and queues them while there is no connection.
+  useEffect(() => {
+    conversations.forEach((conv) => socketManager.joinRoom(conv.id));
   }, [conversations]);
 
   // Persist on every change rather than only after the initial fetch, so
@@ -501,6 +568,18 @@ export default function MessagesPage() {
 
   // Load conversations and connect socket
   const unsubscribeConnectionRef = useRef(null);
+  const handlersRef = useRef(null);
+  const refreshConversationsRef = useRef(null);
+  // Message ids already counted towards a list badge (bounded)
+  const seenMessageIdsRef = useRef(new Set());
+  const rememberSeen = (id) => {
+    if (!id || seenMessageIdsRef.current.has(id)) return false;
+    seenMessageIdsRef.current.add(id);
+    if (seenMessageIdsRef.current.size > 1000) {
+      seenMessageIdsRef.current = new Set([...seenMessageIdsRef.current].slice(-500));
+    }
+    return true;
+  };
   const initCalledRef = useRef(false); // Prevent duplicate init in StrictMode
   
   // Clear stale sessionStorage on mount (in case of hard refresh)
@@ -532,6 +611,34 @@ export default function MessagesPage() {
     
     initCalledRef.current = true;
     sessionStorage.setItem('messages_last_init', now.toString());
+
+    // Silent list refresh used after a reconnect and when the server announces
+    // a conversation we have not seen; joins any new room. Never touches
+    // `loading` and never replaces the list with nothing.
+    refreshConversationsRef.current = async () => {
+      try {
+        const res = await fetch(`${chatUrl}/api/chat/conversations?role=guest`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const fresh = await res.json();
+        if (!fresh.success) return;
+        const list = (fresh.data || [])
+          .filter((conv) => conv.lastMessage)
+          .sort((a, b) => {
+            const timeA = a.lastMessage?.sentAt ? new Date(a.lastMessage.sentAt) : new Date(0);
+            const timeB = b.lastMessage?.sentAt ? new Date(b.lastMessage.sentAt) : new Date(0);
+            return timeB - timeA;
+          });
+        if (list.length === 0 && conversationsRef.current.length > 0) return;
+        setConversations(list);
+        list.forEach((conv) => {
+          socketManager.joinRoom(conv.id);
+          if (conv.propertyId) fetchPropertyDetails(conv.propertyId);
+        });
+      } catch (err) {
+        console.error("[Messages] Conversation refresh failed:", err);
+      }
+    };
 
     async function init() {
       try {
@@ -586,16 +693,16 @@ export default function MessagesPage() {
         });
 
         const handleConnect = () => {
-          const guestConvs = (data.data || []).filter((conv) => {
-            const participant = conv.participants.find(
-              (p) => p.userId === userId
-            );
-            // Only join rooms for conversations with messages
-            return participant && participant.role === "guest" && conv.lastMessage;
-          });
-          guestConvs.forEach(conv => {
+          const reconnect = hasConnectedOnceRef.current;
+          if (reconnect) setReconnectTick((t) => t + 1);
+          hasConnectedOnceRef.current = true;
+          // Join the rooms of every conversation we know (the current list,
+          // not the snapshot from the first load); on a reconnect also refresh
+          // the list — nothing the server pushed while we were away arrived.
+          conversationsRef.current.forEach((conv) => {
             socketManager.joinRoom(conv.id);
           });
+          if (reconnect) refreshConversationsRef.current?.();
         };
 
         const handleDisconnect = () => {
@@ -611,13 +718,19 @@ export default function MessagesPage() {
           );
           
           if (!isGuestConversation) return;
-          
+
+          notifyServerMessageRef.current?.(msgData.message);
+          // A logical message bumps the local badge once, however many times
+          // its event arrives (retries re-broadcast) and never for our own
+          // sends from another tab or device.
+          const countsAsUnread = msgData.message.senderId !== userId && rememberSeen(msgData.message.id);
+
           if (currentConversation && msgData.conversationId === currentConversation.id) {
             setMessages(prev => {
               // Check if message already exists by id OR by clientMessageId (for optimistic updates)
               const existingIndex = prev.findIndex(m => 
                 m.id === msgData.message.id || 
-                (msgData.message.clientMessageId && m.id === msgData.message.clientMessageId)
+                (msgData.message.clientMessageId && (m.id === msgData.message.clientMessageId || m.clientMessageId === msgData.message.clientMessageId))
               );
               
               if (existingIndex !== -1) {
@@ -644,7 +757,7 @@ export default function MessagesPage() {
                     ...conv.unreadCount,
                     [userId]: currentConversation?.id === msgData.conversationId
                       ? 0
-                      : (conv.unreadCount?.[userId] || 0) + (msgData.message.senderId !== userId ? 1 : 0),
+                      : (conv.unreadCount?.[userId] || 0) + (countsAsUnread ? 1 : 0),
                   },
                 };
               }
@@ -661,14 +774,25 @@ export default function MessagesPage() {
 
         // Listen for read receipts
         const handleMessageRead = (readData) => {
-          const { conversationId, messageIds, usrId, timestamp } = readData;
+          const { conversationId, messageIds, userId: readerId, timestamp } = readData;
+          // Read by me in another tab or on another device: the server has
+          // zeroed that thread's unread, so the row here must not keep it.
+          if (readerId === userId) {
+            setConversations((prev) =>
+              prev.map((conv) =>
+                conv.id === conversationId && (conv.unreadCount?.[userId] || 0) > 0
+                  ? { ...conv, unreadCount: { ...conv.unreadCount, [userId]: 0 } }
+                  : conv
+              )
+            );
+          }
           if (selectedConversationRef.current?.id === conversationId) {
             setMessages((prev) =>
               prev.map((msg) =>
-                messageIds.includes(msg.id)
+                messageIds.includes(msg.id) && !(msg.readBy || []).some((r) => r.userId === readerId)
                   ? {
                       ...msg,
-                      readBy: [...(msg.readBy || []), { userId: usrId, readAt: timestamp }],
+                      readBy: [...(msg.readBy || []), { userId: readerId, readAt: timestamp }],
                     }
                   : msg
               )
@@ -700,11 +824,27 @@ export default function MessagesPage() {
           });
         };
 
+        // A conversation this page does not know yet (a new inquiry, a thread
+        // created on another device) announces itself through the unread push
+        // (`conversationId` is additive on that event): refresh the list and
+        // join its room instead of waiting for a reload.
+        const handleUnreadUpdate = (data) => {
+          const id = data?.conversationId;
+          if (!id || conversationsRef.current.some((c) => c.id === id)) return;
+          refreshConversationsRef.current?.();
+        };
+
+        handlersRef.current = { handleConnect, handleDisconnect, handleNewMessage, handleMessageRead, handleTypingUpdate, handleUnreadUpdate };
+        // The shared socket is usually connected before this handler exists;
+        // the next "connect" it sees is then a RE-connect (thread and list
+        // must be re-fetched), not the first one.
+        hasConnectedOnceRef.current = socket.connected;
         socket.on("connect", handleConnect);
         socket.on("disconnect", handleDisconnect);
         socket.on("message:new", handleNewMessage);
         socket.on("message:read", handleMessageRead);
         socket.on("typing:update", handleTypingUpdate);
+        socket.on("unread:update", handleUnreadUpdate);
 
         // Initial connection status is handled by socketManager.onConnectionChange
 
@@ -733,11 +873,19 @@ export default function MessagesPage() {
         unsubscribeConnectionRef.current = null;
       }
       if (socketRef.current) {
-        socketRef.current.off("connect");
-        socketRef.current.off("disconnect");
-        socketRef.current.off("message:new");
-        socketRef.current.off("message:read");
-        socketRef.current.off("typing:update");
+        // Remove exactly our handlers. off(event) with no handler would also
+        // strip the socket manager's own listeners from the shared singleton.
+        const s = socketRef.current;
+        const h = handlersRef.current;
+        if (h) {
+          s.off("connect", h.handleConnect);
+          s.off("disconnect", h.handleDisconnect);
+          s.off("message:new", h.handleNewMessage);
+          s.off("message:read", h.handleMessageRead);
+          s.off("typing:update", h.handleTypingUpdate);
+          s.off("unread:update", h.handleUnreadUpdate);
+        }
+        handlersRef.current = null;
         socketManager.releaseSocket();
       }
     };
@@ -760,15 +908,16 @@ export default function MessagesPage() {
         const data = await res.json();
         
         if (data.success && data.data) {
-          const sortedMessages = (data.data.data || []).sort((a, b) => 
+          const sortedMessages = (data.data.data || []).sort((a, b) =>
             new Date(a.createdAt) - new Date(b.createdAt)
           );
-          setMessages(sortedMessages);
+          sortedMessages.forEach((m) => notifyServerMessageRef.current?.(m));
+          setMessages(reconcileHistoryRef.current ? reconcileHistoryRef.current(sortedMessages) : sortedMessages);
         }
 
-        if (socketRef.current) {
-          socketRef.current.emit("conversation:join", { conversationId: selectedConversation.id });
-        }
+        // Through the manager so the room is tracked (deduped, re-joined
+        // after a reconnect) instead of a bare emit it never learns about.
+        socketManager.joinRoom(selectedConversation.id);
       } catch (err) {
         console.error("Load messages error:", err);
       } finally {
@@ -778,6 +927,39 @@ export default function MessagesPage() {
 
     loadMessages();
   }, [selectedConversation?.id, token, chatUrl, userId]);
+
+  // After a reconnect, re-fetch the open thread and merge it into what is on
+  // screen: server copies replace optimistic ones (by id / clientMessageId),
+  // missed messages are appended, unresolved local sends are kept.
+  const reconnectConversationId = selectedConversation?.id;
+  useEffect(() => {
+    if (!reconnectTick || !reconnectConversationId || !token) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `${chatUrl}/api/chat/conversations/${reconnectConversationId}/messages?limit=50`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        if (cancelled || !data.success || !data.data) return;
+        const fetched = data.data.data || [];
+        fetched.forEach((m) => notifyServerMessageRef.current?.(m));
+        setMessages((prev) => {
+          const byKey = new Map();
+          const keyOf = (m) => m.clientMessageId || m.id;
+          for (const m of prev) byKey.set(keyOf(m), m);
+          for (const m of fetched) byKey.set(keyOf(m), m);
+          return [...byKey.values()].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        });
+      } catch (err) {
+        console.error("Reconnect refetch error:", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [reconnectTick, reconnectConversationId, token, chatUrl]);
 
   // Track messages we've already marked as read to prevent infinite loops
   const markedAsReadRef = useRef(new Set());
@@ -886,7 +1068,9 @@ export default function MessagesPage() {
   }, [selectedConversation?.id, emitTypingStop]);
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation || sending) return;
+    // same gate as the send button: typing is allowed while reconnecting,
+    // sending is not (the draft simply stays in the composer)
+    if (!newMessage.trim() || !selectedConversation || sending || connectionStatus !== "connected") return;
 
     // Stop typing indicator when sending
     if (typingTimeoutRef.current) {
@@ -896,37 +1080,12 @@ export default function MessagesPage() {
 
     setSending(true);
     const text = newMessage.trim();
-    const clientMessageId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-
-    const optimisticMsg = {
-      id: clientMessageId,
-      conversationId: selectedConversation.id,
-      senderId: userId,
-      content: { text },
-      type: "text",
-      createdAt: new Date().toISOString(),
-      status: "sending",
-      readBy: [],
-    };
-    setMessages(prev => [...prev, optimisticMsg]);
+    const quoted = replyTo;
+    cancelReply();
 
     try {
-      if (socketRef.current && connectionStatus === "connected") {
-        socketRef.current.emit(
-          "message:send",
-          {
-            conversationId: selectedConversation.id,
-            content: { text },
-            type: "text",
-            clientMessageId,
-          },
-          (response) => {
-            if (!response.success) {
-              setMessages(prev => prev.filter(m => m.id !== clientMessageId));
-            }
-          }
-        );
-      }
+      // Optimistic bubble + emit with ack timeout; see useSendLifecycle
+      sendViaLifecycle({ text, replyTo: quoted });
 
       // Mark that we should refocus after message is cleared
       shouldRefocusRef.current = true;
@@ -1343,10 +1502,10 @@ export default function MessagesPage() {
         </div>
 
         {/* Messages */}
-        <div 
+        <div
           ref={messagesContainerRef}
           data-chat-messages="true"
-          className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+          className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 bg-gray-50"
           style={{
             minHeight: 0,
             overscrollBehavior: "contain",
@@ -1419,20 +1578,35 @@ export default function MessagesPage() {
                             </AvatarFallback>
                           </Avatar>
                         )}
-                        <div
-                          className={`inline-block ${
-                            isOwn
-                              ? "bg-primaryGreen text-white"
-                              : "bg-white shadow-sm border border-gray-100"
-                          } rounded-2xl px-4 py-2`}
-                          style={{ maxWidth: '75%' }}
+                        <SwipeToReply
+                          messageId={message.id}
+                          own={isOwn}
+                          authorName={isOwn ? "you" : propInfo.hostName}
+                          onReply={() => startReply(message)}
                         >
-                          <p className="text-sm whitespace-pre-wrap break-words">
-                            {message.content?.text}
-                          </p>
-                        </div>
+                          <div
+                            className={`inline-block max-w-full ${
+                              isOwn
+                                ? "bg-primaryGreen text-white"
+                                : "bg-white shadow-sm border border-gray-100"
+                            } rounded-2xl px-4 py-2`}
+                          >
+                            {message.replyTo && (
+                              <QuotedMessage
+                                replyTo={message.replyTo}
+                                own={isOwn}
+                                authorLabel={labelFor(message.replyTo.senderId)}
+                                onJump={scrollToMessage}
+                              />
+                            )}
+                            <p className="text-sm whitespace-pre-wrap break-words">
+                              {message.content?.text}
+                            </p>
+                          </div>
+                        </SwipeToReply>
                       </div>
-                      
+                      {isOwn && <SendStatus message={message} onRetry={retrySend} onDiscard={discardSend} />}
+
                       {/* Read by indicator - only for latest read message */}
                       {isOwn && readByName && (
                         <p className="text-[11px] text-gray-400 mt-1 mr-1">
@@ -1455,12 +1629,22 @@ export default function MessagesPage() {
           style={{ touchAction: 'none' }}
           onTouchMove={(e) => e.preventDefault()}
         >
+          <ReplyPreviewBar
+            replyTo={replyTo}
+            authorLabel={replyTo ? labelFor(replyTo.senderId) : ""}
+            onCancel={cancelReply}
+            length={newMessage.length}
+          />
           <div className="flex items-center gap-2">
             <Input
               ref={desktopInputRef}
               value={newMessage}
+              maxLength={MAX_MESSAGE_LENGTH}
               onChange={(e) => handleInputChange(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+              onKeyDown={(e) => {
+                if (onComposerKeyDown(e)) return;
+                if (e.key === 'Enter' && !e.shiftKey) sendMessage();
+              }}
               onFocus={() => {
                 // Scroll to bottom when keyboard opens
                 const scrollToBottom = () => {
@@ -1479,7 +1663,7 @@ export default function MessagesPage() {
                 setTimeout(scrollToBottom, 500);
               }}
               placeholder="Type a message..."
-              disabled={sending || connectionStatus !== "connected"}
+              disabled={sending || composerBlocked}
               className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
             />
             <Button
@@ -1623,19 +1807,19 @@ export default function MessagesPage() {
         <div className="p-4 border-b bg-white">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bricolage font-semibold">Messages</h2>
-            {connectionStatus === "connecting" && (
+            {(connectionBadge === "connecting" || connectionBadge === "reconnecting") && (
               <Badge variant="outline" className="text-blue-500 border-blue-500">
                 <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                Connecting
+                {connectionBadge === "reconnecting" ? "Reconnecting…" : "Connecting"}
               </Badge>
             )}
-            {connectionStatus === "error" && (
+            {connectionBadge === "error" && (
               <Badge variant="outline" className="text-red-500 border-red-500">
                 <WifiOff className="w-3 h-3 mr-1" />
                 Error
               </Badge>
             )}
-            {connectionStatus === "disconnected" && (
+            {connectionBadge === "offline" && (
               <Badge variant="outline" className="text-orange-500 border-orange-500">
                 <WifiOff className="w-3 h-3 mr-1" />
                 Offline
@@ -1965,7 +2149,7 @@ export default function MessagesPage() {
           {/* Messages - Scrollable */}
           <div
             ref={messagesContainerRef}
-            className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+            className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 bg-gray-50"
           >
             {loadingMessages ? (
               <div className="flex items-center justify-center h-32">
@@ -2036,20 +2220,35 @@ export default function MessagesPage() {
                               </AvatarFallback>
                             </Avatar>
                           )}
-                          <div
-                            className={`inline-block ${
-                              isOwn
-                                ? "bg-primaryGreen text-white"
-                                : "bg-white shadow-sm border border-gray-100"
-                            } rounded-2xl px-4 py-2`}
-                            style={{ maxWidth: '75%' }}
+                          <SwipeToReply
+                            messageId={message.id}
+                            own={isOwn}
+                            authorName={isOwn ? "you" : propInfo.hostName}
+                            onReply={() => startReply(message)}
                           >
-                            <p className="text-sm whitespace-pre-wrap break-words">
-                              {message.content?.text}
-                            </p>
-                          </div>
+                            <div
+                              className={`inline-block max-w-full ${
+                                isOwn
+                                  ? "bg-primaryGreen text-white"
+                                  : "bg-white shadow-sm border border-gray-100"
+                              } rounded-2xl px-4 py-2`}
+                            >
+                              {message.replyTo && (
+                                <QuotedMessage
+                                  replyTo={message.replyTo}
+                                  own={isOwn}
+                                  authorLabel={labelFor(message.replyTo.senderId)}
+                                  onJump={scrollToMessage}
+                                />
+                              )}
+                              <p className="text-sm whitespace-pre-wrap break-words">
+                                {message.content?.text}
+                              </p>
+                            </div>
+                          </SwipeToReply>
                         </div>
-                        
+                        {isOwn && <SendStatus message={message} onRetry={retrySend} onDiscard={discardSend} />}
+
                         {/* Read by indicator - only for latest read message */}
                         {isOwn && readByName && (
                           <p className="text-[11px] text-gray-400 mt-1 mr-1">
@@ -2072,14 +2271,22 @@ export default function MessagesPage() {
             style={{ touchAction: 'none' }}
             onTouchMove={(e) => e.preventDefault()}
           >
+            <ReplyPreviewBar
+              replyTo={replyTo}
+              authorLabel={replyTo ? labelFor(replyTo.senderId) : ""}
+              onCancel={cancelReply}
+              length={newMessage.length}
+            />
             <div className="flex items-center gap-2">
               <input
                 ref={mobileInputRef}
                 type="text"
                 placeholder="Type a message..."
                 value={newMessage}
+                maxLength={MAX_MESSAGE_LENGTH}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={(e) => {
+                  if (onComposerKeyDown(e)) return;
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     sendMessage();
@@ -2097,7 +2304,7 @@ export default function MessagesPage() {
                   setTimeout(doScroll, 400);
                   setTimeout(doScroll, 500);
                 }}
-                disabled={sending || connectionStatus !== "connected"}
+                disabled={sending || composerBlocked}
                 className="flex-1 h-10 px-4 bg-gray-100 rounded-full text-base outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
                 autoComplete="off"
                 autoCorrect="on"

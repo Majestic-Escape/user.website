@@ -607,6 +607,7 @@ export default function ContactHostPage() {
             <Textarea
               ref={textareaRef}
               value={message}
+              maxLength={4000}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={`Hi ${hostName.split(' ')[0]}! I'll be visiting...`}
               className="min-h-[140px] resize-none border-gray-200 focus:border-primaryGreen focus:ring-primaryGreen text-sm rounded-xl"
@@ -855,6 +856,7 @@ export default function ContactHostPage() {
               
               <Textarea
                 value={message}
+                maxLength={4000}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={`Hi ${hostName.split(' ')[0]}! I'll be visiting...`}
                 className="min-h-[140px] resize-none border-gray-200 focus:border-primaryGreen focus:ring-primaryGreen text-base rounded-xl"

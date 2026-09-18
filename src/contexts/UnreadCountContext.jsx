@@ -149,7 +149,15 @@ export function UnreadCountProvider({ children }) {
       }
     };
 
+    // Pushes sent while the socket was down are gone: re-read the totals on
+    // every re-connect (the first connect is covered by the mount fetch).
+    let connectedOnce = socket.connected;
+    const handleReconnect = () => {
+      if (connectedOnce) fetchUnreadCount(true);
+      connectedOnce = true;
+    };
     socket.on("unread:update", handleUnreadUpdate);
+    socket.on("connect", handleReconnect);
     socketListenerRef.current = true;
 
     // Request notification permission
@@ -159,10 +167,11 @@ export function UnreadCountProvider({ children }) {
 
     return () => {
       socket.off("unread:update", handleUnreadUpdate);
+      socket.off("connect", handleReconnect);
       socketListenerRef.current = false;
       socketManager.releaseSocket();
     };
-  }, [user]);
+  }, [user, fetchUnreadCount]);
 
   // Refresh on page visibility change (with debounce)
   useEffect(() => {

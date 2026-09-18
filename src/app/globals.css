@@ -307,10 +307,30 @@ body {
     animation: me-route-progress 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
 
+  /* "Jump to quoted message": a brief wash on the target bubble row. */
+  @keyframes me-reply-flash {
+    0%,
+    25% {
+      background-color: rgba(187, 238, 161, 0.55);
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
+  .me-reply-flash {
+    animation: me-reply-flash 1.2s ease-out;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .me-fade-in,
-    .me-route-progress {
+    .me-route-progress,
+    .me-reply-flash {
       animation: none;
+    }
+    /* still indicate the target without motion */
+    .me-reply-flash {
+      outline: 2px solid #bbeea1;
+      outline-offset: 2px;
     }
   }
 }
