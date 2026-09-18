@@ -174,6 +174,16 @@ export default function MessagesPage() {
     conversationsRef.current = conversations;
   }, [conversations]);
 
+  // Join every conversation's room whenever the list changes. The shared
+  // socket is normally connected before this page has its list (and before
+  // its "connect" handler exists), so joining from the connect event alone
+  // left every thread but the open one silent: no live previews or unread
+  // counts in the list until the next reconnect. The manager dedupes joins
+  // and queues them while there is no connection.
+  useEffect(() => {
+    conversations.forEach((conv) => socketManager.joinRoom(conv.id));
+  }, [conversations]);
+
   // Persist on every change rather than only after the initial fetch, so
   // socket-driven updates (new message, read receipts, unread counts) are what
   // the next visit paints — otherwise the cache would go stale the moment a
@@ -558,6 +568,18 @@ export default function MessagesPage() {
 
   // Load conversations and connect socket
   const unsubscribeConnectionRef = useRef(null);
+  const handlersRef = useRef(null);
+  const refreshConversationsRef = useRef(null);
+  // Message ids already counted towards a list badge (bounded)
+  const seenMessageIdsRef = useRef(new Set());
+  const rememberSeen = (id) => {
+    if (!id || seenMessageIdsRef.current.has(id)) return false;
+    seenMessageIdsRef.current.add(id);
+    if (seenMessageIdsRef.current.size > 1000) {
+      seenMessageIdsRef.current = new Set([...seenMessageIdsRef.current].slice(-500));
+    }
+    return true;
+  };
   const initCalledRef = useRef(false); // Prevent duplicate init in StrictMode
   
   // Clear stale sessionStorage on mount (in case of hard refresh)
@@ -589,6 +611,34 @@ export default function MessagesPage() {
     
     initCalledRef.current = true;
     sessionStorage.setItem('messages_last_init', now.toString());
+
+    // Silent list refresh used after a reconnect and when the server announces
+    // a conversation we have not seen; joins any new room. Never touches
+    // `loading` and never replaces the list with nothing.
+    refreshConversationsRef.current = async () => {
+      try {
+        const res = await fetch(`${chatUrl}/api/chat/conversations?role=guest`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const fresh = await res.json();
+        if (!fresh.success) return;
+        const list = (fresh.data || [])
+          .filter((conv) => conv.lastMessage)
+          .sort((a, b) => {
+            const timeA = a.lastMessage?.sentAt ? new Date(a.lastMessage.sentAt) : new Date(0);
+            const timeB = b.lastMessage?.sentAt ? new Date(b.lastMessage.sentAt) : new Date(0);
+            return timeB - timeA;
+          });
+        if (list.length === 0 && conversationsRef.current.length > 0) return;
+        setConversations(list);
+        list.forEach((conv) => {
+          socketManager.joinRoom(conv.id);
+          if (conv.propertyId) fetchPropertyDetails(conv.propertyId);
+        });
+      } catch (err) {
+        console.error("[Messages] Conversation refresh failed:", err);
+      }
+    };
 
     async function init() {
       try {
@@ -643,18 +693,16 @@ export default function MessagesPage() {
         });
 
         const handleConnect = () => {
-          if (hasConnectedOnceRef.current) setReconnectTick((t) => t + 1);
+          const reconnect = hasConnectedOnceRef.current;
+          if (reconnect) setReconnectTick((t) => t + 1);
           hasConnectedOnceRef.current = true;
-          const guestConvs = (data.data || []).filter((conv) => {
-            const participant = conv.participants.find(
-              (p) => p.userId === userId
-            );
-            // Only join rooms for conversations with messages
-            return participant && participant.role === "guest" && conv.lastMessage;
-          });
-          guestConvs.forEach(conv => {
+          // Join the rooms of every conversation we know (the current list,
+          // not the snapshot from the first load); on a reconnect also refresh
+          // the list — nothing the server pushed while we were away arrived.
+          conversationsRef.current.forEach((conv) => {
             socketManager.joinRoom(conv.id);
           });
+          if (reconnect) refreshConversationsRef.current?.();
         };
 
         const handleDisconnect = () => {
@@ -670,8 +718,12 @@ export default function MessagesPage() {
           );
           
           if (!isGuestConversation) return;
-          
+
           notifyServerMessageRef.current?.(msgData.message);
+          // A logical message bumps the local badge once, however many times
+          // its event arrives (retries re-broadcast) and never for our own
+          // sends from another tab or device.
+          const countsAsUnread = msgData.message.senderId !== userId && rememberSeen(msgData.message.id);
 
           if (currentConversation && msgData.conversationId === currentConversation.id) {
             setMessages(prev => {
@@ -705,7 +757,7 @@ export default function MessagesPage() {
                     ...conv.unreadCount,
                     [userId]: currentConversation?.id === msgData.conversationId
                       ? 0
-                      : (conv.unreadCount?.[userId] || 0) + (msgData.message.senderId !== userId ? 1 : 0),
+                      : (conv.unreadCount?.[userId] || 0) + (countsAsUnread ? 1 : 0),
                   },
                 };
               }
@@ -722,14 +774,25 @@ export default function MessagesPage() {
 
         // Listen for read receipts
         const handleMessageRead = (readData) => {
-          const { conversationId, messageIds, usrId, timestamp } = readData;
+          const { conversationId, messageIds, userId: readerId, timestamp } = readData;
+          // Read by me in another tab or on another device: the server has
+          // zeroed that thread's unread, so the row here must not keep it.
+          if (readerId === userId) {
+            setConversations((prev) =>
+              prev.map((conv) =>
+                conv.id === conversationId && (conv.unreadCount?.[userId] || 0) > 0
+                  ? { ...conv, unreadCount: { ...conv.unreadCount, [userId]: 0 } }
+                  : conv
+              )
+            );
+          }
           if (selectedConversationRef.current?.id === conversationId) {
             setMessages((prev) =>
               prev.map((msg) =>
-                messageIds.includes(msg.id)
+                messageIds.includes(msg.id) && !(msg.readBy || []).some((r) => r.userId === readerId)
                   ? {
                       ...msg,
-                      readBy: [...(msg.readBy || []), { userId: usrId, readAt: timestamp }],
+                      readBy: [...(msg.readBy || []), { userId: readerId, readAt: timestamp }],
                     }
                   : msg
               )
@@ -761,11 +824,27 @@ export default function MessagesPage() {
           });
         };
 
+        // A conversation this page does not know yet (a new inquiry, a thread
+        // created on another device) announces itself through the unread push
+        // (`conversationId` is additive on that event): refresh the list and
+        // join its room instead of waiting for a reload.
+        const handleUnreadUpdate = (data) => {
+          const id = data?.conversationId;
+          if (!id || conversationsRef.current.some((c) => c.id === id)) return;
+          refreshConversationsRef.current?.();
+        };
+
+        handlersRef.current = { handleConnect, handleDisconnect, handleNewMessage, handleMessageRead, handleTypingUpdate, handleUnreadUpdate };
+        // The shared socket is usually connected before this handler exists;
+        // the next "connect" it sees is then a RE-connect (thread and list
+        // must be re-fetched), not the first one.
+        hasConnectedOnceRef.current = socket.connected;
         socket.on("connect", handleConnect);
         socket.on("disconnect", handleDisconnect);
         socket.on("message:new", handleNewMessage);
         socket.on("message:read", handleMessageRead);
         socket.on("typing:update", handleTypingUpdate);
+        socket.on("unread:update", handleUnreadUpdate);
 
         // Initial connection status is handled by socketManager.onConnectionChange
 
@@ -794,11 +873,19 @@ export default function MessagesPage() {
         unsubscribeConnectionRef.current = null;
       }
       if (socketRef.current) {
-        socketRef.current.off("connect");
-        socketRef.current.off("disconnect");
-        socketRef.current.off("message:new");
-        socketRef.current.off("message:read");
-        socketRef.current.off("typing:update");
+        // Remove exactly our handlers. off(event) with no handler would also
+        // strip the socket manager's own listeners from the shared singleton.
+        const s = socketRef.current;
+        const h = handlersRef.current;
+        if (h) {
+          s.off("connect", h.handleConnect);
+          s.off("disconnect", h.handleDisconnect);
+          s.off("message:new", h.handleNewMessage);
+          s.off("message:read", h.handleMessageRead);
+          s.off("typing:update", h.handleTypingUpdate);
+          s.off("unread:update", h.handleUnreadUpdate);
+        }
+        handlersRef.current = null;
         socketManager.releaseSocket();
       }
     };
@@ -828,9 +915,9 @@ export default function MessagesPage() {
           setMessages(reconcileHistoryRef.current ? reconcileHistoryRef.current(sortedMessages) : sortedMessages);
         }
 
-        if (socketRef.current) {
-          socketRef.current.emit("conversation:join", { conversationId: selectedConversation.id });
-        }
+        // Through the manager so the room is tracked (deduped, re-joined
+        // after a reconnect) instead of a bare emit it never learns about.
+        socketManager.joinRoom(selectedConversation.id);
       } catch (err) {
         console.error("Load messages error:", err);
       } finally {

@@ -101,6 +101,19 @@ export default function HostInboxPage() {
   // Bumped on every RE-connect so the open thread is re-fetched and merged.
   const [reconnectTick, setReconnectTick] = useState(0);
   const hasConnectedOnceRef = useRef(false);
+  // Silent list refresh (reconnect, unknown conversation announced by an
+  // unread push); set once the loader below exists.
+  const refreshConversationsRef = useRef(null);
+  // Message ids already counted towards a list badge (bounded)
+  const seenMessageIdsRef = useRef(new Set());
+  const rememberSeen = (id) => {
+    if (!id || seenMessageIdsRef.current.has(id)) return false;
+    seenMessageIdsRef.current.add(id);
+    if (seenMessageIdsRef.current.size > 1000) {
+      seenMessageIdsRef.current = new Set([...seenMessageIdsRef.current].slice(-500));
+    }
+    return true;
+  };
 
   // Header badge: silent for the initial handshake / an already-connected
   // singleton; only a lost connection is shown.
@@ -342,12 +355,23 @@ export default function HostInboxPage() {
 
     const handleConnect = () => {
       console.log("[HostInbox] Socket connected");
-      if (hasConnectedOnceRef.current) setReconnectTick((t) => t + 1);
+      const reconnect = hasConnectedOnceRef.current;
+      if (reconnect) setReconnectTick((t) => t + 1);
       hasConnectedOnceRef.current = true;
       // Join all conversation rooms
       conversationsRef.current.forEach((conv) => {
         socketManager.joinRoom(conv.id);
       });
+      // Nothing pushed while we were away arrived: refresh the list too
+      if (reconnect) refreshConversationsRef.current?.();
+    };
+
+    // A conversation this page does not know yet (a new inquiry) announces
+    // itself through the unread push; refresh the list and join its room.
+    const handleUnreadUpdate = (data) => {
+      const id = data?.conversationId;
+      if (!id || conversationsRef.current.some((c) => c.id === id)) return;
+      refreshConversationsRef.current?.();
     };
 
     const handleDisconnect = () => {
@@ -370,6 +394,10 @@ export default function HostInboxPage() {
       if (!isHostConversation) return;
 
       notifyServerMessageRef.current?.(message);
+      // A logical message bumps the local badge once, however many times its
+      // event arrives (retries re-broadcast), and never for the host's own
+      // sends from another tab or device.
+      const countsAsUnread = message.senderId !== currentUserId && rememberSeen(message.id);
 
       if (selectedConversationRef.current?.id === conversationId) {
         setMessages((prev) => {
@@ -402,7 +430,7 @@ export default function HostInboxPage() {
                   [currentUserId]:
                     selectedConversationRef.current?.id === conversationId
                       ? 0
-                      : (conv.unreadCount[currentUserId] || 0) + 1,
+                      : (conv.unreadCount[currentUserId] || 0) + (countsAsUnread ? 1 : 0),
                 },
               }
             : conv
@@ -417,13 +445,24 @@ export default function HostInboxPage() {
 
     const handleMessageRead = (data) => {
       const { conversationId, messageIds, userId, timestamp } = data;
+      // Read by me in another tab or on another device: that thread's unread
+      // is 0 on the server now, so the row here must not keep the old count.
+      if (userId === currentUserId) {
+        setConversations((prev) =>
+          prev.map((conv) =>
+            conv.id === conversationId && (conv.unreadCount?.[currentUserId] || 0) > 0
+              ? { ...conv, unreadCount: { ...conv.unreadCount, [currentUserId]: 0 } }
+              : conv
+          )
+        );
+      }
       if (selectedConversationRef.current?.id === conversationId) {
         setMessages((prev) =>
           prev.map((msg) =>
-            messageIds.includes(msg.id)
+            messageIds.includes(msg.id) && !(msg.readBy || []).some((r) => r.userId === userId)
               ? {
                   ...msg,
-                  readBy: [...msg.readBy, { userId, readAt: timestamp }],
+                  readBy: [...(msg.readBy || []), { userId, readAt: timestamp }],
                 }
               : msg
           )
@@ -454,12 +493,16 @@ export default function HostInboxPage() {
       });
     };
 
+    // Already connected (the shared socket normally is): the next "connect"
+    // this page sees is a RE-connect, so the thread and list get re-fetched.
+    hasConnectedOnceRef.current = socket.connected;
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on("connect_error", handleConnectError);
     socket.on("message:new", handleNewMessage);
     socket.on("message:read", handleMessageRead);
     socket.on("typing:update", handleTypingUpdate);
+    socket.on("unread:update", handleUnreadUpdate);
 
     // Initial connection status is handled by socketManager.onConnectionChange
 
@@ -472,6 +515,7 @@ export default function HostInboxPage() {
       socket.off("message:new", handleNewMessage);
       socket.off("message:read", handleMessageRead);
       socket.off("typing:update", handleTypingUpdate);
+      socket.off("unread:update", handleUnreadUpdate);
       socketManager.releaseSocket();
     };
   }, [currentUserId]);
@@ -520,6 +564,32 @@ export default function HostInboxPage() {
     // Set the flag AFTER all checks pass and we're about to fetch
     initCalledRef.current = true;
     sessionStorage.setItem('hostinbox_last_init', now.toString());
+
+    // Silent refresh used after a reconnect and when the server announces a
+    // conversation we have not seen; never touches isLoading and never
+    // replaces the list with nothing.
+    refreshConversationsRef.current = async () => {
+      try {
+        const response = await fetch(`${CHAT_URL}/api/chat/conversations?role=host`, {
+          headers: { Authorization: `Bearer ${tokenRef.current}` },
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!data.success) return;
+        const list = (data.data || [])
+          .filter((conv) => conv.lastMessage)
+          .sort((a, b) => {
+            const timeA = a.lastMessage?.sentAt ? new Date(a.lastMessage.sentAt) : new Date(0);
+            const timeB = b.lastMessage?.sentAt ? new Date(b.lastMessage.sentAt) : new Date(0);
+            return timeB - timeA;
+          });
+        if (list.length === 0 && conversationsRef.current.length > 0) return;
+        setConversations(list);
+        fetchConversationDetails(list);
+      } catch (error) {
+        console.error("[HostInbox] Conversation refresh failed:", error);
+      }
+    };
 
     async function loadConversations() {
       // Revalidate silently when a cached list is already on screen — flipping
