@@ -811,7 +811,9 @@ export default function HostInboxPage() {
   }, [selectedConversation?.id, emitTypingStop]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation || !socketRef.current)
+    // same gate as the send buttons: typing is allowed while reconnecting,
+    // sending is not (the draft simply stays in the composer)
+    if (!newMessage.trim() || !selectedConversation || !socketRef.current || connectionStatus !== "connected")
       return;
 
     // Stop typing indicator when sending
@@ -1443,6 +1445,7 @@ export default function HostInboxPage() {
           onSend={handleSendMessage}
           onKeyDown={handleKeyDown}
           disabled={composerBlocked}
+          canSend={connectionStatus === "connected"}
           isSending={isSending}
           placeholder="Type a message..."
           autoFocus={false}

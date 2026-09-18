@@ -981,7 +981,9 @@ export default function MessagesPage() {
   }, [selectedConversation?.id, emitTypingStop]);
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation || sending) return;
+    // same gate as the send button: typing is allowed while reconnecting,
+    // sending is not (the draft simply stays in the composer)
+    if (!newMessage.trim() || !selectedConversation || sending || connectionStatus !== "connected") return;
 
     // Stop typing indicator when sending
     if (typingTimeoutRef.current) {

@@ -15,6 +15,7 @@ export default function MobileChatInput({
   onSend,
   onKeyDown,
   disabled = false,
+  canSend = true,
   isSending = false,
   placeholder = "Type a message...",
   className = "",
@@ -83,10 +84,10 @@ export default function MobileChatInput({
   }, []);
 
   const handleSend = useCallback(() => {
-    if (value.trim() && !disabled && !isSending) {
+    if (value.trim() && !disabled && !isSending && canSend) {
       onSend();
     }
-  }, [value, disabled, isSending, onSend]);
+  }, [value, disabled, isSending, canSend, onSend]);
 
   // The page handler runs first; when it consumed the key (Enter → its own
   // send, Escape → cancel reply) we must not send a second time.
@@ -144,7 +145,7 @@ export default function MobileChatInput({
           onClick={handleSend}
           onMouseDown={handleMouseDown}
           onTouchEnd={handleTouchEnd}
-          disabled={!value.trim() || disabled || isSending}
+          disabled={!value.trim() || disabled || isSending || !canSend}
         >
           {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
         </Button>
