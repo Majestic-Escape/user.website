@@ -72,7 +72,10 @@ export function holdThreadPosition(getScroller, { messageId = null } = {}) {
     observer = new ResizeObserver(apply);
     observer.observe(scroller);
   }
+  let stopped = false;
   const stop = () => {
+    if (stopped) return; // the deadline timer still fires after an explicit stop
+    stopped = true;
     timers.forEach((t) => t && clearTimeout(t));
     observer?.disconnect();
     if (activeHold?.stop === stop) activeHold = null;

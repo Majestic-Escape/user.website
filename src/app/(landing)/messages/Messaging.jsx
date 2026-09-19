@@ -39,13 +39,14 @@ import { toast } from "sonner";
 import SwipeToReply from "@/components/chat/SwipeToReply";
 import QuotedMessage from "@/components/chat/QuotedMessage";
 import ReplyPreviewBar from "@/components/chat/ReplyPreviewBar";
+import ScrollToLatest from "@/components/chat/ScrollToLatest";
 import SendStatus from "@/components/chat/SendStatus";
 import { useReplyTo } from "@/hooks/useReplyTo";
 import { useSendLifecycle } from "@/hooks/useSendLifecycle";
 import { useConnectionBadge } from "@/hooks/useConnectionBadge";
 import { useComposerDrafts } from "@/hooks/useComposerDrafts";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat/reply";
-import { holdThreadPosition } from "@/lib/chat/threadPosition";
+import { holdThreadPosition, isNearBottom } from "@/lib/chat/threadPosition";
 import {
   getCachedConversations,
   setCachedConversations,
@@ -106,6 +107,19 @@ export default function MessagesPage() {
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  // Where the reader is, as of the last scroll event: a message that arrives
+  // while they are up in the thread must not drag it to the bottom.
+  const nearBottomRef = useRef(true);
+  const [showScrollToLatest, setShowScrollToLatest] = useState(false);
+  const [newBelow, setNewBelow] = useState(false);
+  const handleThreadScroll = useCallback(() => {
+    const sc = messagesContainerRef.current;
+    if (!sc) return;
+    const near = isNearBottom(sc);
+    nearBottomRef.current = near;
+    setShowScrollToLatest(!near);
+    if (near) setNewBelow(false);
+  }, []);
   const selectedConversationRef = useRef(null);
   // Seeded from the same cache as state so `init()` can tell a cold start from
   // a revalidate without depending on effect ordering.
@@ -500,20 +514,41 @@ export default function MessagesPage() {
     }
   };
 
-  // Scroll to bottom when messages change
+  const scrollToLatest = () => {
+    setNewBelow(false);
+    scrollToBottom(true);
+  };
+
+  // Follow the thread: instantly on the first render of a thread; smoothly
+  // for a new message when the reader was at the bottom or sent it; not at
+  // all when they were reading older messages (the control above offers the
+  // way down and says something new is waiting).
   const prevMessagesLength = useRef(0);
   useEffect(() => {
-    if (messages.length > 0) {
-      // Only smooth scroll for new messages, instant for initial load
-      const isNewMessage = messages.length > prevMessagesLength.current;
-      scrollToBottom(isNewMessage && prevMessagesLength.current > 0);
-      prevMessagesLength.current = messages.length;
+    if (messages.length === 0) return;
+    const prev = prevMessagesLength.current;
+    prevMessagesLength.current = messages.length;
+    if (prev === 0) {
+      scrollToBottom(false);
+      return;
+    }
+    if (messages.length <= prev) return;
+    const last = messages[messages.length - 1];
+    const own = !!last && !!userId && String(last.senderId) === String(userId);
+    if (own || nearBottomRef.current) {
+      scrollToBottom(true);
+    } else {
+      setNewBelow(true);
+      setShowScrollToLatest(true);
     }
   }, [messages.length]);
 
   // Reset message count when conversation changes
   useEffect(() => {
     prevMessagesLength.current = 0;
+    nearBottomRef.current = true;
+    setNewBelow(false);
+    setShowScrollToLatest(false);
   }, [selectedConversation?.id]);
 
   // Scroll to bottom when conversation is selected
@@ -1511,10 +1546,12 @@ export default function MessagesPage() {
         </div>
 
         {/* Messages */}
+        <div className="relative flex-1 flex flex-col min-h-0">
         <div
           ref={messagesContainerRef}
           data-chat-messages="true"
           className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 bg-gray-50"
+          onScroll={handleThreadScroll}
           style={{
             minHeight: 0,
             overscrollBehavior: "contain",
@@ -1628,6 +1665,8 @@ export default function MessagesPage() {
             })()
           )}
           <div ref={messagesEndRef} />
+        </div>
+        <ScrollToLatest visible={showScrollToLatest} hasNew={newBelow} onClick={scrollToLatest} />
         </div>
 
         {/* Input */}
@@ -2142,9 +2181,11 @@ export default function MessagesPage() {
           </div>
 
           {/* Messages - Scrollable */}
+          <div className="relative flex-1 flex flex-col min-h-0">
           <div
             ref={messagesContainerRef}
             className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 bg-gray-50"
+            onScroll={handleThreadScroll}
           >
             {loadingMessages ? (
               <div className="flex items-center justify-center h-32">
@@ -2256,6 +2297,8 @@ export default function MessagesPage() {
               })()
             )}
             <div ref={messagesEndRef} />
+          </div>
+          <ScrollToLatest visible={showScrollToLatest} hasNew={newBelow} onClick={scrollToLatest} />
           </div>
 
           {/* Message Input - Fixed at bottom */}

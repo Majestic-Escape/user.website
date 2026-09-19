@@ -40,6 +40,8 @@ import { toast } from "sonner";
 import SwipeToReply from "@/components/chat/SwipeToReply";
 import QuotedMessage from "@/components/chat/QuotedMessage";
 import ReplyPreviewBar from "@/components/chat/ReplyPreviewBar";
+import ScrollToLatest from "@/components/chat/ScrollToLatest";
+import { isNearBottom } from "@/lib/chat/threadPosition";
 import SendStatus from "@/components/chat/SendStatus";
 import { useReplyTo } from "@/hooks/useReplyTo";
 import { useSendLifecycle } from "@/hooks/useSendLifecycle";
@@ -84,6 +86,10 @@ export default function HostInboxPage() {
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
   const [isMobileView, setIsMobileView] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  // Where the reader is, as of the last scroll event: a message that arrives
+  // while they are up in the thread must not drag it to the bottom.
+  const nearBottomRef = useRef(true);
+  const [newBelow, setNewBelow] = useState(false);
   const [typingUsers, setTypingUsers] = useState(new Map()); // Map<conversationId, Set<userId>>
 
   // Track page visibility - only mark messages as read when page is visible
@@ -324,15 +330,15 @@ export default function HostInboxPage() {
   const handleScroll = useCallback(() => {
     const container = chatContainerRef.current;
     if (!container) return;
-    
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-    // Show button if user is more than 100px from bottom
-    setShowScrollToBottom(distanceFromBottom > 100);
+    const near = isNearBottom(container);
+    nearBottomRef.current = near;
+    setShowScrollToBottom(!near);
+    if (near) setNewBelow(false);
   }, []);
 
   // Scroll to bottom function
   const scrollToBottom = useCallback(() => {
+    setNewBelow(false);
     const container = chatContainerRef.current;
     if (container) {
       container.scrollTo({
@@ -771,21 +777,35 @@ export default function HostInboxPage() {
     };
   }, [reconnectTick, reconnectConversationId]);
 
-  // Auto-scroll to bottom on new messages
+  // Follow the thread: on the first render of a thread; for a new message
+  // when the reader was at the bottom or sent it; not at all when they were
+  // reading older messages (the floating control offers the way down and
+  // says something new is waiting).
   const prevMessagesLengthRef = useRef(0);
   useEffect(() => {
-    if (chatContainerRef.current && messages.length > 0) {
-      requestAnimationFrame(() => {
-        if (chatContainerRef.current) {
-          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }
-      });
-      prevMessagesLengthRef.current = messages.length;
+    if (!chatContainerRef.current || messages.length === 0) return;
+    const prev = prevMessagesLengthRef.current;
+    prevMessagesLengthRef.current = messages.length;
+    const last = messages[messages.length - 1];
+    const own = !!last && !!currentUserId && String(last.senderId) === String(currentUserId);
+    if (prev !== 0 && messages.length > prev && !own && !nearBottomRef.current) {
+      setNewBelow(true);
+      setShowScrollToBottom(true);
+      return;
     }
+    if (prev !== 0 && messages.length <= prev) return;
+    requestAnimationFrame(() => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    });
   }, [messages.length]);
 
   useEffect(() => {
     prevMessagesLengthRef.current = 0;
+    nearBottomRef.current = true;
+    setNewBelow(false);
+    setShowScrollToBottom(false);
   }, [selectedConversation?.id]);
 
   // Track messages we've already marked as read
@@ -1451,16 +1471,7 @@ export default function HostInboxPage() {
           )}
         </div>
         
-        {/* Scroll to bottom button */}
-        {showScrollToBottom && isMobile && (
-          <button
-            onClick={scrollToBottom}
-            className="absolute bottom-4 right-4 bg-white shadow-lg rounded-full p-2 border border-gray-200 hover:bg-gray-50 transition-all z-10"
-            aria-label="Scroll to bottom"
-          >
-            <ChevronDown className="h-5 w-5 text-gray-600" />
-          </button>
-        )}
+        <ScrollToLatest visible={showScrollToBottom} hasNew={newBelow} onClick={scrollToBottom} />
       </div>
     );
   };
