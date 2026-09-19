@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useLayoutEffect,
+} from "react";
 import { useCheckToken } from "@/services/useCheckToken";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -38,8 +44,18 @@ type BookingQuery = {
   checkoutTime?: string;
   propertyImage?: string;
 };
+// A client component still renders on the server, where useLayoutEffect warns
+// (React 18); the session read only matters in the browser anyway.
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
+
 type AuthContextType = {
   user: User | null;
+  // false until the stored session has been read on the client. Server HTML
+  // and the hydration render cannot know who is signed in, so auth-dependent
+  // chrome (navbar, bottom navigation) renders a neutral placeholder while
+  // this is false instead of flashing the signed-out variant on every load.
+  authReady: boolean;
   login: (user: User) => void;
   logout: () => void;
   modalFilter: boolean;
@@ -109,6 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [bookingQuery, setBookingQuery] = useState<BookingQuery | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [modalFilter, setModalFilter] = useState<boolean>(false);
   const [resetClicked, setResetClicked] = useState<boolean>(false);
   const [propertyIsActive, setPropertyIsActive] = useState<boolean>(false);
@@ -199,7 +216,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => window.removeEventListener(SESSION_CLEARED_EVENT, onCleared);
   }, []);
 
-  useEffect(() => {
+  // Layout-timed so the signed-in chrome is committed before the first paint
+  // after hydration — with a plain effect the neutral placeholder painted for
+  // a frame, then the real items.
+  useIsomorphicLayoutEffect(() => {
     // Check for existing user in localStorage on initial load. Tolerant
     // reads: a corrupt value here used to throw inside the root provider and
     // take every route down.
@@ -212,6 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (storedUser) {
       setUser(storedUser);
     }
+    setAuthReady(true);
 
     // Load saved filters from sessionStorage if needed
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -350,6 +371,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const value: AuthContextType = {
     user,
+    authReady,
     login,
     logout,
     modalFilter,

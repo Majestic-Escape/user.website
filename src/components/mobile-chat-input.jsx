@@ -3,6 +3,7 @@
 import { useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2 } from "lucide-react";
+import { holdThreadPosition } from "@/lib/chat/threadPosition";
 
 /**
  * Mobile-optimized chat input component.
@@ -63,24 +64,11 @@ export default function MobileChatInput({
     };
   }, []);
 
-  // Scroll chat to bottom when input is focused (keyboard opens)
+  // Keyboard opens: stay pinned to the bottom if the reader was there,
+  // otherwise keep the thread where it is (a reply to an older message must
+  // not scroll it away).
   const handleFocus = useCallback(() => {
-    const scrollToBottom = () => {
-      const chatContainer = document.querySelector('[data-chat-messages="true"]');
-      if (chatContainer) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      }
-    };
-    
-    // Scroll immediately and after multiple delays for keyboard animation
-    scrollToBottom();
-    setTimeout(scrollToBottom, 50);
-    setTimeout(scrollToBottom, 100);
-    setTimeout(scrollToBottom, 150);
-    setTimeout(scrollToBottom, 200);
-    setTimeout(scrollToBottom, 300);
-    setTimeout(scrollToBottom, 400);
-    setTimeout(scrollToBottom, 500);
+    holdThreadPosition(() => document.querySelector('[data-chat-messages="true"]'));
   }, []);
 
   const handleSend = useCallback(() => {
