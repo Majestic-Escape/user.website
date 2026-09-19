@@ -15,6 +15,49 @@ import {
 } from "@/components/ui/dialog";
 import { TextReveal } from "@/components/text-reveal";
 
+// Module-level on purpose: defined inside the step it was a new component
+// type on every render, so React unmounted and remounted the dialog (and its
+// trigger) whenever the step re-rendered.
+function InfoDialog({ info, open, onOpenChange }) {
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+    >
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-2"
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent card click event from firing
+          }}
+        >
+          Know more
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{info.title}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-muted-foreground">
+            {info.description}
+          </p>
+          <ul className="space-y-2">
+            {info.details.map((detail, index) => (
+              <li key={index} className="flex items-center gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                {detail}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function ReservationSettings({ updateFormData, formData }) {
   const [bookingType, setBookingType] = useState({
     manual: formData?.bookingType?.manual ?? true,
@@ -90,45 +133,11 @@ export function ReservationSettings({ updateFormData, formData }) {
     },
   };
 
-  const InfoDialog = ({ type }) => (
-    <Dialog
-      open={openDialog[type]}
-      onOpenChange={(isOpen) => {
-        setOpenDialog((prev) => ({ ...prev, [type]: isOpen }));
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="ml-2"
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent card click event from firing
-          }}
-        >
-          Know more
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{bookingInfo[type].title}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <p className="text-muted-foreground">
-            {bookingInfo[type].description}
-          </p>
-          <ul className="space-y-2">
-            {bookingInfo[type].details.map((detail, index) => (
-              <li key={index} className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                {detail}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+  const infoDialogProps = (type) => ({
+    info: bookingInfo[type],
+    open: !!openDialog[type],
+    onOpenChange: (isOpen) => setOpenDialog((prev) => ({ ...prev, [type]: isOpen })),
+  });
 
   return (
     <div className=" max-w-4xl mx-auto p-6 md:min-h-screen md:bg-background">
@@ -161,7 +170,7 @@ export function ReservationSettings({ updateFormData, formData }) {
                       <h3 className="font-medium">
                         Approve or decline requests
                       </h3>
-                      <InfoDialog type="manual" />
+                      <InfoDialog {...infoDialogProps("manual")} />
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Guests must ask if they can book.
@@ -190,7 +199,7 @@ export function ReservationSettings({ updateFormData, formData }) {
                       <div className="flex items-center gap-2">
                         <Zap className="hidden md:block md:h-5 md:w-5" />
                         <h3 className="font-medium">Use Instant Book</h3>
-                        <InfoDialog type="instantBook" />
+                        <InfoDialog {...infoDialogProps("instantBook")} />
                       </div>
                       <p className="text-sm text-muted-foreground">
                         Guests can book automatically.
@@ -218,7 +227,7 @@ export function ReservationSettings({ updateFormData, formData }) {
                       <div className="flex items-center gap-2">
                         <Bolt className="h-5 w-5" />
                         <h3 className="font-medium">Flash Booking</h3>
-                        <InfoDialog type="flashBook" />
+                        <InfoDialog {...infoDialogProps("flashBook")} />
                       </div>
                       <p className="text-sm text-muted-foreground">
                         Guests can book instantly with priority processing.

@@ -151,6 +151,60 @@ function GuestModal({ onClose, children }) {
   );
 }
 // Create a BookPageContent component that uses React Query
+// Module-level on purpose: a component defined inside another component is a
+// new type on every render, so React unmounted and remounted it each time the
+// parent re-rendered.
+function PriceBreakdownModal({ onClose, totals, date, money }) {
+  if (typeof window === "undefined") return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[1200] bg-black/50 flex items-center justify-center">
+      <div className="bg-white rounded-2xl w-full max-w-md mx-4 shadow-xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">Price breakdown</h2>
+          <button onClick={onClose}>✕</button>
+        </div>
+
+        <div className="px-6 py-4 space-y-4 text-sm">
+          <div className="flex justify-between">
+            <span>
+              {totals.nights} night ·{" "}
+              {date.from.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}{" "}
+              –{" "}
+              {date.to.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+            <span>{money(totals.subtotal)}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Service fee</span>
+            <span>{money(totals.serviceFee)}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Taxes</span>
+            <span>{money(totals.nightlytax)}</span>
+          </div>
+
+          <hr />
+
+          <div className="flex justify-between font-semibold">
+            <span>Total (INR)</span>
+            <span>{money(totals.total)}</span>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 function BookPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -311,56 +365,6 @@ function BookPageContent() {
       document.body.style.overflow = "";
     }
   }, [showPriceBreakdown]);
-  function PriceBreakdownModal({ onClose, totals, date }) {
-    if (typeof window === "undefined") return null;
-
-    return createPortal(
-      <div className="fixed inset-0 z-[1200] bg-black/50 flex items-center justify-center">
-        <div className="bg-white rounded-2xl w-full max-w-md mx-4 shadow-xl">
-          <div className="flex items-center justify-between px-6 py-4 border-b">
-            <h2 className="text-lg font-semibold">Price breakdown</h2>
-            <button onClick={onClose}>✕</button>
-          </div>
-
-          <div className="px-6 py-4 space-y-4 text-sm">
-            <div className="flex justify-between">
-              <span>
-                {totals.nights} night ·{" "}
-                {date.from.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })}{" "}
-                –{" "}
-                {date.to.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </span>
-              <span>{money(totals.subtotal)}</span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>Service fee</span>
-              <span>{money(totals.serviceFee)}</span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>Taxes</span>
-              <span>{money(totals.nightlytax)}</span>
-            </div>
-
-            <hr />
-
-            <div className="flex justify-between font-semibold">
-              <span>Total (INR)</span>
-              <span>{money(totals.total)}</span>
-            </div>
-          </div>
-        </div>
-      </div>,
-      document.body,
-    );
-  }
 
   useEffect(() => {
     if (showGuestModal || showPriceBreakdown) {
@@ -1039,7 +1043,9 @@ function BookPageContent() {
             city: property?.address?.city,
             state: property?.address?.state,
             country: property?.address?.country,
-            propertyImage: propertyImg, //property?.photos[0],
+            // the stay page's booking link carries no image; fall back to the
+            // property's first photo so the confirmation page can show it
+            propertyImage: propertyImg || property?.photos?.[0],
             checkin: date.from.getTime(),
             checkout: date.to.getTime(),
             numberOfGuests: guests,
@@ -1763,6 +1769,7 @@ function BookPageContent() {
             </Card>
             {showPriceBreakdown && (
               <PriceBreakdownModal
+                money={money}
                 totals={totals}
                 date={date}
                 onClose={() => setShowPriceBreakdown(false)}

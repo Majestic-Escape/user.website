@@ -31,6 +31,15 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function BookingSummaryPage() {
   const searchParams = useSearchParams();
   const [queryData, setQueryData] = useState(null);
+  // The property image arrives as a query param: a full URL (the stay page
+  // passes photos[0]) or a bucket key from older links. Without it the page
+  // used to request ".../null" from the image optimizer (a 403 and a broken
+  // image on the confirmation page).
+  const propertyImageSrc = queryData?.propertyImage
+    ? /^https?:\/\//.test(queryData.propertyImage)
+      ? queryData.propertyImage
+      : `https://majestic-escape-host-properties.blr1.digitaloceanspaces.com/${queryData.propertyImage}`
+    : null;
   const [isAuth, setIsAuth] = useState(false);
   const auth = async () => {
     const getLocalData = await localStorage.getItem("token");
@@ -215,13 +224,17 @@ export default function BookingSummaryPage() {
           <div className="px-4 py-6 sm:px-0">
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 border rounded-xl p-4 shadow-lg">
               <div>
-                <Image
-                  src={`https://majestic-escape-host-properties.blr1.digitaloceanspaces.com/${queryData?.propertyImage}`}
-                  alt="Property Image"
-                  width={600}
-                  height={400}
-                  className="rounded-xl"
-                />
+                {propertyImageSrc ? (
+                  <Image
+                    src={propertyImageSrc}
+                    alt="Property Image"
+                    width={600}
+                    height={400}
+                    className="rounded-xl"
+                  />
+                ) : (
+                  <div className="rounded-xl bg-gray-100 aspect-[3/2]" aria-hidden="true" />
+                )}
                 <h3 className="mt-4 text-lg font-medium"></h3>
                 <p className="text-gray-600 text-sm">
                   {capitalize(queryData?.placeType)}{" "}
