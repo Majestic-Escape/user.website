@@ -45,6 +45,7 @@ import { useSendLifecycle } from "@/hooks/useSendLifecycle";
 import { useConnectionBadge } from "@/hooks/useConnectionBadge";
 import { useComposerDrafts } from "@/hooks/useComposerDrafts";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat/reply";
+import { holdThreadPosition } from "@/lib/chat/threadPosition";
 import {
   getCachedConversations,
   setCachedConversations,
@@ -364,20 +365,10 @@ export default function MessagesPage() {
             if (keyboardNowOpen) {
               // Keyboard just opened - auto-collapse
               setShowPropertyInfo(false);
-              // Scroll to bottom multiple times as keyboard animates
-              const scrollToBottom = () => {
-                if (messagesContainerRef.current) {
-                  messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-                }
-              };
-              scrollToBottom();
-              setTimeout(scrollToBottom, 50);
-              setTimeout(scrollToBottom, 100);
-              setTimeout(scrollToBottom, 150);
-              setTimeout(scrollToBottom, 200);
-              setTimeout(scrollToBottom, 300);
-              setTimeout(scrollToBottom, 400);
-              setTimeout(scrollToBottom, 500);
+              // Stay pinned to the bottom while the keyboard animates — but
+              // only if the reader was there; a thread scrolled up keeps its
+              // place (see lib/chat/threadPosition).
+              holdThreadPosition(() => messagesContainerRef.current);
             } else {
               // Keyboard just closed - auto-expand
               setShowPropertyInfo(true);
@@ -395,15 +386,11 @@ export default function MessagesPage() {
     const handleFocusIn = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
         inputFocusedRef.current = true;
-        
-        // Scroll to bottom immediately on focus
-        const scrollToBottom = () => {
-          if (messagesContainerRef.current) {
-            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-          }
-        };
-        scrollToBottom();
-        
+
+        // Keep the thread where the reader was while the keyboard opens
+        // (pinned to the bottom only if it already was there).
+        holdThreadPosition(() => messagesContainerRef.current);
+
         // Small delay to let viewport resize event fire first
         setTimeout(() => {
           const keyboardStateChanged = !lastKeyboardStateRef.current;
@@ -418,17 +405,7 @@ export default function MessagesPage() {
               isManualToggleRef.current = false;
             }
           }
-          // Scroll again after keyboard detection
-          scrollToBottom();
         }, 300);
-        
-        // Additional scroll attempts for reliability
-        setTimeout(scrollToBottom, 50);
-        setTimeout(scrollToBottom, 100);
-        setTimeout(scrollToBottom, 150);
-        setTimeout(scrollToBottom, 200);
-        setTimeout(scrollToBottom, 400);
-        setTimeout(scrollToBottom, 500);
       }
     };
 
@@ -1672,21 +1649,9 @@ export default function MessagesPage() {
                 if (e.key === 'Enter' && !e.shiftKey) sendMessage();
               }}
               onFocus={() => {
-                // Scroll to bottom when keyboard opens
-                const scrollToBottom = () => {
-                  const chatContainer = document.querySelector('[data-chat-messages="true"]');
-                  if (chatContainer) {
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                  }
-                };
-                scrollToBottom();
-                setTimeout(scrollToBottom, 50);
-                setTimeout(scrollToBottom, 100);
-                setTimeout(scrollToBottom, 150);
-                setTimeout(scrollToBottom, 200);
-                setTimeout(scrollToBottom, 300);
-                setTimeout(scrollToBottom, 400);
-                setTimeout(scrollToBottom, 500);
+                // Keyboard opens: stay pinned to the bottom if the reader was
+                // there, otherwise keep the thread where it is.
+                holdThreadPosition(() => document.querySelector('[data-chat-messages="true"]'));
               }}
               placeholder="Type a message..."
               disabled={sending || composerBlocked}
@@ -2317,16 +2282,9 @@ export default function MessagesPage() {
                   }
                 }}
                 onFocus={() => {
-                  // Scroll to bottom when keyboard opens
-                  const doScroll = () => scrollToBottom(false);
-                  doScroll();
-                  setTimeout(doScroll, 50);
-                  setTimeout(doScroll, 100);
-                  setTimeout(doScroll, 150);
-                  setTimeout(doScroll, 200);
-                  setTimeout(doScroll, 300);
-                  setTimeout(doScroll, 400);
-                  setTimeout(doScroll, 500);
+                  // Keyboard opens: stay pinned to the bottom if the reader was
+                  // there, otherwise keep the thread where it is.
+                  holdThreadPosition(() => messagesContainerRef.current);
                 }}
                 disabled={sending || composerBlocked}
                 className="flex-1 h-10 px-4 bg-gray-100 rounded-full text-base outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
