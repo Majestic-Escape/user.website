@@ -1043,7 +1043,9 @@ function BookPageContent() {
             city: property?.address?.city,
             state: property?.address?.state,
             country: property?.address?.country,
-            propertyImage: propertyImg, //property?.photos[0],
+            // the stay page's booking link carries no image; fall back to the
+            // property's first photo so the confirmation page can show it
+            propertyImage: propertyImg || property?.photos?.[0],
             checkin: date.from.getTime(),
             checkout: date.to.getTime(),
             numberOfGuests: guests,
