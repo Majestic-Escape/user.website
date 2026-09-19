@@ -3,9 +3,8 @@
 import { ReactNode, useEffect, useState } from "react";
 import AccountHeader from "./account-header";
 import AccountSidebar from "./account-sidebar";
-import Link from "next/link";
 import { readStoredToken } from "@/lib/session";
-import LoginLink from "@/components/login-link";
+import NotAuthorized from "@/components/not-authorized";
 
 interface LayoutProps {
   children: ReactNode;
@@ -32,17 +31,7 @@ export default function AccountLayout({ children }: LayoutProps) {
     );
   }
   if (!isAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
-        You are not authorized to access this page. &nbsp;{" "}
-        <LoginLink>
-          <u>
-            <b>Click Here</b>
-          </u>
-        </LoginLink>
-        &nbsp; to log in now to access.
-      </div>
-    );
+    return <NotAuthorized />;
   }
   return (
     <div className="font-poppins min-h-screen pt-24 bg-offWhite">

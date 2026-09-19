@@ -31,7 +31,6 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
-import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
@@ -39,11 +38,14 @@ import { toast } from "sonner";
 import SwipeToReply from "@/components/chat/SwipeToReply";
 import QuotedMessage from "@/components/chat/QuotedMessage";
 import ReplyPreviewBar from "@/components/chat/ReplyPreviewBar";
+import ScrollToLatest from "@/components/chat/ScrollToLatest";
 import SendStatus from "@/components/chat/SendStatus";
 import { useReplyTo } from "@/hooks/useReplyTo";
 import { useSendLifecycle } from "@/hooks/useSendLifecycle";
 import { useConnectionBadge } from "@/hooks/useConnectionBadge";
+import { useComposerDrafts } from "@/hooks/useComposerDrafts";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat/reply";
+import { holdThreadPosition, isNearBottom } from "@/lib/chat/threadPosition";
 import {
   getCachedConversations,
   setCachedConversations,
@@ -99,11 +101,23 @@ export default function MessagesPage() {
 
   // Track page visibility - only mark messages as read when page is visible
   const isPageVisible = usePageVisibility();
-  const { refreshUnreadCount } = useUnreadCount();
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  // Where the reader is, as of the last scroll event: a message that arrives
+  // while they are up in the thread must not drag it to the bottom.
+  const nearBottomRef = useRef(true);
+  const [showScrollToLatest, setShowScrollToLatest] = useState(false);
+  const [newBelow, setNewBelow] = useState(false);
+  const handleThreadScroll = useCallback(() => {
+    const sc = messagesContainerRef.current;
+    if (!sc) return;
+    const near = isNearBottom(sc);
+    nearBottomRef.current = near;
+    setShowScrollToLatest(!near);
+    if (near) setNewBelow(false);
+  }, []);
   const selectedConversationRef = useRef(null);
   // Seeded from the same cache as state so `init()` can tell a cold start from
   // a revalidate without depending on effect ordering.
@@ -126,6 +140,10 @@ export default function MessagesPage() {
   // singleton; only a lost connection is shown.
   const connectionBadge = useConnectionBadge();
   const composerBlocked = connectionBadge === "offline" || connectionBadge === "error";
+
+  // The composer text belongs to the thread it was typed in: stashed when
+  // another thread is opened, restored when this one is opened again.
+  useComposerDrafts({ conversationId: selectedConversation?.id, value: newMessage, setValue: setNewMessage, userId });
 
   // Quote / reply. The two branches (mobile / desktop) mount one composer each
   // — the refs are cross-named historically, so take whichever is live.
@@ -359,20 +377,10 @@ export default function MessagesPage() {
             if (keyboardNowOpen) {
               // Keyboard just opened - auto-collapse
               setShowPropertyInfo(false);
-              // Scroll to bottom multiple times as keyboard animates
-              const scrollToBottom = () => {
-                if (messagesContainerRef.current) {
-                  messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-                }
-              };
-              scrollToBottom();
-              setTimeout(scrollToBottom, 50);
-              setTimeout(scrollToBottom, 100);
-              setTimeout(scrollToBottom, 150);
-              setTimeout(scrollToBottom, 200);
-              setTimeout(scrollToBottom, 300);
-              setTimeout(scrollToBottom, 400);
-              setTimeout(scrollToBottom, 500);
+              // Stay pinned to the bottom while the keyboard animates — but
+              // only if the reader was there; a thread scrolled up keeps its
+              // place (see lib/chat/threadPosition).
+              holdThreadPosition(() => messagesContainerRef.current);
             } else {
               // Keyboard just closed - auto-expand
               setShowPropertyInfo(true);
@@ -390,15 +398,11 @@ export default function MessagesPage() {
     const handleFocusIn = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
         inputFocusedRef.current = true;
-        
-        // Scroll to bottom immediately on focus
-        const scrollToBottom = () => {
-          if (messagesContainerRef.current) {
-            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-          }
-        };
-        scrollToBottom();
-        
+
+        // Keep the thread where the reader was while the keyboard opens
+        // (pinned to the bottom only if it already was there).
+        holdThreadPosition(() => messagesContainerRef.current);
+
         // Small delay to let viewport resize event fire first
         setTimeout(() => {
           const keyboardStateChanged = !lastKeyboardStateRef.current;
@@ -413,17 +417,7 @@ export default function MessagesPage() {
               isManualToggleRef.current = false;
             }
           }
-          // Scroll again after keyboard detection
-          scrollToBottom();
         }, 300);
-        
-        // Additional scroll attempts for reliability
-        setTimeout(scrollToBottom, 50);
-        setTimeout(scrollToBottom, 100);
-        setTimeout(scrollToBottom, 150);
-        setTimeout(scrollToBottom, 200);
-        setTimeout(scrollToBottom, 400);
-        setTimeout(scrollToBottom, 500);
       }
     };
 
@@ -518,20 +512,41 @@ export default function MessagesPage() {
     }
   };
 
-  // Scroll to bottom when messages change
+  const scrollToLatest = () => {
+    setNewBelow(false);
+    scrollToBottom(true);
+  };
+
+  // Follow the thread: instantly on the first render of a thread; smoothly
+  // for a new message when the reader was at the bottom or sent it; not at
+  // all when they were reading older messages (the control above offers the
+  // way down and says something new is waiting).
   const prevMessagesLength = useRef(0);
   useEffect(() => {
-    if (messages.length > 0) {
-      // Only smooth scroll for new messages, instant for initial load
-      const isNewMessage = messages.length > prevMessagesLength.current;
-      scrollToBottom(isNewMessage && prevMessagesLength.current > 0);
-      prevMessagesLength.current = messages.length;
+    if (messages.length === 0) return;
+    const prev = prevMessagesLength.current;
+    prevMessagesLength.current = messages.length;
+    if (prev === 0) {
+      scrollToBottom(false);
+      return;
+    }
+    if (messages.length <= prev) return;
+    const last = messages[messages.length - 1];
+    const own = !!last && !!userId && String(last.senderId) === String(userId);
+    if (own || nearBottomRef.current) {
+      scrollToBottom(true);
+    } else {
+      setNewBelow(true);
+      setShowScrollToLatest(true);
     }
   }, [messages.length]);
 
   // Reset message count when conversation changes
   useEffect(() => {
     prevMessagesLength.current = 0;
+    nearBottomRef.current = true;
+    setNewBelow(false);
+    setShowScrollToLatest(false);
   }, [selectedConversation?.id]);
 
   // Scroll to bottom when conversation is selected
@@ -602,9 +617,13 @@ export default function MessagesPage() {
     const now = Date.now();
     if (lastInitTime && (now - parseInt(lastInitTime, 10)) < 2000) {
       console.log("[Messages] Init called too recently, skipping (mobile protection)");
-      // Don't return here on desktop - only skip if it's a true duplicate
-      // Check if we already have conversations loaded
-      if (conversations.length > 0) {
+      // Only skip a true duplicate: this mount already registered its socket
+      // handlers. A populated list is not that — a hard reload within 2 s
+      // (no unmount cleanup, so the flag survives; the list comes from the
+      // sessionStorage cache) used to skip init() and leave the page without
+      // socket handlers or a connection subscription: stuck on "connecting",
+      // send disabled, no real-time messages until the next reload.
+      if (handlersRef.current) {
         return;
       }
     }
@@ -672,8 +691,13 @@ export default function MessagesPage() {
             const targetConv = sortedConversations.find(c => c.id === conversationIdFromUrl);
             if (targetConv) {
               setSelectedConversation(targetConv);
-              // Clear the URL param to avoid re-selecting on refresh
-              router.replace('/messages', { scroll: false });
+              // Clear the URL param to avoid re-selecting on refresh. Through
+              // the native History API, which Next syncs into usePathname /
+              // useSearchParams without a navigation: router.replace() fetched
+              // the route again and, in WebKit, remounted this page a moment
+              // later — the deep-linked thread was deselected and the list
+              // shown (every later message arrived with the thread closed).
+              window.history.replaceState(window.history.state, '', '/messages');
             }
           }
           
@@ -898,15 +922,24 @@ export default function MessagesPage() {
     // Clear messages immediately when switching conversations to prevent stale data
     setMessages([]);
 
+    // A slow fetch for the thread the user just left must not land on the
+    // one now open: switching Nisha → Aishwar while Nisha's history was still
+    // in flight painted Nisha's messages under Aishwar's header until
+    // Aishwar's own response replaced them. The cleanup marks this request
+    // stale and its result (and its loading flag) is dropped.
+    let stale = false;
+    const conversationId = selectedConversation.id;
+
     async function loadMessages() {
       setLoadingMessages(true);
       try {
         const res = await fetch(
-          `${chatUrl}/api/chat/conversations/${selectedConversation.id}/messages?limit=50`,
+          `${chatUrl}/api/chat/conversations/${conversationId}/messages?limit=50`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const data = await res.json();
-        
+        if (stale) return;
+
         if (data.success && data.data) {
           const sortedMessages = (data.data.data || []).sort((a, b) =>
             new Date(a.createdAt) - new Date(b.createdAt)
@@ -917,15 +950,18 @@ export default function MessagesPage() {
 
         // Through the manager so the room is tracked (deduped, re-joined
         // after a reconnect) instead of a bare emit it never learns about.
-        socketManager.joinRoom(selectedConversation.id);
+        socketManager.joinRoom(conversationId);
       } catch (err) {
-        console.error("Load messages error:", err);
+        if (!stale) console.error("Load messages error:", err);
       } finally {
-        setLoadingMessages(false);
+        if (!stale) setLoadingMessages(false);
       }
     }
 
     loadMessages();
+    return () => {
+      stale = true;
+    };
   }, [selectedConversation?.id, token, chatUrl, userId]);
 
   // After a reconnect, re-fetch the open thread and merge it into what is on
@@ -1013,9 +1049,8 @@ export default function MessagesPage() {
             : conv
         )
       );
-
-      // Refresh global unread count badge
-      refreshUnreadCount();
+      // The badge follows the server's unread:update push for this read (sent
+      // to the reader's user room); a REST refresh here only raced it.
     }
   }, [selectedConversation?.id, messages, userId, isPageVisible]);
 
@@ -1105,6 +1140,13 @@ export default function MessagesPage() {
   };
 
   const handleSelectConversation = (conv) => {
+    // Swap the thread out in the same render as the header: otherwise the new
+    // thread's header paints once over the previous thread's messages before
+    // the load effect clears them.
+    if (conv.id !== selectedConversationRef.current?.id) {
+      setMessages([]);
+      if (token) setLoadingMessages(true); // the load effect below takes it from here
+    }
     setSelectedConversation(conv);
     setShowReservation(true);
     setShowPropertyInfo(true);
@@ -1247,8 +1289,12 @@ export default function MessagesPage() {
   }
 
 
-  // Reservation Sidebar Component
-  const ReservationSidebar = () => {
+  // Reservation sidebar. Rendered by a plain function call, not as a nested
+  // component: a component type created inside render is a new type on every
+  // render, so React unmounted and remounted the whole panel on each
+  // keystroke in the composer — the property photo went back through its
+  // skeleton and blinked while typing.
+  const renderReservationSidebar = () => {
     if (!selectedConversation || !showReservation) return null;
 
     const propInfo = getPropertyInfo(selectedConversation);
@@ -1502,10 +1548,12 @@ export default function MessagesPage() {
         </div>
 
         {/* Messages */}
+        <div className="relative flex-1 flex flex-col min-h-0">
         <div
           ref={messagesContainerRef}
           data-chat-messages="true"
           className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 bg-gray-50"
+          onScroll={handleThreadScroll}
           style={{
             minHeight: 0,
             overscrollBehavior: "contain",
@@ -1567,8 +1615,12 @@ export default function MessagesPage() {
                         </div>
                       )}
                       
-                      <div className={`flex ${isOwn ? "justify-end" : "justify-start"} w-full`}>
-                        {!isOwn && (
+                      <SwipeToReply
+                        messageId={message.id}
+                        own={isOwn}
+                        authorName={isOwn ? "you" : propInfo.hostName}
+                        onReply={() => startReply(message)}
+                        avatar={!isOwn && (
                           <Avatar className="w-8 h-8 mr-2 flex-shrink-0 self-end">
                             {propInfo.hostImage ? (
                               <AvatarImage src={propInfo.hostImage} />
@@ -1578,33 +1630,27 @@ export default function MessagesPage() {
                             </AvatarFallback>
                           </Avatar>
                         )}
-                        <SwipeToReply
-                          messageId={message.id}
-                          own={isOwn}
-                          authorName={isOwn ? "you" : propInfo.hostName}
-                          onReply={() => startReply(message)}
+                      >
+                        <div
+                          className={`inline-block max-w-full ${
+                            isOwn
+                              ? "bg-primaryGreen text-white"
+                              : "bg-white shadow-sm border border-gray-100"
+                          } rounded-2xl px-4 py-2`}
                         >
-                          <div
-                            className={`inline-block max-w-full ${
-                              isOwn
-                                ? "bg-primaryGreen text-white"
-                                : "bg-white shadow-sm border border-gray-100"
-                            } rounded-2xl px-4 py-2`}
-                          >
-                            {message.replyTo && (
-                              <QuotedMessage
-                                replyTo={message.replyTo}
-                                own={isOwn}
-                                authorLabel={labelFor(message.replyTo.senderId)}
-                                onJump={scrollToMessage}
-                              />
-                            )}
-                            <p className="text-sm whitespace-pre-wrap break-words">
-                              {message.content?.text}
-                            </p>
-                          </div>
-                        </SwipeToReply>
-                      </div>
+                          {message.replyTo && (
+                            <QuotedMessage
+                              replyTo={message.replyTo}
+                              own={isOwn}
+                              authorLabel={labelFor(message.replyTo.senderId)}
+                              onJump={scrollToMessage}
+                            />
+                          )}
+                          <p className="text-sm whitespace-pre-wrap break-words">
+                            {message.content?.text}
+                          </p>
+                        </div>
+                      </SwipeToReply>
                       {isOwn && <SendStatus message={message} onRetry={retrySend} onDiscard={discardSend} />}
 
                       {/* Read by indicator - only for latest read message */}
@@ -1621,6 +1667,8 @@ export default function MessagesPage() {
             })()
           )}
           <div ref={messagesEndRef} />
+        </div>
+        <ScrollToLatest visible={showScrollToLatest} hasNew={newBelow} onClick={scrollToLatest} />
         </div>
 
         {/* Input */}
@@ -1646,21 +1694,9 @@ export default function MessagesPage() {
                 if (e.key === 'Enter' && !e.shiftKey) sendMessage();
               }}
               onFocus={() => {
-                // Scroll to bottom when keyboard opens
-                const scrollToBottom = () => {
-                  const chatContainer = document.querySelector('[data-chat-messages="true"]');
-                  if (chatContainer) {
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                  }
-                };
-                scrollToBottom();
-                setTimeout(scrollToBottom, 50);
-                setTimeout(scrollToBottom, 100);
-                setTimeout(scrollToBottom, 150);
-                setTimeout(scrollToBottom, 200);
-                setTimeout(scrollToBottom, 300);
-                setTimeout(scrollToBottom, 400);
-                setTimeout(scrollToBottom, 500);
+                // Keyboard opens: stay pinned to the bottom if the reader was
+                // there, otherwise keep the thread where it is.
+                holdThreadPosition(() => document.querySelector('[data-chat-messages="true"]'));
               }}
               placeholder="Type a message..."
               disabled={sending || composerBlocked}
@@ -2147,9 +2183,11 @@ export default function MessagesPage() {
           </div>
 
           {/* Messages - Scrollable */}
+          <div className="relative flex-1 flex flex-col min-h-0">
           <div
             ref={messagesContainerRef}
             className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 bg-gray-50"
+            onScroll={handleThreadScroll}
           >
             {loadingMessages ? (
               <div className="flex items-center justify-center h-32">
@@ -2209,8 +2247,12 @@ export default function MessagesPage() {
                           </div>
                         )}
                         
-                        <div className={`flex ${isOwn ? "justify-end" : "justify-start"} w-full`}>
-                          {!isOwn && (
+                        <SwipeToReply
+                          messageId={message.id}
+                          own={isOwn}
+                          authorName={isOwn ? "you" : propInfo.hostName}
+                          onReply={() => startReply(message)}
+                          avatar={!isOwn && (
                             <Avatar className="w-8 h-8 mr-2 flex-shrink-0 self-end">
                               {propInfo.hostImage ? (
                                 <AvatarImage src={propInfo.hostImage} />
@@ -2220,33 +2262,27 @@ export default function MessagesPage() {
                               </AvatarFallback>
                             </Avatar>
                           )}
-                          <SwipeToReply
-                            messageId={message.id}
-                            own={isOwn}
-                            authorName={isOwn ? "you" : propInfo.hostName}
-                            onReply={() => startReply(message)}
+                        >
+                          <div
+                            className={`inline-block max-w-full ${
+                              isOwn
+                                ? "bg-primaryGreen text-white"
+                                : "bg-white shadow-sm border border-gray-100"
+                            } rounded-2xl px-4 py-2`}
                           >
-                            <div
-                              className={`inline-block max-w-full ${
-                                isOwn
-                                  ? "bg-primaryGreen text-white"
-                                  : "bg-white shadow-sm border border-gray-100"
-                              } rounded-2xl px-4 py-2`}
-                            >
-                              {message.replyTo && (
-                                <QuotedMessage
-                                  replyTo={message.replyTo}
-                                  own={isOwn}
-                                  authorLabel={labelFor(message.replyTo.senderId)}
-                                  onJump={scrollToMessage}
-                                />
-                              )}
-                              <p className="text-sm whitespace-pre-wrap break-words">
-                                {message.content?.text}
-                              </p>
-                            </div>
-                          </SwipeToReply>
-                        </div>
+                            {message.replyTo && (
+                              <QuotedMessage
+                                replyTo={message.replyTo}
+                                own={isOwn}
+                                authorLabel={labelFor(message.replyTo.senderId)}
+                                onJump={scrollToMessage}
+                              />
+                            )}
+                            <p className="text-sm whitespace-pre-wrap break-words">
+                              {message.content?.text}
+                            </p>
+                          </div>
+                        </SwipeToReply>
                         {isOwn && <SendStatus message={message} onRetry={retrySend} onDiscard={discardSend} />}
 
                         {/* Read by indicator - only for latest read message */}
@@ -2263,6 +2299,8 @@ export default function MessagesPage() {
               })()
             )}
             <div ref={messagesEndRef} />
+          </div>
+          <ScrollToLatest visible={showScrollToLatest} hasNew={newBelow} onClick={scrollToLatest} />
           </div>
 
           {/* Message Input - Fixed at bottom */}
@@ -2293,16 +2331,9 @@ export default function MessagesPage() {
                   }
                 }}
                 onFocus={() => {
-                  // Scroll to bottom when keyboard opens
-                  const doScroll = () => scrollToBottom(false);
-                  doScroll();
-                  setTimeout(doScroll, 50);
-                  setTimeout(doScroll, 100);
-                  setTimeout(doScroll, 150);
-                  setTimeout(doScroll, 200);
-                  setTimeout(doScroll, 300);
-                  setTimeout(doScroll, 400);
-                  setTimeout(doScroll, 500);
+                  // Keyboard opens: stay pinned to the bottom if the reader was
+                  // there, otherwise keep the thread where it is.
+                  holdThreadPosition(() => messagesContainerRef.current);
                 }}
                 disabled={sending || composerBlocked}
                 className="flex-1 h-10 px-4 bg-gray-100 rounded-full text-base outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
@@ -2361,7 +2392,7 @@ export default function MessagesPage() {
       )}
 
       {/* Reservation Sidebar - Desktop */}
-      {!isMobileView && <ReservationSidebar />}
+      {!isMobileView && renderReservationSidebar()}
     </div>
   );
 }

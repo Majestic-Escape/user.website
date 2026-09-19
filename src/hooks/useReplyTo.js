@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { buildReplySnapshot, canQuote, replyAuthorLabel } from "@/lib/chat/reply";
+import { holdThreadPosition } from "@/lib/chat/threadPosition";
 
 /**
  * Reply-to state for a messaging page.
@@ -39,29 +40,24 @@ export function useReplyTo({ conversationId, userId, otherName, getInput, getScr
 
   const labelFor = useCallback((senderId) => replyAuthorLabel(senderId, userId, otherName), [userId, otherName]);
 
-  const pinToBottom = useCallback(() => {
-    const scroller = getScroller?.();
-    if (!scroller) return;
-    const distance = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
-    if (distance < 80) {
-      requestAnimationFrame(() => {
-        scroller.scrollTop = scroller.scrollHeight;
-      });
-    }
-  }, [getScroller]);
-
   const startReply = useCallback(
     (message) => {
       if (!canQuote(message)) {
         toast("Wait for the message to finish sending");
         return;
       }
-      // Focus first, synchronously: this runs inside the swipe/click gesture.
+      // Decide where the thread stays BEFORE focusing: the composer's own
+      // focus handling, the keyboard and the preview bar all move the layout
+      // right after this. A thread at the bottom stays pinned there; one the
+      // user had scrolled up keeps its place with the swiped message in view
+      // (WhatsApp behaviour — the reply target is never yanked off screen).
+      holdThreadPosition(getScroller, { messageId: message.id });
+      // Focus synchronously: this runs inside the swipe/click gesture, which
+      // is what lets iOS open the keyboard.
       getInput?.()?.focus();
       setReplyTo(buildReplySnapshot(message));
-      pinToBottom();
     },
-    [getInput, pinToBottom]
+    [getInput, getScroller]
   );
 
   const cancelReply = useCallback(() => setReplyTo(null), []);

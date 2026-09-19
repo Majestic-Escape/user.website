@@ -55,6 +55,15 @@ const nextConfig: NextConfig = {
 
   async redirects() {
     return [
+      // The legacy /chat/[propertyId] page (a third, unmaintained copy of the
+      // messaging UI that nothing linked to) was removed; old bookmarks land
+      // on the real inbox.
+      {
+        source: "/chat/:propertyId",
+        destination: "/messages",
+        permanent: false,
+      },
+
       // 1. Redirect www to non-www (HTTPS version)
       {
         source: "/:path*",
