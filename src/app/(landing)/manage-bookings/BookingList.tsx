@@ -187,14 +187,24 @@ const FilterDialog = ({
 
 const ManageBookings: React.FC = () => {
   const queryClient = useQueryClient();
-  const userId: string | null = (() => {
+  // The stored user id is read after mount: reading localStorage during
+  // render made the server (no id → empty state) and the first client
+  // render (id → spinner) disagree, a hydration mismatch (React #418) that
+  // re-rendered the whole page on the client. Until mounted both sides
+  // render the spinner.
+  const [userId, setUserId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState<boolean>(false);
+  useEffect(() => {
+    let stored: string | null = null;
     try {
       const raw = localStorage.getItem("userId");
-      return raw ? JSON.parse(raw) : null;
+      stored = raw ? JSON.parse(raw) : null;
     } catch {
-      return null;
+      stored = null;
     }
-  })();
+    setUserId(stored);
+    setMounted(true);
+  }, []);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [showInvoice, setShowInvoice] = useState<boolean>(false);
@@ -247,7 +257,7 @@ const ManageBookings: React.FC = () => {
   });
   // Logged out (no userId) the query never runs, so it stays "pending";
   // show the empty state instead of a skeleton forever.
-  const isLoading = !!userId && bookingsPending;
+  const isLoading = !mounted || (!!userId && bookingsPending);
   const fetchData = () =>
     queryClient.invalidateQueries({ queryKey: queryKeys.userBookingsAll });
   useEffect(() => {
