@@ -693,8 +693,13 @@ export default function MessagesPage() {
             const targetConv = sortedConversations.find(c => c.id === conversationIdFromUrl);
             if (targetConv) {
               setSelectedConversation(targetConv);
-              // Clear the URL param to avoid re-selecting on refresh
-              router.replace('/messages', { scroll: false });
+              // Clear the URL param to avoid re-selecting on refresh. Through
+              // the native History API, which Next syncs into usePathname /
+              // useSearchParams without a navigation: router.replace() fetched
+              // the route again and, in WebKit, remounted this page a moment
+              // later — the deep-linked thread was deselected and the list
+              // shown (every later message arrived with the thread closed).
+              window.history.replaceState(window.history.state, '', '/messages');
             }
           }
           
