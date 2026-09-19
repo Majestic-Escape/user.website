@@ -584,9 +584,13 @@ export default function MessagesPage() {
     const now = Date.now();
     if (lastInitTime && (now - parseInt(lastInitTime, 10)) < 2000) {
       console.log("[Messages] Init called too recently, skipping (mobile protection)");
-      // Don't return here on desktop - only skip if it's a true duplicate
-      // Check if we already have conversations loaded
-      if (conversations.length > 0) {
+      // Only skip a true duplicate: this mount already registered its socket
+      // handlers. A populated list is not that — a hard reload within 2 s
+      // (no unmount cleanup, so the flag survives; the list comes from the
+      // sessionStorage cache) used to skip init() and leave the page without
+      // socket handlers or a connection subscription: stuck on "connecting",
+      // send disabled, no real-time messages until the next reload.
+      if (handlersRef.current) {
         return;
       }
     }
