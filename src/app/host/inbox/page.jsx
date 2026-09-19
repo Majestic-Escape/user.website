@@ -283,6 +283,12 @@ export default function HostInboxPage() {
   }, []);
 
   const handleSelectConversation = useCallback((conv) => {
+    // Swap the thread out in the same render as the header, so the new
+    // header never paints over the previous thread's messages.
+    if (conv.id !== selectedConversationRef.current?.id) {
+      setMessages([]);
+      if (tokenRef.current) setIsLoadingMessages(true); // the load effect takes it from here
+    }
     setSelectedConversation(conv);
     // Push a history entry on mobile so the browser back button returns to the list
     if (isMobileViewRef.current) {
@@ -698,11 +704,17 @@ export default function HostInboxPage() {
     // Clear messages immediately when switching conversations to prevent stale data
     setMessages([]);
 
+    // A slow fetch for the thread just left must not land on the one now open
+    // (its messages showed under the new thread's header until the new
+    // thread's own response arrived). The cleanup marks the request stale.
+    let stale = false;
+    const conversationId = selectedConversation.id;
+
     async function loadMessages() {
       setIsLoadingMessages(true);
       try {
         const response = await fetch(
-          `${CHAT_URL}/api/chat/conversations/${selectedConversation.id}/messages?limit=50`,
+          `${CHAT_URL}/api/chat/conversations/${conversationId}/messages?limit=50`,
           {
             headers: {
               Authorization: `Bearer ${tokenRef.current}`,
@@ -713,6 +725,7 @@ export default function HostInboxPage() {
         if (!response.ok) throw new Error("Failed to load messages");
 
         const data = await response.json();
+        if (stale) return;
         if (data.success && data.data) {
           const loadedMessages = data.data.data || data.data;
           const messagesArray = Array.isArray(loadedMessages) ? loadedMessages : [];
@@ -721,13 +734,16 @@ export default function HostInboxPage() {
           setMessages(reconcileHistoryRef.current ? reconcileHistoryRef.current(ordered) : ordered);
         }
       } catch (error) {
-        console.error("Error loading messages:", error);
+        if (!stale) console.error("Error loading messages:", error);
       } finally {
-        setIsLoadingMessages(false);
+        if (!stale) setIsLoadingMessages(false);
       }
     }
 
     loadMessages();
+    return () => {
+      stale = true;
+    };
   }, [selectedConversation?.id]);
 
   // After a reconnect, re-fetch the open thread and merge it into what is on

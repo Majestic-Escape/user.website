@@ -903,15 +903,24 @@ export default function MessagesPage() {
     // Clear messages immediately when switching conversations to prevent stale data
     setMessages([]);
 
+    // A slow fetch for the thread the user just left must not land on the
+    // one now open: switching Nisha → Aishwar while Nisha's history was still
+    // in flight painted Nisha's messages under Aishwar's header until
+    // Aishwar's own response replaced them. The cleanup marks this request
+    // stale and its result (and its loading flag) is dropped.
+    let stale = false;
+    const conversationId = selectedConversation.id;
+
     async function loadMessages() {
       setLoadingMessages(true);
       try {
         const res = await fetch(
-          `${chatUrl}/api/chat/conversations/${selectedConversation.id}/messages?limit=50`,
+          `${chatUrl}/api/chat/conversations/${conversationId}/messages?limit=50`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const data = await res.json();
-        
+        if (stale) return;
+
         if (data.success && data.data) {
           const sortedMessages = (data.data.data || []).sort((a, b) =>
             new Date(a.createdAt) - new Date(b.createdAt)
@@ -922,15 +931,18 @@ export default function MessagesPage() {
 
         // Through the manager so the room is tracked (deduped, re-joined
         // after a reconnect) instead of a bare emit it never learns about.
-        socketManager.joinRoom(selectedConversation.id);
+        socketManager.joinRoom(conversationId);
       } catch (err) {
-        console.error("Load messages error:", err);
+        if (!stale) console.error("Load messages error:", err);
       } finally {
-        setLoadingMessages(false);
+        if (!stale) setLoadingMessages(false);
       }
     }
 
     loadMessages();
+    return () => {
+      stale = true;
+    };
   }, [selectedConversation?.id, token, chatUrl, userId]);
 
   // After a reconnect, re-fetch the open thread and merge it into what is on
@@ -1110,6 +1122,13 @@ export default function MessagesPage() {
   };
 
   const handleSelectConversation = (conv) => {
+    // Swap the thread out in the same render as the header: otherwise the new
+    // thread's header paints once over the previous thread's messages before
+    // the load effect clears them.
+    if (conv.id !== selectedConversationRef.current?.id) {
+      setMessages([]);
+      if (token) setLoadingMessages(true); // the load effect below takes it from here
+    }
     setSelectedConversation(conv);
     setShowReservation(true);
     setShowPropertyInfo(true);
