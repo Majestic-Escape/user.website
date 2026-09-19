@@ -1567,8 +1567,12 @@ export default function MessagesPage() {
                         </div>
                       )}
                       
-                      <div className={`flex ${isOwn ? "justify-end" : "justify-start"} w-full`}>
-                        {!isOwn && (
+                      <SwipeToReply
+                        messageId={message.id}
+                        own={isOwn}
+                        authorName={isOwn ? "you" : propInfo.hostName}
+                        onReply={() => startReply(message)}
+                        avatar={!isOwn && (
                           <Avatar className="w-8 h-8 mr-2 flex-shrink-0 self-end">
                             {propInfo.hostImage ? (
                               <AvatarImage src={propInfo.hostImage} />
@@ -1578,33 +1582,27 @@ export default function MessagesPage() {
                             </AvatarFallback>
                           </Avatar>
                         )}
-                        <SwipeToReply
-                          messageId={message.id}
-                          own={isOwn}
-                          authorName={isOwn ? "you" : propInfo.hostName}
-                          onReply={() => startReply(message)}
+                      >
+                        <div
+                          className={`inline-block max-w-full ${
+                            isOwn
+                              ? "bg-primaryGreen text-white"
+                              : "bg-white shadow-sm border border-gray-100"
+                          } rounded-2xl px-4 py-2`}
                         >
-                          <div
-                            className={`inline-block max-w-full ${
-                              isOwn
-                                ? "bg-primaryGreen text-white"
-                                : "bg-white shadow-sm border border-gray-100"
-                            } rounded-2xl px-4 py-2`}
-                          >
-                            {message.replyTo && (
-                              <QuotedMessage
-                                replyTo={message.replyTo}
-                                own={isOwn}
-                                authorLabel={labelFor(message.replyTo.senderId)}
-                                onJump={scrollToMessage}
-                              />
-                            )}
-                            <p className="text-sm whitespace-pre-wrap break-words">
-                              {message.content?.text}
-                            </p>
-                          </div>
-                        </SwipeToReply>
-                      </div>
+                          {message.replyTo && (
+                            <QuotedMessage
+                              replyTo={message.replyTo}
+                              own={isOwn}
+                              authorLabel={labelFor(message.replyTo.senderId)}
+                              onJump={scrollToMessage}
+                            />
+                          )}
+                          <p className="text-sm whitespace-pre-wrap break-words">
+                            {message.content?.text}
+                          </p>
+                        </div>
+                      </SwipeToReply>
                       {isOwn && <SendStatus message={message} onRetry={retrySend} onDiscard={discardSend} />}
 
                       {/* Read by indicator - only for latest read message */}
@@ -2209,8 +2207,12 @@ export default function MessagesPage() {
                           </div>
                         )}
                         
-                        <div className={`flex ${isOwn ? "justify-end" : "justify-start"} w-full`}>
-                          {!isOwn && (
+                        <SwipeToReply
+                          messageId={message.id}
+                          own={isOwn}
+                          authorName={isOwn ? "you" : propInfo.hostName}
+                          onReply={() => startReply(message)}
+                          avatar={!isOwn && (
                             <Avatar className="w-8 h-8 mr-2 flex-shrink-0 self-end">
                               {propInfo.hostImage ? (
                                 <AvatarImage src={propInfo.hostImage} />
@@ -2220,33 +2222,27 @@ export default function MessagesPage() {
                               </AvatarFallback>
                             </Avatar>
                           )}
-                          <SwipeToReply
-                            messageId={message.id}
-                            own={isOwn}
-                            authorName={isOwn ? "you" : propInfo.hostName}
-                            onReply={() => startReply(message)}
+                        >
+                          <div
+                            className={`inline-block max-w-full ${
+                              isOwn
+                                ? "bg-primaryGreen text-white"
+                                : "bg-white shadow-sm border border-gray-100"
+                            } rounded-2xl px-4 py-2`}
                           >
-                            <div
-                              className={`inline-block max-w-full ${
-                                isOwn
-                                  ? "bg-primaryGreen text-white"
-                                  : "bg-white shadow-sm border border-gray-100"
-                              } rounded-2xl px-4 py-2`}
-                            >
-                              {message.replyTo && (
-                                <QuotedMessage
-                                  replyTo={message.replyTo}
-                                  own={isOwn}
-                                  authorLabel={labelFor(message.replyTo.senderId)}
-                                  onJump={scrollToMessage}
-                                />
-                              )}
-                              <p className="text-sm whitespace-pre-wrap break-words">
-                                {message.content?.text}
-                              </p>
-                            </div>
-                          </SwipeToReply>
-                        </div>
+                            {message.replyTo && (
+                              <QuotedMessage
+                                replyTo={message.replyTo}
+                                own={isOwn}
+                                authorLabel={labelFor(message.replyTo.senderId)}
+                                onJump={scrollToMessage}
+                              />
+                            )}
+                            <p className="text-sm whitespace-pre-wrap break-words">
+                              {message.content?.text}
+                            </p>
+                          </div>
+                        </SwipeToReply>
                         {isOwn && <SendStatus message={message} onRetry={retrySend} onDiscard={discardSend} />}
 
                         {/* Read by indicator - only for latest read message */}

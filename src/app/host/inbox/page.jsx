@@ -1408,28 +1408,26 @@ export default function HostInboxPage() {
                           <span className="text-[11px] text-gray-500">{guestFirstName} · Guest {formatMessageTime(message.createdAt)}</span>
                         </div>
                       )}
-                      <div className={`flex ${isOwn ? "justify-end" : "justify-start"} w-full`}>
-                        <SwipeToReply
-                          messageId={message.id}
-                          own={isOwn}
-                          authorName={isOwn ? "you" : guestFirstName}
-                          onReply={() => startReply(message)}
+                      <SwipeToReply
+                        messageId={message.id}
+                        own={isOwn}
+                        authorName={isOwn ? "you" : guestFirstName}
+                        onReply={() => startReply(message)}
+                      >
+                        <div
+                          className={`inline-block max-w-full ${isOwn ? "bg-primaryGreen text-white" : "bg-white shadow-sm border border-gray-100"} rounded-2xl px-4 py-2`}
                         >
-                          <div
-                            className={`inline-block max-w-full ${isOwn ? "bg-primaryGreen text-white" : "bg-white shadow-sm border border-gray-100"} rounded-2xl px-4 py-2`}
-                          >
-                            {message.replyTo && (
-                              <QuotedMessage
-                                replyTo={message.replyTo}
-                                own={isOwn}
-                                authorLabel={labelFor(message.replyTo.senderId)}
-                                onJump={scrollToMessage}
-                              />
-                            )}
-                            <p className="text-sm whitespace-pre-wrap break-words">{message.content?.text}</p>
-                          </div>
-                        </SwipeToReply>
-                      </div>
+                          {message.replyTo && (
+                            <QuotedMessage
+                              replyTo={message.replyTo}
+                              own={isOwn}
+                              authorLabel={labelFor(message.replyTo.senderId)}
+                              onJump={scrollToMessage}
+                            />
+                          )}
+                          <p className="text-sm whitespace-pre-wrap break-words">{message.content?.text}</p>
+                        </div>
+                      </SwipeToReply>
                       {isOwn && <SendStatus message={message} onRetry={retrySend} onDiscard={discardSend} />}
                       {isOwn && isLatestReadMessage && (
                         <p className="text-[11px] text-gray-400 mt-1 mr-1">Read by {guestFirstName}</p>
