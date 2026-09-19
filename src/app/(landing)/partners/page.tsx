@@ -32,51 +32,55 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 
+// Module-level on purpose: a component defined inside another component is a
+// new type on every render, so React unmounted and remounted it each time the
+// parent re-rendered.
+function PartnerForm() {
+  return (
+    <form className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="firstName">First name</Label>
+          <Input id="firstName" placeholder="Enter your first name" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="lastName">Last name</Label>
+          <Input id="lastName" placeholder="Enter your last name" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" type="email" placeholder="Enter your email" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="phone">Phone number</Label>
+        <Input id="phone" type="tel" placeholder="Enter your phone number" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="companyName">Company name (if applicable)</Label>
+        <Input id="companyName" placeholder="Enter your company name" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="numberOfProperties">Number of properties</Label>
+        <Input
+          id="numberOfProperties"
+          type="number"
+          placeholder="How many properties do you manage?"
+        />
+      </div>
+
+      <Button
+        type="submit"
+        className="w-full bg-primaryGreen hover:bg-brightGreen"
+      >
+        Submit Application
+      </Button>
+    </form>
+  );
+}
+
 export default function PartnerPage() {
   const router = useRouter();
-  function PartnerForm() {
-    return (
-      <form className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="firstName">First name</Label>
-            <Input id="firstName" placeholder="Enter your first name" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="lastName">Last name</Label>
-            <Input id="lastName" placeholder="Enter your last name" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="Enter your email" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone number</Label>
-          <Input id="phone" type="tel" placeholder="Enter your phone number" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="companyName">Company name (if applicable)</Label>
-          <Input id="companyName" placeholder="Enter your company name" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="numberOfProperties">Number of properties</Label>
-          <Input
-            id="numberOfProperties"
-            type="number"
-            placeholder="How many properties do you manage?"
-          />
-        </div>
-
-        <Button
-          type="submit"
-          className="w-full bg-primaryGreen hover:bg-brightGreen"
-        >
-          Submit Application
-        </Button>
-      </form>
-    );
-  }
 
   return (
     <div className="font-poppins min-h-screen bg-white">
