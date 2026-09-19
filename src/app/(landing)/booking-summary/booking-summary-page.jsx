@@ -82,7 +82,6 @@ export default function BookingSummaryPage() {
     const state = searchParams.get("state");
     const country = searchParams.get("country");
     const hostFirstName = searchParams.get("hostFirstName");
-    const hostLastName = searchParams.get("hostLastName");
     const propertyType = searchParams.get("propertyType");
     const placeType = searchParams.get("placeType");
     const adults = searchParams.get("adults");
@@ -106,7 +105,6 @@ export default function BookingSummaryPage() {
       state,
       country,
       hostFirstName,
-      hostLastName,
       propertyType,
       placeType,
       adults,
@@ -226,9 +224,7 @@ export default function BookingSummaryPage() {
                 <p className="text-gray-600 text-sm">
                   {capitalize(queryData?.placeType)}{" "}
                   {capitalize(queryData?.propertyType)}{" "}
-                  {queryData?.hostFirstName || queryData?.hostLastName
-                    ? `by ${queryData?.hostFirstName ?? ""} ${queryData?.hostLastName ?? ""}`.trim()
-                    : null}
+                  {queryData?.hostFirstName ? `by ${queryData.hostFirstName}` : null}
                 </p>
 
                 <div className="mt-4 text-sm"></div>
@@ -331,12 +327,11 @@ export default function BookingSummaryPage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-700">
-                    {queryData?.hostFirstName} {queryData?.hostLastName} is your
-                    host
+                    {queryData?.hostFirstName || "Your host"} is your host
                   </h4>
                   <p className="text-gray-500">
-                    Contact {queryData?.hostFirstName} {queryData?.hostLastName}{" "}
-                    to coordinate arrival time and key exchange.
+                    Message {queryData?.hostFirstName || "your host"} to coordinate
+                    arrival time and key exchange.
                   </p>
                   {/* <button className="text-red-400 text-xs mt-1">
                     Message Host

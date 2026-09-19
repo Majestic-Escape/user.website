@@ -51,6 +51,7 @@ import {
   parseDate,
   parseFiniteNumber,
 } from "@/lib/format";
+import { counterpartName } from "@/lib/displayName";
 
 // Counts are summed only when they are real numbers (a missing `guests`
 // used to turn every total into NaN).
@@ -62,8 +63,8 @@ const stayDate = (value) =>
     "—",
     "en-US",
   );
-const fullName = (user) =>
-  `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "—";
+// The guest is the counterpart: first name only (the API returns no more).
+const fullName = (user) => counterpartName(user, "—");
 
 // Mock data for revenue insights (extended for longer periods)
 const revenueData = {
@@ -518,9 +519,7 @@ const AnalyticsPage = () => {
           user_id: pro?.userId?._id,
           booking_id: pro?._id,
           property_title: pro?.propertyId?.title,
-          booked_by: `${pro?.userId?.firstName || ""} ${
-            pro?.userId?.lastName || ""
-          }`,
+          booked_by: counterpartName(pro?.userId, ""),
           checkin: new Date(pro?.checkIn).toLocaleDateString(),
           checkout: new Date(pro?.checkOut).toLocaleDateString(),
           amount: pro?.price,

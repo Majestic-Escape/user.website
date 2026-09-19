@@ -12,6 +12,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { readStoredToken } from "@/lib/session";
 import Link from "next/link";
 import LoginLink from "@/components/login-link";
+import { contactInfoErrorFrom, contactInfoErrorFromResponse } from "@/lib/contactInfoError";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function Ratings() {
@@ -167,7 +168,8 @@ export default function Ratings() {
           }),
         });
         if (!response.ok) {
-          toast.error("Failed to submit review");
+          const refusal = await contactInfoErrorFromResponse(response);
+          toast.error(refusal ? refusal.toast : "Failed to submit review", refusal ? { duration: 9000 } : undefined);
           return;
         }
         toast.success("Submitted review");

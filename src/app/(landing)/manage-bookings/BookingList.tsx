@@ -64,8 +64,8 @@ interface Booking {
   checkOut: string;
   cancellationPolicy?: string;
   reviewed?: boolean;
-  hostId?: { firstName: string; lastName: string; email: string };
-  userId?: { firstName: string; lastName: string; email: string };
+  hostId?: { firstName?: string };
+  userId?: { firstName?: string; lastName?: string; email?: string };
   guests?: number; // ✅ added
   adults?: number; // ✅ added
   children?: number; // ✅ added
@@ -96,8 +96,8 @@ interface InvoiceData {
   checkOut: string;
   cancellationPolicy?: string;
   reviewed?: boolean;
-  hostId?: { firstName: string; lastName: string; email: string };
-  userId?: { firstName: string; lastName: string; email: string };
+  hostId?: { firstName?: string };
+  userId?: { firstName?: string; lastName?: string; email?: string };
   guests?: number; // ✅ added
   adults?: number; // ✅ added
   children?: number; // ✅ added
@@ -409,12 +409,10 @@ const ManageBookings: React.FC = () => {
   // const today = new Date().toLocaleDateString();
   // const hour = new Date().getHours();
 
+  // The backend derives the parties and their emails from the booking
+  // itself; the request carries only the booking id.
   const cancelBooking = async (
     bookingId: string,
-    userEmail: string,
-    hostEmail: string,
-    userName: string,
-    hostName: string,
     propertyId?: string,
   ): Promise<void> => {
     try {
@@ -431,10 +429,6 @@ const ManageBookings: React.FC = () => {
           },
           body: JSON.stringify({
             bookingId: bookingId,
-            userEmail: userEmail,
-            hostEmail: hostEmail,
-            userName: userName,
-            hostName: hostName,
           }),
         });
         if (!response.ok) {
@@ -870,7 +864,6 @@ const ManageBookings: React.FC = () => {
           {filteredBookings.map((booking) => {
             const summaryParams = new URLSearchParams({
               hostFirstName: booking?.hostId?.firstName ?? "",
-              hostLastName: booking?.hostId?.lastName ?? "",
               bookingId: booking?._id ?? "",
               propertyId: booking?.propertyId?._id ?? "",
               propertyType: booking?.propertyId?.propertyType ?? "",
@@ -1065,14 +1058,6 @@ const ManageBookings: React.FC = () => {
                               if (!bookingToCancel) return null;
                               await cancelBooking(
                                 bookingToCancel._id,
-                                bookingToCancel.userId!.email,
-                                bookingToCancel.hostId!.email,
-                                `${bookingToCancel.userId!.firstName} ${
-                                  bookingToCancel.userId!.lastName
-                                }`,
-                                `${bookingToCancel.hostId!.firstName} ${
-                                  bookingToCancel.hostId!.lastName
-                                }`,
                                 bookingToCancel.propertyId?._id,
                               );
                               setCancelDialogOpen(false);

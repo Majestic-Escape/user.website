@@ -39,6 +39,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { counterpartName } from "@/lib/displayName";
 
 const reviews = [];
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -416,15 +417,9 @@ export default function ReviewsPage() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span
-                          title={
-                            review.user.firstName + " " + review.user.lastName
-                          }
-                        >
+                        <span title={counterpartName(review.user, "Guest")}>
                           {" "}
-                          {checkLength(
-                            review.user.firstName + " " + review.user.lastName
-                          )}
+                          {checkLength(counterpartName(review.user, "Guest"))}
                         </span>
                       </TableCell>
                       <TableCell>

@@ -46,6 +46,7 @@ import jsPDF from "jspdf";
 
 import { useEffect } from "react";
 import { formatDate, formatINR, parseFiniteNumber } from "@/lib/format";
+import { counterpartName } from "@/lib/displayName";
 
 // Sums only amounts that are real numbers; records that can't be summed are
 // counted so the UI can say so instead of showing NaN.
@@ -544,10 +545,7 @@ const AnalyticsPage = () => {
           user_id: pro?.bookingId?.userId?._id,
           booking_id: pro?.bookingId?._id,
           property_title: pro?.propertyId?.title,
-          full_name:
-            pro?.bookingId?.userId?.firstName +
-            " " +
-            pro?.bookingId?.userId?.lastName,
+          full_name: counterpartName(pro?.bookingId?.userId, ""),
           checkin: new Date(pro?.bookingId?.checkIn).toLocaleDateString(),
           checkout: new Date(pro?.bookingId?.checkOut).toLocaleDateString(),
           amount: pro?.amount,
@@ -941,8 +939,7 @@ const AnalyticsPage = () => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {`${booking?.bookingId?.userId?.firstName ?? ""} ${booking?.bookingId?.userId?.lastName ?? ""}`.trim() ||
-                      "—"}
+                    {counterpartName(booking?.bookingId?.userId, "—")}
                   </TableCell>
 
                   <TableCell>

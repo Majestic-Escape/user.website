@@ -22,6 +22,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { USER } from "@/lib/query-presets";
 import { queryKeys } from "@/lib/query-keys";
 import { readJSON } from "@/lib/storage";
+import { contactInfoErrorFrom, contactInfoErrorFromResponse } from "@/lib/contactInfoError";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const states = [
   // 28 States
@@ -351,6 +352,12 @@ export default function AccountInfo() {
       );
 
       if (!res.ok) {
+        const refusal = await contactInfoErrorFromResponse(res);
+        if (refusal) {
+          // Keep what was typed; say what to remove and where.
+          toast.error(refusal.toast, { duration: 9000 });
+          return;
+        }
         throw new Error("Failed to save profile");
       }
 

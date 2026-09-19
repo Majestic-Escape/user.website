@@ -9,6 +9,20 @@ const authHeaders = () => {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+// An Error that keeps the backend's code / fields (e.g. 422
+// CONTACT_INFO_NOT_ALLOWED with the offending fields) so forms can explain
+// what to fix instead of a generic failure.
+function serviceError(error, fallback) {
+  const data = error?.response?.data;
+  const err = new Error(data?.message || fallback);
+  if (data?.code) err.code = data.code;
+  if (Array.isArray(data?.fields)) err.fields = data.fields;
+  if (Array.isArray(data?.kinds)) err.kinds = data.kinds;
+  err.status = error?.response?.status;
+  return err;
+}
+
+
 export const propertyService = {
   getAllProperties: async (type = null) => {
     try {
@@ -82,9 +96,7 @@ export const propertyService = {
       );
       return response.data;
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to create property",
-      );
+      throw serviceError(error, "Failed to create property");
     }
   },
 
@@ -98,9 +110,7 @@ export const propertyService = {
       );
       return response.data;
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to update property",
-      );
+      throw serviceError(error, "Failed to update property");
     }
   },
 

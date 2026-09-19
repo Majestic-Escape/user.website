@@ -24,6 +24,10 @@ export const DEFINITIVE_REJECTION_CODES = new Set([
   "CONVERSATION_NOT_FOUND",
   "USER_NOT_PARTICIPANT",
   "MODERATION_BLOCKED",
+  // the sender's moderation section was busy / shared moderation state was
+  // unreachable: nothing stored, the text stays in the composer
+  "MODERATION_BUSY",
+  "MODERATION_UNAVAILABLE",
   "RATE_LIMITED",
   "FORBIDDEN",
   "UNAUTHORIZED",
