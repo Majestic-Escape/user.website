@@ -242,7 +242,11 @@ export default function HostInboxPage() {
   // Detect mobile view
   useEffect(() => {
     const checkMobile = () => {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+      // Same threshold as the guest page (1024): below it the list and the
+      // thread are shown one at a time. At 768–1023 the desktop split view
+      // left the thread pane ~200 px wide beside the dashboard sidebar and
+      // the list, squeezing bubbles to ~120 px.
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
       setIsMobileView(isMobile);
     };
     checkMobile();
@@ -553,28 +557,16 @@ export default function HostInboxPage() {
   useEffect(() => {
     if (!tokenRef.current || !currentUserId) return;
 
-    // Prevent duplicate fetch in React StrictMode and mobile remounts
-    // Only check initCalledRef AFTER we have valid token and userId
+    // Prevent a duplicate fetch within one mount (React StrictMode). The
+    // sessionStorage "mobile protection" that used to sit here guarded
+    // against the inbox layout mounting this page twice; with the page
+    // mounted once it only skipped the list load — and left the refresh
+    // function unset — on a hard reload within 2 s of the previous one.
     if (initCalledRef.current) {
       console.log("[HostInbox] Init already called, skipping duplicate");
       return;
     }
-    
-    // Additional check: prevent rapid re-initialization within 2 seconds
-    const lastInitTime = sessionStorage.getItem('hostinbox_last_init');
-    const now = Date.now();
-    if (lastInitTime && (now - parseInt(lastInitTime, 10)) < 2000) {
-      console.log("[HostInbox] Init called too recently, skipping (mobile protection)");
-      // Don't return here on desktop - only skip if it's a true duplicate
-      // Check if we already have conversations loaded
-      if (conversations.length > 0) {
-        return;
-      }
-    }
-    
-    // Set the flag AFTER all checks pass and we're about to fetch
     initCalledRef.current = true;
-    sessionStorage.setItem('hostinbox_last_init', now.toString());
 
     // Silent refresh used after a reconnect and when the server announces a
     // conversation we have not seen; never touches isLoading and never
@@ -643,9 +635,7 @@ export default function HostInboxPage() {
     loadConversations();
     
     // Cleanup: clear the mobile protection flag on unmount
-    return () => {
-      sessionStorage.removeItem('hostinbox_last_init');
-    };
+    return () => {};
   }, [currentUserId]);
 
   // Fetch property details for conversations.
@@ -1092,7 +1082,7 @@ export default function HostInboxPage() {
 
   // Render conversation list component
   const renderConversationList = () => (
-    <div className={`${selectedConversation ? "hidden md:flex" : "flex"} flex-col w-full md:w-[320px] lg:w-[380px] md:min-w-[280px] md:max-w-[380px] border-r overflow-hidden flex-shrink-0`}>
+    <div className={`${selectedConversation ? "hidden lg:flex" : "flex"} flex-col w-full lg:w-[300px] xl:w-[380px] lg:min-w-[280px] lg:max-w-[380px] border-r overflow-hidden flex-shrink-0`}>
       {/* Header */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
@@ -1287,7 +1277,7 @@ export default function HostInboxPage() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden flex-shrink-0"
+            className="lg:hidden flex-shrink-0"
             onClick={handleBackToList}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -1510,7 +1500,7 @@ export default function HostInboxPage() {
 
   // Render empty state for desktop
   const renderEmptyState = () => (
-    <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-gray-50">
+    <div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-gray-50">
       <div className="rounded-full bg-lightGreen/50 p-6 mb-4">
         <MessageCircle className="h-12 w-12 text-primaryGreen" />
       </div>
