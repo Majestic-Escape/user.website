@@ -31,7 +31,6 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
-import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
@@ -102,7 +101,6 @@ export default function MessagesPage() {
 
   // Track page visibility - only mark messages as read when page is visible
   const isPageVisible = usePageVisibility();
-  const { refreshUnreadCount } = useUnreadCount();
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -1051,9 +1049,8 @@ export default function MessagesPage() {
             : conv
         )
       );
-
-      // Refresh global unread count badge
-      refreshUnreadCount();
+      // The badge follows the server's unread:update push for this read (sent
+      // to the reader's user room); a REST refresh here only raced it.
     }
   }, [selectedConversation?.id, messages, userId, isPageVisible]);
 

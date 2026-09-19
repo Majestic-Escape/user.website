@@ -26,7 +26,6 @@ import { socketManager } from "@/lib/socket";
 import MobileChatContainer from "@/components/mobile-chat-container";
 import MobileChatInput from "@/components/mobile-chat-input";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
-import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
@@ -94,7 +93,6 @@ export default function HostInboxPage() {
 
   // Track page visibility - only mark messages as read when page is visible
   const isPageVisible = usePageVisibility();
-  const { refreshUnreadCount } = useUnreadCount();
 
   const socketRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -857,9 +855,8 @@ export default function HostInboxPage() {
             : conv
         )
       );
-
-      // Refresh global unread count badge
-      refreshUnreadCount();
+      // The badge follows the server's unread:update push for this read (sent
+      // to the reader's user room); a REST refresh here only raced it.
     }
   }, [selectedConversation?.id, messages, currentUserId, isPageVisible]);
 
