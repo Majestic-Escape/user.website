@@ -64,9 +64,10 @@ export default function ReviewsPage() {
     try {
       const getUserId = await localStorage.getItem("userId");
       const userId = JSON.parse(getUserId);
-      const from = date.from ? new Date(date.from).toLocaleDateString() : "";
+      // The API parses M/D/YYYY; toLocaleDateString() depends on the browser locale (en-IN → D/M/YYYY).
+      const from = date.from ? format(new Date(date.from), "M/d/yyyy") : "";
 
-      const to = date.to ? new Date(date.to).toLocaleDateString() : "";
+      const to = date.to ? format(new Date(date.to), "M/d/yyyy") : "";
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
         console.log(from, to);
       }

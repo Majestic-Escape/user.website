@@ -202,8 +202,9 @@ const AnalyticsPage = () => {
     const hostData = await localStorage.getItem("userId");
     const hostId = JSON.parse(hostData);
 
-    const from = dateRange.from ? dateRange.from.toLocaleDateString() : null;
-    const to = dateRange.to ? dateRange.to.toLocaleDateString() : null;
+    // The API parses M/D/YYYY; toLocaleDateString() depends on the browser locale (en-IN → D/M/YYYY).
+    const from = dateRange.from ? format(dateRange.from, "M/d/yyyy") : null;
+    const to = dateRange.to ? format(dateRange.to, "M/d/yyyy") : null;
     if (process.env.NEXT_PUBLIC_ENV === "dev") {
       console.log(from, to);
     }

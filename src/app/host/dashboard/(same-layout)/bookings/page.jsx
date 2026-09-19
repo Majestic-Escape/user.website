@@ -146,8 +146,9 @@ export default function ReservationsPage() {
   // Reservations are LIVE data: a cached page paints instantly while the
   // list always revalidates (and again on tab focus). Filter/page changes
   // keep the previous rows on screen. Mutations invalidate hostBookingsAll.
-  const from = date.from ? date.from.toLocaleDateString() : null;
-  const to = date.to ? date.to.toLocaleDateString() : null;
+  // The API parses M/D/YYYY; toLocaleDateString() depends on the browser locale (en-IN → D/M/YYYY).
+  const from = date.from ? format(date.from, "M/d/yyyy") : null;
+  const to = date.to ? format(date.to, "M/d/yyyy") : null;
   const filters = { searchValue, status, from, to, rowsPerPage, skip };
   const { data: bookingsResult } = useQuery({
     queryKey: queryKeys.hostBookings(hostId, filters),
