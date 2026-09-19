@@ -26,7 +26,6 @@ import { socketManager } from "@/lib/socket";
 import MobileChatContainer from "@/components/mobile-chat-container";
 import MobileChatInput from "@/components/mobile-chat-input";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
-import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
@@ -40,10 +39,13 @@ import { toast } from "sonner";
 import SwipeToReply from "@/components/chat/SwipeToReply";
 import QuotedMessage from "@/components/chat/QuotedMessage";
 import ReplyPreviewBar from "@/components/chat/ReplyPreviewBar";
+import ScrollToLatest from "@/components/chat/ScrollToLatest";
+import { isNearBottom } from "@/lib/chat/threadPosition";
 import SendStatus from "@/components/chat/SendStatus";
 import { useReplyTo } from "@/hooks/useReplyTo";
 import { useSendLifecycle } from "@/hooks/useSendLifecycle";
 import { useConnectionBadge } from "@/hooks/useConnectionBadge";
+import { useComposerDrafts } from "@/hooks/useComposerDrafts";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat/reply";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
@@ -83,11 +85,14 @@ export default function HostInboxPage() {
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
   const [isMobileView, setIsMobileView] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  // Where the reader is, as of the last scroll event: a message that arrives
+  // while they are up in the thread must not drag it to the bottom.
+  const nearBottomRef = useRef(true);
+  const [newBelow, setNewBelow] = useState(false);
   const [typingUsers, setTypingUsers] = useState(new Map()); // Map<conversationId, Set<userId>>
 
   // Track page visibility - only mark messages as read when page is visible
   const isPageVisible = usePageVisibility();
-  const { refreshUnreadCount } = useUnreadCount();
 
   const socketRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -119,6 +124,10 @@ export default function HostInboxPage() {
   // singleton; only a lost connection is shown.
   const connectionBadge = useConnectionBadge();
   const composerBlocked = connectionBadge === "offline" || connectionBadge === "error";
+
+  // The composer text belongs to the thread it was typed in: stashed when
+  // another thread is opened, restored when this one is opened again.
+  useComposerDrafts({ conversationId: selectedConversation?.id, value: newMessage, setValue: setNewMessage, userId: currentUserId });
 
   // Quote / reply
   const guestFirstNameForReply =
@@ -237,7 +246,11 @@ export default function HostInboxPage() {
   // Detect mobile view
   useEffect(() => {
     const checkMobile = () => {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+      // Same threshold as the guest page (1024): below it the list and the
+      // thread are shown one at a time. At 768–1023 the desktop split view
+      // left the thread pane ~200 px wide beside the dashboard sidebar and
+      // the list, squeezing bubbles to ~120 px.
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
       setIsMobileView(isMobile);
     };
     checkMobile();
@@ -278,6 +291,12 @@ export default function HostInboxPage() {
   }, []);
 
   const handleSelectConversation = useCallback((conv) => {
+    // Swap the thread out in the same render as the header, so the new
+    // header never paints over the previous thread's messages.
+    if (conv.id !== selectedConversationRef.current?.id) {
+      setMessages([]);
+      if (tokenRef.current) setIsLoadingMessages(true); // the load effect takes it from here
+    }
     setSelectedConversation(conv);
     // Push a history entry on mobile so the browser back button returns to the list
     if (isMobileViewRef.current) {
@@ -309,15 +328,15 @@ export default function HostInboxPage() {
   const handleScroll = useCallback(() => {
     const container = chatContainerRef.current;
     if (!container) return;
-    
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-    // Show button if user is more than 100px from bottom
-    setShowScrollToBottom(distanceFromBottom > 100);
+    const near = isNearBottom(container);
+    nearBottomRef.current = near;
+    setShowScrollToBottom(!near);
+    if (near) setNewBelow(false);
   }, []);
 
   // Scroll to bottom function
   const scrollToBottom = useCallback(() => {
+    setNewBelow(false);
     const container = chatContainerRef.current;
     if (container) {
       container.scrollTo({
@@ -542,28 +561,16 @@ export default function HostInboxPage() {
   useEffect(() => {
     if (!tokenRef.current || !currentUserId) return;
 
-    // Prevent duplicate fetch in React StrictMode and mobile remounts
-    // Only check initCalledRef AFTER we have valid token and userId
+    // Prevent a duplicate fetch within one mount (React StrictMode). The
+    // sessionStorage "mobile protection" that used to sit here guarded
+    // against the inbox layout mounting this page twice; with the page
+    // mounted once it only skipped the list load — and left the refresh
+    // function unset — on a hard reload within 2 s of the previous one.
     if (initCalledRef.current) {
       console.log("[HostInbox] Init already called, skipping duplicate");
       return;
     }
-    
-    // Additional check: prevent rapid re-initialization within 2 seconds
-    const lastInitTime = sessionStorage.getItem('hostinbox_last_init');
-    const now = Date.now();
-    if (lastInitTime && (now - parseInt(lastInitTime, 10)) < 2000) {
-      console.log("[HostInbox] Init called too recently, skipping (mobile protection)");
-      // Don't return here on desktop - only skip if it's a true duplicate
-      // Check if we already have conversations loaded
-      if (conversations.length > 0) {
-        return;
-      }
-    }
-    
-    // Set the flag AFTER all checks pass and we're about to fetch
     initCalledRef.current = true;
-    sessionStorage.setItem('hostinbox_last_init', now.toString());
 
     // Silent refresh used after a reconnect and when the server announces a
     // conversation we have not seen; never touches isLoading and never
@@ -632,9 +639,7 @@ export default function HostInboxPage() {
     loadConversations();
     
     // Cleanup: clear the mobile protection flag on unmount
-    return () => {
-      sessionStorage.removeItem('hostinbox_last_init');
-    };
+    return () => {};
   }, [currentUserId]);
 
   // Fetch property details for conversations.
@@ -693,11 +698,17 @@ export default function HostInboxPage() {
     // Clear messages immediately when switching conversations to prevent stale data
     setMessages([]);
 
+    // A slow fetch for the thread just left must not land on the one now open
+    // (its messages showed under the new thread's header until the new
+    // thread's own response arrived). The cleanup marks the request stale.
+    let stale = false;
+    const conversationId = selectedConversation.id;
+
     async function loadMessages() {
       setIsLoadingMessages(true);
       try {
         const response = await fetch(
-          `${CHAT_URL}/api/chat/conversations/${selectedConversation.id}/messages?limit=50`,
+          `${CHAT_URL}/api/chat/conversations/${conversationId}/messages?limit=50`,
           {
             headers: {
               Authorization: `Bearer ${tokenRef.current}`,
@@ -708,6 +719,7 @@ export default function HostInboxPage() {
         if (!response.ok) throw new Error("Failed to load messages");
 
         const data = await response.json();
+        if (stale) return;
         if (data.success && data.data) {
           const loadedMessages = data.data.data || data.data;
           const messagesArray = Array.isArray(loadedMessages) ? loadedMessages : [];
@@ -716,13 +728,16 @@ export default function HostInboxPage() {
           setMessages(reconcileHistoryRef.current ? reconcileHistoryRef.current(ordered) : ordered);
         }
       } catch (error) {
-        console.error("Error loading messages:", error);
+        if (!stale) console.error("Error loading messages:", error);
       } finally {
-        setIsLoadingMessages(false);
+        if (!stale) setIsLoadingMessages(false);
       }
     }
 
     loadMessages();
+    return () => {
+      stale = true;
+    };
   }, [selectedConversation?.id]);
 
   // After a reconnect, re-fetch the open thread and merge it into what is on
@@ -760,21 +775,35 @@ export default function HostInboxPage() {
     };
   }, [reconnectTick, reconnectConversationId]);
 
-  // Auto-scroll to bottom on new messages
+  // Follow the thread: on the first render of a thread; for a new message
+  // when the reader was at the bottom or sent it; not at all when they were
+  // reading older messages (the floating control offers the way down and
+  // says something new is waiting).
   const prevMessagesLengthRef = useRef(0);
   useEffect(() => {
-    if (chatContainerRef.current && messages.length > 0) {
-      requestAnimationFrame(() => {
-        if (chatContainerRef.current) {
-          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }
-      });
-      prevMessagesLengthRef.current = messages.length;
+    if (!chatContainerRef.current || messages.length === 0) return;
+    const prev = prevMessagesLengthRef.current;
+    prevMessagesLengthRef.current = messages.length;
+    const last = messages[messages.length - 1];
+    const own = !!last && !!currentUserId && String(last.senderId) === String(currentUserId);
+    if (prev !== 0 && messages.length > prev && !own && !nearBottomRef.current) {
+      setNewBelow(true);
+      setShowScrollToBottom(true);
+      return;
     }
+    if (prev !== 0 && messages.length <= prev) return;
+    requestAnimationFrame(() => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    });
   }, [messages.length]);
 
   useEffect(() => {
     prevMessagesLengthRef.current = 0;
+    nearBottomRef.current = true;
+    setNewBelow(false);
+    setShowScrollToBottom(false);
   }, [selectedConversation?.id]);
 
   // Track messages we've already marked as read
@@ -826,9 +855,8 @@ export default function HostInboxPage() {
             : conv
         )
       );
-
-      // Refresh global unread count badge
-      refreshUnreadCount();
+      // The badge follows the server's unread:update push for this read (sent
+      // to the reader's user room); a REST refresh here only raced it.
     }
   }, [selectedConversation?.id, messages, currentUserId, isPageVisible]);
 
@@ -1071,7 +1099,7 @@ export default function HostInboxPage() {
 
   // Render conversation list component
   const renderConversationList = () => (
-    <div className={`${selectedConversation ? "hidden md:flex" : "flex"} flex-col w-full md:w-[320px] lg:w-[380px] md:min-w-[280px] md:max-w-[380px] border-r overflow-hidden flex-shrink-0`}>
+    <div className={`${selectedConversation ? "hidden lg:flex" : "flex"} flex-col w-full lg:w-[300px] xl:w-[380px] lg:min-w-[280px] lg:max-w-[380px] border-r overflow-hidden flex-shrink-0`}>
       {/* Header */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
@@ -1266,7 +1294,7 @@ export default function HostInboxPage() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden flex-shrink-0"
+            className="lg:hidden flex-shrink-0"
             onClick={handleBackToList}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -1408,28 +1436,26 @@ export default function HostInboxPage() {
                           <span className="text-[11px] text-gray-500">{guestFirstName} · Guest {formatMessageTime(message.createdAt)}</span>
                         </div>
                       )}
-                      <div className={`flex ${isOwn ? "justify-end" : "justify-start"} w-full`}>
-                        <SwipeToReply
-                          messageId={message.id}
-                          own={isOwn}
-                          authorName={isOwn ? "you" : guestFirstName}
-                          onReply={() => startReply(message)}
+                      <SwipeToReply
+                        messageId={message.id}
+                        own={isOwn}
+                        authorName={isOwn ? "you" : guestFirstName}
+                        onReply={() => startReply(message)}
+                      >
+                        <div
+                          className={`inline-block max-w-full ${isOwn ? "bg-primaryGreen text-white" : "bg-white shadow-sm border border-gray-100"} rounded-2xl px-4 py-2`}
                         >
-                          <div
-                            className={`inline-block max-w-full ${isOwn ? "bg-primaryGreen text-white" : "bg-white shadow-sm border border-gray-100"} rounded-2xl px-4 py-2`}
-                          >
-                            {message.replyTo && (
-                              <QuotedMessage
-                                replyTo={message.replyTo}
-                                own={isOwn}
-                                authorLabel={labelFor(message.replyTo.senderId)}
-                                onJump={scrollToMessage}
-                              />
-                            )}
-                            <p className="text-sm whitespace-pre-wrap break-words">{message.content?.text}</p>
-                          </div>
-                        </SwipeToReply>
-                      </div>
+                          {message.replyTo && (
+                            <QuotedMessage
+                              replyTo={message.replyTo}
+                              own={isOwn}
+                              authorLabel={labelFor(message.replyTo.senderId)}
+                              onJump={scrollToMessage}
+                            />
+                          )}
+                          <p className="text-sm whitespace-pre-wrap break-words">{message.content?.text}</p>
+                        </div>
+                      </SwipeToReply>
                       {isOwn && <SendStatus message={message} onRetry={retrySend} onDiscard={discardSend} />}
                       {isOwn && isLatestReadMessage && (
                         <p className="text-[11px] text-gray-400 mt-1 mr-1">Read by {guestFirstName}</p>
@@ -1442,16 +1468,7 @@ export default function HostInboxPage() {
           )}
         </div>
         
-        {/* Scroll to bottom button */}
-        {showScrollToBottom && isMobile && (
-          <button
-            onClick={scrollToBottom}
-            className="absolute bottom-4 right-4 bg-white shadow-lg rounded-full p-2 border border-gray-200 hover:bg-gray-50 transition-all z-10"
-            aria-label="Scroll to bottom"
-          >
-            <ChevronDown className="h-5 w-5 text-gray-600" />
-          </button>
-        )}
+        <ScrollToLatest visible={showScrollToBottom} hasNew={newBelow} onClick={scrollToBottom} />
       </div>
     );
   };
@@ -1491,7 +1508,7 @@ export default function HostInboxPage() {
 
   // Render empty state for desktop
   const renderEmptyState = () => (
-    <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-gray-50">
+    <div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-gray-50">
       <div className="rounded-full bg-lightGreen/50 p-6 mb-4">
         <MessageCircle className="h-12 w-12 text-primaryGreen" />
       </div>
