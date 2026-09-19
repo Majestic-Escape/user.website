@@ -131,7 +131,7 @@ export default function MessagesPage() {
 
   // The composer text belongs to the thread it was typed in: stashed when
   // another thread is opened, restored when this one is opened again.
-  useComposerDrafts({ conversationId: selectedConversation?.id, value: newMessage, setValue: setNewMessage });
+  useComposerDrafts({ conversationId: selectedConversation?.id, value: newMessage, setValue: setNewMessage, userId });
 
   // Quote / reply. The two branches (mobile / desktop) mount one composer each
   // — the refs are cross-named historically, so take whichever is live.

@@ -123,7 +123,7 @@ export default function HostInboxPage() {
 
   // The composer text belongs to the thread it was typed in: stashed when
   // another thread is opened, restored when this one is opened again.
-  useComposerDrafts({ conversationId: selectedConversation?.id, value: newMessage, setValue: setNewMessage });
+  useComposerDrafts({ conversationId: selectedConversation?.id, value: newMessage, setValue: setNewMessage, userId: currentUserId });
 
   // Quote / reply
   const guestFirstNameForReply =
