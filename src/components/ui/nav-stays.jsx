@@ -15,6 +15,7 @@ import WishlistPopup from "../wishlist-popup";
 import { usePathname, useRouter } from "next/navigation";
 
 import { UserDropdownMenu } from "@/components/user-dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 export default function Navbar() {
   const { staysWishlist, experiencesWishlist, wishlists } = useWishlist();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
@@ -26,7 +27,7 @@ export default function Navbar() {
     pathname.startsWith("/stay/") && pathname !== "/stay";
   const mainPage = pathname == "/";
   const filter = pathname.startsWith("/stay/");
-  const { user, logout, returnUrl } = useAuth();
+  const { user, logout, returnUrl, authReady } = useAuth();
   const { unreadCount } = useUnreadCount();
   const [propertyType, setPropertyType] = useState("");
 
@@ -98,7 +99,15 @@ export default function Navbar() {
           >
             <NavTabLayout />
           </div>
-          {user ? (
+          {/* Neutral until the stored session is known: the server HTML cannot
+              tell who is signed in, and the signed-out "Login" used to flash on
+              every reload for signed-in visitors. Same footprint as the avatar
+              button, so the bar does not shift when the real items arrive. */}
+          {!authReady ? (
+            <nav className="ml-auto hidden md:flex items-center gap-4 sm:gap-6" aria-hidden="true">
+              <Skeleton className="h-10 w-10 rounded-full" />
+            </nav>
+          ) : user ? (
             <nav className=" ml-auto hidden md:flex items-center gap-4 sm:gap-6">
               {/* <WishlistPopup
                 isOpen={isWishlistOpen}

@@ -27,6 +27,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import { loginHref } from "@/lib/auth-return";
@@ -88,7 +89,7 @@ const menuItemsLoggedIn = [
 export function BottomNavigation() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, authReady } = useAuth();
   const { unreadCount } = useUnreadCount();
 
   const router = useRouter();
@@ -105,7 +106,35 @@ export function BottomNavigation() {
   return (
     <div className="md:hidden  font-poppins fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200">
       <div className="grid h-full max-w-lg grid-cols-4 mx-auto">
-        {user
+        {/* Until the stored session has been read, the two auth-dependent
+            slots are neutral placeholders: the server HTML used to carry the
+            signed-out items (Help / Login), which flashed on every reload for
+            signed-in visitors before Messages / Bookings took their place. */}
+        {!authReady ? (
+          <>
+            <Link
+              href="/"
+              className={cn(
+                "inline-flex flex-col items-center justify-center px-2 hover:bg-gray-50 group",
+                pathname === "/" ? "text-primaryGreen" : "text-gray-700",
+              )}
+              aria-current={pathname === "/" ? "page" : undefined}
+            >
+              <HomeIcon className="w-5 h-5 mb-1" />
+              <span className="text-xs">Home</span>
+            </Link>
+            {[0, 1].map((i) => (
+              <div
+                key={i}
+                className="inline-flex flex-col items-center justify-center px-2"
+                aria-hidden="true"
+              >
+                <Skeleton className="mb-1 h-5 w-5 rounded-full" />
+                <Skeleton className="h-3 w-12" />
+              </div>
+            ))}
+          </>
+        ) : user
           ? navItemsLoggedIn.map((item) => (
               <Link
                 key={item.name}
@@ -116,6 +145,7 @@ export function BottomNavigation() {
                     ? "text-primaryGreen"
                     : "text-gray-700",
                 )}
+                aria-current={pathname === item.href ? "page" : undefined}
               >
                 <div className="relative">
                   <item.icon className="w-5 h-5 mb-1" />
@@ -141,6 +171,7 @@ export function BottomNavigation() {
                     ? "text-primaryGreen"
                     : "text-gray-700",
                 )}
+                aria-current={pathname === item.href ? "page" : undefined}
               >
                 <item.icon className="w-5 h-5 mb-1" />
                 <span className="text-xs">{item.name}</span>
@@ -148,13 +179,17 @@ export function BottomNavigation() {
             ))}
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger className="font-poppins" asChild>
-            <Button
-              variant="ghost"
-              className="inline-flex flex-col items-center justify-center w-full h-full px-5 hover:bg-gray-50 group"
+            {/* A plain button styled like the three links — the shadcn Button
+                added its own font-weight and padding, so "Menu" sat lower and
+                bolder than the other labels. */}
+            <button
+              type="button"
+              className="inline-flex flex-col items-center justify-center px-2 text-gray-700 hover:bg-gray-50 group"
+              aria-label="Open menu"
             >
-              <MenuIcon className="w-5 h-5 mb-1 text-gray-700" />
-              <span className="text-xs px-2 text-gray-700">Menu</span>
-            </Button>
+              <MenuIcon className="w-5 h-5 mb-1" />
+              <span className="text-xs">Menu</span>
+            </button>
           </SheetTrigger>
           <SheetContent
             side="right"
