@@ -43,6 +43,7 @@ import SendStatus from "@/components/chat/SendStatus";
 import { useReplyTo } from "@/hooks/useReplyTo";
 import { useSendLifecycle } from "@/hooks/useSendLifecycle";
 import { useConnectionBadge } from "@/hooks/useConnectionBadge";
+import { useComposerDrafts } from "@/hooks/useComposerDrafts";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat/reply";
 import {
   getCachedConversations,
@@ -126,6 +127,10 @@ export default function MessagesPage() {
   // singleton; only a lost connection is shown.
   const connectionBadge = useConnectionBadge();
   const composerBlocked = connectionBadge === "offline" || connectionBadge === "error";
+
+  // The composer text belongs to the thread it was typed in: stashed when
+  // another thread is opened, restored when this one is opened again.
+  useComposerDrafts({ conversationId: selectedConversation?.id, value: newMessage, setValue: setNewMessage });
 
   // Quote / reply. The two branches (mobile / desktop) mount one composer each
   // — the refs are cross-named historically, so take whichever is live.
@@ -1247,8 +1252,12 @@ export default function MessagesPage() {
   }
 
 
-  // Reservation Sidebar Component
-  const ReservationSidebar = () => {
+  // Reservation sidebar. Rendered by a plain function call, not as a nested
+  // component: a component type created inside render is a new type on every
+  // render, so React unmounted and remounted the whole panel on each
+  // keystroke in the composer — the property photo went back through its
+  // skeleton and blinked while typing.
+  const renderReservationSidebar = () => {
     if (!selectedConversation || !showReservation) return null;
 
     const propInfo = getPropertyInfo(selectedConversation);
@@ -2357,7 +2366,7 @@ export default function MessagesPage() {
       )}
 
       {/* Reservation Sidebar - Desktop */}
-      {!isMobileView && <ReservationSidebar />}
+      {!isMobileView && renderReservationSidebar()}
     </div>
   );
 }

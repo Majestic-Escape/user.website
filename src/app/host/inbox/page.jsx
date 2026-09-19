@@ -44,6 +44,7 @@ import SendStatus from "@/components/chat/SendStatus";
 import { useReplyTo } from "@/hooks/useReplyTo";
 import { useSendLifecycle } from "@/hooks/useSendLifecycle";
 import { useConnectionBadge } from "@/hooks/useConnectionBadge";
+import { useComposerDrafts } from "@/hooks/useComposerDrafts";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat/reply";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
@@ -119,6 +120,10 @@ export default function HostInboxPage() {
   // singleton; only a lost connection is shown.
   const connectionBadge = useConnectionBadge();
   const composerBlocked = connectionBadge === "offline" || connectionBadge === "error";
+
+  // The composer text belongs to the thread it was typed in: stashed when
+  // another thread is opened, restored when this one is opened again.
+  useComposerDrafts({ conversationId: selectedConversation?.id, value: newMessage, setValue: setNewMessage });
 
   // Quote / reply
   const guestFirstNameForReply =
