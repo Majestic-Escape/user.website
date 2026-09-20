@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import { Skeleton } from "@/components/ui/skeleton";
 import PhotoLightbox from "@/components/ui/photo-lightbox";
 import { useState } from "react";
@@ -51,20 +51,21 @@ export default function ImageGallery({
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 rounded-xl overflow-hidden h-full">
           <div className="sm:col-span-2 sm:row-span-2 relative h-full">
             {displayImages.length > 0 ? (
-              <Image
+              <MediaImage
                 src={displayImages[0] || "/placeholder.svg"}
                 alt="Main property image"
                 fill
-                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 50vw"
+                priority
+                sizes="(max-width: 639px) 100vw, 50vw"
                 className="object-cover cursor-pointer"
                 onClick={() => setOpenAt(0)}
               />
             ) : (
-              <Image
+              <MediaImage
                 src="/placeholder.svg"
                 alt="Main property image"
                 fill
-                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 50vw"
+                sizes="(max-width: 639px) 100vw, 50vw"
                 className="object-cover"
               />
             )}
@@ -76,11 +77,11 @@ export default function ImageGallery({
                 index > 1 ? "hidden md:block" : "hidden sm:block"
               } relative h-full`}
             >
-              <Image
+              <MediaImage
                 src={image || "/placeholder.svg"}
                 alt={`Property image ${index + 2}`}
                 fill
-                sizes="(max-width: 768px) 50vw, 25vw"
+                sizes="(max-width: 767px) 50vw, 25vw"
                 className="object-cover cursor-pointer"
                 onClick={() => setOpenAt(index + 1)}
               />

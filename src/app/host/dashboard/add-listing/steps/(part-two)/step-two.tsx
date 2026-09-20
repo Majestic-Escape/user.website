@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { TextReveal } from "@/components/text-reveal";
 import axios from "axios";
+import { MediaImg } from "@/components/ui/media-image";
 import { authHeaders } from "@/lib/session";
 import { toast } from "sonner";
 
@@ -185,42 +186,97 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
   //   handlePhotoUpload(validFiles);
   // };
 
+  // The server sanitises each photo and renders its display sizes (~3–4 s of
+  // CPU per 12 MP photo), so a selection is sent as small batches, two in
+  // flight: the host sees photos appear as batches finish instead of waiting
+  // on one long request, one bad batch does not lose the others, and no
+  // single request approaches the function's duration budget.
+  const UPLOAD_BATCH_SIZE = 3;
+  const UPLOAD_PARALLEL = 2;
+
+  const uploadBatch = async (batch: File[]): Promise<string[]> => {
+    const formData = new FormData();
+    batch.forEach((file) => formData.append("images", file));
+    const res = await axios.post(`${API_URL}/uploads/`, formData, {
+      headers: { "Content-Type": "multipart/form-data", ...authHeaders() },
+    });
+    return res.data.urls as string[];
+  };
+
   const handlePhotoUpload = async (files: File[]) => {
     setUploading(true);
-    const formData = new FormData();
+    const batches: File[][] = [];
+    for (let i = 0; i < files.length; i += UPLOAD_BATCH_SIZE) {
+      batches.push(files.slice(i, i + UPLOAD_BATCH_SIZE));
+    }
+    const results: (string[] | null)[] = new Array(batches.length).fill(null);
+    const failures: string[] = [];
+    let uploaded = 0;
+    let appended = photos;
+    let flushed = 0; // batches appended so far, in selection order
 
-    files.forEach((file) => {
-      formData.append("images", file);
-    });
+    const flush = () => {
+      while (flushed < batches.length && results[flushed] !== null) {
+        const urls = results[flushed] as string[];
+        if (urls.length) {
+          appended = [
+            ...appended,
+            ...urls.map((url) => ({ id: crypto.randomUUID(), url })),
+          ];
+          setPhotos(appended);
+          updateFormData({ photos: appended.map((photo) => photo.url) });
+        }
+        flushed += 1;
+      }
+    };
+
+    let next = 0;
+    const worker = async () => {
+      while (next < batches.length) {
+        const index = next++;
+        try {
+          const urls = await uploadBatch(batches[index]);
+          results[index] = urls;
+          uploaded += urls.length;
+        } catch (error) {
+          console.error("Upload error:", error);
+          results[index] = [];
+          const e = error as {
+            response?: { data?: { message?: string; error?: string } };
+            message?: string;
+          };
+          failures.push(
+            `${batches[index].map((f) => f.name).join(", ")}: ${
+              e?.response?.data?.message ||
+              e?.response?.data?.error ||
+              e?.message ||
+              "upload failed"
+            }`,
+          );
+        }
+        flush();
+      }
+    };
 
     try {
-      const res = await axios.post(`${API_URL}/uploads/`, formData, {
-        headers: { "Content-Type": "multipart/form-data", ...authHeaders() },
-      });
-
-      const newPhotos = res.data.urls.map((url: string) => ({
-        id: crypto.randomUUID(),
-        url,
-      }));
-      const updatedPhotos = [...photos, ...newPhotos];
-
+      await Promise.all(
+        Array.from({ length: Math.min(UPLOAD_PARALLEL, batches.length) }, worker),
+      );
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
-        console.log("Updated photos:", updatedPhotos);
+        console.log("Updated photos:", appended);
       }
-
-      setPhotos(updatedPhotos);
-      updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
-
-      toast.success(
-        `Successfully uploaded ${files.length} image${files.length > 1 ? "s" : ""}`,
-      );
-    } catch (error: any) {
-      console.error("Upload error:", error);
-      toast.error(
-        error?.response?.data?.error ||
-          error?.message ||
-          "Image upload failed. Please try again.",
-      );
+      if (uploaded > 0) {
+        toast.success(
+          failures.length
+            ? `Uploaded ${uploaded} of ${files.length} images`
+            : `Successfully uploaded ${uploaded} image${uploaded > 1 ? "s" : ""}`,
+        );
+      }
+      if (failures.length) {
+        toast.error(
+          `${failures.slice(0, 2).join(" · ")}${failures.length > 2 ? " …" : ""}`,
+        );
+      }
     } finally {
       setUploading(false);
       resetFileInput();
@@ -500,8 +556,9 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
                         : "scale(1)",
                   }}
                 >
-                  <img
+                  <MediaImg
                     src={photo.url}
+                    renderWidth={320}
                     alt={`Property photo`}
                     className="w-full h-40 object-cover rounded-lg transition-opacity duration-300 ease-in-out"
                     style={{

@@ -1,5 +1,6 @@
 import React, { forwardRef, useEffect, useState } from "react";
 import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import {
   formatDate,
   parseDate,
@@ -160,7 +161,7 @@ const Invoice = ({ payment, invoiceData }) => {
             </div>
           </div>
           <div>
-            <Image
+            <MediaImage
               width={200}
               height={200}
               src={invoiceData?.propertyId?.photos?.[0]}

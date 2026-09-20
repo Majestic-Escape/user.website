@@ -1,4 +1,5 @@
 import Image from "next/image"
+import MediaImage from "@/components/ui/media-image"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -148,10 +149,11 @@ export default function HostProfilePage() {
                   <CardContent className="p-0">
                     <Link href="#" className="block">
                       <div className="relative h-48 w-full">
-                        <Image
+                        <MediaImage
                           src="https://majestic-escape-host-properties.blr1.digitaloceanspaces.com/1742666768717-pexels-frans-van-heerden-201846-1438834.jpg"
                           alt="Listing for Goa"
                           fill
+                          sizes="(max-width: 1023px) 100vw, 800px"
                           className="object-cover"
                         />
                       </div>

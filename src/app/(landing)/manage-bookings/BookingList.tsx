@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Filter, Star, X } from "lucide-react";
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import {
   Dialog,
   DialogContent,
@@ -901,14 +901,15 @@ const ManageBookings: React.FC = () => {
               <Card key={booking?._id} className="p-4">
                 <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr,1fr,1fr,1fr] gap-4">
                   <div className="flex flex-col lg:flex-row gap-4">
-                    <Image
+                    <MediaImage
                       alt="Property"
                       className="rounded-lg object-cover w-full lg:w-24 h-48 lg:h-24"
                       height={96}
                       src={
-                        booking?.propertyId?.photos?.[0] ?? "/placeholder.jpg"
+                        booking?.propertyId?.photos?.[0] ?? "/placeholder.svg"
                       }
                       width={96}
+                      sizes="(max-width: 1023px) 100vw, 96px"
                     />
                     {}
                     <div className="space-y-2">
