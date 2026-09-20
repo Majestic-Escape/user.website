@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import WishlistPopup from "../wishlist-popup";
 import { UserDropdownMenu } from "@/components/user-dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { Heart, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ export default function Navbar() {
   const { staysWishlist, experiencesWishlist, wishlists } = useWishlist();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState(null);
-  const { user, logout, returnUrl } = useAuth();
+  const { user, logout, returnUrl, authReady } = useAuth();
   const { unreadCount } = useUnreadCount();
 
   const router = useRouter();
@@ -75,7 +76,15 @@ export default function Navbar() {
         <div className="z-50 absolute hidden md:block right-[50%] translate-x-1/2">
           <NavTabLayout />
         </div>
-        {user ? (
+        {/* Neutral until the stored session is known: the server HTML cannot
+            tell who is signed in, and the signed-out "Login" used to flash on
+            every reload for signed-in visitors. Same footprint as the avatar
+            button, so the bar does not shift when the real items arrive. */}
+        {!authReady ? (
+          <nav className="ml-auto hidden md:flex items-center gap-4 sm:gap-6" aria-hidden="true">
+            <Skeleton className="h-10 w-10 rounded-full" />
+          </nav>
+        ) : user ? (
           <nav className=" ml-auto hidden md:flex items-center gap-4 sm:gap-6">
             {/* <WishlistPopup
               isOpen={isWishlistOpen}
