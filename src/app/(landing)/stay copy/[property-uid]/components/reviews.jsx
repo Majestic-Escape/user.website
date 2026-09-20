@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import { Star, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,7 +63,7 @@ export default function Review({ property }) {
         <div className="space-y-6 pt-6">
           {property.reviews.map((review) => (
             <div key={review.id} className="flex items-start space-x-4">
-              <Image
+              <MediaImage
                 src={review.avatar}
                 alt={review.user}
                 width={40}

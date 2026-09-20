@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Send, Loader2, Clock, Home, MapPin, Calendar, ExternalLink, Pencil } from "lucide-react";
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import Link from "next/link";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DatePicker } from "@/components/date-picker";
@@ -488,10 +488,11 @@ export default function ContactHostPage() {
             <div className="flex gap-3">
               <div className="relative w-20 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
                 {propertyImage ? (
-                  <Image
+                  <MediaImage
                     src={propertyImage}
                     alt={propertyName}
                     fill
+                    sizes="80px"
                     className="object-cover"
                   />
                 ) : (
@@ -886,10 +887,11 @@ export default function ContactHostPage() {
               {/* Property Image */}
               <div className="relative h-48 bg-gray-100">
                 {propertyImage ? (
-                  <Image
+                  <MediaImage
                     src={propertyImage}
                     alt={propertyName}
                     fill
+                    sizes="(max-width: 1023px) 100vw, 400px"
                     className="object-cover"
                   />
                 ) : (

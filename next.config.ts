@@ -2,8 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // Batch P: optimised listing photos stay cached for 31 days instead of
-    // the 60-second default → fewer re-transformations of the same photo.
+    // Listing photos and profile pictures are served from pre-generated
+    // variants on the Spaces CDN (src/lib/spaces-image.js, MediaImage) and
+    // never touch the optimizer; the settings below now only concern the
+    // site's own static images. 1600 and 2560 are added to the default
+    // device sizes so the srcset can name every CDN variant (no static image
+    // renders at a width that snaps to either, so their optimizer URLs — and
+    // cache entries — are unchanged).
+    deviceSizes: [640, 750, 828, 1080, 1200, 1600, 1920, 2048, 2560, 3840],
+    // Batch P: optimised static images stay cached for 31 days instead of
+    // the 60-second default → fewer re-transformations of the same image.
     minimumCacheTTL: 2678400,
     remotePatterns: [
       {

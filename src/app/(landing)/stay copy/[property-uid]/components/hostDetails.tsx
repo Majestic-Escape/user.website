@@ -1,4 +1,4 @@
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import { BadgeCheck, Calendar, MessageSquare, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 // import { hostData } from "@/lib/data";
@@ -44,7 +44,7 @@ export default function HostInformation({
         <hr className="sm:w-[100px] w-[200px] mb-6 border-gray-200" />
 
         <div className="flex items-center mb-4">
-          <Image
+          <MediaImage
             src={hostData.profileImage || ""}
             alt={hostData.name || ""}
             width={56}

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, use } from "react";
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import { propertyService } from "@/services/propertyService";
 import Rating from "./components/ratings";
 import PriceCard from "./components/price";

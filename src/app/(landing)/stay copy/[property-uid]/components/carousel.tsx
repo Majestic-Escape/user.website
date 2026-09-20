@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import { Heart, Info, Share2, ChevronLeft, ChevronRight } from "lucide-react";
 import { properties } from "@/lib/data";
 
@@ -11,7 +11,7 @@ function PropertyCard({ property }: { property: (typeof properties)[0] }) {
   return (
     <div className="flex flex-col">
       <div className="relative">
-        <Image
+        <MediaImage
           src={property?.images[currentImageIndex]}
           alt={property.name}
           width={400}

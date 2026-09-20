@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useMediaQuery } from "react-responsive";
 import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import {
   Dialog,
   DialogContent,
@@ -71,7 +72,7 @@ export default function ShareDialog({
   const content = (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Image
+        <MediaImage
           width={48}
           height={48}
           src={property?.photos?.[0]}

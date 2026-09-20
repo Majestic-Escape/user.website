@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+import { MediaImg } from "@/components/ui/media-image";
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -260,7 +261,7 @@ export default function ManagePropertiesPage() {
           {properties.map((property) => (
             <Card key={property.id}>
               <CardHeader>
-                <img
+                <MediaImg
                   src={property.image}
                   alt={property.title}
                   className="w-full h-48 object-cover rounded-t-lg"
@@ -327,7 +328,7 @@ export default function ManagePropertiesPage() {
                 return (
                   <TableRow key={property.id}>
                     <TableCell>
-                      <img
+                      <MediaImg
                         src={property.photos[0]}
                         alt={property.title}
                         className="w-16 h-16 object-cover rounded"

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import { attractions } from "@/lib/data";
 
 function AttractionItem({ title, description, imageUrl }) {
@@ -6,7 +6,7 @@ function AttractionItem({ title, description, imageUrl }) {
    
     <div className="flex flex-col md:flex-row gap-6">
       <div className="md:w-2/5 lg:w-1/2">
-        <Image
+        <MediaImage
           src={imageUrl}
           alt={title}
           width={500}

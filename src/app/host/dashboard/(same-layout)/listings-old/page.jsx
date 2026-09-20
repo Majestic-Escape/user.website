@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
+import { MediaImg } from "@/components/ui/media-image";
 
 import * as React from "react";
 import {
@@ -79,7 +80,7 @@ export default function ListingsPage() {
       accessorKey: "photos",
       header: "Image",
       cell: ({ row }) => (
-        <img
+        <MediaImg
           src={row.original.photos[0] || "/placeholder.svg"}
           alt={row.original.title}
           className="w-16 h-16 object-cover rounded"
@@ -339,7 +340,7 @@ export default function ListingsPage() {
           {properties.map((property) => (
             <Card key={property._id}>
               <CardHeader>
-                <img
+                <MediaImg
                   src={property.photos[0] || "/placeholder.svg"}
                   alt={property.title}
                   className="w-full h-48 object-cover rounded-t-lg"

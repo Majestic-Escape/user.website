@@ -1,11 +1,11 @@
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 
 export default function ImageGrid({ images }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Large Image */}
       <div className="relative aspect-[4/3] rounded-lg overflow-hidden">
-        <Image
+        <MediaImage
           src={images[0]}
           alt="Property main image"
           fill
@@ -19,7 +19,7 @@ export default function ImageGrid({ images }) {
             key={index}
             className="relative aspect-[4/3] rounded-lg overflow-hidden"
           >
-            <Image
+            <MediaImage
               src={image}
               alt={`Property image ${index + 2}`}
               fill

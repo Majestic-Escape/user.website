@@ -1,6 +1,6 @@
 "use client"
 import React, { useState } from 'react';
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import { Heart } from 'lucide-react';
 import { useWishlist } from '@/components/wishlist-context';
 import FolderContentsDialog from "@/components/FolderContentsDialog";
@@ -33,9 +33,10 @@ export default function WishlistPage() {
                 })}
               >
                 <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-all duration-200" />
-                <Image
+                <MediaImage
                   width={400}
                   height={400}
+                  sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 25vw"
                   src={staysWishlist[0].image}
                   alt="Stays"
                   className="w-full h-full object-cover"
@@ -57,11 +58,12 @@ export default function WishlistPage() {
                 })}
               >
                 <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-all duration-200" />
-                <Image
+                <MediaImage
                   src={experiencesWishlist[0].image}
                   alt="Experiences"
                   width={400}
                   height={400}
+                  sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 25vw"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute bottom-4 left-4 text-white">
@@ -83,11 +85,12 @@ export default function WishlistPage() {
               >
                 <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-all duration-200" />
                 {folder.items.length > 0 ? (
-                  <Image
+                  <MediaImage
                     src={folder.items[0].image}
                     alt={folder.name}
                     width={400}
                     height={400}
+                    sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 25vw"
                     className="w-full h-full object-cover"
                   />
                 ) : (

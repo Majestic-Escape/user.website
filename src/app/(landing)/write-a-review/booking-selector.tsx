@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Image from "next/image"
+import MediaImage from "@/components/ui/media-image"
 import { Calendar } from 'lucide-react'
 
 interface Booking {
@@ -61,7 +61,7 @@ function BookingCard({ booking, onSelect }: { booking: Booking, onSelect: (booki
       onClick={() => onSelect(booking)}
     >
       <CardContent className="flex items-center gap-4 p-4">
-        <Image
+        <MediaImage
           src={booking.image}
           alt={booking.title}
           width={150}

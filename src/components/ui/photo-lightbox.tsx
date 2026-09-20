@@ -3,7 +3,7 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import useEmblaCarousel from "embla-carousel-react";
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import {
   ChevronLeft,
   ChevronRight,
@@ -413,11 +413,22 @@ function LightboxStage({
                                 aria-hidden="true"
                               />
                             )}
-                            <Image
+                            <MediaImage
                               src={src || FALLBACK_SRC}
                               alt={`Photo ${index + 1} of ${count}`}
                               fill
-                              sizes={swapped ? "100vh" : "100vw"}
+                              // The fitted box is known once the photo's aspect
+                              // is: exact sizes pick the smallest variant that
+                              // covers it at this DPR instead of a full-viewport
+                              // guess (a 3:2 photo on a 1440×900 retina screen
+                              // needs ~2460 device px, not 2880).
+                              sizes={
+                                sized
+                                  ? `${Math.ceil(swapped ? stage.h : stage.w)}px`
+                                  : swapped
+                                    ? "100vh"
+                                    : "100vw"
+                              }
                               className={cn(
                                 "object-contain transition-opacity duration-200 motion-reduce:transition-none",
                                 loaded[index] ? "opacity-100" : "opacity-0",
@@ -559,7 +570,7 @@ function Thumbnail({
           <ImageOff className="h-4 w-4" aria-hidden="true" />
         </span>
       ) : (
-        <Image
+        <MediaImage
           src={src || FALLBACK_SRC}
           alt=""
           fill

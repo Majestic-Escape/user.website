@@ -11,7 +11,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
@@ -223,11 +223,12 @@ export default function BookingSummaryPage() {
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 border rounded-xl p-4 shadow-lg">
               <div>
                 {propertyImageSrc ? (
-                  <Image
+                  <MediaImage
                     src={propertyImageSrc}
                     alt="Property Image"
                     width={600}
                     height={400}
+                    sizes="(max-width: 767px) 100vw, 50vw"
                     className="rounded-xl"
                   />
                 ) : (

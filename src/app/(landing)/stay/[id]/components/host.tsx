@@ -1,5 +1,5 @@
 import { Star, Award, Shield } from "lucide-react"
-import Image from "next/image"
+import MediaImage from "@/components/ui/media-image"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -34,7 +34,7 @@ export default function Host({ host, isLoading }: HostProps) {
   return (
     <section className="mt-12 border-t pt-12">
       <div className="flex items-center mb-6">
-        <Image
+        <MediaImage
           src={host?.avatar || "/placeholder.svg"}
           alt={host?.name}
           width={56}
