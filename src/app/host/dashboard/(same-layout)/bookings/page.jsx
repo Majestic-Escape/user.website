@@ -53,6 +53,7 @@ import { LIVE } from "@/lib/query-presets";
 import { queryKeys } from "@/lib/query-keys";
 import { readJSON } from "@/lib/storage";
 import { readStoredToken } from "@/lib/session";
+import { counterpartName } from "@/lib/displayName";
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 // Mock data for reservations
@@ -145,8 +146,9 @@ export default function ReservationsPage() {
   // Reservations are LIVE data: a cached page paints instantly while the
   // list always revalidates (and again on tab focus). Filter/page changes
   // keep the previous rows on screen. Mutations invalidate hostBookingsAll.
-  const from = date.from ? date.from.toLocaleDateString() : null;
-  const to = date.to ? date.to.toLocaleDateString() : null;
+  // The API parses M/D/YYYY; toLocaleDateString() depends on the browser locale (en-IN → D/M/YYYY).
+  const from = date.from ? format(date.from, "M/d/yyyy") : null;
+  const to = date.to ? format(date.to, "M/d/yyyy") : null;
   const filters = { searchValue, status, from, to, rowsPerPage, skip };
   const { data: bookingsResult } = useQuery({
     queryKey: queryKeys.hostBookings(hostId, filters),
@@ -238,13 +240,9 @@ export default function ReservationsPage() {
   };
 
 
-  const sendConfirmationToUser = async (
-    bookingId,
-    userEmail,
-    hostEmail,
-    userName,
-    hostName
-  ) => {
+  // The backend derives both parties (and their emails) from the booking;
+  // the request carries only the booking id.
+  const sendConfirmationToUser = async (bookingId) => {
     try {
       const getLocalData = await localStorage.getItem("token");
       const data = JSON.parse(getLocalData);
@@ -258,10 +256,6 @@ export default function ReservationsPage() {
           },
           body: JSON.stringify({
             bookingId: bookingId,
-            userEmail: userEmail,
-            hostEmail: hostEmail,
-            userName: userName,
-            hostName: hostName,
           }),
         });
         if (!response.ok) {
@@ -277,13 +271,7 @@ export default function ReservationsPage() {
     }
   };
 
-  const sendRejectionToUser = async (
-    bookingId,
-    userEmail,
-    hostEmail,
-    userName,
-    hostName
-  ) => {
+  const sendRejectionToUser = async (bookingId) => {
     try {
       const getLocalData = await localStorage.getItem("token");
       const data = JSON.parse(getLocalData);
@@ -297,10 +285,6 @@ export default function ReservationsPage() {
           },
           body: JSON.stringify({
             bookingId: bookingId,
-            userEmail: userEmail,
-            hostEmail: hostEmail,
-            userName: userName,
-            hostName: hostName,
           }),
         });
         if (!response.ok) {
@@ -315,26 +299,13 @@ export default function ReservationsPage() {
       console.error(err);
     }
   };
-  const sendCancelToUser = async (
-    bookingId,
-    userEmail,
-    hostEmail,
-    userName,
-    hostName
-  ) => {
+  const sendCancelToUser = async (bookingId) => {
     try {
       const getLocalData = await localStorage.getItem("token");
       const data = JSON.parse(getLocalData);
 
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
-        console.log(
-          "term",
-          bookingId,
-          userEmail,
-          hostEmail,
-          userName,
-          hostName
-        );
+        console.log("term", bookingId);
       }
       if (data) {
         const response = await fetch(`${API_URL}/booking/host/terminate`, {
@@ -345,10 +316,6 @@ export default function ReservationsPage() {
           },
           body: JSON.stringify({
             bookingId: bookingId,
-            userEmail: userEmail,
-            hostEmail: hostEmail,
-            userName: userName,
-            hostName: hostName,
           }),
         });
         if (!response.ok) {
@@ -375,19 +342,11 @@ export default function ReservationsPage() {
   }
   const handleModalConfirm = () => {
     const booking = selectedBooking;
-    const { _id, userId, hostId } = booking;
+    const { _id } = booking;
 
-    const params = [
-      _id,
-      userId?.email,
-      hostId?.email,
-      userId?.firstName + " " + userId?.lastName,
-      hostId?.firstName + " " + hostId?.lastName,
-    ];
-
-    if (modalAction === "accept") sendConfirmationToUser(...params);
-    if (modalAction === "reject") sendRejectionToUser(...params);
-    if (modalAction === "cancel") sendCancelToUser(...params);
+    if (modalAction === "accept") sendConfirmationToUser(_id);
+    if (modalAction === "reject") sendRejectionToUser(_id);
+    if (modalAction === "cancel") sendCancelToUser(_id);
 
     setModalOpen(false);
   };
@@ -684,14 +643,8 @@ export default function ReservationsPage() {
           {bookings?.map((booking) => (
             <TableRow key={booking?._id}>
               <TableCell>
-                <span
-                  title={
-                    booking?.userId?.firstName + " " + booking?.userId?.lastName
-                  }
-                >
-                  {checkLength(
-                    booking?.userId?.firstName + " " + booking?.userId?.lastName
-                  )}
+                <span title={counterpartName(booking?.userId, "Guest")}>
+                  {checkLength(counterpartName(booking?.userId, "Guest"))}
                 </span>
               </TableCell>
               <TableCell>

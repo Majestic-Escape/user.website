@@ -11,6 +11,7 @@ import { LIVE } from "@/lib/query-presets";
 import { queryKeys } from "@/lib/query-keys";
 import { readStoredToken } from "@/lib/session";
 import Link from "next/link";
+import { contactInfoErrorFrom, contactInfoErrorFromResponse } from "@/lib/contactInfoError";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function ReviewGuest() {
@@ -18,6 +19,8 @@ export default function ReviewGuest() {
   const emailToken = searchParams.get("token");
   const [rating, setRating] = useState(0);
   const [reviewData, setReviewData] = useState();
+  // A contact-policy refusal (422 CONTACT_INFO_NOT_ALLOWED) marks the review text
+  const [contactRefusal, setContactRefusal] = useState(null);
   const [isAuth, setIsAuth] = useState(false);
   const bookingId = searchParams.get("booking");
   const [bookData, setBookData] = useState();
@@ -165,8 +168,12 @@ export default function ReviewGuest() {
           }),
         });
         if (!response.ok) {
-          toast.error("Failed to submit review");
+          const refusal = await contactInfoErrorFromResponse(response);
+          setContactRefusal(refusal);
+          toast.error(refusal ? refusal.toast : "Failed to submit review", refusal ? { duration: 9000 } : undefined);
+          return;
         }
+        setContactRefusal(null);
         toast.success("Submitted review");
         router.push(`/host/dashboard/bookings`);
       }
@@ -266,11 +273,21 @@ export default function ReviewGuest() {
               </div>
               <div className="py-4 sm:py-5 sm:grid sm:gap-4 sm:px-6">
                 <textarea
-                  className="px-4 py-4 border border-gray h-40 "
+                  className={`px-4 py-4 border h-40 ${contactRefusal ? "border-red-500" : "border-gray"}`}
                   type="text"
                   placeholder="Write your review ....."
-                  onChange={handleChange}
+                  aria-invalid={contactRefusal ? true : undefined}
+                  aria-describedby={contactRefusal ? "review-contact-error" : undefined}
+                  onChange={(e) => {
+                    setContactRefusal(null);
+                    handleChange(e);
+                  }}
                 />
+                {contactRefusal && (
+                  <p id="review-contact-error" role="alert" className="text-sm text-red-600">
+                    {contactRefusal.message}
+                  </p>
+                )}
                 <Button onClick={handleSubmitReviewData}>Submit</Button>
               </div>
             </div>

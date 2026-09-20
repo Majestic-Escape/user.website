@@ -51,6 +51,7 @@ import {
   parseDate,
   parseFiniteNumber,
 } from "@/lib/format";
+import { counterpartName } from "@/lib/displayName";
 
 // Counts are summed only when they are real numbers (a missing `guests`
 // used to turn every total into NaN).
@@ -62,8 +63,8 @@ const stayDate = (value) =>
     "—",
     "en-US",
   );
-const fullName = (user) =>
-  `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "—";
+// The guest is the counterpart: first name only (the API returns no more).
+const fullName = (user) => counterpartName(user, "—");
 
 // Mock data for revenue insights (extended for longer periods)
 const revenueData = {
@@ -204,8 +205,9 @@ const AnalyticsPage = () => {
     if (process.env.NEXT_PUBLIC_ENV === "dev") {
       console.log("why is", dateRange.from);
     }
-    const from = dateRange.from ? dateRange.from.toLocaleDateString() : null;
-    const to = dateRange.to ? dateRange.to.toLocaleDateString() : null;
+    // The API parses M/D/YYYY; toLocaleDateString() depends on the browser locale (en-IN → D/M/YYYY).
+    const from = dateRange.from ? format(dateRange.from, "M/d/yyyy") : null;
+    const to = dateRange.to ? format(dateRange.to, "M/d/yyyy") : null;
     if (process.env.NEXT_PUBLIC_ENV === "dev") {
       console.log(from, to);
     }
@@ -518,9 +520,7 @@ const AnalyticsPage = () => {
           user_id: pro?.userId?._id,
           booking_id: pro?._id,
           property_title: pro?.propertyId?.title,
-          booked_by: `${pro?.userId?.firstName || ""} ${
-            pro?.userId?.lastName || ""
-          }`,
+          booked_by: counterpartName(pro?.userId, ""),
           checkin: new Date(pro?.checkIn).toLocaleDateString(),
           checkout: new Date(pro?.checkOut).toLocaleDateString(),
           amount: pro?.price,
