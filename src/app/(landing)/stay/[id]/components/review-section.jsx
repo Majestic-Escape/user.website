@@ -20,6 +20,57 @@ const starCount = (rating) => {
   const n = Math.round(Number(rating));
   return Number.isFinite(n) ? Math.min(5, Math.max(0, n)) : 0;
 };
+// Module-level on purpose: a component defined inside another component is a
+// new type on every render, so React unmounted and remounted it each time the
+// parent re-rendered.
+const ReviewSkeleton = () => (
+  <div className="animate-pulse">
+    <div className="flex items-center gap-4 mb-4">
+      <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+      <div className="flex-1">
+        <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+        <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+      </div>
+    </div>
+    <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+    <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+  </div>
+);
+
+const CategorySkeleton = () => (
+  <div className="animate-pulse bg-gray-100 rounded-md p-4 h-24">
+    <div className="w-8 h-8 bg-gray-200 rounded-full mx-auto mb-2"></div>
+    <div className="h-4 bg-gray-200 rounded w-8 mx-auto mb-1"></div>
+    <div className="h-3 bg-gray-200 rounded w-16 mx-auto"></div>
+  </div>
+);
+
+const EmptyState = () => (
+  <div className="flex flex-col items-center justify-center py-12 text-center">
+    <div className="w-16 h-16 mb-4 text-gray-300">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.5}
+          d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+        />
+      </svg>
+    </div>
+    <h3 className="text-xl font-semibold mb-2">No reviews yet</h3>
+    <p className="text-gray-500 max-w-md">
+      This property hasn't received any reviews yet. Be the first to share
+      your experience!
+    </p>
+  </div>
+);
+
 export default function ReviewSection({
   reviews,
   isLoading,
@@ -224,55 +275,10 @@ export default function ReviewSection({
 
   // Skeleton loading for reviews
 
-  const ReviewSkeleton = () => (
-    <div className="animate-pulse">
-      <div className="flex items-center gap-4 mb-4">
-        <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-        <div className="flex-1">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-          <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-        </div>
-      </div>
-      <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-      <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-      <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-    </div>
-  );
   if (isLoading) {
     return <ReviewSkeleton />;
   }
   // Skeleton loading for category ratings
-  const CategorySkeleton = () => (
-    <div className="animate-pulse bg-gray-100 rounded-md p-4 h-24">
-      <div className="w-8 h-8 bg-gray-200 rounded-full mx-auto mb-2"></div>
-      <div className="h-4 bg-gray-200 rounded w-8 mx-auto mb-1"></div>
-      <div className="h-3 bg-gray-200 rounded w-16 mx-auto"></div>
-    </div>
-  );
-  const EmptyState = () => (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="w-16 h-16 mb-4 text-gray-300">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-          />
-        </svg>
-      </div>
-      <h3 className="text-xl font-semibold mb-2">No reviews yet</h3>
-      <p className="text-gray-500 max-w-md">
-        This property hasn't received any reviews yet. Be the first to share
-        your experience!
-      </p>
-    </div>
-  );
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("glanter", reviews);
   }

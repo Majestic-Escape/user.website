@@ -44,6 +44,35 @@ import { counterpartName } from "@/lib/displayName";
 const reviews = [];
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+// Module-level on purpose: a component defined inside another component is a
+// new type on every render, so React unmounted and remounted it each time the
+// parent re-rendered.
+const StatusPill = ({ status }) => {
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "accept":
+        return "bg-green-100 text-green-800";
+      case "reject":
+        return "bg-red-100 text-red-800";
+
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+  return (
+    <span
+      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
+        status?.hideStatus
+      )}`}
+    >
+      {status?.bookingId?.flag
+        ? status?.hideStatus?.charAt(0).toUpperCase() +
+          status?.hideStatus?.slice(1)
+        : null}
+    </span>
+  );
+};
+
 export default function ReviewsPage() {
   const [selectedProperty, setSelectedProperty] = useState("all");
   const [selectedRating, setSelectedRating] = useState("all");
@@ -186,31 +215,6 @@ export default function ReviewsPage() {
     }
     setBookingId(review?.bookingId?._id);
     setHostEmail(review?.property?.hostEmail);
-  };
-  const StatusPill = ({ status }) => {
-    const getStatusColor = (status) => {
-      switch (status) {
-        case "accept":
-          return "bg-green-100 text-green-800";
-        case "reject":
-          return "bg-red-100 text-red-800";
-
-        default:
-          return "bg-gray-100 text-gray-800";
-      }
-    };
-    return (
-      <span
-        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-          status?.hideStatus
-        )}`}
-      >
-        {status?.bookingId?.flag
-          ? status?.hideStatus?.charAt(0).toUpperCase() +
-            status?.hideStatus?.slice(1)
-          : null}
-      </span>
-    );
   };
   return (
     <div className="space-y-4 grid grid-cols-1 mb-16">
