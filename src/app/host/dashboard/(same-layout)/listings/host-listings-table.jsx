@@ -136,6 +136,10 @@ export function HostListingsTable({ userEmail }) {
   const [listingToDelist, setListingToDelist] = useState(null);
   const [relistDialogOpen, setRelistDialogOpen] = useState(false);
   const [listingToRelist, setListingToRelist] = useState(null);
+  // Delete a draft ("incomplete") or withdraw a pending submission ("processing").
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [page, setPage] = useState(1);
   const [imagePopupOpen, setImagePopupOpen] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
@@ -185,6 +189,51 @@ export function HostListingsTable({ userEmail }) {
     setListingToDelist(listing);
     setDelistDialogOpen(true);
   }, []);
+  const handleDeleteClick = useCallback((listing) => {
+    setListingToDelete(listing);
+    setDeleteDialogOpen(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!listingToDelete || deleting) return;
+    setDeleting(true);
+    try {
+      const getLocalData = await localStorage.getItem("token");
+      const data = JSON.parse(getLocalData);
+      const response = await fetch(
+        `${API_BASE_URL}/properties/host/${listingToDelete._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${data}`,
+            "Content-Type": "application/json",
+          },
+          method: "DELETE",
+        },
+      );
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        // the server names why (bookings attached, not a draft any more, …)
+        throw new Error(result?.message || "Failed to delete the listing");
+      }
+      setDeleteDialogOpen(false);
+      setListingToDelete(null);
+      // Only after the 2xx: this table and the listing itself.
+      fetchListings();
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.property(listingToDelete._id),
+      });
+      toast.success(
+        listingToDelete.status === "processing"
+          ? "Submission withdrawn and deleted"
+          : "Draft deleted",
+      );
+    } catch (error) {
+      console.error("Failed to delete listing:", error);
+      toast.error(error?.message || "Failed to delete the listing");
+    } finally {
+      setDeleting(false);
+    }
+  }, [listingToDelete, deleting, fetchListings, queryClient]);
 
   const handleConfirmDelist = useCallback(async () => {
     if (listingToDelist) {
@@ -460,6 +509,20 @@ export function HostListingsTable({ userEmail }) {
                   <DropdownMenuItem onClick={() => handleRelistClick(listing)}>
                     Reactivate
                   </DropdownMenuItem>
+                ) : listing.status == "incomplete" ||
+                  listing.status == "processing" ? (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-red-600 focus:bg-red-50 focus:text-red-700"
+                      data-testid="delete-listing"
+                      onClick={() => handleDeleteClick(listing)}
+                    >
+                      {listing.status == "processing"
+                        ? "Withdraw & delete"
+                        : "Delete draft"}
+                    </DropdownMenuItem>
+                  </>
                 ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -467,7 +530,7 @@ export function HostListingsTable({ userEmail }) {
         },
       },
     ],
-    [handleImageClick, handleDelistClick],
+    [handleImageClick, handleDelistClick, handleDeleteClick],
   );
 
   const table = useReactTable({
@@ -540,6 +603,44 @@ export function HostListingsTable({ userEmail }) {
               </Button>
               <Button variant="destructive" onClick={handleConfirmDelist}>
                 Confirm
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <Dialog
+          open={deleteDialogOpen}
+          onOpenChange={(open) => {
+            if (!deleting) setDeleteDialogOpen(open);
+          }}
+        >
+          <DialogContent data-testid="delete-listing-dialog">
+            <DialogHeader>
+              <DialogTitle>
+                {listingToDelete?.status === "processing"
+                  ? "Withdraw and delete this listing?"
+                  : "Delete this draft?"}
+              </DialogTitle>
+              <DialogDescription>
+                {listingToDelete?.status === "processing"
+                  ? `"${listingToDelete?.title || "Untitled listing"}" is waiting for approval. Withdrawing deletes it and its photos permanently — you can submit a new listing any time.`
+                  : `"${listingToDelete?.title || "Untitled draft"}" and its photos are removed permanently. This cannot be undone.`}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+                data-testid="confirm-delete-listing"
+              >
+                {deleting ? "Deleting…" : "Delete"}
               </Button>
             </DialogFooter>
           </DialogContent>

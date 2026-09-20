@@ -145,8 +145,13 @@ export const propertyService = {
   },
   getUserListingById: async (hostEmail, id) => {
     try {
+      // The edit wizard writes this object back, so it must be the stored
+      // listing (street, registration number, exact point): the server
+      // answers the signed-in owner with it and everyone else with the
+      // public view.
       const response = await axios.get(`${API_BASE_URL}/prop-listing/${id}`, {
         params: { hostEmail },
+        headers: authHeaders(),
       });
       return response.data;
     } catch (error) {
