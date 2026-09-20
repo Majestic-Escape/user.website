@@ -11,7 +11,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -336,7 +336,7 @@ export function HostListingsTable({ userEmail }) {
         cell: ({ row }) => {
           const photos = row.getValue("photos");
           return photos && photos.length > 0 ? (
-            <Image
+            <MediaImage
               src={photos[0] || "/placeholder.svg"}
               alt="Property thumbnail"
               width={50}

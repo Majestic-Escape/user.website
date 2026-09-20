@@ -4,7 +4,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import Image from 'next/image';
+import MediaImage from "@/components/ui/media-image";
 
 export const FolderContentsDialog = ({ isOpen, onClose, folderName, items }) => {
   if (!isOpen) return null;
@@ -27,9 +27,10 @@ export const FolderContentsDialog = ({ isOpen, onClose, folderName, items }) => 
             {items.map((item, index) => (
               <div key={index} className="relative aspect-[1/1.1] flex flex-col">
                 <div className="relative w-full aspect-square rounded-xl overflow-hidden">
-                  <Image
-                  width={200}
-                  height={200}
+                  <MediaImage
+                    width={200}
+                    height={200}
+                    sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 224px"
                     src={item.image}
                     alt="name"
                     className="w-full h-full object-cover"

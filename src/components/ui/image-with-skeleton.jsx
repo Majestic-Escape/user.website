@@ -1,19 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Wraps next/image with a Skeleton overlay that disappears once the binary
 // load fires (or errors). Lives inside a relative-positioned container.
 //
 // Usage mirrors next/image. Pass `fill`, `sizes`, `className`, etc. as usual —
-// the className applies to the underlying <img>, NOT the skeleton.
+// the className applies to the underlying <img>, NOT the skeleton. The photo
+// comes from the Spaces CDN variants (MediaImage); the conversation thumbnails
+// this wraps are 20–112 CSS px, hence the default `sizes`.
 export function ImageWithSkeleton({
   src,
   alt,
   fill,
-  sizes,
+  sizes = "112px",
   className = "",
   onLoad,
   onError,
@@ -31,7 +33,7 @@ export function ImageWithSkeleton({
       {!loaded && (
         <Skeleton className="absolute inset-0 w-full h-full rounded-none" />
       )}
-      <Image
+      <MediaImage
         src={src}
         alt={alt}
         fill={fill}
