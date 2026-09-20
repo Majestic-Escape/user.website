@@ -139,11 +139,12 @@ export default function StaysProperties() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {displayedProperties.map((property) => (
+                {displayedProperties.map((property, index) => (
                   <PropertyCard
                     key={property._id}
                     property={property}
                     includeTaxes={includeTaxes}
+                    priority={index === 0}
                   />
                 ))}
               </div>
