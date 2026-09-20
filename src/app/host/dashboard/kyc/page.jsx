@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { steps } from "./steps/steps";
 import { StepIndicator } from "./components/step-indicator";
+import { KycVerifiedState } from "./components/kyc-verified";
 import { redirect, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { kycService } from "../../../../services/kycService";
@@ -37,6 +38,8 @@ export default function KYC() {
   const [showCongratulationsDialog, setShowCongratulationsDialog] =
     useState(false);
   const [formCompleted, setFormCompleted] = useState(false);
+  // the verified summary reads the stored form (document type, dates, GST)
+  const [verifiedForm, setVerifiedForm] = useState(null);
   const [formData, setFormData] = useState({
     _id: id,
     hostId: null,
@@ -79,6 +82,7 @@ export default function KYC() {
         const result = await response.data;
 
         if (result.status == "completed") {
+          setVerifiedForm(result);
           setFormCompleted(true);
         }
       } catch (error) {
@@ -305,9 +309,7 @@ export default function KYC() {
   }
   if (formCompleted) {
     return (
-      <div className="min-h-screen flex items-center justify-center font-poppins pt-24">
-        You have already verified your KYC. &nbsp;{" "}
-      </div>
+      <KycVerifiedState form={verifiedForm} firstName={auth.user?.firstName} />
     );
   }
   return (
