@@ -99,6 +99,10 @@ const languages = [
 ];
 export default function AccountInfo() {
   const auth = useAuth();
+  // A contact-policy refusal (422 CONTACT_INFO_NOT_ALLOWED): which field(s) to fix
+  const [contactRefusal, setContactRefusal] = useState(null);
+  const aboutRefused = !!contactRefusal?.fields?.some((f) => String(f).startsWith("about"));
+  const languagesRefused = !!contactRefusal?.fields?.some((f) => String(f).startsWith("languages"));
   const [profileData, setProfileData] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [searchLanguage, setSearchLanguage] = useState("");
@@ -354,7 +358,8 @@ export default function AccountInfo() {
       if (!res.ok) {
         const refusal = await contactInfoErrorFromResponse(res);
         if (refusal) {
-          // Keep what was typed; say what to remove and where.
+          // Keep what was typed; say what to remove and where, and mark the field.
+          setContactRefusal(refusal);
           toast.error(refusal.toast, { duration: 9000 });
           return;
         }
@@ -362,6 +367,7 @@ export default function AccountInfo() {
       }
 
       const updatedData = await res.json();
+      setContactRefusal(null);
       toast.success("Profile updated successfully!");
       setProfileData((prev) => ({ ...prev, ...updatedData })); // Update local state with the latest profile data
       // Only after the 2xx: refresh the cached profile and the login snapshot
@@ -721,6 +727,11 @@ export default function AccountInfo() {
               </div>
             </div>
 
+            {languagesRefused && (
+              <p role="alert" className="mt-2 text-sm text-red-600">
+                {contactRefusal.message}
+              </p>
+            )}
             {/* Display Selected Languages */}
             {profileData.languages?.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-3">
@@ -741,15 +752,23 @@ export default function AccountInfo() {
             <h2 className="text-lg font-semibold mb-2">About Me</h2>
 
             <Textarea
-              className="px-4 py-4 border border-gray h-40 w-full "
+              className={`px-4 py-4 border h-40 w-full ${aboutRefused ? "border-red-500 focus-visible:ring-red-500" : "border-gray"}`}
               type="text"
               value={profileData?.about || ""}
               placeholder="Write something fun....."
               maxLength={500}
-              onChange={(e) =>
-                setProfileData((prev) => ({ ...prev, about: e.target.value }))
-              }
+              aria-invalid={aboutRefused || undefined}
+              aria-describedby={aboutRefused ? "about-contact-error" : undefined}
+              onChange={(e) => {
+                setContactRefusal(null);
+                setProfileData((prev) => ({ ...prev, about: e.target.value }));
+              }}
             />
+            {aboutRefused && (
+              <p id="about-contact-error" role="alert" className="mt-2 text-sm text-red-600">
+                {contactRefusal.message}
+              </p>
+            )}
             <div className="text-sm text-muted-foreground text-right">
               {profileData?.about?.length || 0}/500
             </div>
