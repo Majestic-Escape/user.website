@@ -1,5 +1,6 @@
 "use client";
 
+import { counterpartName } from "@/lib/displayName";
 import { useEffect, useState } from "react";
 import { addDays } from "date-fns";
 
@@ -127,8 +128,7 @@ export default function PropertyListing({
                 <h2 className="text-base md:text-lg font-medium text-stone">
                   Hosted by{" "}
                   <span className="text-absoluteDark font-semibold">
-                    {propertyDetails?.host?.firstName}{" "}
-                    {propertyDetails?.host?.lastName}
+                    {counterpartName(propertyDetails?.host, "your host")}
                   </span>
                 </h2>
                 {/* <p className="text-gray-600">2 years hosting</p> */}

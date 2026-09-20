@@ -46,6 +46,7 @@ import jsPDF from "jspdf";
 
 import { useEffect } from "react";
 import { formatDate, formatINR, parseFiniteNumber } from "@/lib/format";
+import { counterpartName } from "@/lib/displayName";
 
 // Sums only amounts that are real numbers; records that can't be summed are
 // counted so the UI can say so instead of showing NaN.
@@ -201,8 +202,9 @@ const AnalyticsPage = () => {
     const hostData = await localStorage.getItem("userId");
     const hostId = JSON.parse(hostData);
 
-    const from = dateRange.from ? dateRange.from.toLocaleDateString() : null;
-    const to = dateRange.to ? dateRange.to.toLocaleDateString() : null;
+    // The API parses M/D/YYYY; toLocaleDateString() depends on the browser locale (en-IN → D/M/YYYY).
+    const from = dateRange.from ? format(dateRange.from, "M/d/yyyy") : null;
+    const to = dateRange.to ? format(dateRange.to, "M/d/yyyy") : null;
     if (process.env.NEXT_PUBLIC_ENV === "dev") {
       console.log(from, to);
     }
@@ -544,10 +546,7 @@ const AnalyticsPage = () => {
           user_id: pro?.bookingId?.userId?._id,
           booking_id: pro?.bookingId?._id,
           property_title: pro?.propertyId?.title,
-          full_name:
-            pro?.bookingId?.userId?.firstName +
-            " " +
-            pro?.bookingId?.userId?.lastName,
+          full_name: counterpartName(pro?.bookingId?.userId, ""),
           checkin: new Date(pro?.bookingId?.checkIn).toLocaleDateString(),
           checkout: new Date(pro?.bookingId?.checkOut).toLocaleDateString(),
           amount: pro?.amount,
@@ -941,8 +940,7 @@ const AnalyticsPage = () => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {`${booking?.bookingId?.userId?.firstName ?? ""} ${booking?.bookingId?.userId?.lastName ?? ""}`.trim() ||
-                      "—"}
+                    {counterpartName(booking?.bookingId?.userId, "—")}
                   </TableCell>
 
                   <TableCell>

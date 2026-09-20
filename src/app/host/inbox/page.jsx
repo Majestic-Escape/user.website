@@ -688,7 +688,7 @@ export default function HostInboxPage() {
         }
       })
     );
-    // Guest details are already stored in conversation participants (firstName, lastName)
+    // Guest details are already stored in conversation participants (firstName)
   };
 
   // Load messages for selected conversation
@@ -963,13 +963,10 @@ export default function HostInboxPage() {
   };
 
   const getGuestName = (conversation) => {
+    // First name only: the chat server resolves it from the guest's account
+    // and never returns a last name (contact lock-down).
     const guest = getGuestParticipant(conversation);
-    if (guest) {
-      // Use firstName/lastName stored in conversation participant data
-      if (guest.firstName) {
-        return guest.lastName ? `${guest.firstName} ${guest.lastName}` : guest.firstName;
-      }
-    }
+    if (guest && guest.firstName) return guest.firstName;
     return "Guest";
   };
 

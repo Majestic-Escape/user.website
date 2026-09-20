@@ -64,8 +64,8 @@ interface Booking {
   checkOut: string;
   cancellationPolicy?: string;
   reviewed?: boolean;
-  hostId?: { firstName: string; lastName: string; email: string };
-  userId?: { firstName: string; lastName: string; email: string };
+  hostId?: { firstName?: string };
+  userId?: { firstName?: string; lastName?: string; email?: string };
   guests?: number; // ✅ added
   adults?: number; // ✅ added
   children?: number; // ✅ added
@@ -96,8 +96,8 @@ interface InvoiceData {
   checkOut: string;
   cancellationPolicy?: string;
   reviewed?: boolean;
-  hostId?: { firstName: string; lastName: string; email: string };
-  userId?: { firstName: string; lastName: string; email: string };
+  hostId?: { firstName?: string };
+  userId?: { firstName?: string; lastName?: string; email?: string };
   guests?: number; // ✅ added
   adults?: number; // ✅ added
   children?: number; // ✅ added
@@ -187,14 +187,24 @@ const FilterDialog = ({
 
 const ManageBookings: React.FC = () => {
   const queryClient = useQueryClient();
-  const userId: string | null = (() => {
+  // The stored user id is read after mount: reading localStorage during
+  // render made the server (no id → empty state) and the first client
+  // render (id → spinner) disagree, a hydration mismatch (React #418) that
+  // re-rendered the whole page on the client. Until mounted both sides
+  // render the spinner.
+  const [userId, setUserId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState<boolean>(false);
+  useEffect(() => {
+    let stored: string | null = null;
     try {
       const raw = localStorage.getItem("userId");
-      return raw ? JSON.parse(raw) : null;
+      stored = raw ? JSON.parse(raw) : null;
     } catch {
-      return null;
+      stored = null;
     }
-  })();
+    setUserId(stored);
+    setMounted(true);
+  }, []);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [showInvoice, setShowInvoice] = useState<boolean>(false);
@@ -247,7 +257,7 @@ const ManageBookings: React.FC = () => {
   });
   // Logged out (no userId) the query never runs, so it stays "pending";
   // show the empty state instead of a skeleton forever.
-  const isLoading = !!userId && bookingsPending;
+  const isLoading = !mounted || (!!userId && bookingsPending);
   const fetchData = () =>
     queryClient.invalidateQueries({ queryKey: queryKeys.userBookingsAll });
   useEffect(() => {
@@ -409,12 +419,10 @@ const ManageBookings: React.FC = () => {
   // const today = new Date().toLocaleDateString();
   // const hour = new Date().getHours();
 
+  // The backend derives the parties and their emails from the booking
+  // itself; the request carries only the booking id.
   const cancelBooking = async (
     bookingId: string,
-    userEmail: string,
-    hostEmail: string,
-    userName: string,
-    hostName: string,
     propertyId?: string,
   ): Promise<void> => {
     try {
@@ -431,10 +439,6 @@ const ManageBookings: React.FC = () => {
           },
           body: JSON.stringify({
             bookingId: bookingId,
-            userEmail: userEmail,
-            hostEmail: hostEmail,
-            userName: userName,
-            hostName: hostName,
           }),
         });
         if (!response.ok) {
@@ -870,7 +874,6 @@ const ManageBookings: React.FC = () => {
           {filteredBookings.map((booking) => {
             const summaryParams = new URLSearchParams({
               hostFirstName: booking?.hostId?.firstName ?? "",
-              hostLastName: booking?.hostId?.lastName ?? "",
               bookingId: booking?._id ?? "",
               propertyId: booking?.propertyId?._id ?? "",
               propertyType: booking?.propertyId?.propertyType ?? "",
@@ -1065,14 +1068,6 @@ const ManageBookings: React.FC = () => {
                               if (!bookingToCancel) return null;
                               await cancelBooking(
                                 bookingToCancel._id,
-                                bookingToCancel.userId!.email,
-                                bookingToCancel.hostId!.email,
-                                `${bookingToCancel.userId!.firstName} ${
-                                  bookingToCancel.userId!.lastName
-                                }`,
-                                `${bookingToCancel.hostId!.firstName} ${
-                                  bookingToCancel.hostId!.lastName
-                                }`,
                                 bookingToCancel.propertyId?._id,
                               );
                               setCancelDialogOpen(false);

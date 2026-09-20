@@ -1029,7 +1029,6 @@ function BookPageContent() {
           const summaryParams = new URLSearchParams(
             cleanParams({
             hostFirstName: property?.host?.firstName,
-            hostLastName: property?.host?.lastName,
             bookingId: booking?.data?._id,
             propertyId: propertyId,
             propertyType: property?.propertyType,

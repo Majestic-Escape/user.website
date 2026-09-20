@@ -21,6 +21,7 @@ import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { loginHref } from "@/lib/auth-return";
+import { contactInfoErrorFrom, contactInfoErrorFromResponse } from "@/lib/contactInfoError";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const offer = process.env.HOST_COMMISSION_OFFER;
 export default function HostOnboarding() {
@@ -257,8 +258,17 @@ export default function HostOnboarding() {
           queryKey: queryKeys.hostListingsAll,
         });
       }
+      return true;
     } catch (error) {
-      toast.error("Failed to save progress. Please try again.");
+      const refusal = contactInfoErrorFrom(error);
+      if (refusal) {
+        // The text stays in the form; the step does not advance.
+        setStepError(refusal.toast);
+        toast.error(refusal.toast, { duration: 9000 });
+      } else {
+        toast.error("Failed to save progress. Please try again.");
+      }
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -311,8 +321,9 @@ export default function HostOnboarding() {
     }
 
     setIsLoading(true);
-    await saveData();
+    const saved = await saveData();
     setIsLoading(false);
+    if (!saved) return;
 
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
@@ -320,8 +331,8 @@ export default function HostOnboarding() {
   };
 
   const handleSaveAndExit = async () => {
-    await saveData(true);
-    router?.push("/host/dashboard/listings");
+    const saved = await saveData(true);
+    if (saved) router?.push("/host/dashboard/listings");
   };
 
   const handleSubmit = async (id) => {
@@ -361,7 +372,13 @@ export default function HostOnboarding() {
         });
       }, 2100);
     } catch (error) {
-      toast.error("Something went wrong. Please try again.");
+      const refusal = contactInfoErrorFrom(error);
+      if (refusal) {
+        setStepError(refusal.toast);
+        toast.error(refusal.toast, { duration: 9000 });
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
