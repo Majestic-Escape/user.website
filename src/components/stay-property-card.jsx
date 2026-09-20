@@ -25,7 +25,9 @@ import { parseFiniteNumber } from "@/lib/format";
 // the text block) instead of a div onClick + router.push: they prefetch when
 // scrolled into view, support middle/ctrl-click and keyboard, and the
 // carousel arrows / dots no longer accidentally open the listing.
-export default function StayCard({ property, includeTaxes }) {
+// `priority`: the first card of the catalogue is the page's LCP element on
+// phones — its first slide is preloaded (eager, high fetch priority).
+export default function StayCard({ property, includeTaxes, priority = false }) {
   const { isInWishlist, wishlists } = useWishlist();
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isWishlistDialogOpen, setIsWishlistDialogOpen] = useState(false);
@@ -158,7 +160,17 @@ export default function StayCard({ property, includeTaxes }) {
                       src={image}
                       width={400}
                       height={400}
-                      sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 310px"
+                      priority={priority && idx === 0}
+                      // Cards are 360 CSS px thumbnails. On 3× phones the 2×
+                      // candidate (w960, ~100 KB) is served instead of the exact
+                      // 1080–1290 px one (166–241 KB): measured at physical pixels
+                      // it still scores above what the optimizer served for cards
+                      // (828 px q70 upscaled 1.3×) on every fixture, and the
+                      // catalogue's LCP depends on the first card's bytes. The
+                      // stay-page hero keeps exact density (there the 2× pick
+                      // measured below today's). Browsers without resolution
+                      // conditions fall through to the exact entries.
+                      sizes="(min-resolution: 2.5dppx) and (max-width: 639px) 66.67vw, (-webkit-min-device-pixel-ratio: 2.5) and (max-width: 639px) 66.67vw, (max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 310px"
                       alt={`${property?.title} - Image ${idx + 1}`}
                       className="aspect-square w-full h-auto object-cover object-center rounded-lg"
                       draggable={false}
