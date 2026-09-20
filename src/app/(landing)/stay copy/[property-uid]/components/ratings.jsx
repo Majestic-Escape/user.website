@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React from "react";
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import { Star, StarHalf, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -53,7 +53,7 @@ export default function Rating({ property }) {
         <div className="flex flex-col sm:flex-row sm:items-start sm:flex-1 gap-4">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="relative flex-shrink-0">
-              <Image
+              <MediaImage
                 src={hostData.profileImage}
                 alt={`${hostData.hostNames}'s profile`}
                 width={56}

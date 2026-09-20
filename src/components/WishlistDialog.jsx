@@ -5,7 +5,7 @@ import { X, FolderPlus, Folder } from "lucide-react";
 import { useWishlist } from "./wishlist-context";
 import { createPortal } from "react-dom";
 import { FolderContentsDialog } from "./FolderContentsDialog";
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 
 export const WishlistDialog = ({ isOpen, onClose, property }) => {
   const { addToWishlist, isInWishlist, createFolder, wishlists } =
@@ -91,7 +91,7 @@ export const WishlistDialog = ({ isOpen, onClose, property }) => {
 
           <div className="mb-4">
             <div className="flex items-center gap-3">
-              <Image
+              <MediaImage
                 width={64}
                 height={64}
                 src={property?.photos?.[0]}

@@ -11,7 +11,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
@@ -151,11 +151,12 @@ export default function Page() {
           <div className="px-4 py-6 sm:px-0">
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 border rounded-xl p-4 shadow-lg">
               <div>
-                <Image
+                <MediaImage
                   src={fetchedData?.propertyId?.photos?.[0]}
                   alt="Property Image"
                   width={600}
                   height={800}
+                  sizes="(max-width: 767px) 100vw, 50vw"
                   className="rounded-xl"
                 />
                 <h3 className="mt-4 text-lg font-medium">{}</h3>

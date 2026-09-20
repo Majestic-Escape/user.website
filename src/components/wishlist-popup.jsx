@@ -1,6 +1,6 @@
 "use client"
 import React, { useState } from 'react';
-import Image from "next/image";
+import MediaImage from "@/components/ui/media-image";
 import { X, Heart } from 'lucide-react';
 import { useWishlist } from '@/components/wishlist-context';
 import FolderContentsDialog from "./FolderContentsDialog";
@@ -42,7 +42,7 @@ export default function WishlistPopup({ isOpen, onClose }) {
                   })}
                 >
                   <div className="absolute max-h-[350px] inset-0 bg-black/30 group-hover:bg-black/40 transition-all duration-200" />
-                  <Image
+                  <MediaImage
                     width={350}
                     height={350}
                     src={staysWishlist[0].image}
@@ -66,7 +66,7 @@ export default function WishlistPopup({ isOpen, onClose }) {
                   })}
                 >
                   <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-all duration-200" />
-                  <Image
+                  <MediaImage
                     src={experiencesWishlist[0].image}
                     alt="Experiences"
                     width={400}
@@ -92,7 +92,7 @@ export default function WishlistPopup({ isOpen, onClose }) {
                 >
                   <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-all duration-200" />
                   {folder.items.length > 0 ? (
-                    <Image
+                    <MediaImage
                       src={folder.items[0].image}
                       alt={folder.name}
                       width={100}
