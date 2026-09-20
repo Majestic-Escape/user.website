@@ -17,6 +17,7 @@ import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { formatINR, formatTime12h, parseDate } from "@/lib/format";
+import { counterpartName } from "@/lib/displayName";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function Page() {
@@ -163,8 +164,7 @@ export default function Page() {
                     (fetchedData?.propertyId?.placeType?.slice(1) ?? "")}{" "}
                   {(fetchedData?.propertyId?.propertyType?.charAt(0)?.toUpperCase() ?? "") +
                     (fetchedData?.propertyId?.propertyType?.slice(1) ?? "")}{" "}
-                  by {fetchedData?.userId?.firstName}{" "}
-                  {fetchedData?.userId?.hostLastName}
+                  by {counterpartName(fetchedData?.userId, "guest")}
                 </p>
               </div>
 
@@ -214,7 +214,7 @@ export default function Page() {
                 <div>
                   <h4 className="font-medium text-gray-700">Email</h4>
                   <p className="text-gray-500">
-                    {fetchedData?.hostId?.email}hdjjdksjdlskdlsk
+                    {fetchedData?.hostId?.email}
                   </p>
                 </div>
                 <div>

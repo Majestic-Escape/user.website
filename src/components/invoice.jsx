@@ -145,8 +145,7 @@ const Invoice = ({ payment, invoiceData }) => {
             <p className="text-sm text-gray-500 mt-1">
               Hosted by{" "}
               <span className="font-medium">
-                {`${changeUpperCase(host.firstName) ?? ""} ${changeUpperCase(host.lastName) ?? ""}`.trim() ||
-                  "—"}
+                {changeUpperCase(host?.firstName) || "your host"}
               </span>
             </p>
             <div className="mt-2">

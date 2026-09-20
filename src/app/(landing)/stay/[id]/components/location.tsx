@@ -30,10 +30,13 @@ export default function Location({ locationInfo, isLoading }: LocationProps) {
       <h2 className="text-xl md:text-2xl font-medium font-bricolage mb-2">Where you'll be</h2>
       <h3 className="text-sm md:text-base  mb-4">{locationInfo.address}</h3>
 
-      <div className="mb-6">
+      <div className="mb-3">
         
         <GoogleMap lat={locationInfo.lat} lng={locationInfo.long} />
       </div>
+      <p className="text-xs md:text-sm text-gray-500 mb-6" data-testid="location-approximate">
+        The map shows the general area. The exact location is shared after your booking is confirmed.
+      </p>
       {/* <button className="font-normal underline">Show more</button> */}
     </section>
   )

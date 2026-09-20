@@ -58,7 +58,6 @@ export default function ContactHostPage() {
   // State
   const [token, setToken] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [guestFirstName, setGuestFirstName] = useState(null);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -100,8 +99,9 @@ export default function ContactHostPage() {
 
   // Derive values from fetched data or URL params
   const hostId = propertyData?.host?._id || hostIdParam;
-  const hostName = propertyData?.host 
-    ? `${propertyData.host.firstName || ''} ${propertyData.host.lastName || ''}`.trim() || decodeURIComponent(hostNameParam)
+  // First name only: the API no longer returns a counterpart's last name.
+  const hostName = propertyData?.host
+    ? (propertyData.host.firstName || '').trim() || decodeURIComponent(hostNameParam)
     : decodeURIComponent(hostNameParam);
   const propertyName = propertyData?.title || decodeURIComponent(propertyNameParam);
   const propertyImage = propertyData?.images?.[0] || propertyData?.photos?.[0] || (propertyImageParam ? decodeURIComponent(propertyImageParam) : null);
@@ -221,10 +221,6 @@ export default function ContactHostPage() {
     try {
       const payload = JSON.parse(atob(storedToken.split(".")[1]));
       setUserId(payload.userId);
-      // Store guest's first name from token
-      if (payload.firstName) {
-        setGuestFirstName(payload.firstName);
-      }
     } catch (e) {
       console.error("Invalid token");
       goToLogin(router);
@@ -342,10 +338,8 @@ export default function ContactHostPage() {
             propertyId,
             hostId,
             guestId: userId,
-            // Include participant names for display
-            hostFirstName: propertyData?.host?.firstName,
-            hostLastName: propertyData?.host?.lastName,
-            guestFirstName: guestFirstName,
+            // Participant names are resolved by the chat server itself
+            // (never trusted from the client).
           }),
         });
 

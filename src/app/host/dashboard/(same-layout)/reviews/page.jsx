@@ -39,6 +39,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { counterpartName } from "@/lib/displayName";
 
 const reviews = [];
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -63,9 +64,10 @@ export default function ReviewsPage() {
     try {
       const getUserId = await localStorage.getItem("userId");
       const userId = JSON.parse(getUserId);
-      const from = date.from ? new Date(date.from).toLocaleDateString() : "";
+      // The API parses M/D/YYYY; toLocaleDateString() depends on the browser locale (en-IN → D/M/YYYY).
+      const from = date.from ? format(new Date(date.from), "M/d/yyyy") : "";
 
-      const to = date.to ? new Date(date.to).toLocaleDateString() : "";
+      const to = date.to ? format(new Date(date.to), "M/d/yyyy") : "";
       if (process.env.NEXT_PUBLIC_ENV === "dev") {
         console.log(from, to);
       }
@@ -416,15 +418,9 @@ export default function ReviewsPage() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span
-                          title={
-                            review.user.firstName + " " + review.user.lastName
-                          }
-                        >
+                        <span title={counterpartName(review.user, "Guest")}>
                           {" "}
-                          {checkLength(
-                            review.user.firstName + " " + review.user.lastName
-                          )}
+                          {checkLength(counterpartName(review.user, "Guest"))}
                         </span>
                       </TableCell>
                       <TableCell>

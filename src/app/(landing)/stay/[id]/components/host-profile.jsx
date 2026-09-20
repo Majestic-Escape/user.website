@@ -207,9 +207,7 @@ export default function HostProfile({ propertyData }) {
       } else {
         // No existing conversation with messages - go to contact_host
         const hostNameParam = encodeURIComponent(
-          (propertyData?.host?.firstName || "") +
-            " " +
-            (propertyData?.host?.lastName || ""),
+          propertyData?.host?.firstName || "",
         );
         const propName = encodeURIComponent(
           propertyData?.title || "Property",
@@ -230,9 +228,7 @@ export default function HostProfile({ propertyData }) {
       // On error, fall back to contact_host page
       console.error("Error checking conversation:", err);
       const hostNameParam = encodeURIComponent(
-        (propertyData?.host?.firstName || "") +
-          " " +
-          (propertyData?.host?.lastName || ""),
+        propertyData?.host?.firstName || "",
       );
       const propName = encodeURIComponent(
         propertyData?.title || "Property",

@@ -16,6 +16,10 @@ interface GoogleMapProps {
 let mapsLoader: Promise<void> | null = null
 let sharedContainer: HTMLDivElement | null = null
 let sharedMap: google.maps.Map | null = null
+// The API returns an approximate point before booking (the exact address is
+// in the confirmed booking); the map shows the area, not a pin.
+let sharedCircle: google.maps.Circle | null = null
+const AREA_RADIUS_M = 500
 
 function loadGoogleMaps(): Promise<void> {
   if (typeof window === "undefined") return Promise.reject(new Error("no window"))
@@ -68,12 +72,28 @@ export default function GoogleMap({ lat, lng }: GoogleMapProps) {
         if (!sharedMap) {
           sharedMap = new window.google.maps.Map(sharedContainer, {
             center,
-            zoom: 15,
+            zoom: 14,
           })
         } else {
           sharedMap.setCenter(center)
-          sharedMap.setZoom(15)
+          sharedMap.setZoom(14)
           window.google.maps.event.trigger(sharedMap, "resize")
+        }
+        if (!sharedCircle) {
+          sharedCircle = new window.google.maps.Circle({
+            map: sharedMap,
+            center,
+            radius: AREA_RADIUS_M,
+            strokeColor: "#4D7C3F",
+            strokeOpacity: 0.8,
+            strokeWeight: 1.5,
+            fillColor: "#4D7C3F",
+            fillOpacity: 0.18,
+            clickable: false,
+          })
+        } else {
+          sharedCircle.setCenter(center)
+          sharedCircle.setMap(sharedMap)
         }
       })
       .catch((error) => console.error(error))

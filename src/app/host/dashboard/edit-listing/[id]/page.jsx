@@ -28,6 +28,7 @@ import { propertyService } from "@/services/propertyService";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { loginHref } from "@/lib/auth-return";
+import { contactInfoErrorFrom, contactInfoErrorFromResponse } from "@/lib/contactInfoError";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function EditListing({ params }) {
   const { id } = use(params);
@@ -181,8 +182,12 @@ export default function EditListing({ params }) {
       setFormData(response);
       invalidateListing();
       // toast.success("Progress saved successfully");
+      return true;
     } catch (error) {
-      toast.error("Failed to save progress. Please try again.");
+      const refusal = contactInfoErrorFrom(error);
+      // The text stays in the form; the step does not advance.
+      toast.error(refusal ? refusal.toast : "Failed to save progress. Please try again.", refusal ? { duration: 9000 } : undefined);
+      return false;
     }
   };
   const handleRedirectToDashboard = () => {
@@ -226,7 +231,8 @@ export default function EditListing({ params }) {
       // router.push("/host/dashboard");
     } catch (error) {
       toast.dismiss(toastId);
-      toast.error("Something went wrong. Please try again.");
+      const refusal = contactInfoErrorFrom(error);
+      toast.error(refusal ? refusal.toast : "Something went wrong. Please try again.", refusal ? { duration: 9000 } : undefined);
     }
   };
 
@@ -263,15 +269,16 @@ export default function EditListing({ params }) {
       const isValid = await validateCurrentStep();
       if (!isValid) return;
     }
-    await saveData();
+    const saved = await saveData();
+    if (!saved) return;
     if (currentStep < editSteps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleSaveAndExit = async () => {
-    await saveData(true);
-    router.push("/host/dashboard/listings");
+    const saved = await saveData(true);
+    if (saved) router.push("/host/dashboard/listings");
   };
 
   const updateFormData = (stepData) => {
