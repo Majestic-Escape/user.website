@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Reply } from "lucide-react";
 
 // Gesture geometry (px). Direction is decided once, LOCK px from the start;
@@ -15,13 +15,23 @@ const EDGE = 24;
 const rubber = (dx) => Math.min(MAX, dx <= THRESHOLD ? dx : THRESHOLD + (dx - THRESHOLD) * 0.35);
 
 /**
- * WhatsApp-style "swipe right to reply" wrapper for one message bubble.
+ * WhatsApp-style "swipe right to reply" for one message.
+ *
+ * Renders the message ROW — the full-width line the bubble sits on, avatar
+ * included — and that whole row is the gesture target: a short "OK" is
+ * swipeable from the bubble, from the empty space beside it and from the far
+ * side of its own line, exactly like WhatsApp. Only the bubble (the inner
+ * wrapper) moves. Everything above and below the row — sender line, time,
+ * send status, read receipt, date separators, the gap between rows — is
+ * outside this element and cannot start a swipe.
  *
  * Touch/pen: hand-rolled Pointer Events — all gesture state lives in a ref and
  * the bubble is moved with a direct `style.transform` write, so a drag never
  * re-renders React. `touch-action: pan-y pinch-zoom` leaves vertical scrolling
  * and pinch-zoom to the browser (which then fires `pointercancel`, resetting
- * us); a second finger cancels; once the direction is locked horizontal the
+ * us); a second finger anywhere on the screen cancels (its pointerdown lands
+ * on whatever is under that finger, so it is watched at the window for the
+ * duration of the gesture only); once the direction is locked horizontal the
  * gesture is ours until release.
  *
  * Mouse: no drag. A small ↩ button beside the bubble appears on hover / focus
@@ -31,12 +41,25 @@ const rubber = (dx) => Math.min(MAX, dx <= THRESHOLD ? dx : THRESHOLD + (dx - TH
  * `onReply` is invoked synchronously inside `pointerup` / `click`, which keeps
  * the user-gesture context alive so the composer can open the keyboard on iOS.
  */
-export default function SwipeToReply({ messageId, own, authorName, onReply, children }) {
+export default function SwipeToReply({ messageId, own, authorName, onReply, avatar = null, children }) {
   const slideRef = useRef(null);
   const hintRef = useRef(null);
   const g = useRef({ state: "idle", pointerId: null, x0: 0, y0: 0, dx: 0, buzzed: false, dragEndedAt: 0 });
+  // The window listener that watches for a second pointer while a gesture is
+  // in progress — installed on pointerdown, removed by reset() (every up /
+  // cancel / lost-capture path ends in reset) and on unmount.
+  const secondPointerRef = useRef(null);
+
+  const stopWatchingPointers = () => {
+    if (secondPointerRef.current) {
+      window.removeEventListener("pointerdown", secondPointerRef.current, true);
+      secondPointerRef.current = null;
+    }
+  };
+  useEffect(() => stopWatchingPointers, []);
 
   const reset = () => {
+    stopWatchingPointers();
     const s = slideRef.current;
     const h = hintRef.current;
     const st = g.current;
@@ -74,6 +97,16 @@ export default function SwipeToReply({ messageId, own, authorName, onReply, chil
     st.y0 = e.clientY;
     st.dx = 0;
     st.buzzed = false;
+    // A pinch's second finger usually lands on a neighbouring row or in the
+    // gap between rows, never on this element — catch it wherever it lands.
+    stopWatchingPointers();
+    const onAnyPointerDown = (ev) => {
+      if (ev.isPrimary) return;
+      reset();
+      g.current.state = "cancelled";
+    };
+    secondPointerRef.current = onAnyPointerDown;
+    window.addEventListener("pointerdown", onAnyPointerDown, true);
   };
 
   const onPointerMove = (e) => {
@@ -163,8 +196,8 @@ export default function SwipeToReply({ messageId, own, authorName, onReply, chil
 
   return (
     <div
-      data-message-id={messageId}
-      className={`group relative flex items-center max-w-[75%] rounded-2xl ${own ? "flex-row-reverse" : ""}`}
+      data-message-row={messageId}
+      className={`flex ${own ? "justify-end" : "justify-start"} w-full`}
       style={{ touchAction: "pan-y pinch-zoom" }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -173,27 +206,35 @@ export default function SwipeToReply({ messageId, own, authorName, onReply, chil
       onLostPointerCapture={onLostPointerCapture}
       onClickCapture={onClickCapture}
     >
-      <span
-        ref={hintRef}
-        aria-hidden="true"
-        className="pointer-events-none absolute left-1 top-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-gray-600 opacity-0"
-        style={{ transform: "translateY(-50%) scale(.6)" }}
+      {avatar}
+      {/* `group` stays on the bubble wrapper so the desktop ↩ button keeps
+          its hover area (the bubble, not the whole line). */}
+      <div
+        data-message-id={messageId}
+        className={`group relative flex items-center max-w-[75%] rounded-2xl ${own ? "flex-row-reverse" : ""}`}
       >
-        <Reply className="h-3.5 w-3.5" />
-      </span>
-      <div ref={slideRef} className="relative min-w-0 max-w-full transition-transform duration-200 ease-out motion-reduce:transition-none">
-        {children}
+        <span
+          ref={hintRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1 top-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-gray-600 opacity-0"
+          style={{ transform: "translateY(-50%) scale(.6)" }}
+        >
+          <Reply className="h-3.5 w-3.5" />
+        </span>
+        <div ref={slideRef} className="relative min-w-0 max-w-full transition-transform duration-200 ease-out motion-reduce:transition-none">
+          {children}
+        </div>
+        <button
+          type="button"
+          data-reply-button
+          aria-label={`Reply to message from ${authorName}`}
+          onClick={onReply}
+          onMouseDown={(e) => e.preventDefault()}
+          className={`absolute top-1/2 -translate-y-1/2 ${own ? "right-full mr-1" : "left-full ml-1"} flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm opacity-0 transition-opacity hover:text-primaryGreen focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen group-hover:opacity-100 [@media(hover:none)]:sr-only [@media(hover:none)]:focus-visible:not-sr-only`}
+        >
+          <Reply className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
       </div>
-      <button
-        type="button"
-        data-reply-button
-        aria-label={`Reply to message from ${authorName}`}
-        onClick={onReply}
-        onMouseDown={(e) => e.preventDefault()}
-        className={`absolute top-1/2 -translate-y-1/2 ${own ? "right-full mr-1" : "left-full ml-1"} flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm opacity-0 transition-opacity hover:text-primaryGreen focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen group-hover:opacity-100 [@media(hover:none)]:sr-only [@media(hover:none)]:focus-visible:not-sr-only`}
-      >
-        <Reply className="h-3.5 w-3.5" aria-hidden="true" />
-      </button>
     </div>
   );
 }
