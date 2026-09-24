@@ -19,6 +19,7 @@ export const queryKeys = {
   search: (params: string, page: Id) => ["search", params, page ?? 1] as const,
   searchAll: ["search"] as const,
   placesIndex: ["placesIndex"] as const,
+  staySuggest: (q: string) => ["staySuggest", q] as const,
   property: (id: Id) => ["property", id] as const,
   reviews: (propertyId: Id, limit: Id, skip: Id) =>
     ["review", propertyId, limit, skip] as const,

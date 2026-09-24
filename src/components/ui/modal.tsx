@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import LocationCombobox from "@/components/search/location-combobox";
+import DestinationSheet from "@/components/search/destination-sheet";
 import { buildFilterUrl } from "@/lib/search/search-url";
 import {
   PocketIcon as Pool,
@@ -887,61 +888,61 @@ export default function FilterModal({
                 {/* Destination Search */}
                 <div>
                   <h3 className="text-md font-medium mb-2">Where to?</h3>
-                  <Popover
-                    open={openDestination}
-                    onOpenChange={setOpenDestination}
+                  {/* Full-screen on phones: a popover flips under the on-screen
+                      keyboard and hides its own input. */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-start px-4 h-12 border-gray-300"
+                    aria-haspopup="dialog"
+                    aria-expanded={openDestination}
+                    onClick={() => setOpenDestination(true)}
                   >
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start px-4 h-12 border-gray-300"
-                      >
-                        <HomeIcon className="mr-2 h-4 w-4" />
-                        <div className="flex flex-col justify-start items-start">
-                          <span className="text-sm">
-                            {/* {destination
-                              ? filteredDestinations.find(
-                                  (d) => d.value === destination
-                                )?.label
-                              : "Anywhere"} */}
-                            {searchTerm ? searchTerm : "Search destinations"}
-                          </span>
-                        </div>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-[calc(100vw-2rem)] max-w-[420px] font-poppins mt-2 p-0 z-[9999]"
-                      align="start"
-                    >
-                      <LocationCombobox
-                        value={searchTerm}
-                        onTextChange={(text) => {
-                          setSearchTerm(text);
-                          setPlaceId(null);
-                          setNear(null);
-                        }}
-                        onPick={(place) => {
-                          setSearchTerm(place.name);
-                          setPlaceId(place.id);
-                          setNear(null);
-                          setOpenDestination(false);
-                          setOpenDatePicker(true);
-                        }}
-                        onNearMe={(point) => {
-                          setSearchTerm("Nearby");
-                          setPlaceId(null);
-                          setNear(point);
-                          setOpenDestination(false);
-                          setOpenDatePicker(true);
-                        }}
-                        onSubmitText={() => {
-                          setOpenDestination(false);
-                          submit();
-                          onClose();
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                    <HomeIcon className="mr-2 h-4 w-4" />
+                    <div className="flex flex-col justify-start items-start">
+                      <span className="text-sm">
+                        {searchTerm ? searchTerm : "Search destinations"}
+                      </span>
+                    </div>
+                  </Button>
+                  <DestinationSheet
+                    open={openDestination}
+                    onClose={() => setOpenDestination(false)}
+                  >
+                    <LocationCombobox
+                      variant="sheet"
+                      value={searchTerm}
+                      onTextChange={(text) => {
+                        setSearchTerm(text);
+                        setPlaceId(null);
+                        setNear(null);
+                      }}
+                      onPick={(place) => {
+                        setSearchTerm(place.name);
+                        setPlaceId(place.id);
+                        setNear(null);
+                        setOpenDestination(false);
+                        setOpenDatePicker(true);
+                      }}
+                      onNearMe={(point) => {
+                        setSearchTerm("Nearby");
+                        setPlaceId(null);
+                        setNear(point);
+                        setOpenDestination(false);
+                        setOpenDatePicker(true);
+                      }}
+                      onSubmitText={() => {
+                        setOpenDestination(false);
+                        submit();
+                        onClose();
+                      }}
+                      onPickStay={(stayId) => {
+                        setOpenDestination(false);
+                        onClose();
+                        router.push(`/stay/${stayId}`);
+                      }}
+                    />
+                  </DestinationSheet>
                 </div>
 
                 {/* Date Range Picker */}

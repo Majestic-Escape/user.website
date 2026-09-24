@@ -17,6 +17,7 @@ import FilterStaysBar from "./filter-stays-bar";
 import FilterModal from "./ui/modal";
 import { useAuth } from "@/contexts/AuthContext";
 import LocationCombobox from "@/components/search/location-combobox";
+import DestinationSheet, { useCoarsePointer } from "@/components/search/destination-sheet";
 import { buildFilterUrl } from "@/lib/search/search-url";
 
 interface SearchFilterProps {
@@ -91,6 +92,8 @@ export default function SearchFilter({
   // A picked suggestion (authoritative for the server) or "near me" (~1 km).
   const [placeId, setPlaceId] = React.useState<string | null>(null);
   const [near, setNear] = React.useState<{ lat: number; lng: number } | null>(null);
+  // tablets get the full-screen sheet: a popover and an on-screen keyboard don't mix
+  const coarse = useCoarsePointer();
   const [dateRange, setDateRange] = React.useState<{
     from: Date | undefined;
     to: Date | undefined;
@@ -267,7 +270,7 @@ export default function SearchFilter({
         }  pl-2 py-1  mx-auto`}
       >
         {/* Destination Search */}
-        <Popover open={openDestination} onOpenChange={setOpenDestination}>
+        <Popover open={openDestination && !coarse} onOpenChange={setOpenDestination}>
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
@@ -324,9 +327,46 @@ export default function SearchFilter({
                 setOpenDestination(false);
                 submit();
               }}
+              onPickStay={(stayId) => {
+                setOpenDestination(false);
+                router.push(`/stay/${stayId}`);
+              }}
             />
           </PopoverContent>
         </Popover>
+        <DestinationSheet open={openDestination && coarse} onClose={() => setOpenDestination(false)}>
+            <LocationCombobox
+              variant="sheet"
+              value={searchTerm}
+              onTextChange={(text) => {
+                setSearchTerm(text);
+                setPlaceId(null);
+                setNear(null);
+              }}
+              onPick={(place) => {
+                setSearchTerm(place.name);
+                setPlaceId(place.id);
+                setNear(null);
+                setOpenDestination(false);
+                setOpenDatePicker(true);
+              }}
+              onNearMe={(point) => {
+                setSearchTerm("Nearby");
+                setPlaceId(null);
+                setNear(point);
+                setOpenDestination(false);
+                setOpenDatePicker(true);
+              }}
+              onSubmitText={() => {
+                setOpenDestination(false);
+                submit();
+              }}
+              onPickStay={(stayId) => {
+                setOpenDestination(false);
+                router.push(`/stay/${stayId}`);
+              }}
+            />
+        </DestinationSheet>
 
         <div className="h-8 bg-border md:block" />
 

@@ -8,12 +8,16 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Info, MapPin } from "lucide-react";
+import { searchTitle, staysNoun } from "@/lib/search/search-title";
+
+export { searchTitle };
 
 export type SearchPlace = { id: string; name: string; type: string; label: string };
 export type SearchMeta = {
   mode: "all" | "place" | "nearby" | "near" | "text";
   query: string | null;
   place: SearchPlace | null;
+  propertyType: string | null;
   corrected: boolean;
   alternatives: SearchPlace[];
   reason: "no_inventory" | "filters" | "dates" | null;
@@ -47,6 +51,7 @@ export function readSearchMeta(raw: unknown): SearchMeta | null {
     mode: r.mode as SearchMeta["mode"],
     query: typeof r.query === "string" ? r.query : null,
     place: place(r.place),
+    propertyType: typeof r.propertyType === "string" && /^[a-z]{2,20}$/.test(r.propertyType) ? r.propertyType : null,
     corrected: r.corrected === true,
     alternatives: places(r.alternatives),
     reason: typeof r.reason === "string" && reasons.includes(r.reason) ? (r.reason as SearchMeta["reason"]) : null,
@@ -74,29 +79,24 @@ function stays(n: number) {
   return `${n} ${n === 1 ? "stay" : "stays"}`;
 }
 
-export function searchTitle(meta: SearchMeta | null): string {
-  if (!meta) return "Discover Our Finest Stays";
-  if (meta.mode === "place" && meta.place) return `Stays in ${meta.place.name}`;
-  if (meta.mode === "nearby" && meta.place) return `Stays near ${meta.place.name}`;
-  if (meta.mode === "near") return "Stays near you";
-  if (meta.mode === "text" && meta.query) return `Stays matching “${meta.query}”`;
-  return "Discover Our Finest Stays";
-}
-
 export default function SearchSummary({ meta, totalCount, hasDates }: { meta: SearchMeta | null; totalCount: number; hasDates: boolean }) {
   const href = usePlaceHref();
   const placeName = meta?.place?.name ?? "";
   let subtitle = "Explore through featured properties available on Majestic Escape";
   if (meta?.mode === "place" && meta.place) subtitle = [stays(totalCount), meta.place.label].filter(Boolean).join(" · ");
   else if ((meta?.mode === "nearby" || meta?.mode === "near") && totalCount) subtitle = `${stays(totalCount)} within 250 km, nearest first`;
-  else if (meta?.mode === "text") subtitle = stays(totalCount);
+  else if (meta?.mode === "text" || (meta?.mode === "all" && meta.propertyType)) subtitle = stays(totalCount);
 
   let banner: string | null = null;
+  const noun = staysNoun(meta?.propertyType).toLowerCase();
   if (meta?.mode === "nearby" && placeName) {
-    if (meta.reason === "no_inventory") banner = `No stays in ${placeName} yet`;
-    else if (meta.reason === "dates") banner = `No stays in ${placeName} are free on ${hasDates ? "your dates" : "those dates"}`;
-    else banner = `No stays in ${placeName} match your filters`;
+    if (meta.reason === "no_inventory") banner = `No ${noun} in ${placeName} yet`;
+    else if (meta.reason === "dates") banner = `No ${noun} in ${placeName} are free on ${hasDates ? "your dates" : "those dates"}`;
+    else banner = `No ${noun} in ${placeName} match your filters`;
     banner += totalCount ? ` — here are the nearest ones${meta.nearestKm !== null ? ` (closest ${formatDistance(meta.nearestKm)} away)` : ""}.` : ", and none nearby either.";
+  } else if (meta?.mode === "text" && meta.query && !totalCount && meta.reason) {
+    // the name / words matched stays, but none fit the dates or filters
+    banner = meta.reason === "dates" ? `Stays matching “${meta.query}” aren't free on your dates.` : `Stays matching “${meta.query}” don't fit your filters.`;
   }
 
   return (

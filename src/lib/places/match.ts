@@ -143,6 +143,23 @@ export function suggestPlaces(index: PlacesIndex | null, query: string, limit = 
   return hits.slice(0, limit).map((h) => strip(h[0]));
 }
 
+/**
+ * Whether a suggested place matches what was typed as its name, an alias or
+ * word by word — not only as a look-alike (a typo) and not only once the
+ * typed words are glued together ("dev bh" is not "Devbhumi Dwarka" the way
+ * it is "Dev Bhoomi Retreat"). Decides whether stay names are listed first.
+ */
+export function isStrongPlaceMatch(index: PlacesIndex | null, place: PlaceSuggestion | undefined, query: string): boolean {
+  if (!index || !place) return false;
+  const e = index.byId.get(place.id);
+  const qn = normalizePlaceText(String(query || "").split(",")[0]);
+  if (!e || !qn) return false;
+  const qc = compactKey(qn);
+  if (e.nameKey === qn || e.nameCompact === qc || e.aliasKeys.includes(qn) || e.aliasCompacts.includes(qc)) return true;
+  if (e.nameKey.startsWith(qn) || e.aliasKeys.some((a) => a.startsWith(qn))) return true;
+  return qn.includes(" ") && wordPrefix(e.nameWords, qn.split(" "));
+}
+
 /** Places with the most stays (localities before regions) — shown before typing. */
 export function popularPlaces(index: PlacesIndex | null, limit = 6): PlaceSuggestion[] {
   if (!index) return [];

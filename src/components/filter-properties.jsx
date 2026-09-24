@@ -134,9 +134,17 @@ export default function FilterProperties({
               ) : properties.length === 0 ? (
                 <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50 rounded-lg px-4 text-center">
                   <div className="text-gray-600 text-lg mb-2">
-                    {search?.query ? `No stays found for “${search.query}”` : "No properties to show"}
+                    {search?.query
+                      ? search.reason && search.mode === "text"
+                        ? `Nothing available for “${search.query}”`
+                        : `No stays found for “${search.query}”`
+                      : "No properties to show"}
                   </div>
-                  <p className="text-gray-500 text-sm">Try a nearby town, a district, or fewer filters.</p>
+                  <p className="text-gray-500 text-sm">
+                    {search?.mode === "text" && search.reason === "dates"
+                      ? "Try other dates, or a nearby town."
+                      : "Try a property name, a nearby town, a district, or fewer filters."}
+                  </p>
                   <SearchSuggestions
                     meta={search}
                     popular={popularPlaces(placesIndex, 6).map((p) => ({ id: p.id, name: p.name, type: p.type, label: p.label }))}

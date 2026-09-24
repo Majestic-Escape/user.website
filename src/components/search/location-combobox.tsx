@@ -5,7 +5,9 @@
 // - Empty field: "Nearby" (asks for location only on click), recent picks,
 //   destinations with the most stays.
 // - Typing: places matched locally (aliases, "Colva, Goa", small typos),
-//   best first, plus a last row to search the typed text as-is.
+//   best first; stays whose NAME matches ("dev bhoo" → Dev Bhoomi Retreat),
+//   one tap straight to the stay; and a last row to search the typed text
+//   as-is (names, keywords, "villa in morjim").
 // - Enter picks the highlighted row; with nothing typed it just searches.
 // - If the suggestion index can't load, the field is plain text and the
 //   server still resolves what was typed.
@@ -13,10 +15,11 @@
 // cmdk provides the combobox / listbox / option semantics and arrow-key
 // navigation; filtering is ours (shouldFilter={false}).
 import * as React from "react";
-import { Clock, Loader2, Map as MapIcon, MapPin, Navigation, Search, Waves } from "lucide-react";
+import { BedDouble, Clock, Loader2, Map as MapIcon, MapPin, Navigation, Search, Waves } from "lucide-react";
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { popularPlaces, suggestPlaces, placeTypeLabel, type PlaceSuggestion } from "@/lib/places/match";
+import { isStrongPlaceMatch, popularPlaces, suggestPlaces, placeTypeLabel, type PlaceSuggestion } from "@/lib/places/match";
 import { usePlacesIndex } from "@/lib/places/use-places-index";
+import { useStaySuggestions } from "@/lib/places/use-stay-suggestions";
 import { readRecentPlaces, rememberPlace, type RecentPlace } from "@/lib/search/recent-places";
 import { getRoundedPosition, NEAR_ME_MESSAGES, type NearMeError } from "@/lib/search/near-me";
 import { cn } from "@/lib/utils";
@@ -29,12 +32,41 @@ type Props = {
   onPick: (place: PickedPlace) => void;
   onNearMe: (point: { lat: number; lng: number }) => void;
   onSubmitText: () => void;
+  onPickStay: (stayId: string) => void;
   autoFocus?: boolean;
   className?: string;
+  /** "sheet": fills a full-screen container (phones / touch), list scrolls inside */
+  variant?: "popover" | "sheet";
 };
 
 const TEXT_ROW = "__search_text__";
 const NEAR_ROW = "__near_me__";
+const STAY_ROW = "stay:";
+
+function Highlight2({ text, query }: { text: string; query: string }) {
+  // bold the typed words where a title word starts with them
+  const words = query.toLowerCase().split(/\s+/).filter((w) => w.length >= 2);
+  if (!words.length) return <>{text}</>;
+  return (
+    <>
+      {text.split(/(\s+)/).map((part, i) => {
+        const w = words.find((x) => part.toLowerCase().startsWith(x));
+        return w ? (
+          <React.Fragment key={i}>
+            <span className="font-semibold text-absoluteDark">{part.slice(0, w.length)}</span>
+            {part.slice(w.length)}
+          </React.Fragment>
+        ) : (
+          <React.Fragment key={i}>{part}</React.Fragment>
+        );
+      })}
+    </>
+  );
+}
+
+function typeWord(type: string) {
+  return type ? type.charAt(0).toUpperCase() + type.slice(1) : "Stay";
+}
 
 function icon(type: PlaceSuggestion["type"]) {
   if (type === "state" || type === "district" || type === "taluka") return MapIcon;
@@ -70,7 +102,8 @@ function Row({ Icon, title, subtitle, meta }: { Icon: React.ElementType; title: 
   );
 }
 
-export default function LocationCombobox({ value, onTextChange, onPick, onNearMe, onSubmitText, autoFocus = true, className }: Props) {
+export default function LocationCombobox({ value, onTextChange, onPick, onNearMe, onSubmitText, onPickStay, autoFocus = true, className, variant = "popover" }: Props) {
+  const sheet = variant === "sheet";
   const [touched, setTouched] = React.useState(false);
   const { index, loading, unavailable } = usePlacesIndex(true);
   const [recent, setRecent] = React.useState<RecentPlace[]>([]);
@@ -100,12 +133,20 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
   const typing = touched && query.trim().length > 0;
   const suggestions = React.useMemo(() => (typing ? suggestPlaces(index, query) : []), [typing, index, query]);
   const popular = React.useMemo(() => (typing ? [] : popularPlaces(index)), [typing, index]);
+  const stays = useStaySuggestions(query, typing);
+  // A stay whose name matches beats a place that only looks alike
+  // ("dev bhoomi": the retreat, not Devbhumi Dwarka district).
+  // (only when places are known: without the index "mandrem" could be a
+  // place as easily as a word in a title — then Enter searches the text)
+  const staysFirst = !!index && stays.length > 0 && !isStrongPlaceMatch(index, suggestions[0], query);
 
   // Highlight the best suggestion while typing; nothing before (so Enter on
   // an empty field searches everywhere instead of asking for location).
   React.useEffect(() => {
-    setSelected(typing ? (suggestions[0]?.id ?? TEXT_ROW) : "");
-  }, [typing, suggestions]);
+    if (!typing) setSelected("");
+    else if (staysFirst) setSelected(STAY_ROW + stays[0].id);
+    else setSelected(suggestions[0]?.id ?? (index && stays[0] ? STAY_ROW + stays[0].id : TEXT_ROW));
+  }, [typing, suggestions, stays, staysFirst]);
 
   const pick = (p: PickedPlace) => {
     rememberPlace(p);
@@ -125,7 +166,7 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
     }
   };
 
-  const count = typing ? suggestions.length : 0;
+  const count = typing ? suggestions.length + stays.length : 0;
 
   return (
     <Command
@@ -133,7 +174,7 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
       loop
       value={selected}
       onValueChange={setSelected}
-      className={cn("bg-white font-poppins", className)}
+      className={cn("bg-white font-poppins", sheet && "flex h-full min-h-0 flex-col", className)}
       label="Search destinations"
     >
       <CommandInput
@@ -155,12 +196,12 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
             onSubmitText();
           }
         }}
-        className="h-12 text-base sm:text-sm"
+        className={sheet ? "h-12 text-base" : "h-12 text-base sm:text-sm"}
       />
       <span className="sr-only" aria-live="polite">
         {typing ? `${count} ${count === 1 ? "suggestion" : "suggestions"}` : ""}
       </span>
-      <CommandList ref={listRef} className="max-h-[min(60vh,360px)]">
+      <CommandList ref={listRef} className={sheet ? "max-h-none min-h-0 flex-1 overscroll-contain pb-4" : "max-h-[min(60vh,360px)]"}>
         {nearError ? (
           <p role="status" className="px-3 py-2 text-xs text-red-600">
             {NEAR_ME_MESSAGES[nearError]}
@@ -169,6 +210,15 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
 
         {typing ? (
           <>
+            {staysFirst ? (
+              <CommandGroup heading="Stays">
+                {stays.map((s) => (
+                  <CommandItem key={s.id} value={STAY_ROW + s.id} onSelect={() => onPickStay(s.id)} className="min-h-[52px] cursor-pointer py-2">
+                    <Row Icon={BedDouble} title={<Highlight2 text={s.title} query={query} />} subtitle={[typeWord(s.type), s.label].filter(Boolean).join(" · ")} />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
             {suggestions.length ? (
               <CommandGroup heading="Destinations">
                 {suggestions.map((s) => (
@@ -186,6 +236,15 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
               <div className="flex items-center gap-2 px-3 py-3 text-sm text-stone">
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Finding places…
               </div>
+            ) : null}
+            {stays.length > 0 && !staysFirst ? (
+              <CommandGroup heading="Stays">
+                {stays.map((s) => (
+                  <CommandItem key={s.id} value={STAY_ROW + s.id} onSelect={() => onPickStay(s.id)} className="min-h-[52px] cursor-pointer py-2">
+                    <Row Icon={BedDouble} title={<Highlight2 text={s.title} query={query} />} subtitle={[typeWord(s.type), s.label].filter(Boolean).join(" · ")} />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
             ) : null}
             <CommandGroup>
               <CommandItem value={TEXT_ROW} onSelect={onSubmitText} className="min-h-[52px] cursor-pointer py-2">

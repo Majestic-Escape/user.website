@@ -115,6 +115,16 @@ check("stays break ties; parent qualifier filters", () => {
   assert.deepEqual(top("goa, india"), ["Goa"], "'India' adds nothing");
   assert.deepEqual(top("seraul"), ["Seraulim|South Goa, Goa"], "live places are suggested");
 });
+check("strong vs look-alike place matches (decides whether stay names go first)", () => {
+  const panaji = M.placeById(idx, "gn:1260607");
+  assert.equal(M.isStrongPlaceMatch(idx, panaji, "panj"), true, "name prefix");
+  assert.equal(M.isStrongPlaceMatch(idx, panaji, "panjim"), true, "alias");
+  assert.equal(M.isStrongPlaceMatch(idx, panaji, "panjm"), false, "a typo is only a look-alike");
+  assert.equal(M.isStrongPlaceMatch(idx, undefined, "x"), false);
+  assert.equal(M.isStrongPlaceMatch(idx, M.placeById(idx, "gn:9255562"), "north g"), true, "word by word");
+  assert.equal(M.isStrongPlaceMatch(idx, M.placeById(idx, "gn:1253367"), "vascodagama"), true, "glued exact name");
+  assert.equal(M.isStrongPlaceMatch(idx, M.placeById(idx, "gn:1253367"), "vas cod"), false, "only when glued: a look-alike");
+});
 check("popular = localities with the most stays", () => {
   assert.deepEqual(M.popularPlaces(idx, 3).map((p) => p.name), ["Panaji", "Calangute", "Margao"]);
   assert.deepEqual(M.popularPlaces(null), []);
@@ -144,6 +154,22 @@ check("performance: 2,500-place index, p95 per keystroke", () => {
   const p95 = t[Math.floor(t.length * 0.95)];
   console.log(`       suggestPlaces p50 ${p50.toFixed(2)} ms, p95 ${p95.toFixed(2)} ms (Node; a mid phone is ~4x slower)`);
   assert.ok(p95 < 4, `p95 ${p95}`);
+});
+
+console.log("result headings");
+const T = loadTs(join(root, "src/lib/search/search-title.ts"));
+check("type-aware headings", () => {
+  const t = (m) => T.searchTitle({ query: null, place: null, propertyType: null, ...m });
+  assert.equal(t({ mode: "place", place: { name: "Morjim" }, propertyType: "villa" }), "Villas in Morjim");
+  assert.equal(t({ mode: "place", place: { name: "Dharamshala" }, propertyType: "tent" }), "Tents in Dharamshala");
+  assert.equal(t({ mode: "nearby", place: { name: "Vasco da Gama" }, propertyType: "hotel" }), "Hotels near Vasco da Gama");
+  assert.equal(t({ mode: "place", place: { name: "Panaji" } }), "Stays in Panaji");
+  assert.equal(t({ mode: "all", propertyType: "villa" }), "Villas");
+  assert.equal(t({ mode: "all" }), "Discover Our Finest Stays");
+  assert.equal(t({ mode: "text", query: "dev bhoomi" }), "Stays matching “dev bhoomi”");
+  assert.equal(t({ mode: "near", propertyType: "guesthouse" }), "Guesthouses near you");
+  assert.equal(T.staysNoun("unknowntype"), "Stays");
+  assert.equal(T.searchTitle(null), "Discover Our Finest Stays");
 });
 
 console.log("search URLs and dates");
