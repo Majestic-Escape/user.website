@@ -27,7 +27,9 @@ import { parseFiniteNumber } from "@/lib/format";
 // carousel arrows / dots no longer accidentally open the listing.
 // `priority`: the first card of the catalogue is the page's LCP element on
 // phones — its first slide is preloaded (eager, high fetch priority).
-export default function StayCard({ property, includeTaxes, priority = false }) {
+// distanceLabel: "12 km away" in nearby / near-me results (from the public
+// approximate point, formatted by the results page).
+export default function StayCard({ property, includeTaxes, priority = false, distanceLabel }) {
   const { isInWishlist, wishlists } = useWishlist();
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isWishlistDialogOpen, setIsWishlistDialogOpen] = useState(false);
@@ -40,6 +42,13 @@ export default function StayCard({ property, includeTaxes, priority = false }) {
   const stayHref = `/stay/${property?._id}`;
   // Incomplete listings can arrive without a basePrice; never show ₹NaN.
   const basePrice = parseFiniteNumber(property?.basePrice);
+  // Some hosts saved the state as the city ("Goa, Goa"); their locality is in
+  // the district field then ("Caranzalem, Goa").
+  const addr = property?.address || {};
+  const cityShown =
+    addr.city && addr.state && addr.district && String(addr.city).trim().toLowerCase() === String(addr.state).trim().toLowerCase()
+      ? String(addr.district).trim()
+      : addr.city;
   const calculatePrice = (basePrice) => {
     const serviceFee = Math.round((basePrice * 14) / 100);
     const priceWithServiceFee = basePrice + serviceFee;
@@ -216,14 +225,17 @@ export default function StayCard({ property, includeTaxes, priority = false }) {
             <h3 className=" mt-1 font-medium  text-graphite w-full overflow-hidden">
               <span className="block truncate text-ellipsis whitespace-nowrap">
                 {convertToUpperCase(property?.propertyType)} in{" "}
-                {convertToUpperCase(property?.address?.city)}
+                {convertToUpperCase(cityShown)}
               </span>
             </h3>
             <p className="text-sm mb-0.5 flex justify-start gap-x-1 items-center text-stone">
               <MapPin className="w-4 h-auto  inline-block mr-1 align-middle hover:text-stone text-stone" />
-              <span className="text-stone text-sm">
-                {convertToUpperCase(property?.address?.city)},{" "}
+              <span className="text-stone text-sm truncate">
+                {convertToUpperCase(cityShown)},{" "}
                 {convertToUpperCase(property?.address?.state)}
+                {distanceLabel ? (
+                  <span className="text-graphite"> · {distanceLabel}</span>
+                ) : null}
               </span>
             </p>
             <p className="text-gray-600">

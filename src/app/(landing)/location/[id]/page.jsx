@@ -6,7 +6,14 @@ import { useParams, useSearchParams } from "next/navigation";
 
 export default function LocationPage() {
   const params = useParams();
-  const locationName = params.id;
+  // the path segment may arrive percent-encoded ("North%20Goa")
+  const locationName = (() => {
+    try {
+      return decodeURIComponent(String(params.id || ""));
+    } catch {
+      return String(params.id || "");
+    }
+  })();
   useEffect(() => {
     sessionStorage.setItem(
       "searchFilters",
