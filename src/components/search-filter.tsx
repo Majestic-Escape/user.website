@@ -4,25 +4,20 @@ import * as React from "react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Search, Minus, Plus, HomeIcon, SlidersHorizontal } from "lucide-react";
+import { Search, Minus, Plus, SlidersHorizontal } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 // import { CustomCommandInput } from "./ui/custom-command-input";
 import { toast } from "sonner";
 import FilterStaysBar from "./filter-stays-bar";
 import FilterModal from "./ui/modal";
 import { useAuth } from "@/contexts/AuthContext";
+import LocationCombobox from "@/components/search/location-combobox";
+import { buildFilterUrl } from "@/lib/search/search-url";
 
 interface SearchFilterProps {
   isScrolled: boolean;
@@ -93,6 +88,9 @@ export default function SearchFilter({
 
   const [destination, setDestination] = React.useState("");
   const [searchTerm, setSearchTerm] = React.useState(active ? location : "");
+  // A picked suggestion (authoritative for the server) or "near me" (~1 km).
+  const [placeId, setPlaceId] = React.useState<string | null>(null);
+  const [near, setNear] = React.useState<{ lat: number; lng: number } | null>(null);
   const [dateRange, setDateRange] = React.useState<{
     from: Date | undefined;
     to: Date | undefined;
@@ -131,9 +129,6 @@ export default function SearchFilter({
     children: Number(active ? child : 0),
     infants: Number(active ? baby : 0),
   });
-  const newAmenities = addAmenities.map((x) =>
-    x.toLowerCase().replaceAll(" ", "_"),
-  );
   const router = useRouter();
   // const pathname = usePathname();
   const handleGuestChange = (
@@ -160,6 +155,8 @@ export default function SearchFilter({
             to: null,
           },
           searchTerm: "",
+          placeId: null,
+          near: null,
           guests: {
             adults: 0,
             children: 0,
@@ -168,6 +165,8 @@ export default function SearchFilter({
         }),
       );
       setSearchTerm("");
+      setPlaceId(null);
+      setNear(null);
       setGuests({ adults: 0, children: 0, infants: 0 });
       setDateRange({ from: undefined, to: undefined });
     }
@@ -189,6 +188,8 @@ export default function SearchFilter({
         });
       }
       if (parsed.searchTerm) setSearchTerm(parsed.searchTerm);
+      if (typeof parsed.placeId === "string") setPlaceId(parsed.placeId);
+      if (parsed.near && Number.isFinite(parsed.near.lat) && Number.isFinite(parsed.near.lng)) setNear(parsed.near);
       if (parsed.guests) setGuests(parsed.guests);
     }
     setHydrated(true); // mark as hydrated after first load
@@ -208,10 +209,12 @@ export default function SearchFilter({
           to: dateRange.to ? dateRange.to.toISOString() : null,
         },
         searchTerm,
+        placeId,
+        near,
         guests,
       }),
     );
-  }, [dateRange, searchTerm, selectProperty, guests, hydrated]);
+  }, [dateRange, searchTerm, placeId, near, selectProperty, guests, hydrated]);
 
   const totalGuests = active
     ? Number(guests.adults) + Number(guests.children) + Number(guests.infants)
@@ -219,109 +222,35 @@ export default function SearchFilter({
   const totalAdults = active
     ? Number(guests.adults) + Number(guests.children)
     : guests.adults + guests.children;
-  const destinations = React.useMemo(
-    () => [
-      {
-        value: "south-goa",
-        label: "South Goa, Goa",
-        image: "/calangute.jpg",
-        description: "Beautiful beach in Goa",
-      },
-      {
-        value: "baga",
-        label: "Baga Beach, Goa",
-        image: "/baga.jpg",
-        description: " Lively beach in Goa",
-      },
-      {
-        value: "panjim",
-        label: "Panjim City, Goa",
-        image: "/panjim.jpg",
-        description: "Capital city of Goa",
-      },
-      {
-        value: "anjuna",
-        label: "Anjuna Beach, Goa",
-        image: "/anjuna.jpg",
-        description: "Famous for its flea market",
-      },
-      {
-        value: "vagator",
-        label: "Vagator Beach, Goa",
-        image: "/vagator.jpg",
-        description: "Scenic beach in Goa",
-      },
-      {
-        value: "candolim",
-        label: "Candolim Beach, Goa",
-        image: "/candolim.jpg",
-        description: "Relaxing beach in Goa",
-      },
-      {
-        value: "arambol",
-        label: "Arambol Beach, Goa",
-        image: "/arambol.jpg",
-        description: "Beach known for its bohemian vibe",
-      },
-      {
-        value: "colva",
-        label: "Colva Beach, Goa",
-        image: "/colva.jpg",
-        description: "Long and popular beach in Goa",
-      },
-    ],
-    [],
-  );
-
-  const filteredDestinations = React.useMemo(() => {
-    if (!searchTerm) return destinations;
-    return destinations.filter((dest) =>
-      dest.label.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-  }, [searchTerm, destinations]);
-
   const formatDate = (date: Date | undefined) => {
     if (!date) return "";
     return format(date, "MMM d");
   };
 
   const submit = () => {
-    const saved = sessionStorage.getItem("searchFilters");
-
-    if (saved) {
-      const parsed = JSON.parse(saved);
-
-      if (parsed.dateRange) {
-        setDateRange({
-          from: parsed.dateRange.from
-            ? new Date(parsed.dateRange.from)
-            : undefined,
-          to: parsed.dateRange.to ? new Date(parsed.dateRange.to) : undefined,
-        });
-      }
-      if (parsed.searchTerm) setSearchTerm(parsed.searchTerm);
-      if (parsed.guests) setGuests(parsed.guests);
-    }
     router.push(
-      `/filter?propertyType=${
-        addPropertyType ? addPropertyType : ""
-      }&location=${searchTerm ? searchTerm : ""}&from=${
-        dateRange?.from ? dateRange?.from.toLocaleDateString() : ""
-      }&to=${dateRange?.to ? dateRange?.to.toLocaleDateString() : ""}&adults=${
-        totalGuests ? totalGuests : ""
-      }&senior=${guests.adults ? guests.adults : ""}&children=${
-        guests.children ? guests.children : ""
-      }&infants=${guests.infants ? guests.infants : ""}&priceMin=${
-        priceRange[0] || ""
-      }&priceMax=${priceRange[1] || ""}&placeType=${
-        addPlaceType ? addPlaceType.replaceAll(" ", "_") : ""
-      }&amenities=${addAmenities.length !== 0 ? newAmenities : ""}&bedrooms=${
-        rooms?.bedrooms || ""
-      }&beds=${rooms?.beds || ""}&bathrooms=${
-        rooms?.bathrooms || ""
-      }&bookingType=${bookingType || ""}&checkinType=${
-        checkinType || ""
-      }&pets=${petAllowed || ""}`,
+      buildFilterUrl({
+        location: near ? "" : searchTerm,
+        placeId: near ? null : placeId,
+        near,
+        from: dateRange?.from,
+        to: dateRange?.to,
+        totalGuests,
+        adults: guests.adults,
+        children: guests.children,
+        infants: guests.infants,
+        propertyType: addPropertyType,
+        priceMin: priceRange[0],
+        priceMax: priceRange[1],
+        placeType: addPlaceType,
+        amenities: addAmenities,
+        bedrooms: rooms?.bedrooms,
+        beds: rooms?.beds,
+        bathrooms: rooms?.bathrooms,
+        bookingType,
+        checkinType,
+        pets: petAllowed,
+      }),
     );
   };
   //middle navbar
@@ -367,52 +296,35 @@ export default function SearchFilter({
             </Button>
           </PopoverTrigger>
           <PopoverContent
-            className="w-[300px] font-poppins mt-2 transition-all duration-200 ease-in-out"
+            className="w-[380px] p-0 font-poppins mt-2 transition-all duration-200 ease-in-out"
             align="start"
           >
-            <Command className="bg-white">
-              <Input
-                placeholder="Search destinations..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => {
-                  // Trigger search on Enter key
-                  if (e.key === "Enter") {
-                    e.preventDefault(); // Prevent default form behavior
-                    submit(); // Call your submit function
-                    setOpenDestination(false); // Close the popover
-                  }
-                }}
-              />
-              <CommandEmpty className="hidden">
-                No destination found.
-              </CommandEmpty>
-              <CommandGroup>
-                {/* {filteredDestinations.map((dest) => (
-                  <button
-                    key={dest.value}
-                    className="flex items-center w-full p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                    onClick={() => {
-                      setDestination(dest.value);
-                      setOpenDestination(false);
-                      setSearchTerm("");
-                    }}
-                  >
-                    <div className="p-3 flex justify-center items-center rounded-sm bg-lightGreen/20">
-                      <HomeIcon className="size-4 text-primaryGreen" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-sm mb-1">
-                        {dest.label}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {dest.description}
-                      </div>
-                    </div>
-                  </button>
-                ))} */}
-              </CommandGroup>
-            </Command>
+            <LocationCombobox
+              value={searchTerm}
+              onTextChange={(text) => {
+                setSearchTerm(text);
+                setPlaceId(null);
+                setNear(null);
+              }}
+              onPick={(place) => {
+                setSearchTerm(place.name);
+                setPlaceId(place.id);
+                setNear(null);
+                setOpenDestination(false);
+                setOpenDatePicker(true);
+              }}
+              onNearMe={(point) => {
+                setSearchTerm("Nearby");
+                setPlaceId(null);
+                setNear(point);
+                setOpenDestination(false);
+                setOpenDatePicker(true);
+              }}
+              onSubmitText={() => {
+                setOpenDestination(false);
+                submit();
+              }}
+            />
           </PopoverContent>
         </Popover>
 

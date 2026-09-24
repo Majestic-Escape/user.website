@@ -10,6 +10,8 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { PUBLIC } from "@/lib/query-presets";
 import { queryKeys } from "@/lib/query-keys";
 import FilterModal from "@/components/ui/modal";
+import { formatSearchDate, parseSearchDate } from "@/lib/search/search-url";
+import { readSearchMeta } from "@/components/search/search-summary";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function FarmHouse({ locationName }) {
@@ -18,6 +20,13 @@ export default function FarmHouse({ locationName }) {
   const to = searchParams.get("to");
   const guests = searchParams.get("adults");
   const location = searchParams.get("location");
+  const placeId = searchParams.get("placeId");
+  const lat = searchParams.get("lat");
+  const lng = searchParams.get("lng");
+  // Calendar days for the API: yyyy-MM-dd links, and legacy
+  // toLocaleDateString() links ("24/9/2026") that new Date() cannot read.
+  const fromDay = formatSearchDate(parseSearchDate(from)) || undefined;
+  const toDay = formatSearchDate(parseSearchDate(to)) || undefined;
   const senior = searchParams.get("senior");
   const child = searchParams.get("children");
   const infants = searchParams.get("infants");
@@ -56,6 +65,8 @@ export default function FarmHouse({ locationName }) {
     isPending: loading,
     isPlaceholderData,
     isFetching,
+    isError,
+    refetch,
   } = useQuery({
     queryKey: queryKeys.search(paramsString, currentPage),
     queryFn: async () => {
@@ -63,9 +74,12 @@ export default function FarmHouse({ locationName }) {
           `${API_URL}/properties/search-properties`,
           {
             params: {
-              location: locationName ? locationName : location,
-              from: from ? new Date(from).toISOString() : undefined,
-              to: to ? new Date(to).toISOString() : undefined,
+              location: locationName ? locationName : location || undefined,
+              placeId: locationName ? undefined : placeId || undefined,
+              lat: locationName ? undefined : lat || undefined,
+              lng: locationName ? undefined : lng || undefined,
+              from: fromDay && toDay ? fromDay : undefined,
+              to: fromDay && toDay ? toDay : undefined,
               guests: guests,
               propertyType: property,
               minPrice: minPrice,
@@ -90,6 +104,7 @@ export default function FarmHouse({ locationName }) {
         return {
           data: Array.isArray(response.data?.data) ? response.data.data : [],
           pagination: response.data?.pagination ?? null,
+          search: readSearchMeta(response.data?.search),
         };
     },
     ...PUBLIC,
@@ -100,6 +115,7 @@ export default function FarmHouse({ locationName }) {
   });
   const data = result?.data ?? [];
   const pagination = result?.pagination ?? null;
+  const search = result?.search ?? null;
   useEffect(() => {
     setCurrentPage(1);
   }, [paramsString]);
@@ -134,6 +150,11 @@ export default function FarmHouse({ locationName }) {
           >
             <FilterProperties
               properties={data}
+              search={search}
+              totalCount={pagination?.totalCount ?? data.length}
+              hasDates={!!(fromDay && toDay)}
+              isError={isError && !data.length}
+              onRetry={() => refetch()}
               from={from}
               to={to}
               guests={guests}

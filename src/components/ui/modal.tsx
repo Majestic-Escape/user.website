@@ -18,12 +18,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-} from "@/components/ui/command";
+import LocationCombobox from "@/components/search/location-combobox";
+import { buildFilterUrl } from "@/lib/search/search-url";
 import {
   PocketIcon as Pool,
   Bath,
@@ -208,6 +204,9 @@ export default function FilterModal({
   // Search state
   const [destination, setDestination] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  // A picked suggestion (authoritative for the server) or "near me" (~1 km).
+  const [placeId, setPlaceId] = useState<string | null>(null);
+  const [near, setNear] = useState<{ lat: number; lng: number } | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [guests, setGuests] = useState<Guests>({
     adults: 0,
@@ -253,6 +252,8 @@ export default function FilterModal({
         });
       }
       if (parsed.searchTerm) setSearchTerm(parsed.searchTerm);
+      setPlaceId(typeof parsed.placeId === "string" ? parsed.placeId : null);
+      setNear(parsed.near && Number.isFinite(parsed.near.lat) && Number.isFinite(parsed.near.lng) ? parsed.near : null);
       if (parsed.guests) setGuests(parsed.guests);
     }
 
@@ -301,50 +302,6 @@ export default function FilterModal({
     const value = Math.min(Number(e.target.value), priceRange[1] - 1000); // keep gap
     setPriceRange([value, priceRange[1]]);
   };
-  const destinations = [
-    {
-      value: "north-goa",
-      label: "North Goa",
-      description: "Popular beaches and nightlife",
-    },
-    {
-      value: "south-goa",
-      label: "South Goa",
-      description: "Quiet and serene beaches",
-    },
-    {
-      value: "panaji",
-      label: "Panaji",
-      description: "Capital city with Portuguese heritage",
-    },
-    {
-      value: "calangute",
-      label: "Calangute",
-      description: "Famous beach with water sports",
-    },
-    {
-      value: "baga",
-      label: "Baga",
-
-      description: "Known for its nightlife and shacks",
-    },
-    {
-      value: "anjuna",
-      label: "Anjuna",
-      description: "Flea market and trance parties",
-    },
-    {
-      value: "candolim",
-      label: "Candolim",
-      description: "Long stretch of sandy beach",
-    },
-  ];
-
-  const filteredDestinations = destinations.filter(
-    (dest) =>
-      dest.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dest.description.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
   const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Math.max(Number(e.target.value), priceRange[0] + 1000);
     setPriceRange([priceRange[0], value]);
@@ -548,31 +505,31 @@ export default function FilterModal({
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("pri", addPropertyType);
   }
-  const newAmenities = addAmenities.map((x) =>
-    x.toLowerCase().replaceAll(" ", "_"),
-  );
+  const filterUrl = () =>
+    buildFilterUrl({
+        location: near ? "" : searchTerm,
+        placeId: near ? null : placeId,
+        near,
+        from: dateRange?.from,
+        to: dateRange?.to,
+        totalGuests,
+        adults: guests.adults,
+        children: guests.children,
+        infants: guests.infants,
+        propertyType: addPropertyType,
+        priceMin: priceRange[0],
+        priceMax: priceRange[1],
+        placeType: addPlaceType,
+        amenities: addAmenities,
+        bedrooms: rooms?.bedrooms,
+        beds: rooms?.beds,
+        bathrooms: rooms?.bathrooms,
+        bookingType,
+        checkinType,
+        pets: petAllowed,
+      });
   const submit = () => {
-    router.push(
-      `/filter?propertyType=${
-        addPropertyType ? addPropertyType : ""
-      }&location=${searchTerm ? searchTerm : ""}&from=${
-        dateRange?.from ? dateRange?.from.toLocaleDateString() : ""
-      }&to=${dateRange?.to ? dateRange?.to.toLocaleDateString() : ""}&adults=${
-        totalGuests ? totalGuests : ""
-      }&senior=${guests.adults ? guests.adults : ""}&children=${
-        guests.children ? guests.children : ""
-      }&infants=${guests.infants ? guests.infants : ""}&priceMin=${
-        priceRange[0] || ""
-      }&priceMax=${priceRange[1] || ""}&placeType=${
-        addPlaceType ? addPlaceType.replaceAll(" ", "_") : ""
-      }&amenities=${addAmenities.length !== 0 ? newAmenities : ""}&bedrooms=${
-        rooms?.bedrooms || ""
-      }&beds=${rooms?.beds || ""}&bathrooms=${
-        rooms?.bathrooms || ""
-      }&bookingType=${bookingType || ""}&checkinType=${
-        checkinType || ""
-      }&pets=${petAllowed}`,
-    );
+    router.push(filterUrl());
   };
   const small = ["tablet", "mobile"];
   if (!isMobile) {
@@ -880,30 +837,7 @@ export default function FilterModal({
                 //   }&pets=${petAllowed}`
                 // );
                 setResetClicked(false);
-                console.log("searchTerm", searchTerm, guests);
-                router.push(
-                  `/filter?propertyType=${
-                    addPropertyType ? addPropertyType : ""
-                  }&location=${searchTerm ? searchTerm : ""}&from=${
-                    dateRange?.from ? dateRange?.from.toLocaleDateString() : ""
-                  }&to=${
-                    dateRange?.to ? dateRange?.to.toLocaleDateString() : ""
-                  }&adults=${totalGuests ? totalGuests : ""}&senior=${
-                    guests.adults ? guests.adults : ""
-                  }&children=${
-                    guests.children ? guests.children : ""
-                  }&infants=${guests.infants ? guests.infants : ""}&priceMin=${
-                    priceRange[0] || ""
-                  }&priceMax=${priceRange[1] || ""}&placeType=${
-                    addPlaceType ? addPlaceType.replaceAll(" ", "_") : ""
-                  }&amenities=${
-                    addAmenities.length !== 0 ? newAmenities : ""
-                  }&bedrooms=${rooms?.bedrooms || ""}&beds=${
-                    rooms?.beds || ""
-                  }&bathrooms=${rooms?.bathrooms || ""}&bookingType=${
-                    bookingType || ""
-                  }&checkinType=${checkinType || ""}&pets=${petAllowed || ""}`,
-                );
+                router.push(filterUrl());
                 onClose();
               }}
               className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
@@ -976,53 +910,36 @@ export default function FilterModal({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
-                      className="w-[300px] font-poppins mt-2 p-0"
+                      className="w-[calc(100vw-2rem)] max-w-[420px] font-poppins mt-2 p-0 z-[9999]"
                       align="start"
                     >
-                      <Command className="bg-white">
-                        <Input
-                          placeholder="Search destinations..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          onKeyDown={(e) => {
-                            // Trigger search on Enter key
-                            if (e.key === "Enter") {
-                              e.preventDefault(); // Prevent default form behavior
-                              submit(); // Call your submit function
-                              onClose(); // Close the popover
-                            }
-                          }}
-                          className="border-0 border-b rounded-none focus-visible:ring-0"
-                        />
-                        {/* <CommandEmpty className="p-2 text-sm text-center">
-                          No destination found.
-                        </CommandEmpty> */}
-                        {/* <CommandGroup className="max-h-60 overflow-y-auto">
-                          {filteredDestinations.map((dest) => (
-                            <button
-                              key={dest.value}
-                              className="flex items-center w-full p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                              onClick={() => {
-                                setDestination(dest.value);
-                                setOpenDestination(false);
-                                setSearchTerm("");
-                              }}
-                            >
-                              <div className="p-2 flex justify-center items-center rounded-sm bg-lightGreen/20">
-                                <HomeIcon className="size-4 text-primaryGreen" />
-                              </div>
-                              <div className="flex-1 ml-2 text-left">
-                                <div className="font-medium text-sm mb-1">
-                                  {dest.label}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {dest.description}
-                                </div>
-                              </div>
-                            </button>
-                          ))}
-                        </CommandGroup> */}
-                      </Command>
+                      <LocationCombobox
+                        value={searchTerm}
+                        onTextChange={(text) => {
+                          setSearchTerm(text);
+                          setPlaceId(null);
+                          setNear(null);
+                        }}
+                        onPick={(place) => {
+                          setSearchTerm(place.name);
+                          setPlaceId(place.id);
+                          setNear(null);
+                          setOpenDestination(false);
+                          setOpenDatePicker(true);
+                        }}
+                        onNearMe={(point) => {
+                          setSearchTerm("Nearby");
+                          setPlaceId(null);
+                          setNear(point);
+                          setOpenDestination(false);
+                          setOpenDatePicker(true);
+                        }}
+                        onSubmitText={() => {
+                          setOpenDestination(false);
+                          submit();
+                          onClose();
+                        }}
+                      />
                     </PopoverContent>
                   </Popover>
                 </div>
@@ -1434,6 +1351,8 @@ export default function FilterModal({
               onClick={() => {
                 clearAllFilters();
                 setSearchTerm("");
+                setPlaceId(null);
+                setNear(null);
                 setGuests({ adults: 0, children: 0, infants: 0 });
                 setDateRange({ from: undefined, to: undefined });
                 sessionStorage.setItem(
@@ -1454,29 +1373,7 @@ export default function FilterModal({
 
             <button
               onClick={() => {
-                router.push(
-                  `/filter?propertyType=${
-                    addPropertyType ? addPropertyType : ""
-                  }&location=${searchTerm ? searchTerm : ""}&from=${
-                    dateRange?.from ? dateRange?.from.toLocaleDateString() : ""
-                  }&to=${
-                    dateRange?.to ? dateRange?.to.toLocaleDateString() : ""
-                  }&adults=${totalGuests ? totalGuests : ""}&senior=${
-                    guests.adults ? guests.adults : ""
-                  }&children=${
-                    guests.children ? guests.children : ""
-                  }&infants=${guests.infants ? guests.infants : ""}&priceMin=${
-                    priceRange[0] || ""
-                  }&priceMax=${priceRange[1] || ""}&placeType=${
-                    addPlaceType ? addPlaceType.replaceAll(" ", "_") : ""
-                  }&amenities=${
-                    addAmenities.length !== 0 ? newAmenities : ""
-                  }&bedrooms=${rooms?.bedrooms || ""}&beds=${
-                    rooms?.beds || ""
-                  }&bathrooms=${rooms?.bathrooms || ""}&bookingType=${
-                    bookingType || ""
-                  }&checkinType=${checkinType || ""}&pets=${petAllowed || ""}`,
-                );
+                router.push(filterUrl());
                 onClose();
               }}
               className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors w-full xs:w-auto order-1 xs:order-2"

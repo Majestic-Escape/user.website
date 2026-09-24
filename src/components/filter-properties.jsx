@@ -9,9 +9,17 @@ import { Label } from "@/components/ui/label";
 import SearchFilter from "./search-filter";
 import { MobileNavbar } from "@/components/stays-mobile-navbar";
 import { SheetProvider } from "@/components/providers/sheet-provider";
+import SearchSummary, { SearchSuggestions, formatDistance } from "@/components/search/search-summary";
+import { usePlacesIndex } from "@/lib/places/use-places-index";
+import { popularPlaces } from "@/lib/places/match";
 
 export default function FilterProperties({
   properties: propertiesProp,
+  search = null,
+  totalCount = 0,
+  hasDates = false,
+  isError = false,
+  onRetry,
   from,
   to,
   guests,
@@ -43,6 +51,8 @@ export default function FilterProperties({
   // A missing/odd payload is an empty result, not an eternal skeleton (and
   // never call setState during render).
   const properties = Array.isArray(propertiesProp) ? propertiesProp : [];
+  // Popular destinations are only needed to rescue an empty result.
+  const { index: placesIndex } = usePlacesIndex(properties.length === 0 && !isError);
   if (loading) {
     return (
       <div className="grid grid-cols-1 max-w-[1760px]  px-4 sm:px-6 lg:px-[72px] py-8 sm:py-16 lg:py-[128px]  bg-white mx-auto sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -88,12 +98,7 @@ export default function FilterProperties({
         <div className="font-poppins flex justify-center w-full bg-white">
           <div className="w-full max-w-[1760px]">
             <div className="mx-auto px-2 lg:px-[62px] py-8 sm:py-16 lg:py-[8px] font-poppins bg-white text-absoluteDark">
-              <h1 className="text-3xl sm:text-2xl lg:text-4xl font-bricolage font-semibold mb-2 text-absoluteDark lg:mt-40 sm:pt-10 md:pt-0">
-                Discover Our Finest Stays
-              </h1>
-              <p className="text-lg sm:text-base text-stone mb-4 sm:mb-8">
-                Explore through featured properties available on Majestic Escape
-              </p>
+              <SearchSummary meta={search} totalCount={totalCount} hasDates={hasDates} />
 
               {/* <div className="w-full  md:hidden rounded-md border  px-4 flex items-center justify-between  border-gray-400 py-3">
                 <div className="space-y-0.5">
@@ -112,12 +117,30 @@ export default function FilterProperties({
                 />
               </div> */}
 
-              {properties.length === 0 ? (
-                <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50 rounded-lg">
-                  <div className="text-gray-500 text-lg mb-2">
-                    No properties to show
+              {isError ? (
+                <div role="alert" className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50 rounded-lg px-4 text-center">
+                  <div className="text-gray-600 text-lg mb-2">
+                    We couldn't load stays right now
                   </div>
-                  <p className="text-gray-400 text-sm"></p>
+                  <p className="text-gray-500 text-sm mb-4">Check your connection and try again.</p>
+                  <button
+                    type="button"
+                    onClick={onRetry}
+                    className="min-h-[44px] rounded-full bg-primaryGreen px-6 text-white hover:bg-brightGreen"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : properties.length === 0 ? (
+                <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50 rounded-lg px-4 text-center">
+                  <div className="text-gray-600 text-lg mb-2">
+                    {search?.query ? `No stays found for “${search.query}”` : "No properties to show"}
+                  </div>
+                  <p className="text-gray-500 text-sm">Try a nearby town, a district, or fewer filters.</p>
+                  <SearchSuggestions
+                    meta={search}
+                    popular={popularPlaces(placesIndex, 6).map((p) => ({ id: p.id, name: p.name, type: p.type, label: p.label }))}
+                  />
                 </div>
               ) : (
                 <>
@@ -127,6 +150,11 @@ export default function FilterProperties({
                         key={property._id}
                         property={property}
                         includeTaxes={includeTaxes}
+                        distanceLabel={
+                          typeof property.distanceKm === "number"
+                            ? `${formatDistance(property.distanceKm)} away`
+                            : undefined
+                        }
                       />
                     ))}
                   </div>
