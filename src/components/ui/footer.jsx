@@ -96,9 +96,17 @@ export default function Footer() {
             <hr className="mt-12" />
 
             <div className="md:hidden desktop:block flex desktop:flex flex-col sm:flex-row justify-between items-center py-8">
-              <p className="text-sm text-stone">
-                &copy; {currentYear} Majestic Escape. All rights reserved
-              </p>
+              <div className="flex flex-col items-center sm:items-start gap-1">
+                <p className="text-sm text-stone">
+                  &copy; {currentYear} Majestic Escape. All rights reserved
+                </p>
+                {/* GeoNames (CC BY 4.0) powers destination search: attribution required */}
+                <p className="text-xs text-stone">
+                  Place data &copy;{" "}
+                  <a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer" className="underline hover:text-absoluteDark">GeoNames</a>
+                  {" "}(<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" className="underline hover:text-absoluteDark">CC BY 4.0</a>)
+                </p>
+              </div>
               <div className="flex mt-6 mb-4 gap-8">
                 <div>
                   <div className="">
@@ -272,9 +280,17 @@ export default function Footer() {
               </div>
             </div>
             <div className="hidden md:block desktop:hidden md:flex md:flex-col md:justify-between md:items-center py-8">
-              <p className="text-sm text-stone">
-                &copy; {currentYear} Majestic Escape. All rights reserved
-              </p>
+              <div className="flex flex-col items-center sm:items-start gap-1">
+                <p className="text-sm text-stone">
+                  &copy; {currentYear} Majestic Escape. All rights reserved
+                </p>
+                {/* GeoNames (CC BY 4.0) powers destination search: attribution required */}
+                <p className="text-xs text-stone">
+                  Place data &copy;{" "}
+                  <a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer" className="underline hover:text-absoluteDark">GeoNames</a>
+                  {" "}(<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" className="underline hover:text-absoluteDark">CC BY 4.0</a>)
+                </p>
+              </div>
               <div className="flex  mb-4 gap-8">
                 <div>
                   <div className="">
