@@ -112,6 +112,7 @@ check("stays break ties; parent qualifier filters", () => {
   assert.deepEqual(top("colv"), ["Colva|South Goa, Goa"], "Colva (1 stay) before Colvale");
   assert.deepEqual(top("manali", 2), ["Manali|Chennai, Tamil Nadu", "Manali|Kulu, Himachal Pradesh"], "same score → population");
   assert.deepEqual(top("manali, himachal"), ["Manali|Kulu, Himachal Pradesh"]);
+  assert.deepEqual(top("goa, india"), ["Goa"], "'India' adds nothing");
   assert.deepEqual(top("seraul"), ["Seraulim|South Goa, Goa"], "live places are suggested");
 });
 check("popular = localities with the most stays", () => {

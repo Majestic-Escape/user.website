@@ -123,7 +123,8 @@ export function suggestPlaces(index: PlacesIndex | null, query: string, limit = 
   if (!qn) return [];
   const qc = compactKey(qn);
   const qWords = qn.split(" ");
-  const qualKeys = quals.map(normalizePlaceText).filter(Boolean);
+  // "Colva, Goa" narrows to Goa; "Goa, India" / "Goa state" add nothing
+  const qualKeys = quals.map(normalizePlaceText).filter((q) => q && q !== "india" && q !== "state");
   const inParents = (e: Entry) => qualKeys.every((q) => e.labelKey.includes(q));
   const hits: Hit[] = [];
   for (const e of index.entries) {
