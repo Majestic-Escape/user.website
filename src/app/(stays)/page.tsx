@@ -5,6 +5,7 @@ import BecomePartner from "@/components/become-partner";
 import LocationWiseStays from "@/components/location-wise-stays";
 import Blogs from "@/components/blogs";
 import { prefetchCatalogue } from "@/lib/server/catalogue";
+import { fetchSiteHero } from "@/lib/server/site-hero";
 
 // Batch P: the page is regenerated at most every 5 minutes, and on demand
 // when the backend reports a listing change (POST /api/revalidate). The
@@ -15,11 +16,13 @@ import { prefetchCatalogue } from "@/lib/server/catalogue";
 export const revalidate = 300;
 
 export default async function Component() {
-  const state = await prefetchCatalogue();
+  // In parallel: the page (ISR) waits for the slower of the two, visitors
+  // are served the cached HTML either way.
+  const [state, hero] = await Promise.all([prefetchCatalogue(), fetchSiteHero()]);
   return (
     <HydrationBoundary state={state ?? undefined}>
       <div>
-        <Hero />
+        <Hero config={hero} />
         <StaysProperties />
         <BecomePartner />
 

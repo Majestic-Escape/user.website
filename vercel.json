@@ -23,5 +23,20 @@
       "destination": "/blog/spice-of-life-a-culinary-journey-through-goan-cuisine",
       "statusCode": 301
     }
+  ],
+  "headers": [
+    {
+      "source": "/_hero/(.*)",
+      "headers": [
+        {
+          "key": "x-vercel-enable-rewrite-caching",
+          "value": "1"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    }
   ]
 }

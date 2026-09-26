@@ -18,7 +18,8 @@ export const VARIANT_SET = "v1";
 export const VARIANT_WIDTHS = [160, 320, 640, 960, 1280, 1600, 1920, 2560, 3840];
 
 const HOST_RE = /^([a-z0-9][a-z0-9-]*)\.([a-z0-9]+)(\.cdn)?\.digitaloceanspaces\.com$/i;
-const VARIANT_PATH_RE = /^(.+)\/v[0-9]+\/w[0-9]{2,4}\.webp$/;
+// WebP for listing photos; the homepage banner also has AVIF renditions.
+const VARIANT_PATH_RE = /^(.+)\/v[0-9]+\/w[0-9]{2,4}\.(?:webp|avif)$/;
 
 // The rollback switch: NEXT_PUBLIC_IMAGE_VARIANTS=off puts every media image
 // back on the default next/image path (Vercel optimizer) at the next build.
@@ -54,11 +55,11 @@ export function variantWidthFor(width) {
   return VARIANT_WIDTHS.find((v) => v >= w) || VARIANT_WIDTHS[VARIANT_WIDTHS.length - 1];
 }
 
-/** CDN URL of the display variant for `width`, or null when `src` is not a Spaces object. */
-export function variantUrl(src, width) {
+/** CDN URL of the display variant for `width` (WebP, or AVIF where stored), or null when `src` is not a Spaces object. */
+export function variantUrl(src, width, ext = "webp") {
   const p = parseSpacesUrl(src);
   if (!p) return null;
-  return `https://${p.bucket}.${p.region}.cdn.digitaloceanspaces.com/${p.path}/${VARIANT_SET}/w${variantWidthFor(width)}.webp`;
+  return `https://${p.bucket}.${p.region}.cdn.digitaloceanspaces.com/${p.path}/${VARIANT_SET}/w${variantWidthFor(width)}.${ext === "avif" ? "avif" : "webp"}`;
 }
 
 /** The master URL of a Spaces object (a variant URL → its master on the origin host). */
