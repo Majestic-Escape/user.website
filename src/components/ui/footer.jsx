@@ -52,12 +52,12 @@ const FooterColumn = ({ data }) => (
     <h3 className="text-base font-bricolage font-semibold text-graphite mb-4">
       {data.title}
     </h3>
-    <nav className="flex flex-col space-y-3">
+    <nav aria-label={data.title} className="flex flex-col items-start space-y-2">
       {data.links.map((link, index) => (
         <Link
           key={index}
           href={link.href}
-          className="text-sm text-stone hover:text-absoluteDark hover:underline transition-all"
+          className="inline-flex items-center rounded-md py-0.5 text-sm text-stone transition-colors [@media(hover:hover)]:hover:text-absoluteDark [@media(hover:hover)]:hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen"
         >
           {link.label}
         </Link>
@@ -120,7 +120,7 @@ export default function Footer() {
                         decoding="async"
                         width={150}
                         height={150}
-                        alt="mail icon"
+                        alt="Evoke Experiences"
                         className="lg:pl-1 "
                       />
                       {/* </Link>
@@ -131,7 +131,7 @@ export default function Footer() {
                         decoding="async"
                         width={100}
                         height={100}
-                        alt="mail icon"
+                        alt="NIDHI — Ministry of Tourism"
                         className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1"
                       />
                       {/* </Link>{" "}
@@ -142,7 +142,7 @@ export default function Footer() {
                         decoding="async"
                         width={100}
                         height={100}
-                        alt="mail icon"
+                        alt="Goa Tourism Development Corporation"
                         className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 "
                       />
                       {/* </Link>
@@ -153,7 +153,7 @@ export default function Footer() {
                         decoding="async"
                         width={100}
                         height={100}
-                        alt="mail icon"
+                        alt="Goa Forest Development Corporation"
                         className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 "
                       />
                       {/* </Link> */}
@@ -163,7 +163,7 @@ export default function Footer() {
                         decoding="async"
                         width={150}
                         height={150}
-                        alt="mail icon"
+                        alt="Rann Utsav — The Tent City"
                         className="lg:pl-1 lg:pr-1"
                       />
                     </div>
@@ -177,7 +177,7 @@ export default function Footer() {
                       decoding="async"
                       width={100}
                       height={100}
-                      alt="mail icon"
+                      alt="Goa Forest Development Corporation"
                       className="h-16 w-16 lg:h-24 lg:w-24"
                     />
                     {/* </Link>{" "}
@@ -188,7 +188,7 @@ export default function Footer() {
                       decoding="async"
                       width={100}
                       height={100}
-                      alt="mail icon"
+                      alt="Goa Tourism Development Corporation"
                       className="h-16 w-16 lg:h-24 lg:w-24 "
                     />
                     {/* </Link>
@@ -199,7 +199,7 @@ export default function Footer() {
                       decoding="async"
                       width={100}
                       height={100}
-                      alt="mail icon"
+                      alt="NIDHI — Ministry of Tourism"
                       className="h-16 w-16 lg:h-24 lg:w-24 "
                     />
                     {/* </Link>{" "} */}
@@ -212,7 +212,7 @@ export default function Footer() {
                       decoding="async"
                       width={100}
                       height={100}
-                      alt="mail icon"
+                      alt="Rann Utsav — The Tent City"
                       className=""
                     />
                     {/* <Link href={"https://evokeexperiences.in/"}> */}
@@ -222,7 +222,7 @@ export default function Footer() {
                       decoding="async"
                       width={100}
                       height={100}
-                      alt="mail icon"
+                      alt="Evoke Experiences"
                       className=""
                     />
                     {/* </Link>{" "} */}
@@ -231,49 +231,43 @@ export default function Footer() {
                 </div>
               </div>
               {/*Desktop*/}{" "}
-              <div className="md:hidden desktop:block flex desktop:flex space-x-6 mt-4 sm:my-16 mb-16 md:pb-0">
-                <Link href="mailto:info@majesticescape.in" target="_blank">
+              <div className="md:hidden desktop:block flex desktop:flex space-x-2 mt-4 sm:my-16 mb-16 md:pb-0">
+                <Link href="mailto:info@majesticescape.in" target="_blank" rel="noopener noreferrer" aria-label="Email Majestic Escape" className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen">
                   <Image
                     src="/icons/mail.png"
                     width={24}
                     height={24}
-                    alt="mail icon"
+                    alt=""
                     className="h-7 w-7 hover:scale-105"
                   />
                 </Link>
 
-                <Link
-                  href="https://www.instagram.com/themajesticescape"
-                  target="_blank"
-                >
+                <Link href="https://www.instagram.com/themajesticescape" target="_blank" rel="noopener noreferrer" aria-label="Majestic Escape on Instagram" className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen">
                   <Image
                     src="/icons/instagram.png"
                     width={24}
                     height={24}
-                    alt="instagram icon"
+                    alt=""
                     className="h-7 w-7 hover:scale-105"
                   />
                 </Link>
 
-                <Link
-                  href="https://www.facebook.com/profile.php?id=61567800352990"
-                  target="_blank"
-                >
+                <Link href="https://www.facebook.com/profile.php?id=61567800352990" target="_blank" rel="noopener noreferrer" aria-label="Majestic Escape on Facebook" className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen">
                   <Image
                     src="/icons/facebook.png"
                     width={24}
                     height={24}
-                    alt="facebook icon"
+                    alt=""
                     className="h-7 w-7 hover:scale-105"
                   />
                 </Link>
 
-                <Link href="https://wa.me/917219666822" target="_blank">
+                <Link href="https://wa.me/917219666822" target="_blank" rel="noopener noreferrer" aria-label="Chat with Majestic Escape on WhatsApp" className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen">
                   <Image
                     src="/icons/whatsapp.png"
                     width={24}
                     height={24}
-                    alt="whatsapp icon"
+                    alt=""
                     className="h-7 w-7 hover:scale-105"
                   />
                 </Link>
@@ -302,7 +296,7 @@ export default function Footer() {
                         decoding="async"
                         width={100}
                         height={100}
-                        alt="mail icon"
+                        alt="Goa Tourism Development Corporation"
                         className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 "
                       />
                       {/* </Link>{" "} hover:scale-105*/}
@@ -313,7 +307,7 @@ export default function Footer() {
                         decoding="async"
                         width={100}
                         height={100}
-                        alt="mail icon"
+                        alt="NIDHI — Ministry of Tourism"
                         className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2"
                       />
                       {/* </Link>{" "}
@@ -324,7 +318,7 @@ export default function Footer() {
                         decoding="async"
                         width={150}
                         height={150}
-                        alt="mail icon"
+                        alt="Evoke Experiences"
                         className="md:mx-2"
                       />
                       {/* </Link>
@@ -335,7 +329,7 @@ export default function Footer() {
                         decoding="async"
                         width={100}
                         height={100}
-                        alt="mail icon"
+                        alt="Goa Forest Development Corporation"
                         className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 hover:scale-105"
                       />
                       {/* </Link> */}
@@ -345,7 +339,7 @@ export default function Footer() {
                         decoding="async"
                         width={150}
                         height={150}
-                        alt="mail icon"
+                        alt="Rann Utsav — The Tent City"
                         className="md:mx-2"
                       />
                     </div>
@@ -354,49 +348,43 @@ export default function Footer() {
                   <div className="flex justify-center"> </div>
                 </div>
               </div>
-              <div className="flex desktop:flex space-x-6 mt-4 sm:mt-0">
-                <Link href="mailto:info@majesticescape.in" target="_blank">
+              <div className="flex desktop:flex space-x-2 mt-4 sm:mt-0">
+                <Link href="mailto:info@majesticescape.in" target="_blank" rel="noopener noreferrer" aria-label="Email Majestic Escape" className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen">
                   <Image
                     src="/icons/mail.png"
                     width={24}
                     height={24}
-                    alt="mail icon"
+                    alt=""
                     className="h-7 w-7 hover:scale-105"
                   />
                 </Link>
 
-                <Link
-                  href="https://www.instagram.com/themajesticescape"
-                  target="_blank"
-                >
+                <Link href="https://www.instagram.com/themajesticescape" target="_blank" rel="noopener noreferrer" aria-label="Majestic Escape on Instagram" className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen">
                   <Image
                     src="/icons/instagram.png"
                     width={24}
                     height={24}
-                    alt="instagram icon"
+                    alt=""
                     className="h-7 w-7 hover:scale-105"
                   />
                 </Link>
 
-                <Link
-                  href="https://www.facebook.com/profile.php?id=61567800352990"
-                  target="_blank"
-                >
+                <Link href="https://www.facebook.com/profile.php?id=61567800352990" target="_blank" rel="noopener noreferrer" aria-label="Majestic Escape on Facebook" className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen">
                   <Image
                     src="/icons/facebook.png"
                     width={24}
                     height={24}
-                    alt="facebook icon"
+                    alt=""
                     className="h-7 w-7 hover:scale-105"
                   />
                 </Link>
 
-                <Link href="https://wa.me/917219666822" target="_blank">
+                <Link href="https://wa.me/917219666822" target="_blank" rel="noopener noreferrer" aria-label="Chat with Majestic Escape on WhatsApp" className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen">
                   <Image
                     src="/icons/whatsapp.png"
                     width={24}
                     height={24}
-                    alt="whatsapp icon"
+                    alt=""
                     className="h-7 w-7 hover:scale-105"
                   />
                 </Link>

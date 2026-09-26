@@ -213,7 +213,7 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
             {staysFirst ? (
               <CommandGroup heading="Stays">
                 {stays.map((s) => (
-                  <CommandItem key={s.id} value={STAY_ROW + s.id} onSelect={() => onPickStay(s.id)} className="min-h-[52px] cursor-pointer py-2">
+                  <CommandItem key={s.id} value={STAY_ROW + s.id} onSelect={() => onPickStay(s.id)} className="min-h-[52px] cursor-pointer rounded-xl py-2">
                     <Row Icon={BedDouble} title={<Highlight2 text={s.title} query={query} />} subtitle={[typeWord(s.type), s.label].filter(Boolean).join(" · ")} />
                   </CommandItem>
                 ))}
@@ -222,7 +222,7 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
             {suggestions.length ? (
               <CommandGroup heading="Destinations">
                 {suggestions.map((s) => (
-                  <CommandItem key={s.id} value={s.id} onSelect={() => pick({ id: s.id, name: s.name, label: s.label })} className="min-h-[52px] cursor-pointer py-2">
+                  <CommandItem key={s.id} value={s.id} onSelect={() => pick({ id: s.id, name: s.name, label: s.label })} className="min-h-[52px] cursor-pointer rounded-xl py-2">
                     <Row
                       Icon={icon(s.type)}
                       title={<Highlight text={s.name} query={query.split(",")[0]} />}
@@ -240,14 +240,14 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
             {stays.length > 0 && !staysFirst ? (
               <CommandGroup heading="Stays">
                 {stays.map((s) => (
-                  <CommandItem key={s.id} value={STAY_ROW + s.id} onSelect={() => onPickStay(s.id)} className="min-h-[52px] cursor-pointer py-2">
+                  <CommandItem key={s.id} value={STAY_ROW + s.id} onSelect={() => onPickStay(s.id)} className="min-h-[52px] cursor-pointer rounded-xl py-2">
                     <Row Icon={BedDouble} title={<Highlight2 text={s.title} query={query} />} subtitle={[typeWord(s.type), s.label].filter(Boolean).join(" · ")} />
                   </CommandItem>
                 ))}
               </CommandGroup>
             ) : null}
             <CommandGroup>
-              <CommandItem value={TEXT_ROW} onSelect={onSubmitText} className="min-h-[52px] cursor-pointer py-2">
+              <CommandItem value={TEXT_ROW} onSelect={onSubmitText} className="min-h-[52px] cursor-pointer rounded-xl py-2">
                 <Row Icon={Search} title={<>Search for “{query.trim()}”</>} subtitle={unavailable ? "Suggestions are unavailable right now" : undefined} />
               </CommandItem>
             </CommandGroup>
@@ -255,14 +255,14 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
         ) : (
           <>
             <CommandGroup heading="Nearby">
-              <CommandItem value={NEAR_ROW} onSelect={nearMe} disabled={locating} className="min-h-[52px] cursor-pointer py-2">
+              <CommandItem value={NEAR_ROW} onSelect={nearMe} disabled={locating} className="min-h-[52px] cursor-pointer rounded-xl py-2">
                 <Row Icon={locating ? Loader2 : Navigation} title={locating ? "Finding your location…" : "Stays near me"} subtitle="Uses your location once, about 1 km accurate" />
               </CommandItem>
             </CommandGroup>
             {recent.length ? (
               <CommandGroup heading="Recent searches">
                 {recent.map((r) => (
-                  <CommandItem key={`r:${r.id}`} value={`r:${r.id}`} onSelect={() => pick(r)} className="min-h-[52px] cursor-pointer py-2">
+                  <CommandItem key={`r:${r.id}`} value={`r:${r.id}`} onSelect={() => pick(r)} className="min-h-[52px] cursor-pointer rounded-xl py-2">
                     <Row Icon={Clock} title={r.name} subtitle={r.label} />
                   </CommandItem>
                 ))}
@@ -271,7 +271,7 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
             {popular.length ? (
               <CommandGroup heading="Popular destinations">
                 {popular.map((p) => (
-                  <CommandItem key={`p:${p.id}`} value={`p:${p.id}`} onSelect={() => pick({ id: p.id, name: p.name, label: p.label })} className="min-h-[52px] cursor-pointer py-2">
+                  <CommandItem key={`p:${p.id}`} value={`p:${p.id}`} onSelect={() => pick({ id: p.id, name: p.name, label: p.label })} className="min-h-[52px] cursor-pointer rounded-xl py-2">
                     <Row Icon={icon(p.type)} title={p.name} subtitle={p.label} meta={`${p.stays} ${p.stays === 1 ? "stay" : "stays"}`} />
                   </CommandItem>
                 ))}

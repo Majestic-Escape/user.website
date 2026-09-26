@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "check:js": "node scripts/check-js-identifiers.mjs",
-    "check:search": "node scripts/check-search.mjs"
+    "check:search": "node scripts/check-search.mjs",
+    "check:ux": "node scripts/check-ux.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

@@ -51,7 +51,7 @@ export default function BlogPost() {
                 trip, here are five clear reasons why homestays often win.
               </p>
               <p className="text-lg text-gray-800 ">
-                <p className="font-medium"> More Space for the Same Price </p>
+                <span className="block font-medium"> More Space for the Same Price </span>
                 Hotels usually offer compact rooms, while homestays provide full
                 homes with bedrooms, living areas, kitchens, and balconies.
                 Families, groups, and long-stay travellers get far more space
@@ -94,17 +94,17 @@ export default function BlogPost() {
                 </span>
               </div>
               <p className="text-lg text-gray-800 ">
-                <p className="font-medium">
+                <span className="block font-medium">
                   A More Local and Authentic Experience
-                </p>{" "}
+                </span>{" "}
                 Homestays let you experience a destination like a local. You
                 stay in real neighbourhoods, interact with hosts, and get access
                 to insider recommendations—something hotels rarely offer.
               </p>
               <p className="text-lg text-gray-800 ">
-                <p className="font-medium">
+                <span className="block font-medium">
                   Better Amenities and Home-Like Comfort
-                </p>{" "}
+                </span>{" "}
                 Most homestays include kitchens, washing machines, private
                 parking, workspaces, and outdoor areas. You get the flexibility
                 to cook, relax, and enjoy a comfortable stay without the
@@ -132,9 +132,9 @@ export default function BlogPost() {
                 </figcaption>
               </figure>
               <div className="space-y-3">
-                <p className="font-medium">
+                <span className="block font-medium">
                   Ideal for Longer Stays and Workations
-                </p>{" "}
+                </span>{" "}
                 <p className="text-lg text-gray-800 ">
                   For long trips, homestays are more practical. They provide
                   WiFi, kitchens, and comfortable setups for remote work, all at
@@ -143,7 +143,7 @@ export default function BlogPost() {
                 </p>
               </div>
               <div className="space-y-3">
-                <p className="font-medium">More Value for Money</p>{" "}
+                <span className="block font-medium">More Value for Money</span>{" "}
                 <p className="text-lg text-gray-800 ">
                   Homestays usually cost less than hotels while offering more
                   space, privacy, and amenities. For groups or families, the

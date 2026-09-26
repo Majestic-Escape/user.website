@@ -23,6 +23,10 @@ const AUTH_SESSION_STORAGE_KEYS = ["messages_last_init", "hostinbox_last_init"];
 // Per-user conversation snapshots (lib/conversationsCache.js), keyed by role.
 // They are userId-stamped, but nothing user-scoped should survive a teardown.
 const AUTH_SESSION_STORAGE_PREFIXES = ["me:conversationsCache:"];
+// The same snapshots persisted across browser restarts, plus the newest
+// messages of recently opened threads (lib/chat/threadCache.js) — private,
+// so they go with the session like the token does.
+const AUTH_LOCAL_STORAGE_PREFIXES = ["me:conversationsCache:", "me:threadCache:"];
 
 // Fired on `window` after a session is torn down so in-memory state
 // (AuthContext's `user`) can reset without importing the context here.
@@ -102,6 +106,8 @@ export function clearSession(queryClient?: QueryClient | null) {
     for (const key of AUTH_SESSION_STORAGE_KEYS) sessionStorage.removeItem(key);
     for (const prefix of AUTH_SESSION_STORAGE_PREFIXES)
       removeByPrefix(sessionStorage, prefix);
+    for (const prefix of AUTH_LOCAL_STORAGE_PREFIXES)
+      removeByPrefix(localStorage, prefix);
   } catch {
     // Storage can throw in private mode / when blocked; nothing else to do.
   }

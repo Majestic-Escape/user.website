@@ -92,26 +92,34 @@ export function PriceNavigation() {
       setModalMobilePrice(total);
     }
   }, []);
+  // Same look as before; the Reserve link is rendered BY the button (asChild)
+  // instead of a <button> nested inside an <a>.
+  const reserveCls =
+    "w-full flex justify-center items-center text-center py-8 px-2 bg-primaryGreen text-2xl font-bricolage hover:bg-brightGreen text-white h-10 rounded-[42px] font-medium";
+  const hasDates = nights > 0;
   return (
-    <div className="md:hidden  font-poppins fixed bottom-0 left-0 z-50 w-full h-24 bg-white border-t border-gray-200">
-      <div className="grid h-full max-w-lg grid-cols-2 mx-auto px-4 py-2 items-center">
-        <div
-          className=" underline"
-          onClick={() => {
-            setOpenPriceModal(true);
-          }}
+    <div className="md:hidden font-poppins fixed bottom-0 inset-x-0 z-50 bg-white border-t border-gray-200 pb-[env(safe-area-inset-bottom)]">
+      <div className="grid h-24 max-w-lg grid-cols-2 mx-auto px-4 py-2 items-center">
+        {/* Opens the price / dates sheet */}
+        <button
+          type="button"
+          onClick={() => setOpenPriceModal(true)}
+          aria-haspopup="dialog"
+          className="min-w-0 rounded-xl text-left underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen"
         >
-          <div className="text-xl font-semibold text-gray-900">
+          <span className="block truncate text-xl font-semibold text-gray-900">
             {perNight === null
               ? "Price on request"
-              : formatINR(nights == 1 ? perNight : nights * perNight)}
-          </div>
-
-          <div className="text-base text-gray-600 underline">
-            {nights} night{nights > 1 ? "s" : ""} ·{" "}
-            {formatDateRange(modalCheckDate?.from, modalCheckDate?.to)}
-          </div>
-        </div>
+              : hasDates
+                ? formatINR(nights == 1 ? perNight : nights * perNight)
+                : `${formatINR(perNight)} / night`}
+          </span>
+          <span className="block truncate text-base text-gray-600 underline">
+            {hasDates
+              ? `${nights} night${nights > 1 ? "s" : ""} · ${formatDateRange(modalCheckDate?.from, modalCheckDate?.to)}`
+              : "Add dates"}
+          </span>
+        </button>
         {perNight === null ? (
           <Button
             disabled
@@ -120,28 +128,21 @@ export function PriceNavigation() {
             Price on request
           </Button>
         ) : isAuth ? (
-          <Link
-            href={{
-              pathname: `/book/stay/${bookingQuery?.propertyId}`,
-              query: bookingQuery,
-            }}
-          >
-            <Button
-              className="w-full flex justify-center items-center text-center py-8 px-2 bg-primaryGreen text-2xl font-bricolage hover:bg-brightGreen text-white h-10 rounded-[42px] font-medium"
-              // onClick={() => {
-              //   setOpenPriceModal(true);
-              // }}
+          <Button asChild className={reserveCls}>
+            <Link
+              href={{
+                pathname: `/book/stay/${bookingQuery?.propertyId}`,
+                query: bookingQuery,
+              }}
             >
               Reserve
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         ) : (
           <Button
-            className="w-full flex justify-center items-center text-center py-8 px-2 bg-primaryGreen text-2xl font-bricolage hover:bg-brightGreen text-white h-10 rounded-[42px] font-medium"
+            className={reserveCls}
             onClick={() => {
               goToLogin(router, checkoutPathFor(bookingQuery?.propertyId, bookingQuery));
-              return;
-              // toast.error("You need to signup or login to reserve");
             }}
           >
             Reserve

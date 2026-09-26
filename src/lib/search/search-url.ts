@@ -59,7 +59,8 @@ export function buildFilterUrl(input: FilterUrlInput): string {
   set("propertyType", input.propertyType);
   set("priceMin", input.priceMin);
   set("priceMax", input.priceMax);
-  set("placeType", input.placeType ? input.placeType.replaceAll(" ", "_") : "");
+  // "Any type" is no filter at all (as a filter it would hide listings with no type set)
+  set("placeType", input.placeType && input.placeType !== "Any type" ? input.placeType.replaceAll(" ", "_") : "");
   set("amenities", (input.amenities || []).map((x) => x.toLowerCase().replaceAll(" ", "_")).join(","));
   set("bedrooms", input.bedrooms);
   set("beds", input.beds);

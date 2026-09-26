@@ -516,7 +516,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
             >
               <div className="relative flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg hover:border-primaryGreen">
                 <span className="pointer-events-none text-center">
-                  <p className="mt-2">
+                  <div className="mt-2">
                     {uploading ? (
                       <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-current"></div>
                     ) : (
@@ -525,7 +525,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
                         <div>Click to upload photos</div>
                       </div>
                     )}
-                  </p>
+                  </div>
                 </span>
               </div>
             </Label>

@@ -1,1389 +1,497 @@
 "use client";
 
-import {
-  X,
-  Minus,
-  Plus,
-  Zap,
-  KeyRound,
-  PawPrint,
-  HomeIcon,
-  CalendarIcon,
-  UserIcon,
-} from "lucide-react";
+// Search + Filters surface.
+//
+// Phones (< 768 px): a full-screen sheet that slides up — Search | Filters
+// tabs, and on Search three cards (Where · When · Who) of which one is open
+// at a time, like Airbnb. The calendar and guest counters are inline, so
+// nothing floats over the sheet's own buttons; "Where" opens the full-screen
+// destination picker that survives the on-screen keyboard. Back closes the
+// sheet instead of leaving the page, and the floating chat launcher steps
+// aside while it is open.
+// Tablets (768–1024 px): the same, as a centred dialog.
+// Desktop (≥ 1025 px): the dialog shows Filters only — the search itself is
+// the pill in the header.
+//
+// Filter state lives in AuthContext (shared with the desktop pill); the
+// where / when / who of the sheet come from the /filter URL being viewed, or
+// else from the last search in this tab.
+import * as React from "react";
 import { format } from "date-fns";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { MapPin, Search, SlidersHorizontal, X } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import LocationCombobox from "@/components/search/location-combobox";
 import DestinationSheet from "@/components/search/destination-sheet";
+import GuestCounter from "@/components/search/guest-counter";
+import StayCalendar, { nightsLabel, type StayRange } from "@/components/search/stay-calendar";
+import FilterPanel, { useActiveFilterCount } from "@/components/search/filter-panel";
 import { buildFilterUrl } from "@/lib/search/search-url";
-import {
-  PocketIcon as Pool,
-  Bath,
-  Umbrella,
-  Flame,
-  UtensilsCrossed,
-  Table,
-  FlameIcon as Fireplace,
-  Piano,
-  Dumbbell,
-  Waves,
-  BeanIcon as Beach,
-  MountainSnowIcon as Ski,
-  ShowerHeadIcon as Shower,
-  AlertOctagon,
-  AmbulanceIcon as FirstAid,
-  FireExtinguisher,
-  AlertCircle,
-  Wifi,
-  Tv,
-  UtensilsIcon,
-  WashingMachineIcon as Washing,
-  Car,
-  CarTaxiFront,
-  Snowflake,
-  Briefcase,
-} from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import { useAuth } from "@/contexts/AuthContext"; // Import your auth context
-import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useDeviceType } from "./device";
-import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
-import { properties } from "../../lib/property-type";
-import { DateRange } from "react-day-picker";
-export default function FilterModal({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  // Get all states and functions from context
+import { capacityGuests, guestSummary, NO_GUESTS, sanitizeGuests, searchFromParams, type Guests } from "@/lib/search/search-state";
+import { leaveLayersThen, useBackToClose, useOverlayFlag, usePresence } from "@/lib/ui/layers";
+import { cn } from "@/lib/utils";
 
-  // const deviceType = useDeviceType();
+type Step = "where" | "when" | "who" | null;
 
-  interface UseAuthReturn {
-    priceRange: [number, number];
-    setPriceRange: React.Dispatch<React.SetStateAction<[number, number]>>;
-    rooms: number;
-    showAllAmenities: boolean;
-    setShowAllAmenities: React.Dispatch<React.SetStateAction<boolean>>;
-    showAllProperties: boolean;
-    setShowAllProperties: React.Dispatch<React.SetStateAction<boolean>>;
-    addAmenities: string[];
-    addPlaceType: string[];
-    setAddPlaceType: React.Dispatch<React.SetStateAction<string[]>>;
-    addPropertyType: string[];
-    setAddPropertyType: React.Dispatch<React.SetStateAction<string[]>>;
-    bookingType: string;
-    setBookingType: React.Dispatch<React.SetStateAction<string>>;
-    petAllowed: boolean;
-    setPetAllowed: React.Dispatch<React.SetStateAction<boolean>>;
-    checkinType: string;
-    setCheckinType: React.Dispatch<React.SetStateAction<string>>;
-    clearAllFilters: () => void;
-    addAmenitiesList: string[];
-    addPropertiesList: string[];
-    handleRoomChange: (type: "increment" | "decrement") => void;
+function readSavedSearch() {
+  if (window.location.pathname.startsWith("/filter")) {
+    return searchFromParams(new URLSearchParams(window.location.search));
   }
+  try {
+    const saved = JSON.parse(sessionStorage.getItem("searchFilters") || "null");
+    if (!saved || typeof saved !== "object") return null;
+    const d = (v: unknown) => {
+      const x = typeof v === "string" ? new Date(v) : undefined;
+      return x && !Number.isNaN(x.getTime()) ? x : undefined;
+    };
+    const near = saved.near && Number.isFinite(saved.near.lat) && Number.isFinite(saved.near.lng) ? saved.near : null;
+    return {
+      searchTerm: typeof saved.searchTerm === "string" ? saved.searchTerm : "",
+      placeId: typeof saved.placeId === "string" ? saved.placeId : null,
+      near,
+      from: d(saved.dateRange?.from),
+      to: d(saved.dateRange?.to),
+      guests: sanitizeGuests(saved.guests),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function useWideScreen(query: string) {
+  const [match, setMatch] = React.useState(false);
+  React.useEffect(() => {
+    const mq = window.matchMedia(query);
+    const update = () => setMatch(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [query]);
+  return match;
+}
+
+/** Keeps Tab inside the dialog (unless focus is in a layer above it). */
+function useFocusTrap(ref: React.RefObject<HTMLElement>, active: boolean) {
+  React.useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      const root = ref.current;
+      if (e.key !== "Tab" || !root || !root.contains(document.activeElement)) return;
+      const items = Array.from(
+        root.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+      ).filter((el) => el.offsetParent !== null);
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [ref, active]);
+}
+
+function StepCard({
+  label,
+  value,
+  title,
+  expanded,
+  onExpand,
+  children,
+}: {
+  label: string;
+  value: string;
+  title: string;
+  expanded: boolean;
+  onExpand: () => void;
+  children: React.ReactNode;
+}) {
+  const id = React.useId();
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={onExpand}
+        className="flex min-h-[56px] w-full items-center justify-between gap-4 rounded-2xl bg-white px-5 text-left shadow-[0_1px_6px_rgba(0,0,0,0.08)] ring-1 ring-black/5 transition-transform duration-150 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen motion-reduce:active:scale-100"
+      >
+        <span className="text-sm text-stone">{label}</span>
+        <span className="min-w-0 truncate text-sm font-semibold text-absoluteDark">{value}</span>
+      </button>
+    );
+  }
+  return (
+    <section
+      aria-labelledby={id}
+      className="rounded-3xl bg-white p-5 shadow-[0_6px_24px_rgba(0,0,0,0.12)] ring-1 ring-black/5 animate-in fade-in-0 zoom-in-[0.98] duration-200 motion-reduce:animate-none"
+    >
+      <h3 id={id} className="font-bricolage text-2xl font-semibold text-absoluteDark">
+        {title}
+      </h3>
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+
+export default function FilterModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const {
     priceRange,
-    setPriceRange,
     setResetClicked,
     rooms,
-    showAllAmenities,
-    setShowAllAmenities,
-    showAllProperties,
-    setShowAllProperties,
     addAmenities,
     addPlaceType,
-    setAddPlaceType,
     addPropertyType,
     bookingType,
-    setBookingType,
     petAllowed,
-    setPetAllowed,
     checkinType,
-    setCheckinType,
     clearAllFilters,
-    addAmenitiesList,
-    addPropertiesList,
-    setAddPropertyType,
     activeTab,
     setActiveTab,
-    handleRoomChange,
   } = useAuth();
   const router = useRouter();
-  const [hydrated, setHydrated] = useState(false);
-  const [matches, setMatches] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  type FilterRooms = {
-    bedrooms: number;
-    beds: number;
-    bathrooms: number;
-  };
+  const filterCount = useActiveFilterCount();
+  // below 1025 px there is no header pill, so the sheet also carries the search
+  const desktop = useWideScreen("(min-width: 1025px)");
+  const tab: "search" | "filters" = !desktop && activeTab === "search" ? "search" : "filters";
 
-  useEffect(() => {
-    const reset = sessionStorage.getItem("modalFilterReset");
-    if (reset == "true") {
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [placeId, setPlaceId] = React.useState<string | null>(null);
+  const [near, setNear] = React.useState<{ lat: number; lng: number } | null>(null);
+  const [dateRange, setDateRange] = React.useState<StayRange>({ from: undefined, to: undefined });
+  const [guests, setGuests] = React.useState<Guests>(NO_GUESTS);
+  const [step, setStep] = React.useState<Step>("where");
+  const [openDestination, setOpenDestination] = React.useState(false);
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+
+  const present = usePresence(isOpen, 220);
+  useBackToClose(isOpen, onClose);
+  useOverlayFlag(isOpen);
+  useFocusTrap(dialogRef, isOpen);
+
+  // A reset requested elsewhere (the "Reset filter" chip) applies on next mount.
+  React.useEffect(() => {
+    if (sessionStorage.getItem("modalFilterReset") == "true") {
       clearAllFilters();
       sessionStorage.setItem("modalFilterReset", "false");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => {
-    const updateSize = () => {
-      setIsMobile(window.innerWidth < 1025); // <md breakpoint
+
+  // Opening: show the search being viewed (or the last one), focus the dialog,
+  // freeze the page behind it; closing gives focus and scroll back.
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const s = readSavedSearch();
+    const next = {
+      searchTerm: s?.searchTerm ?? "",
+      placeId: s?.placeId ?? null,
+      near: s?.near ?? null,
+      from: s?.from,
+      to: s?.from ? s?.to : undefined,
+      guests: s?.guests ?? NO_GUESTS,
     };
-    updateSize();
-    window.addEventListener("resize", updateSize);
-    return () => window.removeEventListener("resize", updateSize);
-  }, []);
-  // const [activeTab, setActiveTab] = useState("filters");
-  // interface DateRange {
-  //   from?: Date;
-  //   to?: Date;
-  // }
-  type Guests = {
-    adults: number;
-    children: number;
-    infants: number;
-  };
+    setSearchTerm(next.searchTerm);
+    setPlaceId(next.placeId);
+    setNear(next.near);
+    setDateRange({ from: next.from, to: next.to });
+    setGuests(next.guests);
+    setStep(!next.searchTerm ? "where" : !(next.from && next.to) ? "when" : "who");
 
-  type FilterGuest = {
-    adults: number;
-    children: number;
-    infants: number;
-  };
-  useEffect(() => {
-    if (isOpen) {
-      setCurrentIndex(0);
-
-      // Save current scroll position
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
-      document.body.style.overflow = "hidden";
-
-      // Store scroll position for later restoration
-      document.body.dataset.scrollY = scrollY.toString();
-    } else {
-      // Restore scroll position
-      const scrollY = document.body.dataset.scrollY || "0";
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.overflow = "";
-
-      // Scroll back to original position
-      window.scrollTo(0, parseInt(scrollY, 10));
-
-      // Clean up
-      delete document.body.dataset.scrollY;
-    }
-
+    const opener = document.activeElement as HTMLElement | null;
+    const y = window.scrollY;
+    const body = document.body.style;
+    const prev = { position: body.position, top: body.top, left: body.left, right: body.right, overflow: body.overflow };
+    body.position = "fixed";
+    body.top = `-${y}px`;
+    body.left = "0";
+    body.right = "0";
+    body.overflow = "hidden";
+    const f = requestAnimationFrame(() => dialogRef.current?.focus({ preventScroll: true }));
     return () => {
-      // Cleanup on unmount
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.overflow = "";
-      delete document.body.dataset.scrollY;
+      cancelAnimationFrame(f);
+      Object.assign(body, prev);
+      window.scrollTo(0, y);
+      if (opener && document.contains(opener)) opener.focus({ preventScroll: true });
     };
   }, [isOpen]);
-  // Search state
-  const [destination, setDestination] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  // A picked suggestion (authoritative for the server) or "near me" (~1 km).
-  const [placeId, setPlaceId] = useState<string | null>(null);
-  const [near, setNear] = useState<{ lat: number; lng: number } | null>(null);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
-  const [guests, setGuests] = useState<Guests>({
-    adults: 0,
-    children: 0,
-    infants: 0,
-  });
-  const [openDestination, setOpenDestination] = useState(false);
-  const [openDatePicker, setOpenDatePicker] = useState(false);
 
-  const [openGuests, setOpenGuests] = useState(false);
-
-  const min = 501;
-  const max = 83000;
-  function useMediaQuery(query: string) {
-    useEffect(() => {
-      const media = window.matchMedia(query);
-      setMatches(media.matches);
-
-      const listener = () => setMatches(media.matches);
-      media.addEventListener("change", listener);
-
-      return () => media.removeEventListener("change", listener);
-    }, [query]);
-
-    return matches;
-  }
-
-  const mobile = useMediaQuery("(max-width: 640px)");
-  useEffect(() => {
-    const saved = mobile
-      ? sessionStorage.getItem("mobileFilters")
-      : sessionStorage.getItem("searchFilters");
-    // console.log("ssssssss", saved);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-
-      if (parsed.dateRange) {
-        setDateRange({
-          from: parsed.dateRange.from
-            ? new Date(parsed.dateRange.from)
-            : undefined,
-          to: parsed.dateRange.to ? new Date(parsed.dateRange.to) : undefined,
-        });
-      }
-      if (parsed.searchTerm) setSearchTerm(parsed.searchTerm);
-      setPlaceId(typeof parsed.placeId === "string" ? parsed.placeId : null);
-      setNear(parsed.near && Number.isFinite(parsed.near.lat) && Number.isFinite(parsed.near.lng) ? parsed.near : null);
-      if (parsed.guests) setGuests(parsed.guests);
+  // Remember the sheet's search in this tab, like the desktop pill does.
+  React.useEffect(() => {
+    if (!isOpen) return;
+    try {
+      sessionStorage.setItem(
+        "searchFilters",
+        JSON.stringify({
+          dateRange: { from: dateRange.from ? dateRange.from.toISOString() : null, to: dateRange.to ? dateRange.to.toISOString() : null },
+          searchTerm,
+          placeId,
+          near,
+          guests,
+        }),
+      );
+    } catch {
+      // storage blocked: nothing to remember
     }
+  }, [isOpen, searchTerm, placeId, near, dateRange, guests]);
 
-    // setHydrated(true); // mark as hydrated after first load
-  }, [mobile, isOpen]);
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !openDestination) onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [isOpen, openDestination, onClose]);
 
-  // Save to localStorage ONLY after hydration
-  // useEffect(() => {
-  //   if (!hydrated) return; // skip first run until state is restored
-  //   const filterData = {
-  //     dateRange: {
-  //       from: dateRange?.from ? dateRange.from.toISOString() : null,
-  //       to: dateRange?.to ? dateRange.to.toISOString() : null,
-  //     },
-  //     searchTerm,
-  //     guests,
-  //   };
+  if (!present) return null;
 
-  //   // Save to both keys to ensure compatibility
-  //   mobile
-  //     ? sessionStorage.setItem("mobileFilters", JSON.stringify(filterData))
-  //     : sessionStorage.setItem("searchFilters", JSON.stringify(filterData));
-  // }, [dateRange, searchTerm, guests, hydrated, mobile]);
-  //Guest change
-  const handleGuestChange = (
-    type: keyof Guests,
-    operation: "increment" | "decrement",
-  ) => {
-    setGuests((prev) => ({
-      ...prev,
-      [type]:
-        operation === "increment"
-          ? prev[type] + 1
-          : Math.max(0, prev[type] - 1),
-    }));
-  };
-
-  const totalGuests = guests.adults + guests.children;
-
-  const formatDate = (date: Date) => {
-    if (!date) return "";
-    return format(date, "MMM d");
-  };
-
-  const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.min(Number(e.target.value), priceRange[1] - 1000); // keep gap
-    setPriceRange([value, priceRange[1]]);
-  };
-  const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(Number(e.target.value), priceRange[0] + 1000);
-    setPriceRange([priceRange[0], value]);
-  };
-  const amenities = [
-    {
-      id: "pool",
-      title: "Pool",
-      icon: Pool,
-    },
-    {
-      id: "hot-tub",
-      title: "Hot tub",
-      icon: Bath,
-    },
-
-    {
-      id: "bbq",
-      title: "BBQ grill",
-      icon: Flame,
-    },
-
-    {
-      id: "indoor-fireplace",
-      title: "Indoor fireplace",
-      icon: Fireplace,
-    },
-
-    {
-      id: "exercise",
-      title: "Exercise equipment",
-      icon: Dumbbell,
-    },
-
-    {
-      id: "beach",
-      title: "Beach access",
-      icon: Beach,
-    },
-
-    // Safety Items
-    {
-      id: "smoke-alarm",
-      title: "Smoke alarm",
-      icon: AlertOctagon,
-    },
-
-    {
-      id: "carbon-monoxide",
-      title: "Carbon monoxide alarm",
-      icon: AlertCircle,
-    },
-
-    // Guest Favorites
-    {
-      id: "wifi",
-      title: "Wifi",
-      icon: Wifi,
-    },
-    { id: "tv", title: "TV", icon: Tv },
-    {
-      id: "kitchen",
-      title: "Kitchen",
-      icon: UtensilsIcon,
-    },
-    {
-      id: "washing",
-      title: "Washing machine",
-      icon: Washing,
-    },
-    {
-      id: "free-parking",
-      title: "Free parking on premises",
-      icon: Car,
-    },
-
-    {
-      id: "air-conditioning",
-      title: "Air conditioning",
-      icon: Snowflake,
-    },
-    {
-      id: "workspace",
-      title: "Dedicated workspace",
-      icon: Briefcase,
-    },
-  ];
-
-  // const properties = [
-  //   {
-  //     icon: "/images/property-icons/h.png",
-  //     label: "House",
-  //     route: "house",
-  //   },
-  //   {
-  //     icon: "/images/property-icons/guest.png",
-  //     label: "Guest House",
-  //     route: "guesthouse",
-  //   },
-  //   {
-  //     icon: "/images/property-icons/cottage.png",
-  //     label: "Cottage",
-  //     route: "cottage",
-  //   },
-  //   {
-  //     icon: "/images/property-icons/flats.svg",
-  //     label: "Hotel",
-  //     route: "hotel",
-  //   },
-  //   {
-  //     icon: "/images/property-icons/bungalow.png",
-  //     label: "Bungalow",
-  //     route: "bungalow",
-  //   },
-
-  //   {
-  //     icon: "/images/property-icons/farmhouse.svg",
-  //     label: "Farm House",
-  //     route: "farmhouse",
-  //   },
-  //   {
-  //     icon: "/images/property-icons/villa.svg",
-  //     label: "Villas",
-  //     route: "villa",
-  //   },
-
-  //   {
-  //     icon: "/images/property-icons/condo.png",
-  //     label: "Condo",
-  //     route: "condo",
-  //   },
-  //   {
-  //     icon: "/images/property-icons/houseboat.png",
-  //     label: "House Boat",
-  //     route: "houseboat",
-  //   },
-  //   {
-  //     icon: "/images/property-icons/yurt.png",
-  //     label: "Yurt",
-  //     route: "yurt",
-  //   },
-  //   {
-  //     icon: "/images/property-icons/apartment.svg",
-  //     label: "Apartments",
-  //     route: "apartment",
-  //   },
-  //   {
-  //     icon: "/images/property-icons/cabin.svg",
-  //     label: "Cabin",
-  //     route: "cabin",
-  //   },
-
-  //   // {
-  //   //   icon: "/images/property-icons/pool.svg",
-  //   //   label: "Pool",
-  //   //   route: "farm-house",
-  //   // },
-  //   {
-  //     icon: "/images/property-icons/trending.svg",
-  //     label: "Trending",
-  //     route: "farm-house",
-  //   },
-  //   // {
-  //   //   icon: "/images/property-icons/bed-and-breakfast.svg",
-  //   //   label: "Bed & Breakfast",
-  //   //   route: "farm-house",
-  //   // },
-  //   // {
-  //   //   icon: "/images/property-icons/rooms.svg",
-  //   //   label: "Rooms",
-  //   //   route: "farm-house",
-  //   // },
-  //   // {
-  //   //   icon: "/images/property-icons/beach.svg",
-  //   //   label: "Beach",
-  //   //   route: "farm-house",
-  //   // },
-  //   {
-  //     icon: "/images/property-icons/mansion.svg",
-  //     label: "Town House",
-  //     route: "townhouse",
-  //   },
-  //   {
-  //     icon: "/images/property-icons/historical-home.svg",
-  //     label: "Historical Home",
-  //     route: "farmhouse",
-  //   },
-  //   {
-  //     icon: "/images/property-icons/treehouse.svg",
-  //     label: "Tree House",
-  //     route: "treehouse",
-  //   },
-  // ];
-
-  const visibleAmenities = showAllAmenities ? amenities : amenities.slice(0, 4);
-  const visibleProperties = showAllProperties
-    ? properties
-    : properties.slice(0, 4);
-
-  if (!isOpen) return null;
-  if (process.env.NEXT_PUBLIC_ENV === "dev") {
-    console.log("pri", addPropertyType);
-  }
-  const filterUrl = () =>
+  const url = () =>
     buildFilterUrl({
-        location: near ? "" : searchTerm,
-        placeId: near ? null : placeId,
-        near,
-        from: dateRange?.from,
-        to: dateRange?.to,
-        totalGuests,
-        adults: guests.adults,
-        children: guests.children,
-        infants: guests.infants,
-        propertyType: addPropertyType,
-        priceMin: priceRange[0],
-        priceMax: priceRange[1],
-        placeType: addPlaceType,
-        amenities: addAmenities,
-        bedrooms: rooms?.bedrooms,
-        beds: rooms?.beds,
-        bathrooms: rooms?.bathrooms,
-        bookingType,
-        checkinType,
-        pets: petAllowed,
-      });
-  const submit = () => {
-    router.push(filterUrl());
+      location: near ? "" : searchTerm,
+      placeId: near ? null : placeId,
+      near,
+      from: dateRange.from,
+      to: dateRange.to,
+      totalGuests: capacityGuests(guests),
+      adults: guests.adults,
+      children: guests.children,
+      infants: guests.infants,
+      propertyType: addPropertyType,
+      priceMin: priceRange[0],
+      priceMax: priceRange[1],
+      placeType: addPlaceType,
+      amenities: addAmenities,
+      bedrooms: rooms?.bedrooms,
+      beds: rooms?.beds,
+      bathrooms: rooms?.bathrooms,
+      bookingType,
+      checkinType,
+      pets: petAllowed,
+    });
+  // Leave through the sheet's own history entries so Back from the results
+  // returns to this page, not to a closed sheet.
+  const go = (href: string) => {
+    setResetClicked(false);
+    leaveLayersThen(() => {
+      onClose();
+      router.push(href);
+    });
   };
-  const small = ["tablet", "mobile"];
-  if (!isMobile) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[1003]">
-        {" "}
-        {/*Pc modal filter page make appear above*/}
-        <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] flex flex-col shadow-xl ">
-          {/* Header - Fixed at top */}
-          <div className="flex justify-between items-center border-b px-4 py-3 sticky top-0 bg-white z-10 rounded-t-3xl">
-            <h2 className="text-lg font-semibold">Filters</h2>
-            <button onClick={onClose}>
-              <X className="w-6 h-6" />
-            </button>
-          </div>
+  const clearSearch = () => {
+    setSearchTerm("");
+    setPlaceId(null);
+    setNear(null);
+    setDateRange({ from: undefined, to: undefined });
+    setGuests(NO_GUESTS);
+    setStep("where");
+  };
 
-          {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-8">
-            {/* Type of Place */}
-            <div>
-              <h3 className="text-md font-medium mb-3">Type of place</h3>
-              <div className="flex gap-2">
-                {["Any type", "Room", "Entire Place"].map((type) => (
-                  <button
-                    key={type}
-                    className={
-                      addPlaceType === type
-                        ? "flex-1 border-2 border-black rounded-lg py-2 px-3 text-sm bg-gray-100"
-                        : "flex-1 border rounded-lg py-2 px-3 text-sm hover:bg-gray-100"
-                    }
-                    onClick={() => {
-                      setAddPlaceType(type);
-                    }}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </div>
+  const whenValue =
+    dateRange.from && dateRange.to ? `${format(dateRange.from, "d MMM")} – ${format(dateRange.to, "d MMM")}` : dateRange.from ? `${format(dateRange.from, "d MMM")} – ?` : "Any week";
+  const hasSearch = !!(searchTerm || dateRange.from || guests.adults || guests.children || guests.infants);
+  const closing = !isOpen;
 
-            {/* Price Range */}
-            <div>
-              <h3 className="text-md font-medium mb-3">Price range</h3>
-              <div className="flex justify-between mt-4">
-                <span className="text-sm">₹{priceRange[0]}</span>
-                <span className="text-sm">₹{priceRange[1]}+</span>
-              </div>
-              {/* Slider container */}
-              <div className="relative w-full">
-                {/* Track background */}
-
-                <div className="absolute top-1/2 h-1 w-full bg-gray-300 rounded-full transform -translate-y-1/2" />
-
-                {/* Track filled part */}
-
-                <div
-                  className="absolute top-1/2 h-1 bg-black rounded-full transform -translate-y-1/2"
-                  style={{
-                    left: `${((priceRange[0] - min) / (max - min)) * 100}%`,
-                    right: `${
-                      100 - ((priceRange[1] - min) / (max - min)) * 100
-                    }%`,
-                  }}
-                />
-
-                {/* Min thumb */}
-                <input
-                  type="range"
-                  min={min}
-                  max={max}
-                  value={priceRange[0]}
-                  onChange={handleMinChange}
-                  className="absolute w-full pointer-events-none appearance-none bg-transparent"
-                />
-
-                {/* Max thumb */}
-                <input
-                  type="range"
-                  min={min}
-                  max={max}
-                  value={priceRange[1]}
-                  onChange={handleMaxChange}
-                  className="absolute w-full pointer-events-none appearance-none bg-transparent"
-                />
-
-                {/* Tailwind override styles for thumbs */}
-                <style jsx>
-                  {`
-                    input[type="range"]::-webkit-slider-thumb {
-                      -webkit-appearance: none;
-                      height: 18px;
-                      width: 18px;
-                      border-radius: 9999px;
-                      background: white;
-                      border: 2px solid black;
-                      cursor: pointer;
-                      pointer-events: auto;
-                    }
-                    input[type="range"]::-moz-range-thumb {
-                      height: 18px;
-                      width: 18px;
-                      border-radius: 9999px;
-                      background: white;
-                      border: 2px solid black;
-                      cursor: pointer;
-                      pointer-events: auto;
-                    }
-                  `}
-                </style>
-              </div>
-
-              {/* Labels */}
-            </div>
-
-            {/* Rooms & Beds */}
-            <div>
-              <h3 className="text-md font-medium mb-3">Rooms and beds</h3>
-              {(["bedrooms", "beds", "bathrooms"] as (keyof FilterRooms)[]).map(
-                (field) => (
-                  <div
-                    key={field}
-                    className="flex justify-between items-center py-2 border-b last:border-none"
-                  >
-                    <span className="capitalize">{field}</span>
-                    <div className="flex items-center gap-3">
-                      <button
-                        className="p-2 border rounded-full disabled:opacity-50"
-                        onClick={() => handleRoomChange(field, -1)}
-                        disabled={rooms[field] === 0}
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <span>{rooms[field] || "Any"}</span>
-                      <button
-                        className="p-2 border rounded-full"
-                        onClick={() => handleRoomChange(field, 1)}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ),
-              )}
-            </div>
-
-            {/* Amenities */}
-            <div>
-              <h3 className="text-md font-medium mb-3">Amenities</h3>
-              <div className="flex flex-wrap gap-2">
-                {visibleAmenities.map((amenity) => (
-                  <span
-                    key={amenity?.id}
-                    className={
-                      addAmenities.includes(amenity?.id)
-                        ? "flex px-3 py-2 border-2 border-black items-center rounded-full text-sm cursor-pointer bg-gray-100"
-                        : "flex px-3 py-2 border items-center rounded-full text-sm cursor-pointer hover:bg-gray-100"
-                    }
-                    onClick={() => {
-                      addAmenitiesList(amenity?.id);
-                    }}
-                  >
-                    <></>
-                    <span className="pr-2">
-                      <amenity.icon />
+  return (
+    <div className={cn("fixed inset-0 z-[1003] flex items-end justify-center md:items-center md:p-6", closing && "pointer-events-none")} role="presentation">
+      <div
+        aria-hidden="true"
+        onClick={onClose}
+        className={cn(
+          "absolute inset-0 hidden bg-black/40 md:block motion-reduce:animate-none",
+          closing ? "animate-out fade-out-0 duration-200 fill-mode-forwards" : "animate-in fade-in-0 duration-300",
+        )}
+      />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={tab === "search" ? "Search stays" : "Filters"}
+        tabIndex={-1}
+        className={cn(
+          "relative flex h-[100dvh] w-full flex-col bg-white font-poppins outline-none md:h-auto md:max-h-[min(88vh,860px)] md:max-w-[640px] md:overflow-hidden md:rounded-3xl md:shadow-2xl",
+          "motion-reduce:animate-none",
+          closing
+            ? "animate-out fade-out-0 slide-out-to-bottom duration-200 ease-in fill-mode-forwards md:slide-out-to-bottom-4 md:zoom-out-95"
+            : "animate-in fade-in-0 slide-in-from-bottom duration-300 ease-out md:slide-in-from-bottom-4 md:zoom-in-95",
+        )}
+      >
+        {/* Header */}
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] md:px-6 md:py-4">
+          {desktop ? (
+            <h2 className="font-bricolage text-lg font-semibold text-absoluteDark">Filters</h2>
+          ) : (
+            <div role="tablist" aria-label="Search or filter" className="relative grid grid-cols-2 rounded-full bg-gray-100 p-1">
+              <span
+                aria-hidden="true"
+                className="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-white shadow-sm ring-1 ring-black/5 transition-transform duration-300 ease-out motion-reduce:transition-none"
+                style={{ transform: tab === "filters" ? "translateX(100%)" : "none" }}
+              />
+              {(["search", "filters"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t}
+                  onClick={() => setActiveTab(t)}
+                  className={cn(
+                    "relative z-[1] inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full px-4 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen",
+                    tab === t ? "text-absoluteDark" : "text-stone hover:text-absoluteDark",
+                  )}
+                >
+                  {t === "search" ? <Search className="h-4 w-4" aria-hidden="true" /> : <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />}
+                  {t === "search" ? "Search" : "Filters"}
+                  {t === "filters" && filterCount > 0 ? (
+                    <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-absoluteDark px-1.5 text-[11px] font-semibold leading-none text-white">
+                      {filterCount}
                     </span>
-                    <span className="pr-2 py-2">{amenity?.title}</span>
-                  </span>
-                ))}
-              </div>
-              <button
-                className="mt-3 text-sm text-blue-600 underline"
-                onClick={() => setShowAllAmenities((prev) => !prev)}
-              >
-                {showAllAmenities ? "Show less" : "Show more"}
-              </button>
+                  ) : null}
+                </button>
+              ))}
             </div>
-
-            {/* Booking Options */}
-            <div>
-              <h3 className="text-md font-medium mb-3">Booking Options</h3>
-              <div className="flex gap-2 ">
-                <div
-                  className={
-                    bookingType === "instant"
-                      ? "flex px-3 py-3 border-2 border-black items-center rounded-full text-sm cursor-pointer bg-gray-100"
-                      : "flex px-3 py-3 border   items-center rounded-full text-sm cursor-pointer hover:bg-gray-100"
-                  }
-                  onClick={() => {
-                    if (bookingType == "") {
-                      setBookingType("instant");
-                    } else {
-                      setBookingType("");
-                    }
-                  }}
-                >
-                  <span className="pr-2">
-                    <Zap className=" h-6 w-6 text-gray-600" />
-                  </span>
-                  <span className="pr-2">Instant</span>
-                </div>
-                <div
-                  className={
-                    checkinType === "self-check-in"
-                      ? "flex px-3 py-2 border-2 border-black items-center rounded-full text-sm cursor-pointer bg-gray-100"
-                      : "flex px-3 py-2 border   items-center rounded-full text-sm cursor-pointer hover:bg-gray-100"
-                  }
-                  onClick={() => {
-                    if (checkinType == "") {
-                      setCheckinType("self-check-in");
-                    } else {
-                      setCheckinType("");
-                    }
-                  }}
-                >
-                  <span className="pr-2">
-                    <KeyRound className=" h-6 w-6 text-gray-600" />
-                  </span>
-                  <span className="pr-2">Self Checkin</span>
-                </div>
-                <div
-                  className={
-                    petAllowed === "no_pets"
-                      ? "flex px-3 py-2 border-2 border-black items-center rounded-full text-sm cursor-pointer bg-gray-100"
-                      : "flex px-3 py-2 border   items-center rounded-full text-sm cursor-pointer hover:bg-gray-100"
-                  }
-                  onClick={() => {
-                    if (petAllowed == "") {
-                      setPetAllowed("no_pets");
-                    } else {
-                      setPetAllowed("");
-                    }
-                  }}
-                >
-                  <span className="pr-2">
-                    <PawPrint className=" h-6 w-6 text-gray-600" />
-                  </span>
-                  <span className="pr-2">No Pets</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Property Type */}
-            <div>
-              <h3 className="text-md font-medium mb-3">Property Type</h3>
-              <div className="flex flex-wrap gap-2">
-                {visibleProperties.map((property, index) => (
-                  <>
-                    <div
-                      className={
-                        addPropertyType == property?.route
-                          ? "flex px-3 py-2 border-2 border-black items-center rounded-full text-sm cursor-pointer bg-gray-100"
-                          : "flex px-3 py-2 border   items-center rounded-full text-sm cursor-pointer hover:bg-gray-100"
-                      }
-                      onClick={() => {
-                        setAddPropertyType(property?.route);
-                      }}
-                    >
-                      <Image
-                        width={30}
-                        height={30}
-                        src={property.icon}
-                        alt={property.label}
-                        className="md:w-16  w-8 h-8  object-contain "
-                      />
-                      <span key={index}>{property?.label}</span>
-                    </div>
-                  </>
-                ))}
-              </div>
-              <button
-                className="mt-3 text-sm text-blue-600 underline"
-                onClick={() => setShowAllProperties((prev) => !prev)}
-              >
-                {showAllProperties ? "Show less" : "Show more"}
-              </button>
-            </div>
-          </div>
-
-          {/* Footer - Fixed at bottom */}
-          <div className="border-t px-4 py-3 flex justify-between items-center sticky bottom-0 bg-white z-10 rounded-b-3xl">
-            <button
-              className="text-sm underline text-gray-600 hover:text-gray-800"
-              onClick={clearAllFilters}
-            >
-              Clear all
-            </button>
-
-            <button
-              onClick={() => {
-                // router.push(
-                //   `/filter?propertyType=${
-                //     addPropertyType ? addPropertyType : ""
-                //   }&location=${""}&from=${""}&to=${""}&adults=${""}&senior=${""}&children=${""}&infants=${""}&priceMin=${
-                //     priceRange[0] ? priceRange[0] : ""
-                //   }&priceMax=${priceRange[1] ? priceRange[1] : ""}&placeType=${
-                //     addPlaceType ? addPlaceType.replaceAll(" ", "_") : ""
-                //   }&amenities=${
-                //     addAmenities.length != 0 ? newAmenities : ""
-                //   }&bedrooms=${rooms?.bedrooms ? rooms?.bedrooms : ""}&beds=${
-                //     rooms?.beds ? rooms?.beds : ""
-                //   }&bathrooms=${
-                //     rooms?.bathrooms ? rooms?.bathrooms : ""
-                //   }&bookingType=${bookingType ? bookingType : ""}&checkinType=${
-                //     checkinType ? checkinType : ""
-                //   }&pets=${petAllowed}`
-                // );
-                setResetClicked(false);
-                router.push(filterUrl());
-                onClose();
-              }}
-              className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              Show new
-            </button>
-          </div>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full text-absoluteDark transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen"
+          >
+            <X className="h-5 w-5" aria-hidden="true" />
+          </button>
         </div>
-      </div>
-    );
-  } else {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[1003] p-2 md:p-4">
-        <div className="bg-white rounded-lg w-full max-w-lg max-h-[65vh] md:max-h-[90vh] flex flex-col shadow-xl">
-          {/* Header - Fixed at top */}
-          <div className="flex justify-between items-center border-b px-4 py-3 sticky top-0 bg-white z-10 rounded-t-lg md:rounded-t-3xl">
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setActiveTab("search")}
-                className={`px-3 py-1 rounded-full text-sm ${
-                  activeTab === "search" ? "bg-black text-white" : "bg-gray-100"
-                }`}
-              >
-                Search
-              </button>
-              <button
-                onClick={() => setActiveTab("filters")}
-                className={`px-3 py-1 rounded-full text-sm ${
-                  activeTab === "filters"
-                    ? "bg-black text-white"
-                    : "bg-gray-100"
-                }`}
-              >
-                Filters
-              </button>
-            </div>
-            <button onClick={onClose} className="p-1">
-              <X className="w-5 h-5 md:w-6 md:h-6" />
-            </button>
-          </div>
 
-          {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-6 md:space-y-8">
-            {activeTab === "search" ? (
-              /* SEARCH TAB CONTENT */
-              <div className="space-y-4">
-                {/* Destination Search */}
-                <div>
-                  <h3 className="text-md font-medium mb-2">Where to?</h3>
-                  {/* Full-screen on phones: a popover flips under the on-screen
-                      keyboard and hides its own input. */}
-                  <Button
+        {/* Body */}
+        <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain", tab === "search" ? "bg-gray-50 px-3 py-4 md:px-6" : "px-4 md:px-6")}>
+          {tab === "search" ? (
+            <div key="search" className="space-y-3 animate-in fade-in-0 duration-200 motion-reduce:animate-none">
+              <StepCard label="Where" value={searchTerm || "Anywhere"} title="Where to?" expanded={step === "where"} onExpand={() => setStep("where")}>
+                <button
+                  type="button"
+                  onClick={() => setOpenDestination(true)}
+                  aria-haspopup="dialog"
+                  aria-expanded={openDestination}
+                  className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl border border-gray-300 px-4 text-left transition-colors hover:border-absoluteDark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen"
+                >
+                  {searchTerm ? <MapPin className="h-5 w-5 shrink-0 text-primaryGreen" aria-hidden="true" /> : <Search className="h-5 w-5 shrink-0 text-absoluteDark" aria-hidden="true" />}
+                  <span className={cn("min-w-0 flex-1 truncate text-base", searchTerm ? "font-medium text-absoluteDark" : "text-stone")}>{searchTerm || "Search destinations"}</span>
+                </button>
+                {searchTerm ? (
+                  <div className="mt-3 flex justify-between">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchTerm("");
+                        setPlaceId(null);
+                        setNear(null);
+                      }}
+                      className="min-h-[44px] rounded-full px-1 text-sm font-semibold text-absoluteDark underline underline-offset-4"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStep("when")}
+                      className="min-h-[44px] rounded-full bg-absoluteDark px-6 text-sm font-semibold text-white transition-transform active:scale-95 motion-reduce:active:scale-100"
+                    >
+                      Next
+                    </button>
+                  </div>
+                ) : null}
+              </StepCard>
+
+              <StepCard label="When" value={whenValue} title="When's your trip?" expanded={step === "when"} onExpand={() => setStep("when")}>
+                <StayCalendar
+                  range={dateRange}
+                  focus={dateRange.from ? "to" : "from"}
+                  months={1}
+                  onChange={(r) => {
+                    setDateRange(r);
+                    if (r.from && r.to) setStep("who");
+                  }}
+                />
+                <p className="mt-3 text-sm text-graphite" aria-live="polite">
+                  {nightsLabel(dateRange)}
+                </p>
+                <div className="mt-3 flex items-center justify-between">
+                  <button
                     type="button"
-                    variant="outline"
-                    className="w-full justify-start px-4 h-12 border-gray-300"
-                    aria-haspopup="dialog"
-                    aria-expanded={openDestination}
-                    onClick={() => setOpenDestination(true)}
+                    onClick={() => (dateRange.from ? setDateRange({ from: undefined, to: undefined }) : setStep("who"))}
+                    className="min-h-[44px] rounded-full px-1 text-sm font-semibold text-absoluteDark underline underline-offset-4"
                   >
-                    <HomeIcon className="mr-2 h-4 w-4" />
-                    <div className="flex flex-col justify-start items-start">
-                      <span className="text-sm">
-                        {searchTerm ? searchTerm : "Search destinations"}
-                      </span>
-                    </div>
-                  </Button>
-                  <DestinationSheet
-                    open={openDestination}
-                    onClose={() => setOpenDestination(false)}
-                  >
-                    <LocationCombobox
-                      variant="sheet"
-                      value={searchTerm}
-                      onTextChange={(text) => {
-                        setSearchTerm(text);
-                        setPlaceId(null);
-                        setNear(null);
-                      }}
-                      onPick={(place) => {
-                        setSearchTerm(place.name);
-                        setPlaceId(place.id);
-                        setNear(null);
-                        setOpenDestination(false);
-                        setOpenDatePicker(true);
-                      }}
-                      onNearMe={(point) => {
-                        setSearchTerm("Nearby");
-                        setPlaceId(null);
-                        setNear(point);
-                        setOpenDestination(false);
-                        setOpenDatePicker(true);
-                      }}
-                      onSubmitText={() => {
-                        setOpenDestination(false);
-                        submit();
-                        onClose();
-                      }}
-                      onPickStay={(stayId) => {
-                        setOpenDestination(false);
-                        onClose();
-                        router.push(`/stay/${stayId}`);
-                      }}
-                    />
-                  </DestinationSheet>
-                </div>
-
-                {/* Date Range Picker */}
-                <div>
-                  <h3 className="text-md font-medium mb-2">When?</h3>
-                  <Popover
-                    open={openDatePicker}
-                    onOpenChange={setOpenDatePicker}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start px-4 h-12 border-gray-300"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        <div className="flex flex-col items-start">
-                          <span className="text-sm">
-                            {dateRange?.from && dateRange?.to
-                              ? `${formatDate(dateRange.from)} - ${formatDate(
-                                  dateRange.to,
-                                )}`
-                              : "Check in - Check out"}
-                          </span>
-                        </div>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="bg-white mt-2 font-poppins w-auto p-0 z-[9999]"
-                      align="start"
-                    >
-                      <Calendar
-                        mode="range"
-                        selected={dateRange}
-                        onSelect={setDateRange}
-                        numberOfMonths={1}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {/* Guests Selection */}
-                <div>
-                  <h3 className="text-md font-medium mb-2">Who's coming?</h3>
-                  <Popover open={openGuests} onOpenChange={setOpenGuests}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start px-4 h-12 border-gray-300"
-                      >
-                        <UserIcon className="mr-2 h-4 w-4" />
-                        <div className="flex flex-col items-start">
-                          <span className="text-sm">
-                            {totalGuests > 0
-                              ? `${totalGuests} guest${
-                                  totalGuests !== 1 ? "s" : ""
-                                }`
-                              : "Add guests"}
-                          </span>
-                        </div>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-full max-w-xs p-4 z-[9999]"
-                      align="start"
-                    >
-                      <div className="space-y-4">
-                        {(
-                          [
-                            "adults",
-                            "children",
-                            "infants",
-                          ] as (keyof FilterGuest)[]
-                        ).map((type) => (
-                          <div
-                            key={type}
-                            className="flex items-center justify-between"
-                          >
-                            <div>
-                              <div className="font-medium capitalize">
-                                {type}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {type === "adults"
-                                  ? "Ages 13 or above"
-                                  : type === "children"
-                                    ? "Ages 2-12"
-                                    : "Under 2"}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() =>
-                                  handleGuestChange(type, "decrement")
-                                }
-                                disabled={guests[type] === 0}
-                                className="h-8 w-8 rounded-full"
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <span className="w-6 text-center">
-                                {guests[type]}
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() =>
-                                  handleGuestChange(type, "increment")
-                                }
-                                className="h-8 w-8 rounded-full"
-                              >
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {/* Search Button */}
-                {/* <Button
-                  className="w-full h-12 bg-black text-white hover:bg-gray-800"
-                  onClick={() => {
-                    // Handle search navigation
-                    router.push(
-                      `/filter?location=${destination || ""}&from=${
-                        dateRange.from || ""
-                      }&to=${dateRange.to || ""}&adults=${
-                        guests.adults || ""
-                      }&children=${guests.children || ""}&infants=${
-                        guests.infants || ""
-                      }`
-                    );
-                    onClose();
-                  }}
-                >
-                  Search
-                </Button> */}
-              </div>
-            ) : (
-              /* FILTERS TAB CONTENT */
-              <>
-                {/* Type of Place */}
-                <div>
-                  <h3 className="text-md font-medium mb-3">Type of place</h3>
-                  <div className="flex flex-col xs:flex-row gap-2">
-                    {["Any type", "Room", "Entire Place"].map((type) => (
-                      <button
-                        key={type}
-                        className={
-                          addPlaceType === type
-                            ? "border-2 border-black rounded-lg py-2 px-3 text-sm bg-gray-100"
-                            : "border rounded-lg py-2 px-3 text-sm hover:bg-gray-100"
-                        }
-                        onClick={() => {
-                          setAddPlaceType(type);
-                        }}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Price Range */}
-                <div>
-                  <h3 className="text-md font-medium mb-3">Price range</h3>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm">₹{priceRange[0]}</span>
-                    <span className="text-sm">₹{priceRange[1]}+</span>
-                  </div>
-
-                  {/* Slider container */}
-                  <div className="relative w-full mb-2">
-                    {/* Track background */}
-                    <div className="absolute top-1/2 h-1.5 w-full bg-gray-300 rounded-full transform -translate-y-1/2" />
-
-                    {/* Track filled part */}
-                    <div
-                      className="absolute top-1/2 h-1.5 bg-black rounded-full transform -translate-y-1/2"
-                      style={{
-                        left: `${((priceRange[0] - min) / (max - min)) * 100}%`,
-                        right: `${
-                          100 - ((priceRange[1] - min) / (max - min)) * 100
-                        }%`,
-                      }}
-                    />
-
-                    {/* Min thumb */}
-                    <input
-                      type="range"
-                      min={min}
-                      max={max}
-                      value={priceRange[0]}
-                      onChange={handleMinChange}
-                      className="absolute w-full pointer-events-none appearance-none bg-transparent"
-                    />
-
-                    {/* Max thumb */}
-                    <input
-                      type="range"
-                      min={min}
-                      max={max}
-                      value={priceRange[1]}
-                      onChange={handleMaxChange}
-                      className="absolute w-full pointer-events-none appearance-none bg-transparent"
-                    />
-
-                    {/* Tailwind override styles for thumbs */}
-                    <style jsx>
-                      {`
-                        input[type="range"]::-webkit-slider-thumb {
-                          -webkit-appearance: none;
-                          height: 20px;
-                          width: 20px;
-                          border-radius: 9999px;
-                          background: white;
-                          border: 2px solid black;
-                          cursor: pointer;
-                          pointer-events: auto;
-                        }
-                        input[type="range"]::-moz-range-thumb {
-                          height: 20px;
-                          width: 20px;
-                          border-radius: 9999px;
-                          background: white;
-                          border: 2px solid black;
-                          cursor: pointer;
-                          pointer-events: auto;
-                        }
-                      `}
-                    </style>
-                  </div>
-                </div>
-
-                {/* Rooms & Beds */}
-                <div>
-                  <h3 className="text-md font-medium mb-3">Rooms and beds</h3>
-                  {(
-                    ["bedrooms", "beds", "bathrooms"] as (keyof FilterRooms)[]
-                  ).map((field) => (
-                    <div
-                      key={field}
-                      className="flex justify-between items-center py-3 border-b last:border-none"
-                    >
-                      <span className="capitalize text-sm md:text-base">
-                        {field}
-                      </span>
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <button
-                          className="p-1 md:p-2 border rounded-full disabled:opacity-50"
-                          onClick={() => handleRoomChange(field, -1)}
-                          disabled={rooms[field] === 0}
-                        >
-                          <Minus className="w-3 h-3 md:w-4 md:h-4" />
-                        </button>
-                        <span className="text-sm md:text-base w-6 text-center">
-                          {rooms[field] || "Any"}
-                        </span>
-                        <button
-                          className="p-1 md:p-2 border rounded-full"
-                          onClick={() => handleRoomChange(field, 1)}
-                        >
-                          <Plus className="w-3 h-3 md:w-4 md:h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Amenities */}
-                <div>
-                  <h3 className="text-md font-medium mb-3">Amenities</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {visibleAmenities.map((amenity) => (
-                      <div
-                        key={amenity.id}
-                        className={
-                          addAmenities.includes(amenity.id)
-                            ? "flex items-center p-2 border-2 border-black rounded-lg text-sm cursor-pointer bg-gray-100"
-                            : "flex items-center p-2 border rounded-lg text-sm cursor-pointer hover:bg-gray-100"
-                        }
-                        onClick={() => {
-                          addAmenitiesList(amenity.id);
-                        }}
-                      >
-                        <amenity.icon className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span className="truncate">{amenity.title}</span>
-                      </div>
-                    ))}
-                  </div>
+                    {dateRange.from ? "Clear" : "Skip"}
+                  </button>
                   <button
-                    className="mt-3 text-sm text-blue-600 underline"
-                    onClick={() => setShowAllAmenities((prev) => !prev)}
+                    type="button"
+                    onClick={() => setStep("who")}
+                    className="min-h-[44px] rounded-full bg-absoluteDark px-6 text-sm font-semibold text-white transition-transform active:scale-95 motion-reduce:active:scale-100"
                   >
-                    {showAllAmenities ? "Show less" : "Show more"}
+                    Next
                   </button>
                 </div>
+              </StepCard>
 
-                {/* Booking Options */}
-                <div>
-                  <h3 className="text-md font-medium mb-3">Booking Options</h3>
-                  <div className="grid grid-cols-1 xs:grid-cols-3 gap-2">
-                    <div
-                      className={
-                        bookingType === "instant"
-                          ? "flex flex-col items-center justify-center p-2 border-2 border-black rounded-lg text-sm cursor-pointer bg-gray-100"
-                          : "flex flex-col items-center justify-center p-2 border rounded-lg text-sm cursor-pointer hover:bg-gray-100"
-                      }
-                      onClick={() => {
-                        setBookingType(
-                          bookingType === "instant" ? "" : "instant",
-                        );
-                      }}
-                    >
-                      <Zap className="w-5 h-5 mb-1 text-gray-600" />
-                      <span className="text-xs text-center">Instant</span>
-                    </div>
-                    <div
-                      className={
-                        checkinType === "self-check-in"
-                          ? "flex flex-col items-center justify-center p-2 border-2 border-black rounded-lg text-sm cursor-pointer bg-gray-100"
-                          : "flex flex-col items-center justify-center p-2 border rounded-lg text-sm cursor-pointer hover:bg-gray-100"
-                      }
-                      onClick={() => {
-                        setCheckinType(
-                          checkinType === "self-check-in"
-                            ? ""
-                            : "self-check-in",
-                        );
-                      }}
-                    >
-                      <KeyRound className="w-5 h-5 mb-1 text-gray-600" />
-                      <span className="text-xs text-center">Self Checkin</span>
-                    </div>
-                    <div
-                      className={
-                        petAllowed === "no_pets"
-                          ? "flex flex-col items-center justify-center p-2 border-2 border-black rounded-lg text-sm cursor-pointer bg-gray-100"
-                          : "flex flex-col items-center justify-center p-2 border rounded-lg text-sm cursor-pointer hover:bg-gray-100"
-                      }
-                      onClick={() => {
-                        setPetAllowed(
-                          petAllowed === "no_pets" ? "" : "no_pets",
-                        );
-                      }}
-                    >
-                      <PawPrint className="w-5 h-5 mb-1 text-gray-600" />
-                      <span className="text-xs text-center">No Pets</span>
-                    </div>
-                  </div>
-                </div>
+              <StepCard label="Who" value={guestSummary(guests) || "Add guests"} title="Who's coming?" expanded={step === "who"} onExpand={() => setStep("who")}>
+                <GuestCounter guests={guests} onChange={setGuests} size="lg" />
+              </StepCard>
+            </div>
+          ) : (
+            <div key="filters" className="animate-in fade-in-0 duration-200 motion-reduce:animate-none">
+              <FilterPanel size={desktop ? "md" : "lg"} />
+            </div>
+          )}
+        </div>
 
-                {/* Property Type */}
-                <div>
-                  <h3 className="text-md font-medium mb-3">Property Type</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {visibleProperties.map((property, index) => (
-                      <div
-                        key={index}
-                        className={
-                          addPropertyType === property.route
-                            ? "flex flex-col items-center justify-center p-2 border-2 border-black rounded-lg text-sm cursor-pointer bg-gray-100"
-                            : "flex flex-col items-center justify-center p-2 border rounded-lg text-sm cursor-pointer hover:bg-gray-100"
-                        }
-                        onClick={() => {
-                          setAddPropertyType(
-                            addPropertyType === property.route
-                              ? ""
-                              : property.route,
-                          );
-                        }}
-                      >
-                        <Image
-                          width={24}
-                          height={24}
-                          src={property.icon}
-                          alt={property.label}
-                          className="w-6 h-6 mb-1 object-contain"
-                        />
-                        <span className="text-xs text-center">
-                          {property.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    className="mt-3 text-sm text-blue-600 underline"
-                    onClick={() => setShowAllProperties((prev) => !prev)}
-                  >
-                    {showAllProperties ? "Show less" : "Show more"}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Footer - Fixed at bottom */}
-          <div className="border-t px-4 py-3 flex flex-col xs:flex-row justify-between items-center gap-3 sticky bottom-0 bg-white z-10 rounded-b-lg md:rounded-b-3xl">
-            <button
-              className="text-sm underline text-gray-600 hover:text-gray-800 order-2 xs:order-1"
-              onClick={() => {
-                clearAllFilters();
-                setSearchTerm("");
-                setPlaceId(null);
-                setNear(null);
-                setGuests({ adults: 0, children: 0, infants: 0 });
-                setDateRange({ from: undefined, to: undefined });
-                sessionStorage.setItem(
-                  "mobileFilters",
-                  JSON.stringify({
-                    dateRange: {
-                      from: dateRange?.from,
-                      to: dateRange?.to,
-                    },
-                    searchTerm,
-                    guests,
-                  }),
-                );
-              }}
-            >
-              Clear all
-            </button>
-
-            <button
-              onClick={() => {
-                router.push(filterUrl());
-                onClose();
-              }}
-              className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors w-full xs:w-auto order-1 xs:order-2"
-            >
-              Show results
-            </button>
-          </div>
+        {/* Footer */}
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-gray-100 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:px-6 md:py-4">
+          <button
+            type="button"
+            onClick={tab === "search" ? clearSearch : clearAllFilters}
+            disabled={tab === "search" ? !hasSearch : filterCount === 0}
+            className="min-h-[44px] rounded-full px-2 text-sm font-semibold text-absoluteDark underline underline-offset-4 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline disabled:hover:bg-transparent"
+          >
+            Clear all
+          </button>
+          <button
+            type="button"
+            onClick={() => go(url())}
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-primaryGreen px-6 text-base font-semibold text-white shadow-sm transition-[background-color,transform] duration-150 hover:bg-brightGreen active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-absoluteDark focus-visible:ring-offset-2 motion-reduce:active:scale-100"
+          >
+            {tab === "search" ? <Search className="h-5 w-5" aria-hidden="true" /> : null}
+            {tab === "search" ? "Search" : "Show results"}
+          </button>
         </div>
       </div>
-    );
-  }
+
+      <DestinationSheet open={openDestination} onClose={() => setOpenDestination(false)}>
+        <LocationCombobox
+          variant="sheet"
+          value={searchTerm}
+          onTextChange={(text) => {
+            setSearchTerm(text);
+            setPlaceId(null);
+            setNear(null);
+          }}
+          onPick={(place) => {
+            setSearchTerm(place.name);
+            setPlaceId(place.id);
+            setNear(null);
+            setOpenDestination(false);
+            setStep("when");
+          }}
+          onNearMe={(point) => {
+            setSearchTerm("Nearby");
+            setPlaceId(null);
+            setNear(point);
+            setOpenDestination(false);
+            setStep("when");
+          }}
+          onSubmitText={() => go(url())}
+          onPickStay={(stayId) => go(`/stay/${stayId}`)}
+        />
+      </DestinationSheet>
+    </div>
+  );
 }

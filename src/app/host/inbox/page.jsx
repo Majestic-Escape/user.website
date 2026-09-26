@@ -47,6 +47,10 @@ import { useSendLifecycle } from "@/hooks/useSendLifecycle";
 import { useConnectionBadge } from "@/hooks/useConnectionBadge";
 import { useComposerDrafts } from "@/hooks/useComposerDrafts";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat/reply";
+import { getCachedThread, setCachedThread } from "@/lib/chat/threadCache";
+import { clearSession } from "@/lib/session";
+import { goToLogin } from "@/lib/auth-return";
+import { useRouter } from "next/navigation";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
@@ -66,6 +70,7 @@ export default function HostInboxPage() {
     };
   });
 
+  const router = useRouter();
   const [conversations, setConversations] = useState(bootstrap.conversations);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -294,8 +299,11 @@ export default function HostInboxPage() {
     // Swap the thread out in the same render as the header, so the new
     // header never paints over the previous thread's messages.
     if (conv.id !== selectedConversationRef.current?.id) {
-      setMessages([]);
-      if (tokenRef.current) setIsLoadingMessages(true); // the load effect takes it from here
+      // Last-seen copy of the thread (if any) paints now; the load effect
+      // revalidates it.
+      const cached = getCachedThread(bootstrap.userId, "host", conv.id);
+      setMessages(cached ? (reconcileHistoryRef.current ? reconcileHistoryRef.current(cached) : cached) : []);
+      if (tokenRef.current) setIsLoadingMessages(!cached); // the load effect takes it from here
     }
     setSelectedConversation(conv);
     // Push a history entry on mobile so the browser back button returns to the list
@@ -572,6 +580,14 @@ export default function HostInboxPage() {
     }
     initCalledRef.current = true;
 
+    // The chat server no longer accepts this session (signed out everywhere,
+    // banned, expired): nothing cached for the account may stay on screen or
+    // on the device.
+    const sessionRejected = () => {
+      clearSession();
+      goToLogin(router);
+    };
+
     // Silent refresh used after a reconnect and when the server announces a
     // conversation we have not seen; never touches isLoading and never
     // replaces the list with nothing.
@@ -580,6 +596,7 @@ export default function HostInboxPage() {
         const response = await fetch(`${CHAT_URL}/api/chat/conversations?role=host`, {
           headers: { Authorization: `Bearer ${tokenRef.current}` },
         });
+        if (response.status === 401) return sessionRejected();
         if (!response.ok) return;
         const data = await response.json();
         if (!data.success) return;
@@ -611,6 +628,7 @@ export default function HostInboxPage() {
           },
         });
 
+        if (response.status === 401) return sessionRejected();
         if (!response.ok) throw new Error("Failed to load conversations");
 
         const data = await response.json();
@@ -695,17 +713,19 @@ export default function HostInboxPage() {
   useEffect(() => {
     if (!selectedConversation || !tokenRef.current) return;
 
-    // Clear messages immediately when switching conversations to prevent stale data
-    setMessages([]);
-
     // A slow fetch for the thread just left must not land on the one now open
     // (its messages showed under the new thread's header until the new
     // thread's own response arrived). The cleanup marks the request stale.
     let stale = false;
     const conversationId = selectedConversation.id;
 
+    // Paint the thread as it was last seen (this device, this account) and
+    // revalidate; otherwise clear it so no other thread's messages linger.
+    const cached = getCachedThread(bootstrap.userId, "host", conversationId);
+    setMessages(cached ? (reconcileHistoryRef.current ? reconcileHistoryRef.current(cached) : cached) : []);
+
     async function loadMessages() {
-      setIsLoadingMessages(true);
+      setIsLoadingMessages(!cached);
       try {
         const response = await fetch(
           `${CHAT_URL}/api/chat/conversations/${conversationId}/messages?limit=50`,
@@ -739,6 +759,15 @@ export default function HostInboxPage() {
       stale = true;
     };
   }, [selectedConversation?.id]);
+
+  // Keep the open thread's device copy current: history, live messages and
+  // read receipts are what the next visit paints first (threadCache keeps
+  // only this thread's server messages, never local unsent copies).
+  const cacheConversationId = selectedConversation?.id;
+  useEffect(() => {
+    if (!cacheConversationId || isLoadingMessages) return;
+    setCachedThread(bootstrap.userId, "host", cacheConversationId, messages);
+  }, [messages, cacheConversationId, isLoadingMessages, bootstrap.userId]);
 
   // After a reconnect, re-fetch the open thread and merge it into what is on
   // screen (server copies win by id / clientMessageId; local unresolved sends

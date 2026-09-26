@@ -14,6 +14,24 @@ import { goToLogin } from '@/lib/auth-return'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
+  /**
+   * Render straight away when a stored token has not expired, and verify it in
+   * the background (the inbox: its cached conversations paint instantly, and
+   * every request it makes is authenticated by the server anyway). A rejected
+   * token still tears the session down and goes to login; an unreachable
+   * server leaves the page as it is.
+   */
+  optimistic?: boolean
+}
+
+// exp (seconds) from the JWT payload; a token without one never "expires" here.
+function isExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return typeof payload?.exp === 'number' && payload.exp * 1000 <= Date.now()
+  } catch {
+    return true
+  }
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5005/api/v1'
@@ -28,14 +46,18 @@ type Status = 'checking' | 'ok' | 'denied' | 'unavailable'
 // retry state instead — a brief backend hiccup must not log a host out.
 // The API still enforces auth on every request, so nothing here is a
 // security boundary.
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, optimistic = false }: ProtectedRouteProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const [status, setStatus] = useState<Status>(() =>
-    isRecentlyVerified(readStoredToken()) ? 'ok' : 'checking',
-  )
+  const [status, setStatus] = useState<Status>(() => {
+    const token = readStoredToken()
+    if (isRecentlyVerified(token)) return 'ok'
+    return optimistic && token && !isExpired(token) ? 'ok' : 'checking'
+  })
 
-  const checkAuth = useCallback(async () => {
+  // background: the page is already on screen — only a definite rejection
+  // changes anything (no spinner, no "couldn't verify" over the page).
+  const checkAuth = useCallback(async (background = false) => {
     const token = readStoredToken()
     if (!token) {
       setStatus('denied')
@@ -46,7 +68,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       setStatus('ok')
       return
     }
-    setStatus('checking')
+    if (!background) setStatus('checking')
     try {
       const response = await runVerificationOnce('verify', () =>
         fetch(`${API_BASE_URL}/auth/verify`, {
@@ -63,17 +85,18 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         clearSession(queryClient)
         setStatus('denied')
         goToLogin(router)
-      } else {
+      } else if (!background) {
         setStatus('unavailable')
       }
     } catch (error) {
       console.error('Authentication error:', error)
-      setStatus('unavailable')
+      if (!background) setStatus('unavailable')
     }
   }, [queryClient, router])
 
   useEffect(() => {
     if (status !== 'ok') checkAuth()
+    else if (!isRecentlyVerified(readStoredToken())) checkAuth(true)
     // Run once on mount; retries go through the button below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -102,7 +125,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
           </p>
           <button
             type="button"
-            onClick={checkAuth}
+            onClick={() => checkAuth()}
             className="mt-4 inline-flex items-center justify-center rounded-full bg-primaryGreen px-6 py-2 text-sm font-medium text-white transition hover:bg-brightGreen active:scale-95 motion-reduce:active:scale-100"
           >
             Retry

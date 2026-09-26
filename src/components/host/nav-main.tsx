@@ -1,5 +1,9 @@
 "use client";
 
+// Host sidebar menu. Each row IS the link (SidebarMenuButton asChild — it used
+// to be a <button> inside an <a>: two tab stops, invalid HTML), the section of
+// the current page is lit (sub-pages included, via lib/nav/active), and the
+// highlight is the same soft pill as the phone tab bar.
 import { Collapsible } from "@/components/ui/collapsible";
 import {
   SidebarGroup,
@@ -13,120 +17,80 @@ import {
 } from "@/components/ui/sidebar";
 import { type LucideIcon } from "lucide-react";
 import Link from "next/link";
+import { activeHref } from "@/lib/nav/active";
+import { countLabel } from "@/components/nav/count-badge";
+import { cn } from "@/lib/utils";
 
-export function NavMain({
-  items,
-  pathname,
-}: {
-  items: {
-    title: string;
-    url: string;
-    icon?: LucideIcon;
-    isActive?: boolean;
-    badge?: number;
-    items?: {
-      title: string;
-      url: string;
-    }[];
-  }[];
-  pathname: string;
-}) {
+type Item = {
+  title: string;
+  url: string;
+  icon?: LucideIcon;
+  isActive?: boolean;
+  badge?: number;
+  items?: { title: string; url: string }[];
+};
+
+export function NavMain({ items, pathname }: { items: Item[]; pathname: string }) {
   const { setOpenMobile } = useSidebar();
-
-  const handleLinkClick = () => {
-    setOpenMobile(false);
-  };
+  const handleLinkClick = () => setOpenMobile(false);
+  const current = activeHref(
+    pathname,
+    items.map((i) => ({ href: i.url, exact: i.url === "/host/dashboard" })),
+  );
 
   return (
     <SidebarGroup>
-      <SidebarMenu>
+      <SidebarMenu className="gap-1">
         {items.map((item) => {
-          /** ACTIVE CHECK */
-          if (process.env.NEXT_PUBLIC_ENV === "dev") {
-            console.log("numba", item);
-          }
-          const isActive = pathname === item.url;
-
+          const isActive = current === item.url;
+          const badge = item.badge != null && item.badge > 0 ? item.badge : 0;
           return (
-            <Collapsible
-              key={item.title}
-              asChild
-              defaultOpen={isActive}
-              className="group/collapsible"
-            >
-              <SidebarMenuItem
-                className={`
-                  py-1 px-1 font-bricolage
-                  ${isActive ? "bg-primaryGreen/10" : ""}
-                `}
-              >
-                <Link href={item.url} onClick={handleLinkClick}>
-                  <SidebarMenuButton
-                    className={`
-                      py-1 hover:bg-gray-200
-                      ${
-                        isActive
-                          ? "bg-primaryGreen text-white hover:bg-primaryGreen"
-                          : ""
-                      }
-                    `}
-                    tooltip={item.title}
+            <Collapsible key={item.title} asChild defaultOpen={isActive} className="group/collapsible">
+              <SidebarMenuItem className="font-bricolage">
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  tooltip={item.title}
+                  className={cn(
+                    "h-11 rounded-full px-3 text-base transition-colors duration-200",
+                    "focus-visible:ring-2 focus-visible:ring-primaryGreen",
+                    isActive
+                      ? "bg-primaryGreen/10 font-medium text-primaryGreen data-[active=true]:bg-primaryGreen/10 data-[active=true]:text-primaryGreen"
+                      : "text-absoluteDark [@media(hover:hover)]:hover:bg-gray-100",
+                  )}
+                >
+                  <Link
+                    href={item.url}
+                    onClick={handleLinkClick}
+                    aria-current={isActive ? "page" : undefined}
+                    aria-label={badge ? `${item.title}, ${countLabel(badge, 99)} unread` : undefined}
                   >
-                    {item.icon && (
-                      <item.icon
-                        className={
-                          isActive ? "text-white" : "text-absoluteDark"
-                        }
-                      />
-                    )}
-                    <span
-                      className={`
-                        text-base pl-2
-                        ${isActive ? "text-white" : "text-absoluteDark"}
-                      `}
-                    >
-                      {item.title}
-                    </span>
-                    {item.badge != null && item.badge > 0 && (
+                    {item.icon ? <item.icon className={isActive ? "text-primaryGreen" : "text-absoluteDark"} aria-hidden="true" /> : null}
+                    <span className="pl-1">{item.title}</span>
+                    {badge ? (
                       <span
-                        className={`
-                          ml-auto flex items-center justify-center
-                          min-w-[20px] h-5 px-1.5 rounded-full
-                          text-[11px] font-bold leading-none
-                          ${isActive ? "bg-white text-primaryGreen" : "bg-red-500 text-white"}
-                        `}
+                        aria-hidden="true"
+                        className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-bold leading-none text-white"
                       >
-                        {item.badge > 9 ? "9+" : item.badge}
+                        {countLabel(badge)}
                       </span>
-                    )}
-                  </SidebarMenuButton>
-                </Link>
+                    ) : null}
+                  </Link>
+                </SidebarMenuButton>
 
-                {/* HANDLE SUBMENU */}
                 {item.items && item.items.length > 0 && (
                   <SidebarMenuSub>
                     {item.items.map((subItem) => {
-                      const subActive =
-                        pathname === subItem.url ||
-                        pathname.startsWith(subItem.url + "/");
-
+                      const subActive = pathname === subItem.url || pathname.startsWith(subItem.url + "/");
                       return (
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton
                             asChild
-                            className={
-                              subActive ? "bg-primaryGreen text-white" : ""
-                            }
+                            isActive={subActive}
+                            className={cn("rounded-full", subActive && "bg-primaryGreen/10 font-medium text-primaryGreen")}
                           >
-                            <Link href={subItem.url} onClick={handleLinkClick}>
+                            <Link href={subItem.url} onClick={handleLinkClick} aria-current={subActive ? "page" : undefined}>
                               <span>{subItem.title}</span>
-                              {/* {subItem.url == "/help-center" ? (
-                                <a target="_blank">
-                                  <span>{subItem.title}</span>
-                                </a>
-                              ) : (
-                                <span>{subItem.title}</span>
-                              )} */}
                             </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
@@ -142,82 +106,3 @@ export function NavMain({
     </SidebarGroup>
   );
 }
-
-// "use client";
-
-// import { Collapsible } from "@/components/ui/collapsible";
-// import {
-//   SidebarGroup,
-//   SidebarMenu,
-//   SidebarMenuButton,
-//   SidebarMenuItem,
-//   SidebarMenuSub,
-//   SidebarMenuSubButton,
-//   SidebarMenuSubItem,
-//   useSidebar,
-// } from "@/components/ui/sidebar";
-// import { type LucideIcon } from "lucide-react";
-// import Link from "next/link";
-
-// export function NavMain({
-//   items,
-// }: {
-//   items: {
-//     title: string;
-//     url: string;
-//     icon?: LucideIcon;
-//     isActive?: boolean;
-//     items?: {
-//       title: string;
-//       url: string;
-//     }[];
-//   }[];
-// }) {
-//   const { setOpenMobile } = useSidebar();
-
-//   const handleLinkClick = () => {
-//     setOpenMobile(false);
-//   };
-
-//   return (
-//     <SidebarGroup>
-//       <SidebarMenu>
-//         {items.map((item) => (
-//           <Collapsible
-//             key={item.title}
-//             asChild
-//             defaultOpen={item.isActive}
-//             className="group/collapsible"
-//           >
-//             <SidebarMenuItem className="py-1 px-1 font-bricolage">
-//               <Link className="" href={item.url} onClick={handleLinkClick}>
-//                 <SidebarMenuButton
-//                   className="py-1  hover:bg-gray-200"
-//                   tooltip={item.title}
-//                 >
-//                   {item.icon && <item.icon className=" " />}
-//                   <span className="text-base pl-2  text-absoluteDark">
-//                     {item.title}
-//                   </span>
-//                 </SidebarMenuButton>
-//               </Link>
-//               {item.items && item.items.length > 0 && (
-//                 <SidebarMenuSub>
-//                   {item.items.map((subItem) => (
-//                     <SidebarMenuSubItem key={subItem.title}>
-//                       <SidebarMenuSubButton asChild>
-//                         <Link href={subItem.url} onClick={handleLinkClick}>
-//                           <span className="text-black">{subItem.title}</span>
-//                         </Link>
-//                       </SidebarMenuSubButton>
-//                     </SidebarMenuSubItem>
-//                   ))}
-//                 </SidebarMenuSub>
-//               )}
-//             </SidebarMenuItem>
-//           </Collapsible>
-//         ))}
-//       </SidebarMenu>
-//     </SidebarGroup>
-//   );
-// }

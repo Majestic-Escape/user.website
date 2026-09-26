@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import MediaImage from "@/components/ui/media-image"
 import { Calendar } from 'lucide-react'
+import { format } from "date-fns";
 
 interface Booking {
   id: string
@@ -73,7 +74,7 @@ function BookingCard({ booking, onSelect }: { booking: Booking, onSelect: (booki
           <div className="flex items-center gap-2 text-gray-500 mt-2">
             <Calendar className="h-4 w-4" />
             <span className="text-sm">
-              {new Date(booking.date).toLocaleDateString()}
+              {format(new Date(booking.date), "d MMM yyyy")}
             </span>
           </div>
         </div>

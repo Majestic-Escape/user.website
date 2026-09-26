@@ -28,8 +28,13 @@
 //      vice versa. Role is therefore part of the storage key, not just a field,
 //      and an unrecognised role is refused outright.
 //
-// sessionStorage (not localStorage) keeps this tab-scoped and wipes it when the
-// tab closes.
+// localStorage, so the list is on screen the moment /messages or the inbox
+// opens — also after the browser was closed and reopened (a restored tab), not
+// only on a revisit within the tab. It is always revalidated on mount. The
+// session teardown (lib/session.ts clearSession, logout's localStorage.clear())
+// removes it, and a 401 from the chat server clears it before anything else
+// renders (the account's session is gone). Entries older than MAX_AGE_MS are
+// ignored and a previewed message is trimmed to what a row can show.
 
 const STORAGE_PREFIX = "me:conversationsCache:v2:";
 // v1 was a single un-roled key. Anything written by it is unreadable here (the
@@ -39,13 +44,22 @@ const LEGACY_KEY = "me:conversationsCache:v1";
 
 const VALID_ROLES = ["guest", "host"];
 const MAX_CONVERSATIONS = 60;
-// Sanity bound only. sessionStorage already dies with the tab and we always
-// revalidate on mount, so this exists purely so a tab left open overnight
-// doesn't flash a very stale list before the fresh one lands.
-const MAX_AGE_MS = 12 * 60 * 60 * 1000;
+// We always revalidate on mount; this only stops a list from weeks ago being
+// painted before the fresh one lands.
+const MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
+// A row shows one line of the last message; the full text is in the thread.
+const PREVIEW_CHARS = 280;
 
 const isBrowser = () =>
-  typeof window !== "undefined" && typeof window.sessionStorage !== "undefined";
+  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+
+const store = () => window.localStorage;
+
+const trimPreview = (conv) => {
+  const text = conv?.lastMessage?.content;
+  if (typeof text !== "string" || text.length <= PREVIEW_CHARS) return conv;
+  return { ...conv, lastMessage: { ...conv.lastMessage, content: text.slice(0, PREVIEW_CHARS) } };
+};
 
 // Refuse anything that isn't a role we know about, so a caller can never build
 // an arbitrary storage key (or silently share one between surfaces).
@@ -55,6 +69,8 @@ const keyFor = (role) =>
 const dropLegacy = () => {
   try {
     window.sessionStorage.removeItem(LEGACY_KEY);
+    // the tab-scoped copies this cache used to keep
+    VALID_ROLES.forEach((r) => window.sessionStorage.removeItem(`${STORAGE_PREFIX}${r}`));
   } catch {
     /* nothing useful to do */
   }
@@ -91,7 +107,7 @@ export const getCachedConversations = (userId, role) => {
   if (!userId || !key || !isBrowser()) return null;
   try {
     dropLegacy();
-    const raw = window.sessionStorage.getItem(key);
+    const raw = store().getItem(key);
     if (!raw) return null;
     const entry = JSON.parse(raw);
     if (!entry || typeof entry !== "object") return null;
@@ -110,13 +126,13 @@ export const setCachedConversations = (userId, role, conversations) => {
   const key = keyFor(role);
   if (!userId || !key || !isBrowser() || !Array.isArray(conversations)) return;
   try {
-    window.sessionStorage.setItem(
+    store().setItem(
       key,
       JSON.stringify({
         userId,
         role,
         savedAt: Date.now(),
-        conversations: conversations.slice(0, MAX_CONVERSATIONS),
+        conversations: conversations.slice(0, MAX_CONVERSATIONS).map(trimPreview),
       })
     );
   } catch {
@@ -131,7 +147,7 @@ export const clearCachedConversations = (role) => {
     const roles = role ? [role] : VALID_ROLES;
     roles.forEach((r) => {
       const key = keyFor(r);
-      if (key) window.sessionStorage.removeItem(key);
+      if (key) store().removeItem(key);
     });
     dropLegacy();
   } catch {
