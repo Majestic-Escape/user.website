@@ -21,7 +21,7 @@ import { isStrongPlaceMatch, popularPlaces, suggestPlaces, placeTypeLabel, type 
 import { usePlacesIndex } from "@/lib/places/use-places-index";
 import { useStaySuggestions } from "@/lib/places/use-stay-suggestions";
 import { readRecentPlaces, rememberPlace, type RecentPlace } from "@/lib/search/recent-places";
-import { getRoundedPosition, NEAR_ME_MESSAGES, type NearMeError } from "@/lib/search/near-me";
+import { NEAR_ME_MESSAGES, requestNearMe, watchLocationPermission, type NearMeError } from "@/lib/search/near-me";
 import { cn } from "@/lib/utils";
 
 export type PickedPlace = { id: string; name: string; label: string };
@@ -87,11 +87,11 @@ function Highlight({ text, query }: { text: string; query: string }) {
   return <>{text}</>;
 }
 
-function Row({ Icon, title, subtitle, meta }: { Icon: React.ElementType; title: React.ReactNode; subtitle?: string; meta?: string }) {
+function Row({ Icon, title, subtitle, meta, spin = false }: { Icon: React.ElementType; title: React.ReactNode; subtitle?: string; meta?: string; spin?: boolean }) {
   return (
     <div className="flex w-full items-center gap-3">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-lightGreen/20" aria-hidden="true">
-        <Icon className="h-4 w-4 text-primaryGreen" />
+        <Icon className={cn("h-4 w-4 text-primaryGreen", spin && "motion-safe:animate-spin")} />
       </span>
       <span className="flex min-w-0 flex-1 flex-col text-left">
         <span className="truncate text-sm text-graphite">{title}</span>
@@ -107,7 +107,9 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
   const [touched, setTouched] = React.useState(false);
   const { index, loading, unavailable } = usePlacesIndex(true);
   const [recent, setRecent] = React.useState<RecentPlace[]>([]);
-  const [locating, setLocating] = React.useState(false);
+  // null, or what the "near me" request is waiting on: the visitor's answer to
+  // the browser prompt ("asking") or the position itself ("locating")
+  const [locating, setLocating] = React.useState<null | "asking" | "locating">(null);
   const [nearError, setNearError] = React.useState<NearMeError | null>(null);
   const [selected, setSelected] = React.useState("");
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -154,17 +156,27 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
   };
 
   const nearMe = async () => {
+    if (locating) return; // one request at a time
     setNearError(null);
-    setLocating(true);
     try {
-      const point = await getRoundedPosition();
+      const point = await requestNearMe(setLocating);
       onNearMe(point);
     } catch (e) {
       setNearError((typeof e === "string" ? e : "unavailable") as NearMeError);
     } finally {
-      setLocating(false);
+      setLocating(null);
     }
   };
+
+  // Re-allowed in the browser's site settings while this is open: drop the
+  // "blocked" message so the row reads as usable again (no request is made
+  // until the visitor taps it).
+  React.useEffect(() => {
+    if (nearError !== "denied" && nearError !== "dismissed") return;
+    return watchLocationPermission((state) => {
+      if (state !== "denied") setNearError(null);
+    });
+  }, [nearError]);
 
   const count = typing ? suggestions.length + stays.length : 0;
 
@@ -201,9 +213,12 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
       <span className="sr-only" aria-live="polite">
         {typing ? `${count} ${count === 1 ? "suggestion" : "suggestions"}` : ""}
       </span>
+      <span className="sr-only" aria-live="polite">
+        {locating === "asking" ? "Waiting for location permission in your browser" : locating ? "Finding your location" : ""}
+      </span>
       <CommandList ref={listRef} className={sheet ? "max-h-none min-h-0 flex-1 overscroll-contain pb-4" : "max-h-[min(60vh,360px)]"}>
         {nearError ? (
-          <p role="status" className="px-3 py-2 text-xs text-red-600">
+          <p role="status" className="px-3 py-2 text-xs leading-relaxed text-red-600">
             {NEAR_ME_MESSAGES[nearError]}
           </p>
         ) : null}
@@ -255,8 +270,19 @@ export default function LocationCombobox({ value, onTextChange, onPick, onNearMe
         ) : (
           <>
             <CommandGroup heading="Nearby">
-              <CommandItem value={NEAR_ROW} onSelect={nearMe} disabled={locating} className="min-h-[52px] cursor-pointer rounded-xl py-2">
-                <Row Icon={locating ? Loader2 : Navigation} title={locating ? "Finding your location…" : "Stays near me"} subtitle="Uses your location once, about 1 km accurate" />
+              <CommandItem value={NEAR_ROW} onSelect={nearMe} aria-busy={locating ? true : undefined} className="min-h-[52px] cursor-pointer rounded-xl py-2">
+                <Row
+                  Icon={locating ? Loader2 : Navigation}
+                  spin={!!locating}
+                  title={locating === "asking" ? "Waiting for your permission…" : locating ? "Finding your location…" : "Stays near me"}
+                  subtitle={
+                    locating === "asking"
+                      ? "Allow location in your browser's prompt, next to the web address"
+                      : locating
+                        ? "This can take a few seconds"
+                        : "Uses your location once, about 1 km accurate"
+                  }
+                />
               </CommandItem>
             </CommandGroup>
             {recent.length ? (
