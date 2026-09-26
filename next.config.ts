@@ -1,5 +1,25 @@
 import type { NextConfig } from "next";
 
+// The admin-managed homepage banner (src/lib/hero.js, server.me
+// docs/site-hero.md) is served from this domain: the LCP image reuses the
+// page's connection instead of opening one to the CDN first. Only the exact
+// shape of a banner rendition is forwarded — never any other object of the
+// bucket — to the Spaces CDN (immutable objects; vercel.json lets Vercel's
+// edge cache them). Same bucket/prefix rules as heroSource() in
+// src/lib/hero.js (scripts/check-hero.mjs holds the two together).
+const HERO_BUCKET = /^[a-z0-9][a-z0-9-]{1,62}\.[a-z0-9]{2,12}$/.test(process.env.SITE_HERO_BUCKET || "")
+  ? (process.env.SITE_HERO_BUCKET as string)
+  : "majestic-escape-host-properties.blr1";
+const HERO_PREFIX =
+  !process.env.VERCEL && /^_qa\/site\/hero\/[a-z0-9-]{1,40}\/$/.test(process.env.SITE_HERO_PREFIX || "")
+    ? (process.env.SITE_HERO_PREFIX as string)
+    : "site/hero/";
+const HERO_REWRITE = {
+  source:
+    "/_hero/:slot(desktop|mobile)/:file([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\.jpg)/v1/:variant(w[0-9]{2,4}\\.avif|w[0-9]{2,4}\\.webp)",
+  destination: `https://${HERO_BUCKET}.cdn.digitaloceanspaces.com/${HERO_PREFIX}:slot/:file/v1/:variant`,
+};
+
 const nextConfig: NextConfig = {
   images: {
     // Listing photos and profile pictures are served from pre-generated
@@ -55,6 +75,7 @@ const nextConfig: NextConfig = {
     const backendUrl =
       process.env.BACKEND_URL || "http://localhost:5005/api/v1";
     return [
+      HERO_REWRITE,
       {
         source: "/api/v1/:path*",
         destination: `${backendUrl}/:path*`,

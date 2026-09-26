@@ -19,7 +19,7 @@ import { COUNT_STAYS_PATH, FRONT_STAYS_PATH, normalizeCountStays, normalizeFront
 export const CATALOGUE_REVALIDATE_SECONDS = 300;
 const FETCH_TIMEOUT_MS = 6000;
 
-function backendBase(): string | null {
+export function backendBase(): string | null {
   const base = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
   return base && /^https?:\/\//.test(base) ? base.replace(/\/$/, "") : null;
 }
