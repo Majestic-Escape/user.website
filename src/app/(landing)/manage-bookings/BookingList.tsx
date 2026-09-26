@@ -787,7 +787,8 @@ const ManageBookings: React.FC = () => {
             onValueChange={setActiveTab}
             className="w-full lg:w-auto"
           >
-            <TabsList className="h-auto p-0 bg-transparent border-b border-gray-200 w-full lg:w-auto flex flex-wrap">
+            {/* one swipeable row on phones (it used to wrap "Rejected" onto a second line) */}
+            <TabsList className="h-auto min-h-0 p-0 rounded-none bg-transparent border-b border-gray-200 w-full lg:w-auto flex flex-nowrap justify-start overflow-x-auto no-scrollbar">
               {[
                 { value: "all", label: "All" },
                 { value: "upcoming", label: "Upcoming" },
@@ -799,7 +800,7 @@ const ManageBookings: React.FC = () => {
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="relative h-9 rounded-none border-b-2 border-transparent px-2 sm:px-4 pb-3 pt-2 text-sm sm:text-base font-semibold text-muted-foreground data-[state=active]:border-primaryGreen data-[state=active]:text-primaryGreen "
+                  className="relative h-9 shrink-0 rounded-none border-b-2 border-transparent px-2 sm:px-4 pb-3 pt-2 text-sm sm:text-base font-semibold text-muted-foreground data-[state=active]:border-primaryGreen data-[state=active]:text-primaryGreen data-[state=active]:shadow-none data-[state=active]:bg-transparent"
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -920,7 +921,7 @@ const ManageBookings: React.FC = () => {
                             : booking?.propertyId?.title}
                         </span>
                       </h3>
-                      <p className="text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground">
                         Located at {booking?.propertyId?.address?.city},{" "}
                         {booking?.propertyId?.address?.state}
                         <Link
@@ -930,7 +931,7 @@ const ManageBookings: React.FC = () => {
                             View Details
                           </div>
                         </Link>
-                      </p>
+                      </div>
                       {/* <div className="flex items-center gap-2">
                       <Avatar className="w-6 h-6">
                         <AvatarImage alt="Host" src="/placeholder.svg" />

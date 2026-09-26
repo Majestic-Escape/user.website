@@ -2,6 +2,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Star } from 'lucide-react'
+import { format } from "date-fns";
 
 interface ReviewFormProps {
   booking: {
@@ -18,7 +19,7 @@ export function ReviewForm({ booking }: ReviewFormProps) {
       <div className="space-y-2">
         <h2 className="text-xl font-semibold">{booking.title}</h2>
         <p className="text-gray-500">
-          {new Date(booking.date).toLocaleDateString()}
+          {format(new Date(booking.date), "d MMM yyyy")}
         </p>
       </div>
 

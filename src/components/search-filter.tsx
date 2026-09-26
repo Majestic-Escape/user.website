@@ -1,591 +1,508 @@
 "use client";
 
+// Desktop / tablet search pill: Where · Check in · Check out · Who · Search.
+//
+// Airbnb-style: every segment is a pill inside the pill. Hover tints it, the
+// open one turns into a raised white pill while the rest of the bar greys out,
+// dividers next to a hovered/open segment fade, and one panel is open at a
+// time. The flow walks forward on its own — pick a place → dates open, pick
+// check-out → guests open — and the Search button grows a label while a panel
+// is open. On /filter the fields show the search the results came from.
 import * as React from "react";
 import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Search, Minus, Plus, SlidersHorizontal } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-// import { CustomCommandInput } from "./ui/custom-command-input";
-import { toast } from "sonner";
-import FilterStaysBar from "./filter-stays-bar";
-import FilterModal from "./ui/modal";
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Search, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import LocationCombobox from "@/components/search/location-combobox";
 import DestinationSheet, { useCoarsePointer } from "@/components/search/destination-sheet";
+import GuestCounter from "@/components/search/guest-counter";
+import StayCalendar, { nightsLabel, type RangeFocus, type StayRange } from "@/components/search/stay-calendar";
 import { buildFilterUrl } from "@/lib/search/search-url";
+import { capacityGuests, guestSummary, NO_GUESTS, sanitizeGuests, searchFromParams, type Guests, type UrlSearch } from "@/lib/search/search-state";
+import { leaveLayersThen } from "@/lib/ui/layers";
+import { cn } from "@/lib/utils";
 
 interface SearchFilterProps {
   isScrolled: boolean;
-  fromDate: string;
-  toDate: string;
-  location: string;
-  guest: string;
-  active: boolean;
-  grownup: string;
-  child: string;
-  baby: string;
-  property: string;
+  fromDate?: string;
+  toDate?: string;
+  location?: string;
+  guest?: string;
+  active?: boolean;
+  grownup?: string;
+  child?: string;
+  baby?: string;
+  property?: string;
+  propertyType?: string;
 }
-type Guests = {
-  adults: number;
-  children: number;
-  infants: number;
-};
 
-const safeParseDate = (
-  dateString: string | undefined | null,
-): Date | undefined => {
+type Panel = "where" | "dates" | "who" | null;
+
+const safeParseDate = (dateString: string | undefined | null): Date | undefined => {
   if (!dateString) return undefined;
-
   const date = new Date(dateString);
-  // Check if the date is valid
   return isNaN(date.getTime()) ? undefined : date;
 };
-export default function SearchFilter({
-  isScrolled,
-  fromDate,
-  toDate,
-  location,
-  guest,
+
+// Never taller than the room left on screen (a landscape phone or a short
+// window): the panel scrolls inside itself instead of running off the page.
+const POPOVER =
+  "max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain rounded-3xl border-0 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.16)] ring-1 ring-black/5 font-poppins motion-reduce:animate-none";
+
+/** Seeds the pill from a /filter URL (useSearchParams needs its own Suspense). */
+function UrlSearchSync({ onSearch }: { onSearch: (s: UrlSearch) => void }) {
+  const params = useSearchParams();
+  const pathname = usePathname();
+  const key = params.toString();
+  const onSearchRef = React.useRef(onSearch);
+  onSearchRef.current = onSearch;
+  React.useEffect(() => {
+    if (pathname.startsWith("/filter")) onSearchRef.current(searchFromParams(new URLSearchParams(key)));
+  }, [pathname, key]);
+  return null;
+}
+
+type SegId = "where" | "in" | "out" | "who";
+
+function Segment({
+  id,
   active,
-  grownup,
-  child,
-  baby,
-  property,
-}: SearchFilterProps) {
+  onHover,
+  className,
+  children,
+}: {
+  id: SegId;
+  active: boolean;
+  onHover: (id: SegId | null) => void;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      data-active={active}
+      onPointerEnter={(e) => e.pointerType === "mouse" && onHover(id)}
+      onPointerLeave={(e) => e.pointerType === "mouse" && onHover(null)}
+      className={cn(
+        "relative flex h-full min-w-0 items-center rounded-full transition-[background-color,box-shadow] duration-200 ease-out motion-reduce:transition-none",
+        active
+          ? "bg-white shadow-[0_6px_20px_rgba(0,0,0,0.12)]"
+          : "hover:bg-gray-100 group-data-[open=true]/bar:hover:bg-gray-200/80",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Thin rule between two segments; it fades when either neighbour is lit. */
+function Divider({ hidden }: { hidden: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn("h-8 w-px shrink-0 bg-gray-200 transition-opacity duration-200", hidden && "opacity-0")}
+    />
+  );
+}
+
+function ClearButton({ label, onClear }: { label: string; onClear: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClear}
+      className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-gray-100 text-graphite transition-colors hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-absoluteDark animate-in fade-in-0 zoom-in-75 duration-150 motion-reduce:animate-none"
+    >
+      <X className="h-3.5 w-3.5" aria-hidden="true" />
+    </button>
+  );
+}
+
+export default function SearchFilter({ isScrolled, fromDate, toDate, location, active, grownup, child, baby }: SearchFilterProps) {
   const {
     priceRange,
-    setPriceRange,
     rooms,
-    showAllAmenities,
-    setShowAllAmenities,
-    showAllProperties,
-    setShowAllProperties,
     addAmenities,
     setResetClicked,
     addPlaceType,
-    setAddPlaceType,
     addPropertyType,
     bookingType,
-    setBookingType,
     petAllowed,
-    setPetAllowed,
     checkinType,
-    setCheckinType,
-    clearAllFilters,
-    addAmenitiesList,
-    addPropertiesList,
-    setAddPropertyType,
-    activeTab,
-    setActiveTab,
-    handleRoomChange,
   } = useAuth();
 
-  const [destination, setDestination] = React.useState("");
-  const [searchTerm, setSearchTerm] = React.useState(active ? location : "");
+  const router = useRouter();
+  const pathname = usePathname();
+  const coarse = useCoarsePointer(); // touch tablets get the full-screen sheet, not a popover
+
+  const [searchTerm, setSearchTerm] = React.useState(active ? location || "" : "");
   // A picked suggestion (authoritative for the server) or "near me" (~1 km).
   const [placeId, setPlaceId] = React.useState<string | null>(null);
   const [near, setNear] = React.useState<{ lat: number; lng: number } | null>(null);
-  // tablets get the full-screen sheet: a popover and an on-screen keyboard don't mix
-  const coarse = useCoarsePointer();
-  const [dateRange, setDateRange] = React.useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({
+  const [dateRange, setDateRange] = React.useState<StayRange>({
     from: active ? safeParseDate(fromDate) : undefined,
     to: active ? safeParseDate(toDate) : undefined,
   });
-  const [openDestination, setOpenDestination] = React.useState(false);
-  const [openDatePicker, setOpenDatePicker] = React.useState(false);
-  const [openGuests, setOpenGuests] = React.useState(false);
-  const [selectProperty, setSelectProperty] = React.useState(
-    property ? property : "",
+  const [guests, setGuests] = React.useState<Guests>(
+    active ? sanitizeGuests({ adults: grownup, children: child, infants: baby }) : NO_GUESTS,
   );
-  const [matches, setMatches] = React.useState(false);
-  const pathname = usePathname();
-  const isStayDetailPage =
-    pathname.startsWith("/stay/") && pathname !== "/stay";
+  const [panel, setPanel] = React.useState<Panel>(null);
+  const [dateFocus, setDateFocus] = React.useState<RangeFocus>("from");
+  const [hovered, setHovered] = React.useState<SegId | null>(null);
+  const barRef = React.useRef<HTMLDivElement>(null);
+  const panelRef = React.useRef<Panel>(null);
+  panelRef.current = panel;
 
-  function useMediaQuery(query: string) {
-    React.useEffect(() => {
-      const media = window.matchMedia(query);
-      setMatches(media.matches);
-
-      const listener = () => setMatches(media.matches);
-      media.addEventListener("change", listener);
-
-      return () => media.removeEventListener("change", listener);
-    }, [query]);
-
-    return matches;
-  }
-
-  const isMobile = useMediaQuery("(max-width: 640px)");
-  const [guests, setGuests] = React.useState<Guests>({
-    adults: Number(active ? grownup : 0),
-    children: Number(active ? child : 0),
-    infants: Number(active ? baby : 0),
-  });
-  const router = useRouter();
-  // const pathname = usePathname();
-  const handleGuestChange = (
-    type: keyof Guests,
-    operation: "increment" | "decrement",
-  ) => {
-    setGuests((prev) => ({
-      ...prev,
-      [type]:
-        operation === "increment"
-          ? prev[type] + 1
-          : Math.max(0, prev[type] - 1),
-    }));
-  };
-  // Track hydration
+  // Home starts a fresh search; elsewhere the last one is restored (tab-scoped).
   const [hydrated, setHydrated] = React.useState(false);
   React.useEffect(() => {
-    if (pathname == "/") {
+    if (pathname === "/") {
+      sessionStorage.setItem(
+        "searchFilters",
+        JSON.stringify({ dateRange: { from: null, to: null }, searchTerm: "", placeId: null, near: null, guests: NO_GUESTS }),
+      );
+    } else if (!pathname.startsWith("/filter")) {
+      // /filter is seeded from its URL instead (UrlSearchSync)
+      try {
+        const saved = JSON.parse(sessionStorage.getItem("searchFilters") || "null");
+        if (saved) {
+          setDateRange({
+            from: saved.dateRange?.from ? safeParseDate(saved.dateRange.from) : undefined,
+            to: saved.dateRange?.to ? safeParseDate(saved.dateRange.to) : undefined,
+          });
+          if (typeof saved.searchTerm === "string") setSearchTerm(saved.searchTerm);
+          setPlaceId(typeof saved.placeId === "string" ? saved.placeId : null);
+          setNear(saved.near && Number.isFinite(saved.near.lat) && Number.isFinite(saved.near.lng) ? saved.near : null);
+          if (saved.guests) setGuests(sanitizeGuests(saved.guests));
+        }
+      } catch {
+        // unreadable / blocked storage: start empty
+      }
+    }
+    setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  React.useEffect(() => {
+    if (!hydrated) return;
+    try {
       sessionStorage.setItem(
         "searchFilters",
         JSON.stringify({
-          dateRange: {
-            from: null,
-            to: null,
-          },
-          searchTerm: "",
-          placeId: null,
-          near: null,
-          guests: {
-            adults: 0,
-            children: 0,
-            infants: 0,
-          },
+          dateRange: { from: dateRange.from ? dateRange.from.toISOString() : null, to: dateRange.to ? dateRange.to.toISOString() : null },
+          searchTerm,
+          placeId,
+          near,
+          guests,
         }),
       );
-      setSearchTerm("");
-      setPlaceId(null);
-      setNear(null);
-      setGuests({ adults: 0, children: 0, infants: 0 });
-      setDateRange({ from: undefined, to: undefined });
+    } catch {
+      // storage full / blocked: the search still works, it just isn't remembered
     }
-  }, []);
-  // Load from localStorage on mount
-  React.useEffect(() => {
-    // const reset = sessionStorage.getItem("reset");
-    // if (reset !== "true") {
-    const saved = sessionStorage.getItem("searchFilters");
-    if (saved) {
-      const parsed = JSON.parse(saved);
+  }, [dateRange, searchTerm, placeId, near, guests, hydrated]);
 
-      if (parsed.dateRange) {
-        setDateRange({
-          from: parsed.dateRange.from
-            ? new Date(parsed.dateRange.from)
-            : undefined,
-          to: parsed.dateRange.to ? new Date(parsed.dateRange.to) : undefined,
-        });
-      }
-      if (parsed.searchTerm) setSearchTerm(parsed.searchTerm);
-      if (typeof parsed.placeId === "string") setPlaceId(parsed.placeId);
-      if (parsed.near && Number.isFinite(parsed.near.lat) && Number.isFinite(parsed.near.lng)) setNear(parsed.near);
-      if (parsed.guests) setGuests(parsed.guests);
-    }
-    setHydrated(true); // mark as hydrated after first load
-    // }
+  const applyUrlSearch = React.useCallback((s: UrlSearch) => {
+    setSearchTerm(s.searchTerm);
+    setPlaceId(s.placeId);
+    setNear(s.near);
+    setDateRange({ from: s.from, to: s.to });
+    setGuests(s.guests);
   }, []);
 
-  // Save to localStorage ONLY after hydration
-  React.useEffect(() => {
-    if (!hydrated) return; // skip first run until state is restored
-    // sessionStorage.setItem("reset", "false");
-
-    sessionStorage.setItem(
-      "searchFilters",
-      JSON.stringify({
-        dateRange: {
-          from: dateRange.from ? dateRange.from.toISOString() : null,
-          to: dateRange.to ? dateRange.to.toISOString() : null,
-        },
-        searchTerm,
-        placeId,
-        near,
-        guests,
-      }),
-    );
-  }, [dateRange, searchTerm, placeId, near, selectProperty, guests, hydrated]);
-
-  const totalGuests = active
-    ? Number(guests.adults) + Number(guests.children) + Number(guests.infants)
-    : guests.adults + guests.children + guests.infants;
-  const totalAdults = active
-    ? Number(guests.adults) + Number(guests.children)
-    : guests.adults + guests.children;
-  const formatDate = (date: Date | undefined) => {
-    if (!date) return "";
-    return format(date, "MMM d");
+  const open = (p: Panel, focus: RangeFocus = "from") => {
+    setDateFocus(focus);
+    setPanel(p);
+  };
+  // A controlled popover reports "closed"; only clear the panel if it is still ours.
+  const closeIf = (p: Panel) => (o: boolean) => {
+    if (o) setPanel(p);
+    else setPanel((cur) => (cur === p ? null : cur));
+  };
+  // Clicking another segment switches panels without closing the bar first.
+  const stayOpenInsideBar = (e: { target: EventTarget | null; preventDefault: () => void }) => {
+    if (e.target instanceof Node && barRef.current?.contains(e.target)) e.preventDefault();
+  };
+  // Don't pull focus back to the old segment when another panel is opening.
+  const focusBackUnlessSwitching = (e: Event) => {
+    if (panelRef.current !== null) e.preventDefault();
   };
 
   const submit = () => {
-    router.push(
-      buildFilterUrl({
-        location: near ? "" : searchTerm,
-        placeId: near ? null : placeId,
-        near,
-        from: dateRange?.from,
-        to: dateRange?.to,
-        totalGuests,
-        adults: guests.adults,
-        children: guests.children,
-        infants: guests.infants,
-        propertyType: addPropertyType,
-        priceMin: priceRange[0],
-        priceMax: priceRange[1],
-        placeType: addPlaceType,
-        amenities: addAmenities,
-        bedrooms: rooms?.bedrooms,
-        beds: rooms?.beds,
-        bathrooms: rooms?.bathrooms,
-        bookingType,
-        checkinType,
-        pets: petAllowed,
-      }),
-    );
+    setPanel(null);
+    setResetClicked(false);
+    const url = buildFilterUrl({
+      location: near ? "" : searchTerm,
+      placeId: near ? null : placeId,
+      near,
+      from: dateRange.from,
+      to: dateRange.to,
+      totalGuests: capacityGuests(guests),
+      adults: guests.adults,
+      children: guests.children,
+      infants: guests.infants,
+      propertyType: addPropertyType,
+      priceMin: priceRange[0],
+      priceMax: priceRange[1],
+      placeType: addPlaceType,
+      amenities: addAmenities,
+      bedrooms: rooms?.bedrooms,
+      beds: rooms?.beds,
+      bathrooms: rooms?.bathrooms,
+      bookingType,
+      checkinType,
+      pets: petAllowed,
+    });
+    leaveLayersThen(() => router.push(url));
   };
-  //middle navbar
+
+  const pickHandlers = {
+    value: searchTerm,
+    onTextChange: (text: string) => {
+      setSearchTerm(text);
+      setPlaceId(null);
+      setNear(null);
+    },
+    onPick: (place: { id: string; name: string }) => {
+      setSearchTerm(place.name);
+      setPlaceId(place.id);
+      setNear(null);
+      open("dates");
+    },
+    onNearMe: (point: { lat: number; lng: number }) => {
+      setSearchTerm("Nearby");
+      setPlaceId(null);
+      setNear(point);
+      open("dates");
+    },
+    onSubmitText: submit,
+    onPickStay: (stayId: string) => {
+      setPanel(null);
+      leaveLayersThen(() => router.push(`/stay/${stayId}`));
+    },
+  };
+
+  const whoText = guestSummary(guests);
+  const lit = (id: SegId) =>
+    hovered === id ||
+    (id === "where" && panel === "where") ||
+    (id === "in" && panel === "dates" && dateFocus === "from") ||
+    (id === "out" && panel === "dates" && dateFocus === "to") ||
+    (id === "who" && panel === "who");
+  const barOpen = panel !== null;
+  const compact = isScrolled;
+  const title = "text-xs font-semibold tracking-wide text-absoluteDark";
+  const value = (set: boolean) => cn("truncate text-sm", set ? "text-absoluteDark" : "text-stone");
+  const segButton = cn(
+    "flex h-full w-full min-w-0 flex-col items-start justify-center rounded-full text-left outline-none",
+    "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-absoluteDark",
+    compact ? "px-4" : "px-6",
+  );
+
   return (
     <>
-      {" "}
+      <React.Suspense fallback={null}>
+        <UrlSearchSync onSearch={applyUrlSearch} />
+      </React.Suspense>
       <div
-        className={`transition-all duration-300 ${
-          isScrolled
-            ? "opacity-100 -translate-y-full"
-            : "opacity-100 translate-y-0  lg:my-4"
-        } hidden md:flex font-poppins items-center gap-1 relative bg-white rounded-full border-[1px] z-30 border-gray-200 shadow-md max-w-full ${
-          isScrolled ? "md:w-[500px]" : "md:w-[850px]"
-        }  pl-2 py-1  mx-auto`}
+        ref={barRef}
+        role="search"
+        aria-label="Search stays"
+        data-open={barOpen}
+        className={cn(
+          "group/bar relative z-30 mx-auto hidden max-w-full items-center rounded-full border p-1 font-poppins shadow-[0_3px_14px_rgba(0,0,0,0.10)] transition-[background-color,border-color,width,transform] duration-300 ease-out md:flex",
+          barOpen ? "border-gray-200 bg-gray-100" : "border-gray-200 bg-white",
+          // production's height (62px) in both states; scrolling only narrows it and hides the subtitles
+          compact ? "h-[62px] -translate-y-full md:w-[520px]" : "h-[62px] translate-y-0 md:w-[850px] lg:my-4",
+        )}
       >
-        {/* Destination Search */}
-        <Popover open={openDestination && !coarse} onOpenChange={setOpenDestination}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              role="combobox"
-              aria-expanded={openDestination}
-              className={`w-full ${
-                isScrolled ? "sm:w-[100px]" : "sm:w-[250px]"
-              } justify-start px-4 h-14 transition-all duration-200 ease-in-out`}
-            >
-              <div className="flex flex-col justify-start items-start">
-                <span className="text-sm font-bricolage font-medium">
-                  Anywhere
-                </span>
-                <span
-                  className={`text-sm ${
-                    isScrolled ? "hidden" : "inline-block"
-                  } text-muted-foreground font-normal`}
-                >
-                  {searchTerm ? searchTerm : "Search destinations"}
-                  {/* {destination
-                    ? filteredDestinations.find((d) => d.value === destination)
-                        ?.label || "Search destinations"
-                    : "Search destinations"} */}
-                </span>
-              </div>
-            </Button>
-          </PopoverTrigger>
+        {/* WHERE */}
+        <Popover open={panel === "where" && !coarse} onOpenChange={closeIf("where")}>
+          <Segment id="where" active={panel === "where"} onHover={setHovered} className="flex-[1.35]">
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={segButton}
+                aria-haspopup="dialog"
+                aria-expanded={panel === "where"}
+                onClick={(e) => {
+                  // a coarse pointer opens the sheet; the popover toggles itself otherwise
+                  if (coarse) {
+                    e.preventDefault();
+                    open("where");
+                  }
+                }}
+              >
+                {compact ? (
+                  <span className={cn(title, "truncate text-sm")}>{searchTerm || "Anywhere"}</span>
+                ) : (
+                  <>
+                    <span className={title}>Where</span>
+                    <span className={cn(value(!!searchTerm), "max-w-full pr-6")}>{searchTerm || "Search destinations"}</span>
+                  </>
+                )}
+              </button>
+            </PopoverTrigger>
+            {panel === "where" && searchTerm && !compact ? (
+              <ClearButton
+                label="Clear destination"
+                onClear={() => {
+                  setSearchTerm("");
+                  setPlaceId(null);
+                  setNear(null);
+                }}
+              />
+            ) : null}
+          </Segment>
           <PopoverContent
-            className="w-[380px] p-0 font-poppins mt-2 transition-all duration-200 ease-in-out"
             align="start"
+            sideOffset={12}
+            className={cn(POPOVER, "w-[400px] overflow-hidden p-0")}
+            onInteractOutside={stayOpenInsideBar}
+            onCloseAutoFocus={focusBackUnlessSwitching}
           >
-            <LocationCombobox
-              value={searchTerm}
-              onTextChange={(text) => {
-                setSearchTerm(text);
-                setPlaceId(null);
-                setNear(null);
-              }}
-              onPick={(place) => {
-                setSearchTerm(place.name);
-                setPlaceId(place.id);
-                setNear(null);
-                setOpenDestination(false);
-                setOpenDatePicker(true);
-              }}
-              onNearMe={(point) => {
-                setSearchTerm("Nearby");
-                setPlaceId(null);
-                setNear(point);
-                setOpenDestination(false);
-                setOpenDatePicker(true);
-              }}
-              onSubmitText={() => {
-                setOpenDestination(false);
-                submit();
-              }}
-              onPickStay={(stayId) => {
-                setOpenDestination(false);
-                router.push(`/stay/${stayId}`);
-              }}
-            />
+            <LocationCombobox {...pickHandlers} />
           </PopoverContent>
         </Popover>
-        <DestinationSheet open={openDestination && coarse} onClose={() => setOpenDestination(false)}>
-            <LocationCombobox
-              variant="sheet"
-              value={searchTerm}
-              onTextChange={(text) => {
-                setSearchTerm(text);
-                setPlaceId(null);
-                setNear(null);
-              }}
-              onPick={(place) => {
-                setSearchTerm(place.name);
-                setPlaceId(place.id);
-                setNear(null);
-                setOpenDestination(false);
-                setOpenDatePicker(true);
-              }}
-              onNearMe={(point) => {
-                setSearchTerm("Nearby");
-                setPlaceId(null);
-                setNear(point);
-                setOpenDestination(false);
-                setOpenDatePicker(true);
-              }}
-              onSubmitText={() => {
-                setOpenDestination(false);
-                submit();
-              }}
-              onPickStay={(stayId) => {
-                setOpenDestination(false);
-                router.push(`/stay/${stayId}`);
-              }}
-            />
+        <DestinationSheet open={panel === "where" && coarse} onClose={() => setPanel(null)}>
+          <LocationCombobox variant="sheet" {...pickHandlers} />
         </DestinationSheet>
 
-        <div className="h-8 bg-border md:block" />
+        <Divider hidden={lit("where") || lit("in")} />
 
-        {/* Date Range Picker */}
-        <Popover open={openDatePicker} onOpenChange={setOpenDatePicker}>
-          <PopoverTrigger asChild>
-            <div className="flex">
-              <Button
-                variant="ghost"
-                className="w-[125px] justify-start px-4 h-14 transition-all duration-200 ease-in-out"
-              >
-                <div className="flex flex-col items-start">
-                  <span className="text-sm font-bricolage font-medium">
-                    Check in
-                  </span>
-                  <span className="text-sm font-normal text-muted-foreground">
-                    {dateRange?.from ? formatDate(dateRange.from) : "Add dates"}
-                  </span>
-                </div>
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-[125px] justify-start px-4 h-14 transition-all duration-200 ease-in-out"
-              >
-                <div className="flex flex-col items-start">
-                  <span className="text-sm font-bricolage font-medium">
-                    Check out
-                  </span>
-                  <span className="text-sm font-normal text-muted-foreground">
-                    {dateRange?.to ? formatDate(dateRange.to) : "Add dates"}
-                  </span>
-                </div>
-              </Button>
-            </div>
-          </PopoverTrigger>
-          <PopoverContent
-            className="bg-white mt-2 font-poppins w-auto p-0 transition-all duration-200 ease-in-out"
-            align="start"
-          >
-            <Calendar
-              mode="range"
-              selected={dateRange}
-              onSelect={(newDateRange) => {
-                setDateRange({
-                  from: newDateRange?.from,
-                  to: newDateRange?.to ?? undefined,
-                });
-                if (newDateRange?.from && newDateRange?.to) {
-                  setOpenDatePicker(false);
-                }
-              }}
-              numberOfMonths={2}
-              disabled={(date) => {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0); // strip time
-                return date < today;
-              }}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-
-        <div className="w-px h-8 bg-border md:block" />
-
-        {/* Guests Selection */}
-        <Popover open={openGuests} onOpenChange={setOpenGuests}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              className={`${
-                isScrolled ? "w-[100px]" : "w-[250px] "
-              } justify-start px-4 h-14 transition-all duration-200 ease-in-out`}
-            >
-              <div className="flex flex-col items-start">
-                <span className="text-sm font-bricolage font-medium">
-                  {isScrolled ? "Guests" : "Who"}
-                </span>
-                <span
-                  className={`${
-                    isScrolled ? "hidden" : "inline-block"
-                  } text-sm font-normal text-muted-foreground`}
+        {/* CHECK IN · CHECK OUT (one calendar) */}
+        <Popover open={panel === "dates"} onOpenChange={closeIf("dates")}>
+          <PopoverAnchor asChild>
+            <div className="flex h-full min-w-0 flex-[1.6] items-center">
+              <Segment id="in" active={panel === "dates" && dateFocus === "from"} onHover={setHovered} className="flex-1">
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className={segButton}
+                    aria-haspopup="dialog"
+                    aria-expanded={panel === "dates"}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (panel === "dates" && dateFocus === "from") setPanel(null);
+                      else open("dates", "from");
+                    }}
+                  >
+                    <span className={title}>{compact && dateRange.from ? format(dateRange.from, "d MMM") : "Check in"}</span>
+                    {!compact ? <span className={value(!!dateRange.from)}>{dateRange.from ? format(dateRange.from, "d MMM") : "Add dates"}</span> : null}
+                  </button>
+                </PopoverTrigger>
+              </Segment>
+              <Divider hidden={lit("in") || lit("out")} />
+              <Segment id="out" active={panel === "dates" && dateFocus === "to"} onHover={setHovered} className="flex-1">
+                <button
+                  type="button"
+                  className={segButton}
+                  aria-haspopup="dialog"
+                  aria-expanded={panel === "dates"}
+                  onClick={() => {
+                    if (panel === "dates" && dateFocus === "to") setPanel(null);
+                    else open("dates", dateRange.from ? "to" : "from");
+                  }}
                 >
-                  {totalGuests > 0
-                    ? `${Number(totalGuests)} guest${
-                        Number(totalGuests) !== 1 ? "s" : ""
-                      }`
-                    : "Add guests"}
-                </span>
-              </div>
-            </Button>
-          </PopoverTrigger>
+                  <span className={title}>{compact && dateRange.to ? format(dateRange.to, "d MMM") : "Check out"}</span>
+                  {!compact ? <span className={value(!!dateRange.to)}>{dateRange.to ? format(dateRange.to, "d MMM") : "Add dates"}</span> : null}
+                </button>
+                {panel === "dates" && dateRange.from && !compact ? (
+                  <ClearButton label="Clear dates" onClear={() => { setDateRange({ from: undefined, to: undefined }); setDateFocus("from"); }} />
+                ) : null}
+              </Segment>
+            </div>
+          </PopoverAnchor>
           <PopoverContent
-            className="w-[320px] p-6 transition-all duration-200 ease-in-out"
-            align="start"
+            align="center"
+            sideOffset={12}
+            className={cn(POPOVER, "w-auto p-6")}
+            onInteractOutside={stayOpenInsideBar}
+            onCloseAutoFocus={focusBackUnlessSwitching}
           >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-absoluteDark">Adults</div>
-                  <div className="text-sm text-muted-foreground">
-                    Ages 13 or above
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleGuestChange("adults", "decrement")}
-                    disabled={guests.adults === 0}
-                    className="transition-all h-8 w-8 bg-[#eee] rounded-full duration-200 ease-in-out"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="w-8 text-center">{guests.adults}</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleGuestChange("adults", "increment")}
-                    className="transition-all h-8 w-8 bg-[#eee] rounded-full duration-200 ease-in-out"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Children</div>
-                  <div className="text-sm text-muted-foreground">Ages 2-12</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleGuestChange("children", "decrement")}
-                    disabled={guests.children === 0}
-                    className="transition-all h-8 w-8 bg-[#eee] rounded-full duration-200 ease-in-out"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="w-8 text-center">{guests.children}</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleGuestChange("children", "increment")}
-                    className="transition-all h-8 w-8 bg-[#eee] rounded-full duration-200 ease-in-out"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Infants</div>
-                  <div className="text-sm text-muted-foreground">Under 2</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleGuestChange("infants", "decrement")}
-                    disabled={guests.infants === 0}
-                    className="transition-all h-8 w-8 bg-[#eee] rounded-full duration-200 ease-in-out"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="w-8 text-center">{guests.infants}</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleGuestChange("infants", "increment")}
-                    className="transition-all h-8 w-8 bg-[#eee] rounded-full duration-200 ease-in-out"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+            <StayCalendar
+              range={dateRange}
+              focus={dateFocus}
+              months={2}
+              className="w-[616px] max-w-[calc(100vw-5rem)]"
+              onChange={(r) => {
+                setDateRange(r);
+                if (r.from && r.to) open("who");
+                else setDateFocus(r.from ? "to" : "from");
+              }}
+            />
+            <div className="mt-4 flex items-center justify-between gap-4 border-t border-gray-100 pt-4">
+              <p className="text-sm text-graphite" aria-live="polite">{nightsLabel(dateRange)}</p>
+              <button
+                type="button"
+                disabled={!dateRange.from}
+                onClick={() => {
+                  setDateRange({ from: undefined, to: undefined });
+                  setDateFocus("from");
+                }}
+                className="rounded-full px-3 py-2 text-sm font-semibold text-absoluteDark underline underline-offset-4 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-absoluteDark disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                Clear dates
+              </button>
             </div>
           </PopoverContent>
         </Popover>
 
-        {/* Search Button */}
-        <Button
-          size="icon"
-          className="h-12 w-12 absolute right-2 shrink-0 bg-primaryGreen hover:bg-brightGreen text-white rounded-full transition-all duration-200 ease-in-out"
-          onClick={() => {
-            setResetClicked(false);
-            submit();
-          }}
-        >
-          <Search className="h-6 w-6" />
-          <span className="sr-only">Search</span>
-        </Button>
-      </div>
-      <div
-        className={`lg:block w-[101vw] px-6 bg-white  bdesktop:flex  bdesktop:justify-center transition-all duration-300 -ml-8 ${
-          isScrolled
-            ? "md:opacity-100 md:-translate-y-3/4  border-gray-100 shadow-sm"
-            : "opacity-100 translate-y-2 "
-        }`}
-      >
-        {isStayDetailPage ? null : (
-          <div className="grid grid-cols-[10%_80%_10%]">
-            <div></div>
-            <div className="overflow-hidden">
-              {/* <FilterStaysBar
-                selectProperty={selectProperty}
-                setSelectProperty={setSelectProperty}
-                location={location}
-                from={null}
-                to={null}
-                adults={null}
-                senior={null}
-                childrens={null}
-                infants={null}
-              /> home page filter */}
-            </div>
-            <div></div>
-          </div>
-        )}
+        <Divider hidden={lit("out") || lit("who")} />
+
+        {/* WHO + SEARCH */}
+        <Popover open={panel === "who"} onOpenChange={closeIf("who")}>
+          <Segment id="who" active={panel === "who"} onHover={setHovered} className="flex-[1.35]">
+            <PopoverTrigger asChild>
+              <button type="button" className={cn(segButton, compact ? "pr-16" : "pr-[4.5rem]")} aria-haspopup="dialog" aria-expanded={panel === "who"}>
+                <span className={title}>{compact ? whoText || "Guests" : "Who"}</span>
+                {!compact ? <span className={value(!!whoText)}>{whoText || "Add guests"}</span> : null}
+              </button>
+            </PopoverTrigger>
+            <button
+              type="button"
+              onClick={submit}
+              aria-label="Search"
+              className={cn(
+                "absolute right-1 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-full bg-primaryGreen font-semibold text-white shadow-sm",
+                "transition-[background-color,padding,transform] duration-200 ease-out hover:bg-brightGreen active:scale-95 motion-reduce:transition-none",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-absoluteDark focus-visible:ring-offset-2",
+                "h-12 min-w-12 px-3",
+              )}
+            >
+              <Search className="h-4 w-4" aria-hidden="true" />
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "overflow-hidden whitespace-nowrap text-sm transition-[max-width,opacity,margin] duration-200 ease-out motion-reduce:transition-none",
+                  barOpen && !compact ? "ml-2 max-w-[4.5rem] opacity-100" : "max-w-0 opacity-0",
+                )}
+              >
+                Search
+              </span>
+            </button>
+          </Segment>
+          <PopoverContent
+            align="end"
+            sideOffset={12}
+            className={cn(POPOVER, "w-[380px] p-6")}
+            onInteractOutside={stayOpenInsideBar}
+            onCloseAutoFocus={focusBackUnlessSwitching}
+          >
+            <GuestCounter guests={guests} onChange={setGuests} />
+            {whoText ? (
+              <div className="mt-5 flex justify-end border-t border-gray-100 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setGuests(NO_GUESTS)}
+                  className="rounded-full px-3 py-2 text-sm font-semibold text-absoluteDark underline underline-offset-4 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-absoluteDark"
+                >
+                  Clear
+                </button>
+              </div>
+            ) : null}
+          </PopoverContent>
+        </Popover>
       </div>
     </>
   );

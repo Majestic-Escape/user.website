@@ -9,6 +9,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Info, MapPin } from "lucide-react";
 import { searchTitle, staysNoun } from "@/lib/search/search-title";
+import FiltersButton from "@/components/search/filters-button";
 
 export { searchTitle };
 
@@ -101,8 +102,13 @@ export default function SearchSummary({ meta, totalCount, hasDates }: { meta: Se
 
   return (
     <div className="mb-4 sm:mb-8">
-      <h1 className="text-3xl sm:text-2xl lg:text-4xl font-bricolage font-semibold mb-2 text-absoluteDark lg:mt-40 sm:pt-10 md:pt-0">{searchTitle(meta)}</h1>
-      <p className="text-lg sm:text-base text-stone">{subtitle}</p>
+      <div className="flex items-start justify-between gap-4 lg:mt-40 sm:pt-10 md:pt-0">
+        <div className="min-w-0">
+          <h1 className="text-3xl sm:text-2xl lg:text-4xl font-bricolage font-semibold mb-2 text-absoluteDark">{searchTitle(meta)}</h1>
+          <p className="text-lg sm:text-base text-stone">{subtitle}</p>
+        </div>
+        <FiltersButton className="mt-1 hidden shrink-0 md:inline-flex" />
+      </div>
       {meta?.corrected && meta.place && meta.query ? (
         <p className="mt-2 text-sm text-stone">
           Showing results for <span className="font-medium text-absoluteDark">{meta.place.name}</span> — you searched “{meta.query}”.

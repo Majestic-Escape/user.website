@@ -173,7 +173,7 @@ const Invoice = ({ payment, invoiceData }) => {
 
         {/* Traveler Info */}
         <div className="mb-6 border-t border-b py-4">
-          <p className="text-sm text-gray-800">
+          <div className="text-sm text-gray-800">
             <span className="font-semibold">Traveler:</span>
             {adults[0] ? (
               <div>
@@ -191,7 +191,7 @@ const Invoice = ({ payment, invoiceData }) => {
                 {changeUpperCase(item?.name) ?? "—"}, {item?.age ?? "—"}
               </div>
             ))}
-          </p>
+          </div>
         </div>
 
         {/* Cancellation Policy */}
