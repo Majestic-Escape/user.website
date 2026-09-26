@@ -14,7 +14,8 @@ import { invalidateByTag } from "@vercel/functions";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const TAG = /^(listings|listing:[a-f0-9]{24})$/;
+// listings: the catalogue; site-hero: the admin-managed homepage banner
+const TAG = /^(listings|listing:[a-f0-9]{24}|site-hero)$/;
 const MAX_TAGS = 20;
 const MAX_BODY = 4096;
 
