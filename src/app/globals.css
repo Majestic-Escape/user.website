@@ -161,7 +161,7 @@ body.razorpay-lock {
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 99 52% 25%; /* brand green (#36621F) focus ring */
   }
 }
 
@@ -181,6 +181,9 @@ body {
   overflow-x: hidden;
   font-size: 15px;
   scroll-behavior: smooth;
+  /* Android/iOS paint a square grey flash over whatever is tapped, ignoring
+     rounded shapes; controls show their own pressed state instead. */
+  -webkit-tap-highlight-color: transparent;
 }
 .no-spinner::-webkit-outer-spin-button,
 .no-spinner::-webkit-inner-spin-button {
@@ -367,4 +370,74 @@ body {
    open). Its own stacking puts it above every dialog. */
 majestic-chat-widget {
   pointer-events: auto;
+}
+
+/* While a full-screen search layer is open (src/lib/ui/layers.ts) the chat
+   launcher steps aside: it sits above every layer and would cover the
+   sheet's own buttons. It comes back as soon as the layer closes. */
+html[data-me-overlay] majestic-chat-widget {
+  display: none !important;
+}
+
+/* Dual-thumb price slider (filter-panel.tsx): two overlaid range inputs,
+   only their thumbs take the pointer so either can be dragged. */
+.me-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+  margin: 0;
+}
+.me-range::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 2rem;
+}
+.me-range::-moz-range-track {
+  background: transparent;
+  height: 2rem;
+}
+.me-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  height: 28px;
+  width: 28px;
+  margin-top: 2px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 1px solid #b0b0b0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  cursor: grab;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.me-range::-moz-range-thumb {
+  pointer-events: auto;
+  height: 28px;
+  width: 28px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 1px solid #b0b0b0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  cursor: grab;
+}
+.me-range:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.1);
+}
+.me-range:focus-visible {
+  outline: none;
+}
+.me-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgba(54, 98, 31, 0.35), 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+.me-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px rgba(54, 98, 31, 0.35), 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+@media (prefers-reduced-motion: reduce) {
+  .me-range::-webkit-slider-thumb {
+    transition: none;
+  }
+  .me-range:active::-webkit-slider-thumb {
+    transform: none;
+  }
 }

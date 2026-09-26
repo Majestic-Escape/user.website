@@ -1,21 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuPortal,
-} from "@/components/ui/dropdown-menu";
-import { User } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
+// Guest account menu in the desktop headers (components/nav/account-menu).
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import AccountMenu from "@/components/nav/account-menu";
 
 export function UserDropdownMenu() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -25,102 +16,20 @@ export function UserDropdownMenu() {
     router.push("/login");
   };
 
-  // if (!user) {
-  //   // If there's no user, redirect to login page
-  //   router.push("/login");
-  //   return null;
-  // }
   return (
-    <div className="relative">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            className="rounded-full border border-gray-200"
-            size="icon"
-            variant="ghost"
-          >
-            <User className="h-6 w-6" />
-            <span className="sr-only">Toggle user menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuPortal>
-          <DropdownMenuContent
-            align="end"
-            className={cn(
-              "w-56",
-              "z-[1100]",
-              "absolute right-0 mt-2",
-              "overflow-hidden",
-              "origin-top-right",
-            )}
-            sideOffset={5}
-          >
-            <DropdownMenuItem asChild>
-              <Link className="py-2" href="/account/personal-info">
-                Account
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link className="py-2" href="/messages">
-                Messages
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              {/* <Link className="py-2" href="/notifications">
-              Notifications
-            </Link> */}
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link className="py-2" href="/manage-bookings">
-                Bookings
-              </Link>
-            </DropdownMenuItem>
-
-            {/* <hr /> */}
-
-            <DropdownMenuItem className="lg:hidden" asChild>
-              <Link href="/host/dashboard" className=" py-2">
-                Switch to Hosting
-              </Link>
-              {/* <Link
-              className="py-2"
-              href="/host/dashboard/add-listing"
-              rel="noopener noreferrer"
-            >
-              Host your Property
-            </Link> */}
-            </DropdownMenuItem>
-
-            <DropdownMenuItem asChild>
-              {/* <Link
-              className="py-2"
-              href="/host/dashboard"
-              rel="noopener noreferrer"
-            >
-              Manage Experiences
-            </Link> */}
-            </DropdownMenuItem>
-
-            <hr />
-            <DropdownMenuItem asChild>
-              <Link className="py-2" href="/faq">
-                FAQ
-              </Link>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem asChild>
-              <Link className="py-2" href="/help-center">
-                Help Center
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <button onClick={handleLogout} className="py-2 w-full">
-                Logout
-              </button>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenuPortal>
-      </DropdownMenu>
-    </div>
+    <AccountMenu
+      entries={[
+        { type: "link", label: "Account", href: "/account/personal-info" },
+        { type: "link", label: "Messages", href: "/messages" },
+        { type: "link", label: "Bookings", href: "/manage-bookings" },
+        // the header shows "Switch to Hosting" itself from lg up
+        { type: "link", label: "Switch to Hosting", href: "/host/dashboard", className: "lg:hidden" },
+        { type: "separator" },
+        { type: "link", label: "FAQ", href: "/faq" },
+        { type: "link", label: "Help Center", href: "/help-center" },
+        { type: "separator" },
+        { type: "action", label: "Logout", onSelect: handleLogout },
+      ]}
+    />
   );
 }

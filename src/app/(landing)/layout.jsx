@@ -10,7 +10,6 @@ import { MobileNavbar } from "@/components/stays-mobile-navbar";
 import FilterModal from "@/components/ui/modal";
 import { PriceNavigation } from "@/components/ui/price-navigation";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 export default function Layout({ children }) {
@@ -18,47 +17,9 @@ export default function Layout({ children }) {
     useAuth();
   const pathname = usePathname();
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  useEffect(() => {
-    if (modalFilter) {
-      setCurrentIndex(0);
-
-      // Save current scroll position
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
-      document.body.style.overflow = "hidden";
-
-      // Store scroll position for later restoration
-      document.body.dataset.scrollY = scrollY.toString();
-    } else {
-      // Restore scroll position
-      const scrollY = document.body.dataset.scrollY || "0";
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.overflow = "";
-
-      // Scroll back to original position
-      window.scrollTo(0, parseInt(scrollY, 10));
-
-      // Clean up
-      delete document.body.dataset.scrollY;
-    }
-
-    return () => {
-      // Cleanup on unmount
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.overflow = "";
-      delete document.body.dataset.scrollY;
-    };
-  }, [modalFilter]);
+  // The search/filters sheet (components/ui/modal.tsx) freezes and restores
+  // the page scroll itself. A second lock here ran after it, read the frozen
+  // position as 0 and scrolled to the top when the sheet closed.
   // Check if current path is a stay detail page
   const isStayDetailPage =
     pathname.startsWith("/stay/") && pathname !== "/stay";
@@ -67,7 +28,9 @@ export default function Layout({ children }) {
   const isFilter = pathname.startsWith("/filter");
   const isLocation = pathname.startsWith("/location/");
 
-  const isMobile = useMediaQuery("(max-width: 640px)");
+  // Same breakpoint as the bars' own CSS (md = 768px): 641–767px used to get
+  // neither the desktop header (hidden below md) nor the phone one.
+  const isMobile = useMediaQuery("(max-width: 767px)");
   return (
     <>
       <div className="font-poppins">
@@ -79,19 +42,18 @@ export default function Layout({ children }) {
           ) : (
             <Oldbar />
           )}
-          {isStayDetailPage && isMobile ? <MobileNavbar /> : null}
+          {/* phone header and price bar hide themselves from md up (CSS), so
+              they render from the first paint — no header popping in after
+              hydration, no gap between breakpoints */}
+          {isStayDetailPage ? <MobileNavbar /> : null}
           {/* <MobileNavbar /> Stay Page */}
           {/* {children} */}
-          <main className={modalFilter ? "filter blur-sm" : ""}>
+          <main className={modalFilter ? "md:blur-sm" : ""}>
             {children}
           </main>
           <FilterModal isOpen={modalFilter} onClose={closeModal} />
           <FooterWrapper />
-          {!isStayDetailPage ? (
-            <BottomNavigation />
-          ) : isMobile ? (
-            <PriceNavigation />
-          ) : null}
+          {!isStayDetailPage ? <BottomNavigation /> : <PriceNavigation />}
         </div>
       </div>
     </>

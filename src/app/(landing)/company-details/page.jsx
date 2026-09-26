@@ -89,7 +89,7 @@ export default function CompanyDetails() {
               <h2 className="text-2xl font-semibold mb-4">Our Services</h2>
 
               <Tabs defaultValue="accommodations" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsList className="grid w-full grid-cols-3 mb-6 [&>button]:whitespace-normal [&>button]:leading-tight">
                   <TabsTrigger value="accommodations">
                     Accommodations
                   </TabsTrigger>

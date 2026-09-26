@@ -424,7 +424,7 @@ export default function ContactHostPage() {
   // Success state
   if (sent) {
     return (
-      <div className={`fixed ${isMobile ? 'inset-0 z-[100]' : 'top-12 md:top-[76px] left-0 right-0 bottom-12 md:bottom-0 z-40'} flex items-center justify-center px-4 bg-white`}>
+      <div className={`fixed ${isMobile ? 'inset-0 z-[1003]' : 'top-12 md:top-[76px] left-0 right-0 bottom-12 md:bottom-0 z-40'} flex items-center justify-center px-4 bg-white`}>
         <div className="max-w-md w-full text-center">
           <div className="w-16 h-16 bg-lightGreen rounded-full flex items-center justify-center mx-auto mb-6">
             <Send className="w-8 h-8 text-primaryGreen" />
@@ -456,7 +456,7 @@ export default function ContactHostPage() {
   // Loading state
   if (loading) {
     return (
-      <div className={`fixed ${isMobile ? 'inset-0 z-[100]' : 'top-12 md:top-[76px] left-0 right-0 bottom-12 md:bottom-0 z-40'} flex items-center justify-center bg-white`}>
+      <div className={`fixed ${isMobile ? 'inset-0 z-[1003]' : 'top-12 md:top-[76px] left-0 right-0 bottom-12 md:bottom-0 z-40'} flex items-center justify-center bg-white`}>
         <Loader2 className="w-8 h-8 animate-spin text-primaryGreen" />
       </div>
     );
@@ -467,7 +467,7 @@ export default function ContactHostPage() {
   if (isMobile && showMessageInput) {
     return (
       <div 
-        className="fixed inset-0 bg-white flex flex-col z-[100] font-poppins"
+        className="fixed inset-0 bg-white flex flex-col z-[1003] font-poppins"
         style={{ 
           height: keyboardHeight > 0 ? `${window.visualViewport?.height || window.innerHeight}px` : '100dvh',
           top: keyboardHeight > 0 ? `${window.visualViewport?.offsetTop || 0}px` : 0
@@ -641,7 +641,7 @@ export default function ContactHostPage() {
   // Mobile Layout
   if (isMobile) {
     return (
-      <div className="fixed inset-0 bg-white flex flex-col z-[100] font-poppins">
+      <div className="fixed inset-0 bg-white flex flex-col z-[1003] font-poppins">
         {/* Header */}
         <div className="flex items-center px-4 py-3 border-b bg-white flex-shrink-0">
           <button onClick={() => router.back()} className="p-1.5 -ml-1 hover:bg-gray-100 rounded-full">

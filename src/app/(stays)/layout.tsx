@@ -15,15 +15,13 @@ export default function StaysLayout({ children }: { children: ReactNode }) {
   return (
     <SheetProvider>
       <div className="font-poppins">
-        {modalFilter && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 z-40"></div>
-        )}
+        {/* the search / filters surface brings its own backdrop */}
 
         <Navbar />
 
         <MobileNavbar />
 
-        <main className={modalFilter ? "filter blur-sm" : ""}>{children}</main>
+        <main className={modalFilter ? "md:blur-sm" : ""}>{children}</main>
         <FilterModal isOpen={modalFilter} onClose={closeModal} />
         <FooterWrapper />
         <BottomNavigation />

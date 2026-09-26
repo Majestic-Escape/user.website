@@ -1,21 +1,13 @@
+import Script from "next/script";
 
-
-
-
-
-
-export default function RootLayout({
-  children,
-}) {
+// The membership page pays through Razorpay Checkout. This layout used to
+// render its own <html>/<body> (a second document inside the root layout,
+// which React reports as a hydration error); the script is simply loaded here.
+export default function HostMembershipLayout({ children }) {
   return (
-    <html lang="en">
-      <head>
-        <script src="https://checkout.razorpay.com/v1/checkout.js" async />
-      </head>
-      <body >
-          {children}
-      </body>
-    </html>
-  )
+    <>
+      {children}
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
+    </>
+  );
 }
-

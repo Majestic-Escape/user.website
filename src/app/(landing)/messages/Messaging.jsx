@@ -53,6 +53,8 @@ import {
 } from "@/lib/conversationsCache";
 import MessagesSkeleton from "./MessagesSkeleton";
 import { goToLogin } from "@/lib/auth-return";
+import { getCachedThread, setCachedThread } from "@/lib/chat/threadCache";
+import { clearSession } from "@/lib/session";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -639,6 +641,11 @@ export default function MessagesPage() {
         const res = await fetch(`${chatUrl}/api/chat/conversations?role=guest`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        if (res.status === 401) {
+          clearSession();
+          goToLogin(router);
+          return;
+        }
         const fresh = await res.json();
         if (!fresh.success) return;
         const list = (fresh.data || [])
@@ -666,9 +673,31 @@ export default function MessagesPage() {
         // cache exists to remove.
         if (conversationsRef.current.length === 0) setLoading(true);
 
+        // Connection state first: the shared socket is usually up already, and
+        // Send must not wait for the list round trip to become usable.
+        if (!unsubscribeConnectionRef.current) {
+          unsubscribeConnectionRef.current = socketManager.onConnectionChange((state) => {
+            setConnectionStatus(state);
+          });
+        }
+
+        // A deep-linked thread that is already in the cached list opens now;
+        // the fresh list below confirms it (or closes it if it is gone).
+        const cachedTarget = conversationIdFromUrl
+          ? conversationsRef.current.find((c) => c.id === conversationIdFromUrl)
+          : null;
+        if (cachedTarget && !selectedConversationRef.current) setSelectedConversation(cachedTarget);
+
         const res = await fetch(`${chatUrl}/api/chat/conversations?role=guest`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        if (res.status === 401) {
+          // The account's session is gone (signed out everywhere, banned,
+          // expired): nothing cached for it may stay on this device.
+          clearSession();
+          goToLogin(router);
+          return;
+        }
         const data = await res.json();
         
         if (data.success) {
@@ -689,6 +718,9 @@ export default function MessagesPage() {
           // Auto-select conversation from URL if provided
           if (conversationIdFromUrl) {
             const targetConv = sortedConversations.find(c => c.id === conversationIdFromUrl);
+            if (!targetConv && cachedTarget && selectedConversationRef.current?.id === cachedTarget.id) {
+              setSelectedConversation(null);
+            }
             if (targetConv) {
               setSelectedConversation(targetConv);
               // Clear the URL param to avoid re-selecting on refresh. Through
@@ -711,10 +743,7 @@ export default function MessagesPage() {
         const socket = socketManager.getSocket(token);
         if (!socket) return;
 
-        // Subscribe to connection state changes from socket manager
-        unsubscribeConnectionRef.current = socketManager.onConnectionChange((state) => {
-          setConnectionStatus(state);
-        });
+        // (connection state is subscribed at the top of init)
 
         const handleConnect = () => {
           const reconnect = hasConnectedOnceRef.current;
@@ -919,9 +948,6 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!selectedConversation || !token) return;
 
-    // Clear messages immediately when switching conversations to prevent stale data
-    setMessages([]);
-
     // A slow fetch for the thread the user just left must not land on the
     // one now open: switching Nisha → Aishwar while Nisha's history was still
     // in flight painted Nisha's messages under Aishwar's header until
@@ -930,8 +956,13 @@ export default function MessagesPage() {
     let stale = false;
     const conversationId = selectedConversation.id;
 
+    // Paint the thread as it was last seen (this device, this account) and
+    // revalidate; otherwise clear it so no other thread's messages linger.
+    const cached = getCachedThread(userId || bootstrap.userId, "guest", conversationId);
+    setMessages(cached ? (reconcileHistoryRef.current ? reconcileHistoryRef.current(cached) : cached) : []);
+
     async function loadMessages() {
-      setLoadingMessages(true);
+      setLoadingMessages(!cached);
       try {
         const res = await fetch(
           `${chatUrl}/api/chat/conversations/${conversationId}/messages?limit=50`,
@@ -963,6 +994,16 @@ export default function MessagesPage() {
       stale = true;
     };
   }, [selectedConversation?.id, token, chatUrl, userId]);
+
+  // Keep the open thread's device copy current: history, live messages and
+  // read receipts are what the next visit paints first. Only this thread's
+  // server messages are kept (threadCache filters by conversation and drops
+  // local, unsent copies).
+  const cacheConversationId = selectedConversation?.id;
+  useEffect(() => {
+    if (!cacheConversationId || loadingMessages) return;
+    setCachedThread(userId || bootstrap.userId, "guest", cacheConversationId, messages);
+  }, [messages, cacheConversationId, loadingMessages, userId, bootstrap.userId]);
 
   // After a reconnect, re-fetch the open thread and merge it into what is on
   // screen: server copies replace optimistic ones (by id / clientMessageId),
@@ -1144,8 +1185,11 @@ export default function MessagesPage() {
     // thread's header paints once over the previous thread's messages before
     // the load effect clears them.
     if (conv.id !== selectedConversationRef.current?.id) {
-      setMessages([]);
-      if (token) setLoadingMessages(true); // the load effect below takes it from here
+      // Last-seen copy of the thread (if any) paints now; the load effect
+      // below revalidates it.
+      const cached = getCachedThread(userId || bootstrap.userId, "guest", conv.id);
+      setMessages(cached ? (reconcileHistoryRef.current ? reconcileHistoryRef.current(cached) : cached) : []);
+      if (token) setLoadingMessages(!cached); // the load effect below takes it from here
     }
     setSelectedConversation(conv);
     setShowReservation(true);
