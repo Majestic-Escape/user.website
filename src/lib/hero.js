@@ -22,8 +22,11 @@
 import { VARIANT_SET, variantWidthFor } from "./spaces-image.js";
 
 export const HERO_SLOTS = Object.freeze({
-  desktop: Object.freeze({ ratio: 1920 / 740, cap: 3840 }),
-  mobile: Object.freeze({ ratio: 530 / 720, cap: 1600 }),
+  // cap: the widest master the server keeps; renditionCap: the widest file
+  // browsers are offered (desktop: 2560, as the static hero — server.me
+  // services/siteHeroImage.js explains the byte budget behind it)
+  desktop: Object.freeze({ ratio: 1920 / 740, cap: 3840, renditionCap: 2560 }),
+  mobile: Object.freeze({ ratio: 530 / 720, cap: 1600, renditionCap: 1600 }),
 });
 export const RENDITION_STEPS = Object.freeze([640, 960, 1280, 1600, 1920, 2560, 3840]);
 export const ALT_MAX = 150;
@@ -55,7 +58,7 @@ export const STATIC_HERO = Object.freeze({
 
 /** Actual pixel widths of the renditions of a master `masterWidth` px wide (mirrors the server). */
 export function heroRenditionWidths(masterWidth, slot) {
-  const top = Math.min(Math.floor(Number(masterWidth) || 0), HERO_SLOTS[slot].cap);
+  const top = Math.min(Math.floor(Number(masterWidth) || 0), HERO_SLOTS[slot].renditionCap);
   if (top < 1) return [];
   const widths = RENDITION_STEPS.filter((w) => w < top);
   widths.push(top);

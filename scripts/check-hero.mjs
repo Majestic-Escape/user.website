@@ -25,7 +25,7 @@ const spaces = await import(pathToFileURL(path.join(root, "src/lib/spaces-image.
 expect(JSON.stringify(vectors.renditionSteps) === JSON.stringify(hero.RENDITION_STEPS), `rendition steps: site ${hero.RENDITION_STEPS} vs server ${vectors.renditionSteps}`);
 expect(JSON.stringify(vectors.variantWidths) === JSON.stringify(spaces.VARIANT_WIDTHS), "variant widths differ from the server");
 for (const s of ["desktop", "mobile"]) {
-  expect(Math.abs(vectors.slots[s].ratio - hero.HERO_SLOTS[s].ratio) < 1e-12 && vectors.slots[s].cap === hero.HERO_SLOTS[s].cap, `${s} slot differs from the server`);
+  expect(Math.abs(vectors.slots[s].ratio - hero.HERO_SLOTS[s].ratio) < 1e-12 && vectors.slots[s].cap === hero.HERO_SLOTS[s].cap && vectors.slots[s].renditionCap === hero.HERO_SLOTS[s].renditionCap, `${s} slot differs from the server`);
 }
 for (const v of vectors.vectors) {
   const widths = hero.heroRenditionWidths(v.masterWidth, v.slot);
@@ -85,7 +85,7 @@ expect(hero.validateHero(ok(), qa) === null, "production keys are not accepted b
 const r = hero.resolveHero(good, { source });
 expect(source.delivery === "site", "site delivery is the default");
 expect(!r.isStatic && r.alt === good.alt && r.version === 3, "custom banner resolved");
-expect(r.desktop.avif.split(", ").length === 7 && r.desktop.avif.endsWith(`/_hero/desktop/${uuid}.jpg/v1/w3840.avif 2805w`) && r.desktop.avif.startsWith(`/_hero/desktop/${uuid}.jpg/v1/w640.avif 640w`), `desktop avif srcset: ${r.desktop.avif}`);
+expect(r.desktop.avif.split(", ").length === 6 && r.desktop.avif.endsWith(`/_hero/desktop/${uuid}.jpg/v1/w2560.avif 2560w`) && !r.desktop.avif.includes("2805w") && r.desktop.avif.startsWith(`/_hero/desktop/${uuid}.jpg/v1/w640.avif 640w`), `desktop avif srcset: ${r.desktop.avif}`);
 expect(r.mobile.webp === ["640", "960", "1060"].map((w) => `/_hero/mobile/${uuid}.jpg/v1/w${spaces.variantWidthFor(Number(w))}.webp ${w}w`).join(", "), `mobile webp srcset: ${r.mobile.webp}`);
 expect(r.desktop.jpeg === `https://majestic-escape-host-properties.blr1.cdn.digitaloceanspaces.com/site/hero/desktop/${uuid}.jpg`, "JPEG fallback is the master on the CDN");
 expect(r.mobile.origin === `https://majestic-escape-host-properties.blr1.digitaloceanspaces.com/site/hero/mobile/${uuid}.jpg/v1/w1280.webp`, `origin fallback: ${r.mobile.origin}`);
@@ -93,7 +93,7 @@ expect(r.cdnOrigin === null, "no preconnect needed for site delivery");
 // HERO_DELIVERY=cdn: the CDN directly, with a preconnect
 const cdnSource = hero.heroSource({ HERO_DELIVERY: "cdn" });
 const rc = hero.resolveHero(good, { source: cdnSource });
-expect(rc.desktop.avif.endsWith(`https://majestic-escape-host-properties.blr1.cdn.digitaloceanspaces.com/site/hero/desktop/${uuid}.jpg/v1/w3840.avif 2805w`), `cdn delivery desktop avif: ${rc.desktop.avif}`);
+expect(rc.desktop.avif.endsWith(`https://majestic-escape-host-properties.blr1.cdn.digitaloceanspaces.com/site/hero/desktop/${uuid}.jpg/v1/w2560.avif 2560w`), `cdn delivery desktop avif: ${rc.desktop.avif}`);
 expect(rc.mobile.webp === ["640", "960", "1060"].map((w) => `https://majestic-escape-host-properties.blr1.cdn.digitaloceanspaces.com/site/hero/mobile/${uuid}.jpg/v1/w${spaces.variantWidthFor(Number(w))}.webp ${w}w`).join(", "), `cdn delivery mobile webp: ${rc.mobile.webp}`);
 expect(rc.cdnOrigin === "https://majestic-escape-host-properties.blr1.cdn.digitaloceanspaces.com", "preconnect origin for cdn delivery");
 expect(rc.mobile.origin === r.mobile.origin && rc.desktop.jpeg === r.desktop.jpeg, "fallbacks do not depend on the delivery");

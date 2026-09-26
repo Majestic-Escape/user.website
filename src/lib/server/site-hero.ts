@@ -9,8 +9,18 @@ import "server-only";
 // Like the catalogue it carries the fresh bypass, so a regeneration after a
 // purge is never refilled from a stale edge copy of the API response.
 //
-// Anything unexpected — backend down, timeout, a payload that fails
-// validateHero() — means null, and the page shows the bundled banner.
+// A payload that fails validateHero() means null: the page shows the
+// bundled banner. A backend that can't be reached (error, 5xx, timeout)
+// is different:
+//  - at build time, and in development, the bundled banner too (the build
+//    must not depend on the backend);
+//  - in a production regeneration (ISR) the error is thrown, so the
+//    regeneration fails and the page generated last — with the banner it
+//    already showed — keeps being served; the next one tries again. ("/" is
+//    prerendered at build, so there is always such a page.) Returning null
+//    here would replace a published banner with the bundled one for at
+//    least a regeneration period after a publish whose purge met a backend
+//    hiccup.
 // HERO_DYNAMIC=off ignores the API altogether (a redeploy-time kill switch).
 import { backendBase } from "@/lib/server/catalogue";
 import { heroSource, validateHero } from "@/lib/hero";
@@ -38,6 +48,7 @@ export async function fetchSiteHero(): Promise<HeroConfig> {
     return config;
   } catch (err) {
     console.error("[site-hero] fetch failed:", err instanceof Error ? err.message : err);
+    if (process.env.NODE_ENV === "production" && process.env.NEXT_PHASE !== "phase-production-build") throw err;
     return null;
   }
 }
