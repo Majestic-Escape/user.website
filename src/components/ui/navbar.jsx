@@ -8,7 +8,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadCount } from "@/contexts/UnreadCountContext";
 import WishlistPopup from "../wishlist-popup";
-import { UserDropdownMenu } from "@/components/user-dropdown-menu";
+import HeaderActions from "@/components/nav/header-actions";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { Heart, MessageSquare } from "lucide-react";
@@ -43,26 +43,26 @@ export default function Navbar() {
     <header
       className={
         isSearchVisible
-          ? "hidden md:block w-screen bg-white  z-[1002]  font-poppins border-b px-4 md:px-6 "
-          : "fixed top-0 left-0 right-0 w-screen bg-white  z-[1002]  font-poppins border-b px-4 md:px-6 "
+          ? "hidden md:block w-full bg-white z-[1002] font-poppins border-b px-4 md:px-6"
+          : "fixed inset-x-0 top-0 bg-white z-[1002] font-poppins border-b px-4 md:px-6"
       }
     >
       <div className=" container max-w-[1400px] flex  h-12 md:h-[76px] w-full items-center mx-auto">
         <div></div>{" "}
-        <Link className="flex items-center gap-2 text-[#3B5D2D]" href="/">
+        <Link className="flex min-h-[44px] items-center gap-2 rounded-lg text-[#3B5D2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen" href="/" aria-label="Majestic Escape home">
           {/* <Image
             className="h-6 md:h-6 w-auto"
             width={200}
             height={40}
             src="/images/logo.svg"
-            alt="Logo"
+            alt=""
           /> */}
           <Image
             className="hidden lg:block h-6 w-auto"
             width={200}
             height={40}
             src="/images/logo.svg"
-            alt="Logo"
+            alt=""
           />
           {/* ✅ MEDIUM SCREENS ONLY */}
           <Image
@@ -70,98 +70,13 @@ export default function Navbar() {
             width={200}
             height={40}
             src="/logo.png" // <-- medium-specific image
-            alt="Logo Medium"
+            alt=""
           />
         </Link>
         <div className="z-50 absolute hidden md:block right-[50%] translate-x-1/2">
           <NavTabLayout />
         </div>
-        {/* Neutral until the stored session is known: the server HTML cannot
-            tell who is signed in, and the signed-out "Login" used to flash on
-            every reload for signed-in visitors. Same footprint as the avatar
-            button, so the bar does not shift when the real items arrive. */}
-        {!authReady ? (
-          <nav className="ml-auto hidden md:flex items-center gap-4 sm:gap-6" aria-hidden="true">
-            <Skeleton className="h-10 w-10 rounded-full" />
-          </nav>
-        ) : user ? (
-          <nav className=" ml-auto hidden md:flex items-center gap-4 sm:gap-6">
-            {/* <WishlistPopup
-              isOpen={isWishlistOpen}
-              onClose={() => setIsWishlistOpen(false)}
-            /> */}
-            <button
-              onClick={switchToHosting}
-              className="hidden lg:inline-flex text-sm bg-transparent border-none shadow-none text-stone font-medium hover:text-brightGreen hover:underline"
-            >
-              Switch to Hosting
-            </button>
-
-            {/* ✅ MEDIUM SCREEN ONLY BUTTON */}
-            {/* <Button
-              onClick={() => router.push("/host")}
-              className="hidden md:inline-flex lg:hidden text-sm bg-primaryGreen text-white px-4 rounded-full hover:bg-brightGreen"
-            >
-              Host Switch
-            </Button> */}
-            {/* <Button
-              onClick={switchToHosting}
-              className="text-sm bg-transparent hover:bg-transparent border-none shadow-none  text-stone font-medium hover:text-brightGreen hover:transition-colors hover:underline"
-            >
-              Switch to Hosting
-            </Button> */}
-            {/* <Button
-              variant="ghost"
-              size="icon"
-              className="relative"
-              onClick={() => setIsWishlistOpen(!isWishlistOpen)}
-            >
-              <Heart
-                className={`h-5 w-5 ${
-                  isWishlistOpen ? "text-red-500" : "text-muted-foreground"
-                }`}
-              />
-              {totalWishlistItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                  {totalWishlistItems}
-                </span>
-              )}
-            </Button> */}
-
-            <Link href="/messages" className="relative">
-              <MessageSquare className="h-5 w-5 text-muted-foreground" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center font-bold text-[10px] leading-none">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              )}
-            </Link>
-
-            <UserDropdownMenu className="" />
-          </nav>
-        ) : (
-          <nav className=" ml-auto hidden md:flex items-center gap-4 sm:gap-6">
-            {/* <WishlistPopup
-              isOpen={isWishlistOpen}
-              onClose={() => setIsWishlistOpen(false)}
-            /> */}
-            {/* <Link
-              className="text-base text-absoluteDark font-medium hover:text-brightGreen hover:transition-colors hover:underline"
-              href="/login"
-            >
-              Become a Host On filter page
-            </Link> */}
-            <Link
-              href={{
-                pathname: "/login",
-                query: returnUrl ? { returnUrl: decodeURIComponent(returnUrl) } : undefined,
-              }}
-              className="bg-primaryGreen font-medium hover:bg-brightGreen px-6 text-base rounded-3xl text-white py-1.5"
-            >
-              Login
-            </Link>
-          </nav>
-        )}
+        <HeaderActions />
       </div>
     </header>
   );

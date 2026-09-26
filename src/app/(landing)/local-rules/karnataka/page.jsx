@@ -70,18 +70,20 @@ export default function KarnatakaRules() {
                         <strong>Maintain Books and Registers</strong>. While
                         operating your homestay in Karnataka, you should
                         maintain the following books and registers:
-                        <br />
-                        <li>A complaint/suggestion book;</li>
-                        <li>
-                          A registration book to record complete details of
-                          guests;
-                        </li>
-                        <li>
-                          A serially numbered bill book (three copies); and
-                        </li>
-                        <li>
-                          A serially numbered payment/advance receipt book.
-                        </li>
+                        {/* a list inside the item (an <li> cannot sit directly in an <li>) */}
+                        <ul>
+                          <li>A complaint/suggestion book;</li>
+                          <li>
+                            A registration book to record complete details of
+                            guests;
+                          </li>
+                          <li>
+                            A serially numbered bill book (three copies); and
+                          </li>
+                          <li>
+                            A serially numbered payment/advance receipt book.
+                          </li>
+                        </ul>
                       </li>
                     </dd>
                   </div>

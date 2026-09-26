@@ -3,7 +3,13 @@ body {
   font-family: "poppins", system-ui, sans-serif;
   background: white;
   color: black;
+  /* Not `hidden` (globals.css): that makes body a scroll container and breaks
+     the booking card's position: sticky. `clip` keeps sticky working and still
+     stops sideways page scroll; this sheet stays loaded after a client-side
+     navigation, and with `visible` the home hero's 100vw bleed scrolled by the
+     scrollbar's width on desktops. Browsers without `clip` keep `visible`. */
   overflow-x: visible !important;
+  overflow-x: clip !important;
   font-size: 15px;
   scroll-behavior: smooth;
 }

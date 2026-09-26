@@ -29,7 +29,7 @@ export default function GoaRules() {
                       Listing registration requirements
                     </dt>
                     <dd className="mt-1  text-gray-900 sm:mt-0 sm:col-span-2">
-                      <p>
+                      <div>
                         The{" "}
                         <a
                           className="underline"
@@ -94,7 +94,7 @@ export default function GoaRules() {
                         Category “D” under the Goa Rules as set out above, the
                         following registration and other rules apply: <br />{" "}
                         <br />
-                      </p>
+                      </div>
                       <span className="flex text-lg font-semibold">
                         Registration
                       </span>

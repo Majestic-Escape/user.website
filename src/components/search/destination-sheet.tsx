@@ -7,10 +7,12 @@
 // the input it contains scrolls off the top of the screen. Here the input is
 // pinned at the top and the list fills exactly the VISIBLE area above the
 // keyboard (window.visualViewport, which shrinks with it on iOS Safari and
-// Android Chrome), scrolling inside itself.
+// Android Chrome), scrolling inside itself. The phone's Back closes it (it
+// reads as a page), and the floating chat launcher steps aside meanwhile.
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft } from "lucide-react";
+import { useBackToClose, useOverlayFlag } from "@/lib/ui/layers";
 
 type Props = {
   open: boolean;
@@ -42,6 +44,8 @@ export default function DestinationSheet({ open, onClose, title = "Where to?", c
   const area = useVisibleArea(open);
   const closeRef = React.useRef(onClose);
   closeRef.current = onClose;
+  useBackToClose(open, onClose);
+  useOverlayFlag(open);
 
   React.useEffect(() => {
     if (!open) return;
@@ -65,11 +69,11 @@ export default function DestinationSheet({ open, onClose, title = "Where to?", c
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-x-0 z-[10050] flex flex-col bg-white font-poppins"
+      className="fixed inset-x-0 z-[10050] flex flex-col bg-white font-poppins animate-in fade-in-0 slide-in-from-bottom-6 duration-200 ease-out motion-reduce:animate-none"
       style={{ top: area ? area.top : 0, height: area ? area.height : "100dvh" }}
     >
       <div className="flex shrink-0 items-center gap-1 border-b px-2 py-1.5">
-        <button type="button" onClick={onClose} aria-label="Close" className="flex h-11 w-11 items-center justify-center rounded-full text-graphite hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen">
+        <button type="button" onClick={onClose} aria-label="Close" className="flex h-[44px] w-[44px] items-center justify-center rounded-full text-graphite hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen">
           <ArrowLeft className="h-5 w-5" aria-hidden="true" />
         </button>
         <h2 className="font-bricolage text-base font-semibold text-absoluteDark">{title}</h2>
