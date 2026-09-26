@@ -11,16 +11,17 @@ import "server-only";
 //
 // A payload that fails validateHero() means null: the page shows the
 // bundled banner. A backend that can't be reached (error, 5xx, timeout)
-// is different:
-//  - at build time, and in development, the bundled banner too (the build
-//    must not depend on the backend);
-//  - in a production regeneration (ISR) the error is thrown, so the
-//    regeneration fails and the page generated last — with the banner it
-//    already showed — keeps being served; the next one tries again. ("/" is
-//    prerendered at build, so there is always such a page.) Returning null
-//    here would replace a published banner with the bundled one for at
-//    least a regeneration period after a publish whose purge met a backend
-//    hiccup.
+// never fails the page — like the catalogue, the error is swallowed:
+//  - the answer this server process last read successfully is used, if it
+//    is less than a day old (a replaced banner's images are kept at least
+//    24 h after it is retired, so its URLs still resolve);
+//  - otherwise (a fresh instance, the build) the bundled banner.
+// Either way the failed fetch is not cached, so the page is regenerated
+// with the real banner within one page period (5 min) once the backend
+// answers. Throwing instead is not safe: after a purge (revalidateTag) Next
+// renders the page in the foreground, and a thrown error there is a 500
+// for the home page for as long as the backend is failing
+// (tests/pw-final/hero-isr-failure.mjs).
 // HERO_DYNAMIC=off ignores the API altogether (a redeploy-time kill switch).
 import { backendBase } from "@/lib/server/catalogue";
 import { heroSource, validateHero } from "@/lib/hero";
@@ -29,6 +30,9 @@ export const HERO_REVALIDATE_SECONDS = 3600;
 const FETCH_TIMEOUT_MS = 6000;
 
 export type HeroConfig = ReturnType<typeof validateHero>;
+
+const LAST_GOOD_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+let lastGood: { config: HeroConfig; at: number } | null = null;
 
 export async function fetchSiteHero(): Promise<HeroConfig> {
   if (process.env.HERO_DYNAMIC === "off") return null;
@@ -45,10 +49,11 @@ export async function fetchSiteHero(): Promise<HeroConfig> {
     if (!res.ok) throw new Error(`/site/hero → ${res.status}`);
     const config = validateHero(await res.json(), heroSource(process.env));
     if (!config) console.error("[site-hero] payload refused; showing the bundled banner");
+    lastGood = { config, at: Date.now() };
     return config;
   } catch (err) {
-    console.error("[site-hero] fetch failed:", err instanceof Error ? err.message : err);
-    if (process.env.NODE_ENV === "production" && process.env.NEXT_PHASE !== "phase-production-build") throw err;
-    return null;
+    const known = lastGood && Date.now() - lastGood.at < LAST_GOOD_MAX_AGE_MS ? lastGood : null;
+    console.error("[site-hero] fetch failed:", err instanceof Error ? err.message : err, known ? "— showing the last banner read" : "— showing the bundled banner");
+    return known ? known.config : null;
   }
 }
