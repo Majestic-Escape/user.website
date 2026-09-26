@@ -25,8 +25,9 @@ export const HERO_SLOTS = Object.freeze({
   // cap: the widest master the server keeps; renditionCap: the widest file
   // browsers are offered (desktop: 2560, as the static hero — server.me
   // services/siteHeroImage.js explains the byte budget behind it)
-  desktop: Object.freeze({ ratio: 1920 / 740, cap: 3840, renditionCap: 2560 }),
-  mobile: Object.freeze({ ratio: 530 / 720, cap: 1600, renditionCap: 1600 }),
+  // renditionMin: nothing narrower than the slot is ever shown at (desktop from 768 px)
+  desktop: Object.freeze({ ratio: 1920 / 740, cap: 3840, renditionCap: 2560, renditionMin: 768 }),
+  mobile: Object.freeze({ ratio: 530 / 720, cap: 1600, renditionCap: 1600, renditionMin: 0 }),
 });
 export const RENDITION_STEPS = Object.freeze([640, 960, 1280, 1600, 1920, 2560, 3840]);
 export const ALT_MAX = 150;
@@ -60,7 +61,7 @@ export const STATIC_HERO = Object.freeze({
 export function heroRenditionWidths(masterWidth, slot) {
   const top = Math.min(Math.floor(Number(masterWidth) || 0), HERO_SLOTS[slot].renditionCap);
   if (top < 1) return [];
-  const widths = RENDITION_STEPS.filter((w) => w < top);
+  const widths = RENDITION_STEPS.filter((w) => w < top && w >= HERO_SLOTS[slot].renditionMin);
   widths.push(top);
   return widths;
 }
