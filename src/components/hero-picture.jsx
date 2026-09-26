@@ -20,6 +20,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const DESKTOP = "(min-width: 768px)";
+// Phones at 2.5× and denser are served the 2× candidate (as the catalogue
+// cards are): a 390 px screen at 3× takes the 960 px file, not the 1060 px
+// one. Still sharper than the bundled banner it replaces (853 px), and the
+// cold first visit on a phone stays within the "not slower" tolerance
+// (Vercel preview A/B, tests/pw-final/evidence/audit/perf-vercel-*.json).
+const MOBILE_SIZES = "(min-resolution: 2.5dppx) 66.67vw, (-webkit-min-device-pixel-ratio: 2.5) 66.67vw, 100vw";
 const INLINE_1PX = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 const lqipVar = (s) => (s ? `url("${s}")` : "none");
 
@@ -68,9 +74,9 @@ export default function HeroPicture({ hero, fallback }) {
       <source media={DESKTOP} type="image/avif" srcSet={shown.desktop.avif} sizes="100vw" />
       <source media={DESKTOP} type="image/webp" srcSet={shown.desktop.webp} sizes="100vw" />
       <source media={DESKTOP} srcSet={shown.desktop.jpeg} sizes="100vw" />
-      <source type="image/avif" srcSet={shown.mobile.avif} sizes="100vw" />
-      <source type="image/webp" srcSet={shown.mobile.webp} sizes="100vw" />
-      <source srcSet={shown.mobile.jpeg} sizes="100vw" />
+      <source type="image/avif" srcSet={shown.mobile.avif} sizes={MOBILE_SIZES} />
+      <source type="image/webp" srcSet={shown.mobile.webp} sizes={MOBILE_SIZES} />
+      <source srcSet={shown.mobile.jpeg} sizes={MOBILE_SIZES} />
       {img}
     </picture>
   );
