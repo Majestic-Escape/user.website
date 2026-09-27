@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createKeyboardViewport } from "@/lib/chat/keyboardViewport";
 
 /**
  * Mobile-optimized chat container that handles virtual keyboard properly.
@@ -40,19 +41,24 @@ export default function MobileChatContainer({
       initialViewportHeight.current = window.visualViewport?.height || window.innerHeight;
     }
 
+    // Keeps the message box above the keyboard on Android Chrome (lib/chat/keyboardViewport)
+    const keyboardViewport = createKeyboardViewport();
+
     // Function to update container height based on visual viewport
     const updateContainerHeight = () => {
       if (window.visualViewport) {
         // Use visualViewport height which accounts for keyboard
-        const height = window.visualViewport.height;
-        setContainerHeight(`${height}px`);
-        
-        // Also update CSS custom property for other elements to use
-        document.documentElement.style.setProperty('--mobile-vh', `${height}px`);
+        const viewportHeight = window.visualViewport.height;
 
         // Detect keyboard state
-        const heightDiff = initialViewportHeight.current - height;
+        const heightDiff = initialViewportHeight.current - viewportHeight;
         const keyboardNowOpen = heightDiff > 150;
+
+        const height = keyboardViewport.height(keyboardNowOpen);
+        setContainerHeight(`${height}px`);
+
+        // Also update CSS custom property for other elements to use
+        document.documentElement.style.setProperty('--mobile-vh', `${height}px`);
         const wasKeyboardOpen = isKeyboardOpenRef.current;
 
         if (keyboardNowOpen !== wasKeyboardOpen) {
@@ -124,6 +130,7 @@ export default function MobileChatContainer({
       window.removeEventListener("resize", updateContainerHeight);
       document.removeEventListener("focusin", handleFocusIn);
       document.removeEventListener("focusout", handleFocusOut);
+      keyboardViewport.dispose();
 
       // Restore body scroll
       document.body.style.position = "";

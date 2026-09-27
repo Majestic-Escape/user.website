@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { DatePicker } from "@/components/date-picker";
 import { format, differenceInCalendarDays } from "date-fns";
 import { goToLogin } from "@/lib/auth-return";
+import { createKeyboardViewport } from "@/lib/chat/keyboardViewport";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -69,6 +70,8 @@ export default function ContactHostPage() {
   const [showMessageInput, setShowMessageInput] = useState(false);
   const [propertyData, setPropertyData] = useState(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  // the screen's height while the keyboard is up (lib/chat/keyboardViewport)
+  const [keyboardScreenHeight, setKeyboardScreenHeight] = useState(0);
   const [selectedDates, setSelectedDates] = useState(null); // { from: Date, to: Date } | null
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [mobileDatePickerOpen, setMobileDatePickerOpen] = useState(false);
@@ -179,14 +182,20 @@ export default function ContactHostPage() {
   // Handle keyboard visibility on mobile (for send button adjustment)
   useEffect(() => {
     if (!isMobile) return;
-    
+
+    // Keeps the send button above the keyboard on Android Chrome (lib/chat/keyboardViewport)
+    const keyboardViewport = createKeyboardViewport();
+    keyboardViewport.height(false); // the resting inset, read before any keyboard opens
+
     const handleResize = () => {
       // Use visualViewport API for accurate keyboard detection
       if (window.visualViewport) {
         const viewportHeight = window.visualViewport.height;
         const windowHeight = window.innerHeight;
         const keyboardH = windowHeight - viewportHeight;
-        setKeyboardHeight(keyboardH > 50 ? keyboardH : 0);
+        const keyboardOpen = keyboardH > 50;
+        setKeyboardHeight(keyboardOpen ? keyboardH : 0);
+        setKeyboardScreenHeight(keyboardViewport.height(keyboardOpen));
       }
     };
     
@@ -201,6 +210,7 @@ export default function ContactHostPage() {
         window.visualViewport.removeEventListener('resize', handleResize);
         window.visualViewport.removeEventListener('scroll', handleResize);
       }
+      keyboardViewport.dispose();
     };
   }, [isMobile]);
 
@@ -469,7 +479,7 @@ export default function ContactHostPage() {
       <div 
         className="fixed inset-0 bg-white flex flex-col z-[1003] font-poppins"
         style={{ 
-          height: keyboardHeight > 0 ? `${window.visualViewport?.height || window.innerHeight}px` : '100dvh',
+          height: keyboardHeight > 0 ? `${keyboardScreenHeight || window.visualViewport?.height || window.innerHeight}px` : '100dvh',
           top: keyboardHeight > 0 ? `${window.visualViewport?.offsetTop || 0}px` : 0
         }}
       >
