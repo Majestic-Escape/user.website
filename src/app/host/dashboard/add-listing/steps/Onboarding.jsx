@@ -4,6 +4,7 @@
 import { Bed, ImageIcon, DoorOpen } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { TextReveal } from "@/components/text-reveal";
+import { HOST_ILLUSTRATIONS } from "@/lib/host-illustrations";
 
 export default function Onboarding() {
   const steps = [
@@ -44,7 +45,9 @@ export default function Onboarding() {
                     </h1>
                     <img
                       className="w-3/4 p-4 md:p-8  h-auto mx-auto"
-                      src="/images/home-stay.png"
+                      {...HOST_ILLUSTRATIONS.homeStay}
+                      sizes="(min-width: 1024px) 400px, calc(75vw - 32px)"
+                      decoding="async"
                       alt="Home stay"
                     />
                     {/* <img

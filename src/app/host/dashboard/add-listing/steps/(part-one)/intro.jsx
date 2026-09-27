@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { TextReveal } from "@/components/text-reveal";
+import { HOST_ILLUSTRATIONS } from "@/lib/host-illustrations";
 
 export function StepOneIntro() {
   return (
@@ -24,7 +25,9 @@ export function StepOneIntro() {
         </div>
         <div>
           <img
-            src="/step-one-illustration.png"
+            {...HOST_ILLUSTRATIONS.stepOne}
+            sizes="(min-width: 1280px) 560px, (min-width: 768px) 44vw, 100vw"
+            decoding="async"
             className="rounded-md"
             alt="Step one"
           />

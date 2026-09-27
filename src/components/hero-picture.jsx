@@ -28,8 +28,11 @@ const DESKTOP = "(min-width: 768px)";
 const MOBILE_SIZES = "(min-resolution: 2.5dppx) 66.67vw, (-webkit-min-device-pixel-ratio: 2.5) 66.67vw, 100vw";
 const INLINE_1PX = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 const lqipVar = (s) => (s ? `url("${s}")` : "none");
+// The box per viewport (see hero-section.jsx); a page with other art passes
+// its own proportions (the experiences banner, exp-hero.jsx).
+const HOME_BOX = "aspect-[530/720] md:aspect-[1920/740]";
 
-export default function HeroPicture({ hero, fallback }) {
+export default function HeroPicture({ hero, fallback, boxClassName = HOME_BOX }) {
   const steps = hero.isStatic ? 1 : 3;
   const [step, setStep] = useState(0);
   const imgRef = useRef(null);
@@ -54,7 +57,7 @@ export default function HeroPicture({ hero, fallback }) {
       elementtiming="hero-banner"
       onError={next}
       style={style}
-      className="block w-full h-auto object-cover aspect-[530/720] md:aspect-[1920/740] bg-cover bg-center bg-no-repeat bg-[image:var(--lqip-m)] md:bg-[image:var(--lqip-d)]"
+      className={`block w-full h-auto object-cover ${boxClassName} bg-cover bg-center bg-no-repeat bg-[image:var(--lqip-m)] md:bg-[image:var(--lqip-d)]`}
     />
   );
 
