@@ -4,6 +4,7 @@
 import { Bed, ImageIcon, DoorOpen } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
+import { HOST_ILLUSTRATIONS } from "@/lib/host-illustrations"
 
 export default function Page (){
 
@@ -42,7 +43,7 @@ export default function Page (){
             <h1 className="text-2xl md:text-4xl font-bricolage text-absoluteDark font-semibold mb-4 md:mb-8 ">
             Begin your hosting journey with Majestic Escape
             </h1>
-            <img className='w-full p-4 md:p-8  h-auto' src="/images/home-stay.png" alt="Home stay" />
+            <img className='w-full p-4 md:p-8  h-auto' {...HOST_ILLUSTRATIONS.homeStay} sizes="(min-width: 1280px) 560px, (min-width: 1024px) 50vw, 100vw" decoding="async" alt="Home stay" />
 
           
           </div>

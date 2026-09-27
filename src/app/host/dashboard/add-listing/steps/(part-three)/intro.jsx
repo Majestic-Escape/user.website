@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { TextReveal } from "@/components/text-reveal";
+import { HOST_ILLUSTRATIONS } from "@/lib/host-illustrations";
 export function StepThreeIntro() {
 
     return (
@@ -17,7 +18,7 @@ export function StepThreeIntro() {
   </TextReveal>
       </div>
        <div>
-  <img src="/step-three-illustration.png" className="rounded-md max-w-[400px]" alt="Step one" />
+  <img {...HOST_ILLUSTRATIONS.stepThree} sizes="400px" decoding="async" className="rounded-md max-w-[400px]" alt="Step one" />
        </div>
        </section>
        

@@ -46,8 +46,11 @@ export default function FarmHouse({ locationName }) {
   const LIMIT = 16;
   // The full query string is the cache key, so every filter (not just the
   // five the old effect listed) triggers a fresh search, and coming back to
-  // the same search paints from cache.
+  // the same search paints from cache. On /location/<name> the place comes
+  // from the path, so it is part of the key too: every spot page used to
+  // share one entry, and the second one opened showed the first one's stays.
   const paramsString = searchParams.toString();
+  const scope = locationName || null;
 
   const array = amenities
     ? amenities
@@ -68,7 +71,7 @@ export default function FarmHouse({ locationName }) {
     isError,
     refetch,
   } = useQuery({
-    queryKey: queryKeys.search(paramsString, currentPage),
+    queryKey: queryKeys.search(paramsString, currentPage, scope),
     queryFn: async () => {
         const response = await axios.get(
           `${API_URL}/properties/search-properties`,
@@ -110,15 +113,17 @@ export default function FarmHouse({ locationName }) {
     ...PUBLIC,
     staleTime: 2 * 60 * 1000,
     // Page changes keep the previous rows on screen (dimmed) instead of a
-    // full-height spinner.
-    placeholderData: keepPreviousData,
+    // full-height spinner — within the same place only: another spot's stays
+    // (and its "Stays near …" heading) are never shown as a placeholder.
+    placeholderData: (previous, previousQuery) =>
+      previousQuery && previousQuery.queryKey[3] === scope ? keepPreviousData(previous) : undefined,
   });
   const data = result?.data ?? [];
   const pagination = result?.pagination ?? null;
   const search = result?.search ?? null;
   useEffect(() => {
     setCurrentPage(1);
-  }, [paramsString]);
+  }, [paramsString, scope]);
   const { setAddPropertyType } = useAuth();
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("now", data);

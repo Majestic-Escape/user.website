@@ -1,10 +1,33 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import { Check, Dot, X } from "lucide-react";
 import Heading from "@/components/ui/heading";
 import { toast } from "sonner";
+import tourLqip from "../../public/images/tour/gen/lqip.json";
+
+// Tour photos: pre-generated WebP (scripts/optimize-static-images.mjs →
+// public/images/tour/gen, the listing-photo policy) with a 24 px placeholder
+// under each until it paints. All lazy: a plain eager <img> is preloaded by
+// React's server renderer, so the seven full-size JPEGs (2.5 MB) used to
+// compete with the banner before anyone scrolled. A name must have been
+// generated (it is a key of the placeholder file).
+type TourPhoto = { src: string; srcSet: string; width: number; height: number; lqip: string };
+const TOUR_WIDTHS = [480, 800, 1024, 1363];
+const tour = (name: keyof typeof tourLqip, height: number): TourPhoto => ({
+  src: `/images/tour/gen/${name}-800.webp`,
+  srcSet: TOUR_WIDTHS.map((w) => `/images/tour/gen/${name}-${w}.webp ${w}w`).join(", "),
+  width: 1363,
+  height,
+  lqip: tourLqip[name],
+});
+// How wide each photo is drawn (object-cover, measured): 220 px tall on
+// phones, so a 2:1 photo is ~444 px wide whatever the phone; the full width
+// from 480 px; ~750–850 px in the 420 px box from md; from lg half the row
+// (its height set by the text) — ~800 px at 1024, 647 at 1440, 887 at 1920.
+// Phones at 2.5× and denser take the 2× candidate, as the catalogue cards do.
+const TOUR_SIZES =
+  "(min-resolution: 2.5dppx) and (max-width: 477px) 296px, (-webkit-min-device-pixel-ratio: 2.5) and (max-width: 477px) 296px, (max-width: 477px) 444px, (max-width: 639px) calc(100vw - 34px), (max-width: 767px) calc(100vw - 50px), (max-width: 1023px) 880px, (max-width: 1439px) 800px, calc(50vw - 72px)";
 
 // Reads one query-string value after mount. Deliberately not useSearchParams():
 // that hook would make /experiences bail out of static prerendering and ship
@@ -19,7 +42,7 @@ function useClientSearchParam(name: string): string | null {
 }
 
 type ImageTextSectionProps = {
-  images: string[];
+  images: TourPhoto[];
   items: string[];
 
   disabled: boolean;
@@ -46,8 +69,8 @@ type ActivityModalProps = {
 };
 const charDham = {
   images: [
-    "/images/tour/CHARDHAM_1.jpg",
-    // "/images/tour/CHARDHAM_2.jpg"
+    tour("chardham_1", 767),
+    // CHARDHAM_2.jpg: generate it first (scripts/optimize-static-images.mjs)
   ],
   items: [
     "5 Nights/6 Days",
@@ -63,7 +86,7 @@ const charDham = {
   disabled: false,
 };
 const doDham = {
-  images: ["/images/tour/do_dhaam.jpg"],
+  images: [tour("do_dhaam", 676)],
   items: [
     "5 Nights/6 Days",
     "Visit Haridwar - Guptkashi/Sitapur",
@@ -76,7 +99,7 @@ const doDham = {
   disabled: false,
 };
 const goa = {
-  images: ["/images/tour/goa.jpg"],
+  images: [tour("goa", 676)],
   items: [
     "Pick and drop",
     "All-inclusive package (transport, accommodation, meals)",
@@ -87,7 +110,7 @@ const goa = {
   disabled: false,
 };
 const unity = {
-  images: ["/images/tour/statue_of_unity.jpg"],
+  images: [tour("statue_of_unity", 676)],
   items: [
     "Statue of Unity tour",
     "Visit Valley of flowers and unity glow garden",
@@ -99,7 +122,7 @@ const unity = {
   disabled: false,
 };
 const dwarka = {
-  images: ["/images/tour/dwarka.jpg"],
+  images: [tour("dwarka", 676)],
   items: [
     "Darshan at the sacred Jyotirlingas of Somnath and Nageshwar",
     "Explore Dwarka",
@@ -111,7 +134,7 @@ const dwarka = {
   disabled: false,
 };
 const ram_mandir = {
-  images: ["/images/tour/ram_mandir.jpg"],
+  images: [tour("ram_mandir", 676)],
   items: [
     "Divine darshan at Shri Ram Mandir in Ayodhya and the sacred Kashi Vishwanath Temple",
     "Spiritual walk through the ancient lanes and heritage",
@@ -124,9 +147,8 @@ const ram_mandir = {
 };
 const rannUtsav = {
   images: [
-    "/images/tour/rann_utsav_1.jpg",
-    // "/images/tour/rann_utsav_2.jpg",
-    // "/images/tour/rann_utsav_3.jpg",
+    tour("rann_utsav_1", 767),
+    // rann_utsav_2.jpg / rann_utsav_3.jpg: generate them first (scripts/optimize-static-images.mjs)
   ],
   items: [
     "White Desert experience at the Great Rann of Kutch",
@@ -644,9 +666,16 @@ function ImageTextSection({
         {/* LEFT SECTION */}
         <div className="w-full lg:w-[50%] relative border-r border-gray-200 bg-gray-50 flex  h-[220px] md:h-[420px] lg:h-auto">
           <img
-            src={images[index]}
-            alt={`Slide ${index + 1}`}
-            className="w-full h-full object-cover"
+            src={images[index].src}
+            srcSet={images[index].srcSet}
+            sizes={TOUR_SIZES}
+            width={images[index].width}
+            height={images[index].height}
+            alt={images.length > 1 ? `${title} (photo ${index + 1} of ${images.length})` : title}
+            loading="lazy"
+            decoding="async"
+            style={{ backgroundImage: `url("${images[index].lqip}")` }}
+            className="w-full h-full object-cover bg-cover bg-center"
           />
 
           {/* Navigation */}
