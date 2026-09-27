@@ -47,6 +47,7 @@ import { useConnectionBadge } from "@/hooks/useConnectionBadge";
 import { useComposerDrafts } from "@/hooks/useComposerDrafts";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat/reply";
 import { holdThreadPosition, isNearBottom } from "@/lib/chat/threadPosition";
+import { createKeyboardViewport } from "@/lib/chat/keyboardViewport";
 import {
   getCachedConversations,
   setCachedConversations,
@@ -358,14 +359,17 @@ export default function MessagesPage() {
       initialViewportHeight.current = currentVpHeight;
     }
 
+    // Keeps the message box above the keyboard on Android Chrome (lib/chat/keyboardViewport)
+    const keyboardViewport = createKeyboardViewport();
+
     const updateHeight = () => {
       if (window.visualViewport) {
         const currentHeight = window.visualViewport.height;
-        setMobileViewportHeight(`${currentHeight}px`);
-        
+
         // Detect keyboard open/close (keyboard is open if viewport shrinks by more than 150px)
         const heightDiff = initialViewportHeight.current - currentHeight;
         const keyboardNowOpen = heightDiff > 150;
+        setMobileViewportHeight(`${keyboardViewport.height(keyboardNowOpen)}px`);
         const wasKeyboardOpen = isKeyboardOpenRef.current;
         const keyboardStateChanged = keyboardNowOpen !== wasKeyboardOpen;
         
@@ -474,6 +478,7 @@ export default function MessagesPage() {
       window.removeEventListener("resize", updateHeight);
       document.removeEventListener("focusin", handleFocusIn);
       document.removeEventListener("focusout", handleFocusOut);
+      keyboardViewport.dispose();
 
       // Restore body scroll
       document.body.style.position = "";
