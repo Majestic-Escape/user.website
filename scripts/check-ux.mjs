@@ -6,6 +6,8 @@
 //     lib/propertyDetailsCache.js: on-device chat copies — account + role
 //     isolation, only server messages of that thread, size bounds, expiry,
 //     no private listing fields
+//   - lib/chat/composer.js: a chat message stays one line (breaks → spaces,
+//     caret kept, never longer)
 // Sources are transpiled in memory; a Map-backed localStorage stands in.
 //
 // Usage: node scripts/check-ux.mjs   (npm run check:ux)
@@ -85,6 +87,7 @@ const A = load(join(root, "src/lib/nav/active.ts"));
 const T = load(join(root, "src/lib/chat/threadCache.js"));
 const C = load(join(root, "src/lib/conversationsCache.js"));
 const P = load(join(root, "src/lib/propertyDetailsCache.js"));
+const M = load(join(root, "src/lib/chat/composer.js"));
 
 console.log("guests");
 check("capacity excludes infants; summary", () => {
@@ -259,6 +262,23 @@ check("listing summaries: only row fields kept, bounded", () => {
   assert.equal(got.address.city, "Panaji");
   for (let i = 0; i < 60; i++) P.setCachedProperty(`q${i}`, full);
   assert.equal(Object.keys(JSON.parse(window.localStorage.getItem("me:propertyDetailsCache:v2"))).length, 50);
+});
+
+console.log("chat composer");
+check("line breaks become one space each run; caret stays after the same character", () => {
+  assert.equal(M.hasLineBreak("one line"), false);
+  for (const br of ["\n", "\r\n", "\r", "\u2028", "\u2029"]) assert.equal(M.hasLineBreak("a" + br + "b"), true);
+  assert.deepEqual(M.flattenLineBreaks("hello\nthere"), { text: "hello there", caret: 11 });
+  assert.deepEqual(M.flattenLineBreaks("a\r\n\r\nb", 5), { text: "a b", caret: 2 });
+  assert.deepEqual(M.flattenLineBreaks("x\n\ny", 2), { text: "x y", caret: 2 }, "caret inside a run");
+  assert.deepEqual(M.flattenLineBreaks("pasted\nline|rest", 12), { text: "pasted line|rest", caret: 12 });
+  assert.deepEqual(M.flattenLineBreaks("no breaks", 3), { text: "no breaks", caret: 3 });
+  assert.deepEqual(M.flattenLineBreaks("ab", 99), { text: "ab", caret: 2 }, "caret clamped");
+});
+check("flattening never makes a message longer (maxLength still holds)", () => {
+  const samples = ["\n", "\n\n\n", "a\nb\nc", "\r\n".repeat(50), "x".repeat(1999) + "\n"];
+  for (const t of samples) assert.ok(M.flattenLineBreaks(t).text.length <= t.length, JSON.stringify(t));
+  assert.equal(M.hasLineBreak(M.flattenLineBreaks("a\u2028b\nc").text), false);
 });
 
 if (failures) {

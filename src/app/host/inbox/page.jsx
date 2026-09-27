@@ -38,6 +38,7 @@ import ConversationRowsSkeleton from "@/components/conversation-row-skeleton";
 import { toast } from "sonner";
 import SwipeToReply from "@/components/chat/SwipeToReply";
 import QuotedMessage from "@/components/chat/QuotedMessage";
+import ChatComposerField, { DESKTOP_COMPOSER_CLASS } from "@/components/chat/ChatComposerField";
 import ReplyPreviewBar from "@/components/chat/ReplyPreviewBar";
 import ScrollToLatest from "@/components/chat/ScrollToLatest";
 import { isNearBottom } from "@/lib/chat/threadPosition";
@@ -1509,7 +1510,7 @@ export default function HostInboxPage() {
         length={newMessage.length}
       />
       <div className="flex items-center gap-2">
-        <Input
+        <ChatComposerField
           ref={desktopInputRef}
           placeholder="Type a message..."
           value={newMessage}
@@ -1517,7 +1518,7 @@ export default function HostInboxPage() {
           onChange={(e) => handleInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isSending || composerBlocked}
-          className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
+          className={DESKTOP_COMPOSER_CLASS}
         />
         <Button
           size="icon"
