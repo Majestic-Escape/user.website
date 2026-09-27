@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import SwipeToReply from "@/components/chat/SwipeToReply";
 import QuotedMessage from "@/components/chat/QuotedMessage";
 import ReplyPreviewBar from "@/components/chat/ReplyPreviewBar";
+import ChatComposerField, { DESKTOP_COMPOSER_CLASS } from "@/components/chat/ChatComposerField";
 import ScrollToLatest from "@/components/chat/ScrollToLatest";
 import SendStatus from "@/components/chat/SendStatus";
 import { useReplyTo } from "@/hooks/useReplyTo";
@@ -1728,7 +1729,7 @@ export default function MessagesPage() {
             length={newMessage.length}
           />
           <div className="flex items-center gap-2">
-            <Input
+            <ChatComposerField
               ref={desktopInputRef}
               value={newMessage}
               maxLength={MAX_MESSAGE_LENGTH}
@@ -1744,7 +1745,7 @@ export default function MessagesPage() {
               }}
               placeholder="Type a message..."
               disabled={sending || composerBlocked}
-              className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
+              className={DESKTOP_COMPOSER_CLASS}
             />
             <Button
               onClick={sendMessage}
@@ -2360,9 +2361,8 @@ export default function MessagesPage() {
               length={newMessage.length}
             />
             <div className="flex items-center gap-2">
-              <input
+              <ChatComposerField
                 ref={mobileInputRef}
-                type="text"
                 placeholder="Type a message..."
                 value={newMessage}
                 maxLength={MAX_MESSAGE_LENGTH}
@@ -2380,11 +2380,7 @@ export default function MessagesPage() {
                   holdThreadPosition(() => messagesContainerRef.current);
                 }}
                 disabled={sending || composerBlocked}
-                className="flex-1 h-10 px-4 bg-gray-100 rounded-full text-base outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
-                autoComplete="off"
-                autoCorrect="on"
-                autoCapitalize="sentences"
-                enterKeyHint="send"
+                className="flex-1 min-w-0 h-10 px-4 py-0 bg-gray-100 rounded-full text-base leading-10 outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
               />
               {/* Using a div to prevent focus stealing on mobile */}
               <div
