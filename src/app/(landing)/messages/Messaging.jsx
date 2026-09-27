@@ -60,6 +60,16 @@ import { clearSession } from "@/lib/session";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+// The host's first name as the chat server has it now — it reads the name
+// from the host's account whenever it serves the conversation, so a rename
+// shows on the next fetch. The listing's copy (cached for up to 7 days) is
+// only the fallback, then "Host".
+function hostFirstName(conv, propertyDetails) {
+  const live = conv?.participants?.find((p) => p?.role === "host")?.firstName;
+  if (typeof live === "string" && live.trim()) return live.trim();
+  return propertyDetails?.[conv?.propertyId]?.host?.firstName || "Host";
+}
+
 export default function MessagesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -151,7 +161,7 @@ export default function MessagesPage() {
 
   // Quote / reply. The two branches (mobile / desktop) mount one composer each
   // — the refs are cross-named historically, so take whichever is live.
-  const otherFirstName = propertyDetails[selectedConversation?.propertyId]?.host?.firstName || "Host";
+  const otherFirstName = hostFirstName(selectedConversation, propertyDetails);
   const { replyTo, startReply, cancelReply, restoreReply, scrollToMessage, onComposerKeyDown, labelFor } = useReplyTo({
     conversationId: selectedConversation?.id,
     userId,
@@ -1221,14 +1231,8 @@ export default function MessagesPage() {
 
   const isPropertyLoaded = (conv) => Boolean(conv && propertyDetails[conv.propertyId]);
 
-  // Get host name from property details - only first name for privacy
-  const getHostName = (conv) => {
-    const property = propertyDetails[conv.propertyId];
-    if (property?.host) {
-      return property.host.firstName || 'Host';
-    }
-    return 'Host';
-  };
+  // Only the first name, for privacy (see hostFirstName).
+  const getHostName = (conv) => hostFirstName(conv, propertyDetails);
 
   // Get property info from cached details
   const getPropertyInfo = (conv) => {
