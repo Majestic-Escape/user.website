@@ -38,7 +38,14 @@ export function normalizeFrontStays(data: unknown): CatalogueCard[] {
   return Array.isArray(list) ? (list as CatalogueCard[]).map(stripVector) : [];
 }
 
+// Only well-formed entries: a destination card shows a number only when the
+// backend sent one (anything else leaves that card's count unknown).
+function isCityCount(item: unknown): item is CityCount {
+  const c = item as Partial<CityCount> | null;
+  return !!c && typeof c.city === "string" && Number.isInteger(c.count) && (c.count as number) >= 0;
+}
+
 export function normalizeCountStays(result: unknown): CityCount[] {
   const list = (result as { data?: unknown } | null)?.data;
-  return Array.isArray(list) ? (list as CityCount[]) : [];
+  return Array.isArray(list) ? list.filter(isCityCount) : [];
 }

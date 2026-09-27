@@ -83,8 +83,9 @@ while (queue.length) {
 const MEDIA_SRC = /photos|profilePicture|avatar|propertyImage|hostImage|\.image\b|images\[|\.url\b|digitaloceanspaces/i;
 const NOT_MEDIA = /icon|logo|placeholder|\/images\/|\/carousel\//i;
 // Media-looking fields that come from static data in the repo (blog posts,
-// the experiences catalogue, /images/tour/*): not host uploads, so the
-// default next/image path is the intended one. Each entry must still exist.
+// the experiences catalogue, /images/tour/*): not host uploads, so they are
+// served as pre-generated files (scripts/optimize-static-images.mjs) or by
+// the default next/image path. Each entry must still exist.
 const STATIC_DATA = new Set([
   "src/app/(landing)/blogs/page.tsx",
   "src/app/(landing)/experience/page.tsx",

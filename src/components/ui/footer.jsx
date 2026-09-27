@@ -77,10 +77,17 @@ export default function Footer() {
             <div className="xl:grid xl:grid-cols-5 xl:gap-8">
               <div className="xl:col-span-1">
                 <Link href="/">
+                  {/* lazy: an eager <img> is preloaded by React's server
+                      renderer — this footer logo competed with every page's
+                      top image. 165×84 is the SVG's own 169:86, the size it
+                      is drawn at (height: auto), so nothing moves when it
+                      loads late. */}
                   <img
                     src="/images/logo-footer.svg"
                     width="165"
-                    height="88"
+                    height="84"
+                    loading="lazy"
+                    decoding="async"
                     alt="Majestic Escape Logo"
                   />
                 </Link>
