@@ -16,7 +16,10 @@ export const queryKeys = {
   frontStays: (type: Id) => ["frontStays", type ?? "all"] as const,
   frontStaysAll: ["frontStays"] as const,
   countStays: ["countStays"] as const,
-  search: (params: string, page: Id) => ["search", params, page ?? 1] as const,
+  // scope: the place a /location/<name> page takes from its path (not in
+  // `params`, its query string) — null on /filter
+  search: (params: string, page: Id, scope: string | null = null) =>
+    ["search", params, page ?? 1, scope] as const,
   searchAll: ["search"] as const,
   placesIndex: ["placesIndex"] as const,
   staySuggest: (q: string) => ["staySuggest", q] as const,
