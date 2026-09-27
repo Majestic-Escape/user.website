@@ -16,13 +16,62 @@ import Link from "next/link";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 // Batch P: the destination list lives in lib/data/destinations (shared with
 // the server prefetch so both sides build the same countstays request).
-const LocationCard = ({ name, staysNearby, image, image2x, countData }) => {
-  const actualStaysNearby = countData?.filter(
-    (item) => item?.city?.toLowerCase() == name?.toLowerCase(),
-  );
+const COUNT_TIMEOUT_MS = 8000;
 
-  const displayCount =
-    actualStaysNearby?.length > 0 ? actualStaysNearby[0]?.count : staysNearby;
+// Bounded (a hung backend ends as "unknown", never an endless placeholder);
+// no Content-Type: a GET without it needs no CORS preflight.
+async function fetchCountStays() {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), COUNT_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${API_BASE_URL}${COUNT_STAYS_PATH}`, { signal: ctrl.signal });
+    if (!response.ok) {
+      const error = new Error(`countstays ${response.status}`);
+      error.status = response.status; // a 4xx is final (query-presets)
+      throw error;
+    }
+    return normalizeCountStays(await response.json());
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// A card's number is the number of stays its page lists (server.me
+// countstays runs the search itself); undefined when it is not known.
+function countFor(countData, name) {
+  const lower = name.toLowerCase();
+  const entry = countData.find((item) => item.city.toLowerCase() === lower);
+  return entry ? entry.count : undefined;
+}
+
+const LINE = "text-sm text-stone text-gray pt-2";
+const FADE_IN = " motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300";
+
+// Under the name: "N Stays Nearby", "No stays yet" for none; a quiet
+// placeholder while the count loads and a plain invitation when it could not
+// be read — never a made-up number.
+function StaysLine({ count, pending, fadeIn }) {
+  const fade = fadeIn ? FADE_IN : "";
+  if (count === 0) return <p className={LINE + fade}>No stays yet</p>;
+  if (count > 0) {
+    return (
+      <p className={LINE + fade}>
+        <span className="font-bold text-brightGreen">{count}</span> {count === 1 ? "Stay" : "Stays"} Nearby
+      </p>
+    );
+  }
+  if (pending) {
+    return (
+      <p className={LINE}>
+        <span className="inline-block h-4 w-24 rounded bg-gray-200 align-middle animate-pulse motion-reduce:animate-none" aria-hidden="true" />
+        <span className="sr-only">Loading stays</span>
+      </p>
+    );
+  }
+  return <p className={LINE + fade}>Explore stays</p>;
+}
+
+const LocationCard = ({ name, image, image2x, count, pending, fadeIn }) => {
   return (
     <div className="w-full flex-shrink-0 px-2 mb-4">
       <Link
@@ -40,15 +89,12 @@ const LocationCard = ({ name, staysNearby, image, image2x, countData }) => {
             height={200}
             loading="lazy"
             decoding="async"
-            className=" h-[100px] md:h-[200px] w-auto object-cover rounded-lg"
+            className=" h-[100px] md:h-[200px] w-auto object-cover rounded-lg bg-gray-100"
           />
           <h3 className="mt-2 text-sm leading-tight font-semibold text-graphite whitespace-nowrap overflow-hidden text-ellipsis">
             {name}
           </h3>
-          <p className="text-sm text-stone text-gray pt-2">
-            <span className="font-bold text-brightGreen">{displayCount}</span>{" "}
-            Stays Nearby
-          </p>
+          <StaysLine count={count} pending={pending} fadeIn={fadeIn} />
         </div>
       </Link>
     </div>
@@ -57,24 +103,24 @@ const LocationCard = ({ name, staysNearby, image, image2x, countData }) => {
 
 const LocationWisestays = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  // +1 / -1: the way the last page change went; 0 until the first one, so
+  // the server-rendered cards never animate on load.
+  const [direction, setDirection] = useState(0);
   // Always start from the server's value (desktop) and measure in an effect.
   // Reading window.innerWidth during the first client render produced a
   // different tree than the prerendered HTML on phones → hydration error on
   // every mobile home load.
   const [windowWidth, setWindowWidth] = useState(1024);
   // Destination counts change slowly; cached for 30 min so returning to the
-  // home page never refetches them. A failure just leaves the counts empty
-  // (as before) — the cards still render.
-  const { data: countData = [] } = useQuery({
+  // home page never refetches them. A failure leaves them unknown — the cards
+  // still render and link to their pages.
+  const {
+    data: countData = [],
+    isPending,
+    isFetchedAfterMount,
+  } = useQuery({
     queryKey: queryKeys.countStays,
-    queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}${COUNT_STAYS_PATH}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) throw new Error(`countstays ${response.status}`);
-      return normalizeCountStays(await response.json());
-    },
+    queryFn: fetchCountStays,
     ...PUBLIC_LONG,
   });
   useEffect(() => {
@@ -94,64 +140,62 @@ const LocationWisestays = () => {
   };
 
   const itemsPerView = getItemsPerView();
-  // const maxIndex = destinations.length - itemsPerView;
   const maxIndex = Math.max(0, destinations.length - itemsPerView);
+  // The page shown is the slice itself. (The row used to be shifted by the
+  // index as well, which moved the second desktop page half out of view.)
   const visibleDestinations = destinations.slice(
     currentIndex,
     currentIndex + itemsPerView,
   );
-  const handleNext = () => {
-    setCurrentIndex((prev) => Math.min(prev + itemsPerView, maxIndex));
+  const goTo = (index) => {
+    if (index === currentIndex) return;
+    setDirection(index > currentIndex ? 1 : -1);
+    setCurrentIndex(index);
   };
-
-  const handlePrev = () => {
-    setCurrentIndex((prev) => Math.max(prev - itemsPerView, 0));
-  };
+  const handleNext = () => goTo(Math.min(currentIndex + itemsPerView, maxIndex));
+  const handlePrev = () => goTo(Math.max(currentIndex - itemsPerView, 0));
 
   const showLeftArrow = currentIndex > 0;
   const showRightArrow = currentIndex < maxIndex;
 
+  // A page change slides the new cards in from the side they came from
+  // (transform + opacity only; none with reduced motion).
+  const pageMotion =
+    direction === 0
+      ? ""
+      : `motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300 ${
+          direction > 0
+            ? "motion-safe:slide-in-from-right-4"
+            : "motion-safe:slide-in-from-left-4"
+        }`;
+  const cards = visibleDestinations.map((destination) => {
+    const count = countFor(countData, destination.name);
+    return (
+      <LocationCard
+        key={destination.id ?? destination.name}
+        {...destination}
+        count={count}
+        pending={isPending}
+        fadeIn={isFetchedAfterMount}
+      />
+    );
+  });
+
   const renderDestinations = () => {
     if (windowWidth < 768) {
       return (
-        <div className="grid grid-cols-2 gap-4">
-          {visibleDestinations.map((destination) => (
-            <LocationCard key={destination.id ?? destination.name} {...destination} countData={countData} />
-          ))}
+        <div key={currentIndex} className={`grid grid-cols-2 gap-4 ${pageMotion}`}>
+          {cards}
         </div>
       );
     }
     if (windowWidth < 1024) {
-      if (windowWidth < 1024) {
-        // Tablet view: Grid layout with 4 columns
-        return (
-          <div className="grid grid-cols-4 gap-4">
-            {visibleDestinations.map((destination) => (
-              <LocationCard key={destination.id ?? destination.name} {...destination} countData={countData} />
-            ))}
-          </div>
-        );
-      }
-      // Mobile and Tablet view: Grid layout
-      // return (
-      //   <div
-      //     className={`grid gap-4 ${
-      //       windowWidth >= 768 ? "grid-cols-4" : "grid-cols-2"
-      //     }`}
-      //   >
-      //     {destinations.map((destination, index) => (
-      //       <div key={destination.id} className="w-1/6 flex-shrink-0">
-      //         <LocationCard
-      //           key={destination.id}
-      //           name={destination.name}
-      //           staysNearby={destination.staysNearby}
-      //           image={destination.image}
-      //           countData={countData}
-      //         />
-      //       </div>
-      //     ))}
-      //   </div>
-      // );
+      // Tablet view: Grid layout with 4 columns
+      return (
+        <div key={currentIndex} className={`grid grid-cols-4 gap-4 ${pageMotion}`}>
+          {cards}
+        </div>
+      );
     }
 
     // Desktop view: Carousel
@@ -160,7 +204,9 @@ const LocationWisestays = () => {
         {/* LEFT CHEVRON */}
         {showLeftArrow && (
           <button
+            type="button"
             onClick={handlePrev}
+            aria-label="Previous destinations"
             className="
         absolute
         -left-8
@@ -176,25 +222,20 @@ const LocationWisestays = () => {
         transition
       "
           >
-            <ChevronLeft className="w-6 h-6 text-gray-600" />
+            <ChevronLeft className="w-6 h-6 text-gray-600" aria-hidden="true" />
           </button>
         )}
 
         {/* CAROUSEL (UNCHANGED WIDTH & POSITION) */}
         <div className="overflow-hidden">
-          <div
-            className="flex transition-transform duration-300 ease-in-out px-2"
-            style={{
-              transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
-            }}
-          >
-            {visibleDestinations.map((destination) => (
+          <div key={currentIndex} className={`flex px-2 ${pageMotion}`}>
+            {visibleDestinations.map((destination, i) => (
               <div
                 key={destination.id}
                 className="flex-shrink-0 "
                 style={{ width: `${100 / itemsPerView}%` }}
               >
-                <LocationCard key={destination.id ?? destination.name} {...destination} countData={countData} />
+                {cards[i]}
               </div>
             ))}
           </div>
@@ -203,7 +244,9 @@ const LocationWisestays = () => {
         {/* RIGHT CHEVRON */}
         {showRightArrow && (
           <button
+            type="button"
             onClick={handleNext}
+            aria-label="Next destinations"
             className="
         absolute
         -right-6
@@ -219,7 +262,7 @@ const LocationWisestays = () => {
         transition
       "
           >
-            <ChevronRight className="w-6 h-6 text-gray-600" />
+            <ChevronRight className="w-6 h-6 text-gray-600" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -241,14 +284,16 @@ const LocationWisestays = () => {
               length: Math.ceil(destinations.length / itemsPerView),
             }).map((_, idx) => (
               <button
+                type="button"
                 key={idx}
                 className={`w-3 h-3 rounded-full transition-colors duration-200 ${
                   Math.floor(currentIndex / itemsPerView) === idx
                     ? "bg-gray-800"
                     : "bg-gray-300"
                 }`}
-                onClick={() => setCurrentIndex(idx * itemsPerView)}
+                onClick={() => goTo(idx * itemsPerView)}
                 aria-label={`Go to slide group ${idx + 1}`}
+                aria-current={Math.floor(currentIndex / itemsPerView) === idx ? "true" : undefined}
               />
             ))}
           </div>
