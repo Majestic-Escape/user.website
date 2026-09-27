@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import SwipeToReply from "@/components/chat/SwipeToReply";
 import QuotedMessage from "@/components/chat/QuotedMessage";
 import ReplyPreviewBar from "@/components/chat/ReplyPreviewBar";
+import ChatComposerField, { DESKTOP_COMPOSER_CLASS } from "@/components/chat/ChatComposerField";
 import ScrollToLatest from "@/components/chat/ScrollToLatest";
 import SendStatus from "@/components/chat/SendStatus";
 import { useReplyTo } from "@/hooks/useReplyTo";
@@ -46,6 +47,7 @@ import { useConnectionBadge } from "@/hooks/useConnectionBadge";
 import { useComposerDrafts } from "@/hooks/useComposerDrafts";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat/reply";
 import { holdThreadPosition, isNearBottom } from "@/lib/chat/threadPosition";
+import { createKeyboardViewport } from "@/lib/chat/keyboardViewport";
 import {
   getCachedConversations,
   setCachedConversations,
@@ -357,14 +359,17 @@ export default function MessagesPage() {
       initialViewportHeight.current = currentVpHeight;
     }
 
+    // Keeps the message box above the keyboard on Android Chrome (lib/chat/keyboardViewport)
+    const keyboardViewport = createKeyboardViewport();
+
     const updateHeight = () => {
       if (window.visualViewport) {
         const currentHeight = window.visualViewport.height;
-        setMobileViewportHeight(`${currentHeight}px`);
-        
+
         // Detect keyboard open/close (keyboard is open if viewport shrinks by more than 150px)
         const heightDiff = initialViewportHeight.current - currentHeight;
         const keyboardNowOpen = heightDiff > 150;
+        setMobileViewportHeight(`${keyboardViewport.height(keyboardNowOpen)}px`);
         const wasKeyboardOpen = isKeyboardOpenRef.current;
         const keyboardStateChanged = keyboardNowOpen !== wasKeyboardOpen;
         
@@ -473,6 +478,7 @@ export default function MessagesPage() {
       window.removeEventListener("resize", updateHeight);
       document.removeEventListener("focusin", handleFocusIn);
       document.removeEventListener("focusout", handleFocusOut);
+      keyboardViewport.dispose();
 
       // Restore body scroll
       document.body.style.position = "";
@@ -1728,7 +1734,7 @@ export default function MessagesPage() {
             length={newMessage.length}
           />
           <div className="flex items-center gap-2">
-            <Input
+            <ChatComposerField
               ref={desktopInputRef}
               value={newMessage}
               maxLength={MAX_MESSAGE_LENGTH}
@@ -1744,7 +1750,7 @@ export default function MessagesPage() {
               }}
               placeholder="Type a message..."
               disabled={sending || composerBlocked}
-              className="flex-1 bg-gray-100 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-0"
+              className={DESKTOP_COMPOSER_CLASS}
             />
             <Button
               onClick={sendMessage}
@@ -2360,9 +2366,8 @@ export default function MessagesPage() {
               length={newMessage.length}
             />
             <div className="flex items-center gap-2">
-              <input
+              <ChatComposerField
                 ref={mobileInputRef}
-                type="text"
                 placeholder="Type a message..."
                 value={newMessage}
                 maxLength={MAX_MESSAGE_LENGTH}
@@ -2380,11 +2385,7 @@ export default function MessagesPage() {
                   holdThreadPosition(() => messagesContainerRef.current);
                 }}
                 disabled={sending || composerBlocked}
-                className="flex-1 h-10 px-4 bg-gray-100 rounded-full text-base outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
-                autoComplete="off"
-                autoCorrect="on"
-                autoCapitalize="sentences"
-                enterKeyHint="send"
+                className="flex-1 min-w-0 h-10 px-4 py-0 bg-gray-100 rounded-full text-base leading-10 outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
               />
               {/* Using a div to prevent focus stealing on mobile */}
               <div

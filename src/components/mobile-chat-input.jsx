@@ -4,10 +4,11 @@ import { useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2 } from "lucide-react";
 import { holdThreadPosition } from "@/lib/chat/threadPosition";
+import ChatComposerField from "@/components/chat/ChatComposerField";
 
 /**
  * Mobile-optimized chat input component.
- * Uses native input and prevents focus loss on send.
+ * Uses a native single-line field and prevents focus loss on send.
  * Prevents scrolling when touching the input area.
  */
 export default function MobileChatInput({
@@ -110,9 +111,8 @@ export default function MobileChatInput({
     >
       {topSlot}
       <div className="flex items-center gap-2 w-full">
-        <input
+        <ChatComposerField
           ref={setInputRef}
-          type="text"
           placeholder={placeholder}
           value={value}
           maxLength={maxLength}
@@ -120,12 +120,7 @@ export default function MobileChatInput({
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           disabled={disabled}
-          className="flex-1 min-w-0 h-10 px-4 bg-gray-100 rounded-full text-base outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
-          autoComplete="off"
-          autoCorrect="on"
-          autoCapitalize="sentences"
-          enterKeyHint="send"
-          inputMode="text"
+          className="flex-1 min-w-0 h-10 px-4 py-0 bg-gray-100 rounded-full text-base leading-10 outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <Button
           size="icon"
