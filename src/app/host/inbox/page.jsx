@@ -1509,7 +1509,10 @@ export default function HostInboxPage() {
         onCancel={cancelReply}
         length={newMessage.length}
       />
-      <div className="flex items-center gap-2">
+      {/* items-end, not items-center: as the field grows past one line the
+          send button stays pinned to its bottom edge (WhatsApp-style), not
+          re-centred in the whole grown height. */}
+      <div className="flex items-end gap-2">
         <ChatComposerField
           ref={desktopInputRef}
           placeholder="Type a message..."

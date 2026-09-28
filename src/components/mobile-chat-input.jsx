@@ -110,7 +110,10 @@ export default function MobileChatInput({
       style={{ width: '100%', touchAction: 'none' }}
     >
       {topSlot}
-      <div className="flex items-center gap-2 w-full">
+      {/* items-end, not items-center: as the field grows past one line the
+          send button stays pinned to its bottom edge (WhatsApp-style), not
+          re-centred in the whole grown height. */}
+      <div className="flex items-end gap-2 w-full">
         <ChatComposerField
           ref={setInputRef}
           placeholder={placeholder}
@@ -120,7 +123,10 @@ export default function MobileChatInput({
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           disabled={disabled}
-          className="flex-1 min-w-0 h-10 px-4 py-0 bg-gray-100 rounded-full text-base leading-10 outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
+          // A fixed 20px radius (not rounded-full) — half of the 40px resting
+          // height, so it still reads as a full pill at rest — stays sensible
+          // instead of ballooning once the field grows.
+          className="flex-1 min-w-0 min-h-10 px-4 py-2 bg-gray-100 rounded-[1.25rem] text-base leading-6 outline-none focus:ring-2 focus:ring-primaryGreen disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <Button
           size="icon"
