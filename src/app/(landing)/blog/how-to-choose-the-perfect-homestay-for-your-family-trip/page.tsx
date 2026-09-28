@@ -147,7 +147,7 @@ export default function BlogPost() {
               <figure>
                 <Image
                   width={600}
-                  height={600}
+                  height={400}
                   className="w-full object-cover rounded-xl"
                   src="/images/white_water_rafting.png"
                   alt="Biking through Goan countryside"

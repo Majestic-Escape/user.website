@@ -51,7 +51,7 @@ export default function Component({ user }) {
 
           <Image
             width={500}
-            height={300}
+            height={249} // the file's 746×371, so its box is right before it loads
             src="/images/hero-graphic.png"
             alt="Hero Graphic"
           />

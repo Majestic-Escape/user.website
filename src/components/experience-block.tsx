@@ -4,22 +4,21 @@ import { useState, useEffect, useRef } from "react";
 import { Check, Dot, X } from "lucide-react";
 import Heading from "@/components/ui/heading";
 import { toast } from "sonner";
-import tourLqip from "../../public/images/tour/gen/lqip.json";
 
 // Tour photos: pre-generated WebP (scripts/optimize-static-images.mjs →
-// public/images/tour/gen, the listing-photo policy) with a 24 px placeholder
-// under each until it paints. All lazy: a plain eager <img> is preloaded by
+// public/images/tour/gen, the listing-photo policy) over the light-grey
+// panel until it paints. All lazy: a plain eager <img> is preloaded by
 // React's server renderer, so the seven full-size JPEGs (2.5 MB) used to
-// compete with the banner before anyone scrolled. A name must have been
-// generated (it is a key of the placeholder file).
-type TourPhoto = { src: string; srcSet: string; width: number; height: number; lqip: string };
+// compete with the banner before anyone scrolled. A new name must be
+// generated first (the optimizer script) and added to TourName.
+type TourName = "chardham_1" | "do_dhaam" | "statue_of_unity" | "dwarka" | "goa" | "ram_mandir" | "rann_utsav_1";
+type TourPhoto = { src: string; srcSet: string; width: number; height: number };
 const TOUR_WIDTHS = [480, 800, 1024, 1363];
-const tour = (name: keyof typeof tourLqip, height: number): TourPhoto => ({
+const tour = (name: TourName, height: number): TourPhoto => ({
   src: `/images/tour/gen/${name}-800.webp`,
   srcSet: TOUR_WIDTHS.map((w) => `/images/tour/gen/${name}-${w}.webp ${w}w`).join(", "),
   width: 1363,
   height,
-  lqip: tourLqip[name],
 });
 // How wide each photo is drawn (object-cover, measured): 220 px tall on
 // phones, so a 2:1 photo is ~444 px wide whatever the phone; the full width
@@ -674,8 +673,7 @@ function ImageTextSection({
             alt={images.length > 1 ? `${title} (photo ${index + 1} of ${images.length})` : title}
             loading="lazy"
             decoding="async"
-            style={{ backgroundImage: `url("${images[index].lqip}")` }}
-            className="w-full h-full object-cover bg-cover bg-center"
+            className="w-full h-full object-cover"
           />
 
           {/* Navigation */}

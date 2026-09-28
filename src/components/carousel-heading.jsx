@@ -33,7 +33,7 @@ alt="Images"
 height={250}
 width={250}
 
-className={`object-fit aspect-square w-[250px]`}/>  
+className={`object-cover aspect-square w-[250px]`}/>  
               </CardContent>
               </Card>
             </div>
