@@ -128,7 +128,7 @@ export default function Footer() {
                         width={150}
                         height={150}
                         alt="Evoke Experiences"
-                        className="lg:pl-1 "
+                        className="lg:pl-1 object-contain"
                       />
                       {/* </Link>
                       <Link href={"https://nidhi.tourism.gov.in/"}> */}
@@ -139,7 +139,7 @@ export default function Footer() {
                         width={100}
                         height={100}
                         alt="NIDHI — Ministry of Tourism"
-                        className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1"
+                        className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 object-contain"
                       />
                       {/* </Link>{" "}
                       <Link href={"https://goa-tourism.com/"}> */}
@@ -150,7 +150,7 @@ export default function Footer() {
                         width={100}
                         height={100}
                         alt="Goa Tourism Development Corporation"
-                        className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 "
+                        className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 object-contain"
                       />
                       {/* </Link>
                       <Link href={"https://forest.goa.gov.in/"}> */}
@@ -161,7 +161,7 @@ export default function Footer() {
                         width={100}
                         height={100}
                         alt="Goa Forest Development Corporation"
-                        className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 "
+                        className="h-16 w-16 lg:h-24 lg:w-24 lg:pl-1 object-contain"
                       />
                       {/* </Link> */}
                       <img
@@ -171,7 +171,7 @@ export default function Footer() {
                         width={150}
                         height={150}
                         alt="Rann Utsav — The Tent City"
-                        className="lg:pl-1 lg:pr-1"
+                        className="lg:pl-1 lg:pr-1 object-contain"
                       />
                     </div>
                   </div>
@@ -185,7 +185,7 @@ export default function Footer() {
                       width={100}
                       height={100}
                       alt="Goa Forest Development Corporation"
-                      className="h-16 w-16 lg:h-24 lg:w-24"
+                      className="h-16 w-16 lg:h-24 lg:w-24 object-contain"
                     />
                     {/* </Link>{" "}
                     <Link href={"https://goa-tourism.com/"}> */}
@@ -196,7 +196,7 @@ export default function Footer() {
                       width={100}
                       height={100}
                       alt="Goa Tourism Development Corporation"
-                      className="h-16 w-16 lg:h-24 lg:w-24 "
+                      className="h-16 w-16 lg:h-24 lg:w-24 object-contain"
                     />
                     {/* </Link>
                     <Link href={"https://nidhi.tourism.gov.in/"}> */}
@@ -207,7 +207,7 @@ export default function Footer() {
                       width={100}
                       height={100}
                       alt="NIDHI — Ministry of Tourism"
-                      className="h-16 w-16 lg:h-24 lg:w-24 "
+                      className="h-16 w-16 lg:h-24 lg:w-24 object-contain"
                     />
                     {/* </Link>{" "} */}
                   </div>
@@ -220,7 +220,7 @@ export default function Footer() {
                       width={100}
                       height={100}
                       alt="Rann Utsav — The Tent City"
-                      className=""
+                      className="object-contain"
                     />
                     {/* <Link href={"https://evokeexperiences.in/"}> */}
                     <img
@@ -230,7 +230,7 @@ export default function Footer() {
                       width={100}
                       height={100}
                       alt="Evoke Experiences"
-                      className=""
+                      className="object-contain"
                     />
                     {/* </Link>{" "} */}
                   </div>
@@ -304,7 +304,7 @@ export default function Footer() {
                         width={100}
                         height={100}
                         alt="Goa Tourism Development Corporation"
-                        className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 "
+                        className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 object-contain"
                       />
                       {/* </Link>{" "} hover:scale-105*/}
                       {/* <Link href={"https://nidhi.tourism.gov.in/"}> */}
@@ -315,7 +315,7 @@ export default function Footer() {
                         width={100}
                         height={100}
                         alt="NIDHI — Ministry of Tourism"
-                        className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2"
+                        className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 object-contain"
                       />
                       {/* </Link>{" "}
                       <Link href={"https://evokeexperiences.in/"}> */}
@@ -326,7 +326,7 @@ export default function Footer() {
                         width={150}
                         height={150}
                         alt="Evoke Experiences"
-                        className="md:mx-2"
+                        className="md:mx-2 object-contain"
                       />
                       {/* </Link>
                       <Link href={"https://forest.goa.gov.in/"}> */}
@@ -337,7 +337,7 @@ export default function Footer() {
                         width={100}
                         height={100}
                         alt="Goa Forest Development Corporation"
-                        className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 hover:scale-105"
+                        className="h-16 w-16 lg:h-24 lg:w-24 md:mx-2 hover:scale-105 object-contain"
                       />
                       {/* </Link> */}
                       <img
@@ -347,7 +347,7 @@ export default function Footer() {
                         width={150}
                         height={150}
                         alt="Rann Utsav — The Tent City"
-                        className="md:mx-2"
+                        className="md:mx-2 object-contain"
                       />
                     </div>
                   </div>

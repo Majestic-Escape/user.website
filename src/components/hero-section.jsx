@@ -21,19 +21,21 @@
 // second full-size download on almost every load (measured: 33–35 of 39).
 // hero-picture.jsx keeps every candidate in <source>s (0 of 78).
 //
-// A placeholder (a 24 px WebP, ~300 B inline) shows under the image until it
-// paints — far below Chrome's 0.05 bits-per-pixel floor, so it never counts
-// as the LCP element. No fade on the LCP image: it would delay LCP.
+// Until the image paints, the box is a plain light-grey panel of the final
+// size. (It used to show a 24 px preview stretched ~65× — owners read that
+// smear as a broken image.) No fade on the LCP image: it would delay LCP.
 import { preconnect } from "react-dom";
 import HeroPicture from "./hero-picture";
 import { heroSource, resolveHero } from "@/lib/hero";
-import staticLqip from "../../public/images/hero/gen/hero-lqip.json";
+
+const withoutPreview = (h) => ({ ...h, desktop: { ...h.desktop, lqip: "" }, mobile: { ...h.mobile, lqip: "" } });
 
 // config: validateHero() output (lib/server/site-hero.ts) or null
 export default function HeroSection({ config }) {
   const source = heroSource(process.env);
-  const fallback = resolveHero(null, { source, staticLqip });
-  const hero = config ? resolveHero(config, { source, staticLqip }) : fallback;
+  // no placeholder data to the browser: the grey panel needs none
+  const fallback = withoutPreview(resolveHero(null, { source }));
+  const hero = config ? withoutPreview(resolveHero(config, { source })) : fallback;
   if (!hero.isStatic && hero.cdnOrigin) preconnect(hero.cdnOrigin); // direct-CDN delivery only
   return (
     <div className="pt-32 md:pt-46 w-screen -mx-[calc((100vw-100%)/2)] overflow-hidden">

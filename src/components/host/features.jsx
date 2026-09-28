@@ -264,7 +264,7 @@ export default function Component() {
 
                     <Image
                       width={300}
-                      height={300}
+                      height={151} // the SVG's 131×66
                       src="/images/customers-chart.svg"
                       alt=""
                     />
@@ -288,7 +288,7 @@ export default function Component() {
                   </div>
                   <Image
                     width={300}
-                    height={300}
+                    height={125} // the SVG's 404×168
                     alt="Chart line"
                     className="max-h-16 w-auto"
                     src={"/images/chart-line.svg"}

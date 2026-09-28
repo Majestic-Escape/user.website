@@ -112,7 +112,7 @@ export default function BlogPost() {
               <figure>
                 <Image
                   width={600}
-                  height={600}
+                  height={400}
                   className="w-full object-cover rounded-xl"
                   src="/images/img1.png"
                   alt="Chorao Bird Sanctuary"

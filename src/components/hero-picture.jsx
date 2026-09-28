@@ -27,7 +27,6 @@ const DESKTOP = "(min-width: 768px)";
 // (Vercel preview A/B, tests/pw-final/evidence/audit/perf-vercel-*.json).
 const MOBILE_SIZES = "(min-resolution: 2.5dppx) 66.67vw, (-webkit-min-device-pixel-ratio: 2.5) 66.67vw, 100vw";
 const INLINE_1PX = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-const lqipVar = (s) => (s ? `url("${s}")` : "none");
 // The box per viewport (see hero-section.jsx); a page with other art passes
 // its own proportions (the experiences banner, exp-hero.jsx).
 const HOME_BOX = "aspect-[530/720] md:aspect-[1920/740]";
@@ -44,7 +43,6 @@ export default function HeroPicture({ hero, fallback, boxClassName = HOME_BOX })
   }, [step, next]);
 
   const shown = step === 2 ? fallback : hero;
-  const style = { "--lqip-m": lqipVar(shown.mobile.lqip), "--lqip-d": lqipVar(shown.desktop.lqip) };
   const img = (
     <img
       ref={imgRef}
@@ -56,8 +54,7 @@ export default function HeroPicture({ hero, fallback, boxClassName = HOME_BOX })
       decoding="async"
       elementtiming="hero-banner"
       onError={next}
-      style={style}
-      className={`block w-full h-auto object-cover ${boxClassName} bg-cover bg-center bg-no-repeat bg-[image:var(--lqip-m)] md:bg-[image:var(--lqip-d)]`}
+      className={`block w-full h-auto object-cover ${boxClassName} bg-gray-100`}
     />
   );
 

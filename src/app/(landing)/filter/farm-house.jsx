@@ -138,7 +138,8 @@ export default function FarmHouse({ locationName }) {
       {/* Add a Toaster component here as well for immediate visibility */}
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
+        // tall enough that the footer stays below the fold until the results replace it
+        <div className="flex justify-center items-start pt-32 min-h-[80vh]">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primaryGreen"></div>
         </div>
       ) : (
