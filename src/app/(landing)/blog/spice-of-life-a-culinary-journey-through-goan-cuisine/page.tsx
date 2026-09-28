@@ -115,7 +115,7 @@ export default function BlogPost() {
               <figure>
                 <Image
                   width={600}
-                  height={600}
+                  height={336}
                   className="w-full object-cover rounded-xl"
                   src="/images/blog/4/food-3.jpg"
                   alt="Spices and Ingredients"
