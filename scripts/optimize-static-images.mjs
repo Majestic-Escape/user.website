@@ -91,8 +91,6 @@ const jobs = [
     formats: ["avif", "webp", "jpeg"],
     settings: EXPERIENCES_SETTINGS,
     quality: { avif: { 960: 75, 1280: 75, 1600: 65 }, webp: { 960: 88, 1280: 88, 1600: 85 } },
-    lqip: "desktop",
-    lqipFile: "experiences/gen/lqip.json",
   },
   // experiences banner, phone art (2000×2720, shown below 768 px; phones at
   // 2.5× and denser take the 2× candidate, as on the home page)
@@ -103,13 +101,11 @@ const jobs = [
     formats: ["avif", "webp", "jpeg"],
     settings: EXPERIENCES_SETTINGS,
     quality: { avif: { 640: 82, 960: 82, 1280: 81, 1600: 80 }, webp: { 640: 90, 960: 90, 1280: 90, 1600: 90 } },
-    lqip: "mobile",
-    lqipFile: "experiences/gen/lqip.json",
   },
   // experiences tour cards: 1363 px photos shown 391–907 px wide (object-cover)
   ...["CHARDHAM_1.jpg", "do_dhaam.jpg", "statue_of_unity.jpg", "dwarka.jpg", "goa.jpg", "ram_mandir.jpg", "rann_utsav_1.jpg"].map((f) => {
     const name = f.replace(/\.[^.]+$/, "").toLowerCase();
-    return { src: `tour/${f}`, out: `tour/gen/${name}`, widths: [480, 800, 1024, 1363], formats: ["webp"], settings: PHOTO_SETTINGS, lqip: name, lqipFile: "tour/gen/lqip.json" };
+    return { src: `tour/${f}`, out: `tour/gen/${name}`, widths: [480, 800, 1024, 1363], formats: ["webp"], settings: PHOTO_SETTINGS };
   }),
   // host wizard illustrations (1080 px PNGs with alpha, shown ≤ ~560 px): the
   // step ones live at the root of public/
