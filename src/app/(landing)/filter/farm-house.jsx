@@ -138,8 +138,10 @@ export default function FarmHouse({ locationName }) {
       {/* Add a Toaster component here as well for immediate visibility */}
 
       {loading ? (
-        // tall enough that the footer stays below the fold until the results replace it
-        <div className="flex justify-center items-start pt-32 min-h-[80vh]">
+        // a full screen tall, like the pages' own Suspense fallbacks: at 80vh the
+        // footer (fixed header, so nothing above) showed in the last fifth of a
+        // phone until the results pushed it off
+        <div className="flex justify-center items-start pt-32 min-h-screen">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primaryGreen"></div>
         </div>
       ) : (
