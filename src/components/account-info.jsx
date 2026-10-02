@@ -616,7 +616,10 @@ export default function AccountInfo() {
                     align="start"
                     sideOffset={4}
                     avoidCollisions={false}
-                    className="max-h-40 overflow-y-auto"
+                    // Collisions are off (the list always opens below the field), so cap the
+                    // width at the space to the field's right: the longest state name used
+                    // to push the list 150–185px past the screen edge on phones.
+                    className="max-h-40 overflow-y-auto max-w-[var(--radix-select-content-available-width)]"
                   >
                     {/* Search input inside dropdown */}
                     <div className="py-2 px-1">
