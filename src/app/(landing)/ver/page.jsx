@@ -85,7 +85,7 @@ export default function KYCVerification() {
   };
 
   return (
-    <div className="container mx-auto max-w-7xl bg-white py-32">
+    <div className="container mx-auto max-w-7xl bg-white py-32 px-4">
       <Card className="w-full max-w-3xl mx-auto ">
         <CardHeader>
           <CardTitle>KYC Verification</CardTitle>

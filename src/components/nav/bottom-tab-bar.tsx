@@ -39,7 +39,7 @@ type ItemProps = {
 // px-1 below 360px: at 320 a 64px tab with px-2 left 48px, which truncated
 // "Bookings" on the 5-tab host bar.
 export const tabItemCls =
-  "group inline-flex h-full w-full flex-col items-center justify-center px-1 min-[360px]:px-2 outline-none transition-transform duration-150 active:scale-95 motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primaryGreen";
+  "group inline-flex h-full w-full flex-col items-center justify-center px-1 [@media(min-width:360px)]:px-2 outline-none transition-transform duration-150 active:scale-95 motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primaryGreen";
 
 export function TabIcon({ icon: Icon, active, count }: { icon: React.ComponentType<{ className?: string }>; active?: boolean; count?: number }) {
   return (

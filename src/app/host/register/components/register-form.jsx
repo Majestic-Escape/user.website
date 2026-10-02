@@ -365,7 +365,7 @@ export default function RegisterPage() {
 
               <div>
                 <div className="flex md:gap-x-6 flex-col md:flex md:flex-row ">
-                  <div>
+                  <div className="md:flex-auto">
                     <Input
                       type="email"
                       placeholder="Email"
@@ -382,7 +382,7 @@ export default function RegisterPage() {
                     )}
                   </div>
 
-                  <div>
+                  <div className="md:flex-auto">
                     <div className="flex">
                       <div className="flex-shrink-0 flex items-center text-sm justify-center bg-white border border-r-0 border-gray-300 rounded-l-md px-3">
                         +91

@@ -662,7 +662,7 @@ export default function ContactHostPage() {
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5">
           {/* Host Info Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between gap-3 mb-6">
             <div className="flex-1">
               <h1 className="text-xl font-semibold font-bricolage mb-1">Contact {hostName}</h1>
               <p className="text-gray-500 text-sm flex items-center gap-1.5">

@@ -17,7 +17,7 @@ export default function SupportPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Phone className="mr-2 h-5 w-5" />
+                <Phone className="mr-2 h-5 w-5 shrink-0" />
                 Call Us
               </CardTitle>
             </CardHeader>
@@ -36,7 +36,7 @@ export default function SupportPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <WhatsApp className="mr-2 h-5 w-5" />
+                <WhatsApp className="mr-2 h-5 w-5 shrink-0" />
                 WhatsApp Support
               </CardTitle>
             </CardHeader>
@@ -58,7 +58,7 @@ export default function SupportPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Mail className="mr-2 h-5 w-5" />
+                <Mail className="mr-2 h-5 w-5 shrink-0" />
                 Email Support
               </CardTitle>
             </CardHeader>

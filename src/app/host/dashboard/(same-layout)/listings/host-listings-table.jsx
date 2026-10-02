@@ -341,7 +341,7 @@ export function HostListingsTable({ userEmail }) {
               alt="Property thumbnail"
               width={50}
               height={50}
-              className="rounded-md cursor-pointer"
+              className="h-[50px] w-[50px] object-cover rounded-md cursor-pointer"
               onClick={() => handleImageClick(photos, row.getValue("title"))}
             />
           ) : (

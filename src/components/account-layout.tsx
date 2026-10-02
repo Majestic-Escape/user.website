@@ -39,7 +39,8 @@ export default function AccountLayout({ children }: LayoutProps) {
         <AccountHeader />
         <div className="flex">
           {/* <AccountSidebar /> */}
-          <main className="flex-1 p-8">{children}</main>
+          {/* <390px: this inset plus the form's own p-4 + p-6 squeezed the State select under 110px */}
+          <main className="flex-1 p-8 [@media(max-width:389px)]:px-0">{children}</main>
         </div>
       </div>
     </div>

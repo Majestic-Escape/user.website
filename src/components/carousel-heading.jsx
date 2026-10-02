@@ -40,8 +40,9 @@ className={`object-cover aspect-square w-[250px]`}/>
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious />
-      <CarouselNext />
+      {/* the panel's overflow-hidden clips the arrows out of view; display:none keeps them out of the tab order */}
+      <CarouselPrevious className="hidden" />
+      <CarouselNext className="hidden" />
     </Carousel>
   )
 }
