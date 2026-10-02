@@ -114,7 +114,7 @@ export default function TaxesPage() {
           <CardTitle>Tax Reports</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center gap-4">
             <Select value={selectedProperty} onValueChange={setSelectedProperty}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Select property" />
@@ -127,7 +127,7 @@ export default function TaxesPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center gap-4">
             <Button className="border border-primaryGreen bg-white text-primaryGreen hover:bg-gray-50 rounded-3xl">
               <Download className="mr-2 h-4 w-4" />
               Download Annual Tax Report
@@ -186,7 +186,7 @@ export default function TaxesPage() {
           <CardTitle>Tax Document Upload</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center gap-4">
             <Input type="file" id="tax-document" className="w-full max-w-sm" />
     <Button className="bg-primaryGreen hover:bg-brightGreen rounded-3xl">
               <Upload  className="mr-2 h-4 w-4" />

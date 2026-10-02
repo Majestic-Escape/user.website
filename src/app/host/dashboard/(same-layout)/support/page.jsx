@@ -11,7 +11,9 @@ export default function SupportPage() {
         <p className="text-muted-foreground mb-8">Get help with your Majestic Escape hosting experience</p>
      
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        {/* 3 columns only from lg: at 768–1023 the content column is ~500px and
+            a third of it (~150px) could not hold the e-mail button. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -64,7 +66,7 @@ export default function SupportPage() {
               <p className="mb-4 text-sm text-muted-foreground">Get in touch with our support team via email.</p>
               <Link
               href="mailto:info@majesticescape.in" 
-              className="bg-primaryGreen text-sm hover:to-brightGreen px-3 w-full rounded-3xl text-white py-2"
+              className="[overflow-wrap:anywhere] bg-primaryGreen text-sm hover:to-brightGreen px-3 w-full rounded-3xl text-white py-2"
               >
                 info@majesticescape.in
               </Link>

@@ -53,9 +53,12 @@ export default function Navbar() {
       }`}
     >
       <header className="px-4  md:px-6 z-[2000] md:pb-4 desktop:pb-4">
-        <div className="container max-w-[1400px] flex h-12 md:h-16 w-full items-center mx-auto ">
+        {/* md+: same 3-column grid as the main navbar (pill centred, shrinks
+            before it can overlap Become a Host / Login); explicit columns keep
+            the actions in column 3 while the pill is hidden on scroll. */}
+        <div className="container max-w-[1400px] flex h-12 md:h-16 w-full items-center mx-auto md:grid md:grid-cols-[1fr_minmax(0,max-content)_1fr] md:gap-4">
           <div></div>{" "}
-          <Link className="flex min-h-[44px] items-center gap-2 rounded-lg text-[#3B5D2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen" href="/" aria-label="Majestic Escape home">
+          <Link className="md:col-start-1 flex min-h-[44px] items-center gap-2 rounded-lg text-[#3B5D2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen" href="/" aria-label="Majestic Escape home">
             {/* <Image
               className="hidden md:inline-block h-4 md:h-7 w-auto"
               width={200}
@@ -79,9 +82,8 @@ export default function Navbar() {
               alt=""
             />
           </Link>
-          <div></div>
           <div
-            className={`inline-block z-50 absolute  mb-4 right-[50%] translate-x-1/2 
+            className={`inline-block z-50 md:col-start-2 md:min-w-0 mb-4 
             transition-all duration-300 ${
               isScrolled
                 ? "opacity-0 hidden md:hidden"
@@ -92,7 +94,7 @@ export default function Navbar() {
           >
             <NavTabLayout />
           </div>
-          <HeaderActions showBecomeHost />
+          <HeaderActions showBecomeHost className="md:col-start-3 whitespace-nowrap" />
         </div>
         {/* <div className={`transition-all duration-300 ${isScrolled ? 'opacity-100 -translate-y-full' : 'opacity-100 translate-y-0 '}`}> */}
 

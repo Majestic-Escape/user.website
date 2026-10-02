@@ -256,6 +256,16 @@ body {
   }
 }
 
+/* Phones: the fixed bottom tab bar (4.5rem + home indicator) must never hide
+   the element that has keyboard focus (WCAG 2.4.11); scroll-padding makes the
+   browser scroll focused/anchored elements clear of it. Same idea as the admin
+   site's scroll-padding-bottom below 768px. */
+@media (max-width: 767px) {
+  html {
+    scroll-padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+}
+
 /* Ensure input doesn't zoom on iOS: Safari zooms into any focused field whose
    text is under 16px. Covers every typed field (email, tel, date, number,
    password, untyped inputs…) plus select/textarea; the viewport no longer
