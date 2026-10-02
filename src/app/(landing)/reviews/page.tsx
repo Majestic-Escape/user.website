@@ -108,7 +108,10 @@ export default function Component() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    // Top padding clears the fixed site header (~60px on phones, 77px from md),
+    // matching the offset other landing pages use; p-6 alone hid the title
+    // and the "Write a review" button underneath it.
+    <div className="px-6 pb-6 pt-20 md:pt-28 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">My Reviews</h1>

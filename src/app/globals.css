@@ -256,10 +256,13 @@ body {
   }
 }
 
-/* Ensure input doesn't zoom on iOS */
+/* Ensure input doesn't zoom on iOS: Safari zooms into any focused field whose
+   text is under 16px. Covers every typed field (email, tel, date, number,
+   password, untyped inputs…) plus select/textarea; the viewport no longer
+   locks zoom, so this rule is what keeps focus from zooming. */
 @media (max-width: 767px) {
-  input[type="text"],
-  input[type="search"],
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]),
+  select,
   textarea {
     font-size: 16px !important;
   }
