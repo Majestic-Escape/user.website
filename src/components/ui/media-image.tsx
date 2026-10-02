@@ -48,7 +48,7 @@ export const MediaImage = forwardRef<HTMLImageElement, MediaImageProps>(
     const fallback = url !== null && failedSrc === url;
     const cdn = VARIANTS_ENABLED && !fallback && url !== null && isSpacesUrl(url);
     if (url !== null && deadSrc === url) {
-      return <Image ref={ref} {...props} src={PHOTO_PLACEHOLDER} unoptimized />;
+      return <Image ref={ref} {...props} alt={props.alt} src={PHOTO_PLACEHOLDER} unoptimized />;
     }
     return (
       <Image
@@ -90,7 +90,7 @@ export function MediaImg({
   const cdn = VARIANTS_ENABLED && !!src && failedSrc !== src && isSpacesUrl(src);
   if (src && deadSrc === src) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img {...props} src={PHOTO_PLACEHOLDER} srcSet={undefined} />;
+    return <img {...props} alt={props.alt ?? ""} src={PHOTO_PLACEHOLDER} srcSet={undefined} />;
   }
   return (
     // eslint-disable-next-line @next/next/no-img-element

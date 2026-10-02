@@ -112,7 +112,9 @@ export default function HostResources() {
   ];
 
   return (
-    <div className="font-poppins min-h-screen py-16 md:py-32 bg-gray-50">
+    // pt-24 on phones clears the ~69px fixed host header (py-16 left the H1
+    // ~9px underneath it).  md+ unchanged.
+    <div className="font-poppins min-h-screen pt-24 pb-16 md:py-32 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <header className="mb-12">
           <h1 className="text-4xl font-bricolage font-bold text-gray-900 mb-4">
