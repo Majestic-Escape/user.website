@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Skeleton } from "@/components/ui/skeleton";
 import { USER } from "@/lib/query-presets";
 import { queryKeys } from "@/lib/query-keys";
-import { listConnections, releaseBlocks } from "./api";
+import { listConnections, releaseBlocks, stopExportLink } from "./api";
 import ConnectWizard from "./ConnectWizard";
 import ConnectionCard from "./ConnectionCard";
 import DisconnectDialog from "./DisconnectDialog";
@@ -51,6 +51,9 @@ export default function CalendarSyncPanel({ propertyId, onAvailabilityChanged })
   const [orphanToRelease, setOrphanToRelease] = useState(null);
   const [orphanBusy, setOrphanBusy] = useState(false);
   const [orphanError, setOrphanError] = useState(null);
+  const [linkToStop, setLinkToStop] = useState(null);
+  const [stopBusy, setStopBusy] = useState(false);
+  const [stopError, setStopError] = useState(null);
 
   if (!propertyId) return null;
   const providers = (data && data.providers) || [];
@@ -71,6 +74,21 @@ export default function CalendarSyncPanel({ propertyId, onAvailabilityChanged })
       setOrphanError(err.message);
     } finally {
       setOrphanBusy(false);
+    }
+  }
+
+  async function stopLink() {
+    if (!linkToStop) return;
+    setStopBusy(true);
+    setStopError(null);
+    try {
+      const r = await stopExportLink(linkToStop.id);
+      setData(r.data);
+      setLinkToStop(null);
+    } catch (err) {
+      setStopError(err.message);
+    } finally {
+      setStopBusy(false);
     }
   }
 
@@ -169,16 +187,31 @@ export default function CalendarSyncPanel({ propertyId, onAvailabilityChanged })
 
           {data.disconnected.length > 0 && (
             <div className="rounded-lg border bg-white p-3">
-              <h3 className="text-sm font-semibold text-gray-900">Disconnected sites still blocking dates</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Disconnected sites</h3>
               <ul className="mt-2 space-y-2">
                 {data.disconnected.map((d) => (
-                  <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                    <span>
-                      {d.name}: {d.orphanedBlocks} booking{d.orphanedBlocks === 1 ? "" : "s"} kept blocked{d.disconnectedAt ? ` since ${relativeTime(d.disconnectedAt)}` : ""}.
-                    </span>
-                    <Button type="button" variant="outline" className="h-[44px]" onClick={() => setOrphanToRelease(d)}>
-                      Release dates…
-                    </Button>
+                  <li key={d.id} className="flex flex-col gap-2 text-sm">
+                    {d.orphanedBlocks > 0 && (
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span>
+                          {d.name}: {d.orphanedBlocks} booking{d.orphanedBlocks === 1 ? "" : "s"} kept blocked{d.disconnectedAt ? ` since ${relativeTime(d.disconnectedAt)}` : ""}.
+                        </span>
+                        <Button type="button" variant="outline" className="h-[44px]" onClick={() => setOrphanToRelease(d)}>
+                          Release dates…
+                        </Button>
+                      </div>
+                    )}
+                    {d.linkLive && (
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-gray-700">
+                          {d.name}: your Majestic link still works, so {d.channelLabel} keeps seeing your Majestic bookings
+                          {d.linkLastServedAt ? ` (last requested ${relativeTime(d.linkLastServedAt)})` : ""}.
+                        </span>
+                        <Button type="button" variant="outline" className="h-[44px]" onClick={() => setLinkToStop(d)}>
+                          Stop link…
+                        </Button>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -228,6 +261,27 @@ export default function CalendarSyncPanel({ propertyId, onAvailabilityChanged })
             </Button>
             <Button type="button" variant="destructive" className="h-[44px]" disabled={orphanBusy} onClick={releaseOrphan}>
               Release dates
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!linkToStop} onOpenChange={(o) => !o && (setLinkToStop(null), setStopError(null))}>
+        <DialogContent className={DIALOG_CLASS}>
+          <DialogHeader className="text-left">
+            <DialogTitle>Stop your Majestic link for {linkToStop && linkToStop.channelLabel}?</DialogTitle>
+            <DialogDescription>
+              {linkToStop && linkToStop.channelLabel} will stop seeing your Majestic bookings and could sell those nights again. Only do this if you no longer list this stay there.
+            </DialogDescription>
+          </DialogHeader>
+          <p role="alert" className="min-h-[1.25rem] text-sm text-red-700">
+            {stopError}
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" className="h-[44px]" onClick={() => setLinkToStop(null)}>
+              Keep link
+            </Button>
+            <Button type="button" variant="destructive" className="h-[44px]" disabled={stopBusy} onClick={stopLink}>
+              Stop link
             </Button>
           </div>
         </DialogContent>

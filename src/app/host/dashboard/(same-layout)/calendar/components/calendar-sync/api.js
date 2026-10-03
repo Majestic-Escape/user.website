@@ -42,5 +42,6 @@ export const syncConnectionNow = (id) => call("POST", `/connections/${id}/sync`)
 export const rotateExportLink = (id) => call("POST", `/connections/${id}/rotate-export`);
 export const confirmExportAdded = (id) => call("POST", `/connections/${id}/confirm-export`);
 export const disconnectCalendar = (id, { acknowledge, releaseBlocks }) => call("POST", `/connections/${id}/disconnect`, { acknowledge, releaseBlocks });
+export const stopExportLink = (id) => call("POST", `/connections/${id}/stop-export`);
 export const releaseBlocks = (id) => call("POST", `/connections/${id}/release-blocks`, { acknowledge: true });
 export const explainDate = (propertyId, date) => call("GET", `/properties/${propertyId}/explain?date=${encodeURIComponent(date)}`).then((r) => r.data);

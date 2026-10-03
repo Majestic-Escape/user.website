@@ -58,7 +58,7 @@ export default function DisconnectDialog({ open, onOpenChange, connection, onCha
             <div className="flex gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               <p>
-                If this stay is still listed on {label}, {label} can keep taking bookings — and Majestic will no longer see them. Your Majestic link for {label} keeps working, so {label} still sees your Majestic bookings; remove it in {label} if you stop listing there.
+                If this stay is still listed on {label}, {label} can keep taking bookings — and Majestic will no longer see them. Your Majestic link for {label} keeps working, so {label} still sees your Majestic bookings; if you stop listing there, remove it in {label} or stop it here afterwards.
               </p>
             </div>
           </DialogDescription>
