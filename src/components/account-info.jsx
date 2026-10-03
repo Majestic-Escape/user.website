@@ -515,7 +515,7 @@ export default function AccountInfo() {
           {/* Full Name (non-editable) */}
           <div>
             <h2 className="text-lg font-semibold mb-1">Full Name</h2>
-            <p>
+            <p className="[overflow-wrap:anywhere]">
               {profileData?.firstName} {profileData?.lastName}
             </p>
           </div>
@@ -529,7 +529,7 @@ export default function AccountInfo() {
           {/* Email Address (non-editable) */}
           <div>
             <h2 className="text-lg font-semibold mb-1">Email Address</h2>
-            <p>{profileData.email}</p>
+            <p className="[overflow-wrap:anywhere]">{profileData.email}</p>
           </div>
           <hr />
 
