@@ -72,7 +72,10 @@ export default function Footer() {
   return (
     <div className="flex justify-center w-full border-t border-t-gray-100 bg-offWhite">
       <div className="w-full max-w-[1400px] mx-auto">
-        <footer className="bg-offWhite px-5 md:px-16 py-12 relative font-poppins text-absolute-dark">
+        {/* pb-24: the chat launcher floats 24–176px above the bottom edge, so the last row of
+            links (social icons) has to end above that band or, at the very end of a page where
+            nothing scrolls any further, the launcher would sit on top of them. */}
+        <footer className="bg-offWhite px-5 md:px-16 pt-12 pb-24 relative font-poppins text-absolute-dark">
           <div className="mx-auto relative">
             <div className="xl:grid xl:grid-cols-5 xl:gap-8">
               <div className="xl:col-span-1">
