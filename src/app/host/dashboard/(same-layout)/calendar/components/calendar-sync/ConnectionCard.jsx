@@ -133,6 +133,11 @@ export default function ConnectionCard({ connection: c, provider, onChanged, onF
           A booking on {label} overlaps a Majestic booking. Check {label} — one guest may need to be moved. Our team has been alerted.
         </p>
       )}
+      {c.counts.overlaps > 0 && (
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
+          A booking on {label} overlaps one on another connected site. Check both sites — one guest may need to be moved. We keep these dates blocked either way.
+        </p>
+      )}
       {c.counts.likelyMirrors > 0 && c.counts.conflicts === 0 && (
         <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">
           {label} shows {c.counts.likelyMirrors === 1 ? "a date" : "dates"} you sold on Majestic as unavailable — most likely {label} copying your Majestic booking. Worth a quick look in {label}.
