@@ -57,7 +57,6 @@ export default function Navbar() {
             before it can overlap Become a Host / Login); explicit columns keep
             the actions in column 3 while the pill is hidden on scroll. */}
         <div className="container max-w-[1400px] flex h-12 md:h-16 w-full items-center mx-auto md:grid md:grid-cols-[1fr_minmax(0,max-content)_1fr] md:gap-4">
-          <div></div>{" "}
           <Link className="md:col-start-1 flex min-h-[44px] items-center gap-2 rounded-lg text-[#3B5D2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen" href="/" aria-label="Majestic Escape home">
             {/* <Image
               className="hidden md:inline-block h-4 md:h-7 w-auto"
