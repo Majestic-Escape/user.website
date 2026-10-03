@@ -42,6 +42,8 @@ export function inboundText(state, provider) {
       return { tone: "warn", label: "Retrying", detail: `The last check of ${provider} failed. Dates already blocked stay blocked.` };
     case "STALE":
       return { tone: "warn", label: "Out of date", detail: `${provider} hasn't been checked recently. Guests booking on Majestic trigger a fresh check first.` };
+    case "PARTIAL":
+      return { tone: "warn", label: "Partly read", detail: `Some entries of ${provider} couldn't be read fully.` };
     case "BROKEN":
       return { tone: "bad", label: "Not working", detail: null };
     case "NEEDS_ATTENTION":
@@ -63,6 +65,14 @@ export function outboundText(state, provider, exp) {
         tone: "good",
         label: "Link in use",
         detail: `Your Majestic link was last requested ${relativeTime(exp.lastServedAt)}${exp.lastServedAgent && exp.lastServedAgent !== "Other" ? ` by an app identifying itself as ${exp.lastServedAgent}` : ""}.`,
+      };
+    case "OPENED":
+      // Something opened the link (a chat preview, a browser) but nothing
+      // that identifies as a calendar service has requested it yet.
+      return {
+        tone: "warn",
+        label: "Opened, not by a calendar",
+        detail: `Your Majestic link was opened ${relativeTime(exp.lastServedAt)}, but not by an app identifying itself as ${provider} or another calendar service. Check the link is saved in ${provider}.`,
       };
     case "QUIET":
       return { tone: "warn", label: "Not requested lately", detail: `Nobody has requested your Majestic link since ${relativeTime(exp.lastServedAt)}. Check it is still saved in ${provider}.` };

@@ -25,10 +25,11 @@ function reasonsOf(data) {
   const out = [];
   for (const c of data.connections) {
     if (c.protection === "HEALTHY") continue;
-    if (["BROKEN", "NEEDS_ATTENTION", "STALE", "DEGRADED"].includes(c.health.state)) out.push(`${c.name}: ${c.health.reason || "needs a look"}`);
+    if (["BROKEN", "NEEDS_ATTENTION", "STALE", "DEGRADED", "PARTIAL"].includes(c.health.state)) out.push(`${c.name}: ${c.health.reason || "needs a look"}`);
     else if (c.export.state === "NOT_CONFIRMED") out.push(`${c.name}: your Majestic link isn't set up in ${c.channelLabel} yet, so Majestic bookings don't block dates there.`);
     else if (c.export.state === "WAITING") out.push(`${c.name}: waiting for ${c.channelLabel} to request your Majestic link.`);
     else if (c.export.state === "QUIET") out.push(`${c.name}: ${c.channelLabel} hasn't requested your Majestic link recently.`);
+    else if (c.export.state === "OPENED") out.push(`${c.name}: your Majestic link was opened, but not yet by ${c.channelLabel}. Check it is saved there.`);
   }
   return out;
 }
