@@ -256,7 +256,7 @@ export default function CalendarSyncPanel({ propertyId, onAvailabilityChanged })
             {orphanError}
           </p>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" className="h-[44px]" onClick={() => setOrphanToRelease(null)}>
+            <Button type="button" variant="outline" className="h-[44px]" onClick={() => (setOrphanToRelease(null), setOrphanError(null))}>
               Keep blocked
             </Button>
             <Button type="button" variant="destructive" className="h-[44px]" disabled={orphanBusy} onClick={releaseOrphan}>
@@ -277,7 +277,7 @@ export default function CalendarSyncPanel({ propertyId, onAvailabilityChanged })
             {stopError}
           </p>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" className="h-[44px]" onClick={() => setLinkToStop(null)}>
+            <Button type="button" variant="outline" className="h-[44px]" onClick={() => (setLinkToStop(null), setStopError(null))}>
               Keep link
             </Button>
             <Button type="button" variant="destructive" className="h-[44px]" disabled={stopBusy} onClick={stopLink}>
