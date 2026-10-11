@@ -18,6 +18,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import axios from "axios";
+import { fitImage, ImagePrepError } from "@/lib/image-upload";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { USER } from "@/lib/query-presets";
 import { queryKeys } from "@/lib/query-keys";
@@ -110,6 +111,8 @@ export default function AccountInfo() {
   const [searchState, setSearchState] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const fileInputRef = useRef(null);
+  // One photo change at a time (upload or clear); the avatar shows progress.
+  const [photoBusy, setPhotoBusy] = useState(false);
   const dropdownRef = useRef(null);
   // Profile is cached per email (USER preset) so re-opening the account
   // page paints instantly; the editable form state below is seeded from it.
@@ -160,6 +163,7 @@ export default function AccountInfo() {
 
   // Trigger file input click when avatar is clicked
   const handleAvatarClick = () => {
+    if (photoBusy) return;
     fileInputRef.current?.click();
   };
 
@@ -167,55 +171,41 @@ export default function AccountInfo() {
     console.log("xyzabc", avatarUrl);
   }
   // Handle file upload and convert file to base64 URL
+  // Upload a new profile photo. The server stores it, points the profile at
+  // it and removes the replaced picture itself — the old one must NOT be
+  // deleted first (a failed upload then left a broken avatar). Photos are
+  // fitted under the API's 4.5 MB request cap in the browser (HEIC included).
   const handleFileChange = async (event) => {
-    if (process.env.NEXT_PUBLIC_ENV === "dev") {
-      console.log("reaching0");
-    }
     const file = event.target.files?.[0];
-    const MAX_SIZE = 5 * 1024 * 1024;
-    if (process.env.NEXT_PUBLIC_ENV === "dev") {
-      console.log("reaching1");
-    }
-    if (!file) {
-      toast.error("No file found. Reupload the file");
-      return;
-    }
-    if (process.env.NEXT_PUBLIC_ENV === "dev") {
-      console.log("reaching2");
-    }
+    event.target.value = ""; // the same file can be picked again
+    if (!file || photoBusy) return;
+    const MAX_SIZE = 40 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
-      toast.error(`File too large: ${file.name}. Max size is 5MB.`);
+      toast.error(`File too large: ${file.name}. Max size is 40MB.`);
       return;
     }
+    const heic = /hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
     if (
-      !["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(
-        file.type
-      )
+      !heic &&
+      !["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(file.type)
     ) {
       toast.error("Please select a JPG, PNG or WEBP image.");
       return;
     }
 
+    setPhotoBusy(true);
     try {
-      let update = false;
-      if (avatarUrl.length != 0) {
-        // Best effort: a picture that cannot be removed (still referenced
-        // elsewhere, legacy object) must not block choosing a new one.
-        try {
-          await axios.delete(`${API_URL}/uploads/delete`, {
-            data: { url: avatarUrl },
-            headers: authHeaders(),
-          });
-        } catch (deleteError) {
-          console.error("Previous profile image not removed", deleteError);
-        }
-        update = true;
+      let ready = file;
+      if (heic || file.size > 4_000_000) {
+        ({ file: ready } = await fitImage(file, {
+          maxBytes: 4_000_000,
+          maxEdge: 3840,
+          passThroughTypes: [],
+        }));
       }
-
       const formData = new FormData();
-      formData.append("file", file);
-      const user = await localStorage.getItem("userId");
-      const userId = JSON.parse(user);
+      formData.append("file", ready);
+      const userId = JSON.parse(localStorage.getItem("userId"));
       const res = await axios.post(
         `${API_URL}/uploads/profile?userId=${userId}`,
         formData,
@@ -223,39 +213,48 @@ export default function AccountInfo() {
           headers: { "Content-Type": "multipart/form-data", ...authHeaders() },
         }
       );
-      if (process.env.NEXT_PUBLIC_ENV === "dev") {
-        console.log("reaching4");
-      }
-      const newUrl = res.data.url;
-
-      // STEP 3: Set new image
-      setAvatarUrl(newUrl);
-      if (update == true) {
-        toast.success("Profile image uploaded");
-        update = false;
-      } else {
-        toast.success("Profile image updated");
-      }
+      setAvatarUrl(res.data.url);
+      toast.success("Profile photo updated");
     } catch (error) {
       console.error("Upload failed:", error);
-      toast.error("Failed to upload photos");
+      const data = error?.response?.data;
+      toast.error(
+        error instanceof ImagePrepError
+          ? error.code === "UNDECODABLE"
+            ? "This photo format isn't supported here. Please choose a JPG or PNG."
+            : "This photo is too large to upload. Please choose a smaller one."
+          : data?.message ||
+              data?.error ||
+              (error?.response
+                ? "Couldn't upload the photo. Please try again."
+                : "Couldn't reach the server. Please check your connection and try again.")
+      );
+    } finally {
+      setPhotoBusy(false);
     }
   };
+  // Remove the profile photo: the server deletes it and clears it from the
+  // profile in the same request, so the avatar never points at a deleted file.
   const handleDelete = async () => {
+    if (!avatarUrl || photoBusy) return;
+    setPhotoBusy(true);
     try {
-      let update = false;
-      if (avatarUrl.length != 0) {
-        const response = await axios.delete(`${API_URL}/uploads/delete`, {
-          data: { url: avatarUrl },
-          headers: authHeaders(),
-        });
-        if (response.status != 200) {
-          throw new Error(`Failed to delete image`);
-        }
-        toast.error("Deleted the profile image");
-      }
+      await axios.delete(`${API_URL}/uploads/delete`, {
+        data: { url: avatarUrl },
+        headers: authHeaders(),
+      });
+      setAvatarUrl("");
+      toast.success("Profile photo removed");
     } catch (error) {
       console.error(error);
+      const data = error?.response?.data;
+      toast.error(
+        data?.message ||
+          data?.error ||
+          "Couldn't remove the photo. Please try again."
+      );
+    } finally {
+      setPhotoBusy(false);
     }
   };
 
@@ -486,28 +485,40 @@ export default function AccountInfo() {
           <div>
             <h2 className="text-lg font-semibold mb-4">Profile Image</h2>
             <div className="flex items-center gap-4">
-              <Avatar
-                className="w-20 h-20 cursor-pointer"
-                onClick={handleAvatarClick}
-              >
-                <AvatarImage
-                  src={avatarUrl || "/placeholder.svg"}
-                  alt="Profile"
-                />
-                <AvatarFallback>U</AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar
+                  className={`w-20 h-20 cursor-pointer transition-opacity duration-200 motion-reduce:transition-none ${photoBusy ? "opacity-50" : ""}`}
+                  onClick={handleAvatarClick}
+                  aria-busy={photoBusy}
+                >
+                  <AvatarImage
+                    src={avatarUrl || "/placeholder.svg"}
+                    alt="Profile"
+                  />
+                  <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+                {photoBusy && (
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center animate-in fade-in-0 duration-200 motion-reduce:animate-none">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-700 border-t-transparent" />
+                  </div>
+                )}
+              </div>
               <input
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileChange}
-                // accept="image/jpeg, image/png"
+                accept="image/*"
                 className="hidden"
               />
               <p className="text-sm text-muted-foreground">
                 Click on the avatar to upload your own image.
               </p>
             </div>
-            <Button className="mt-6" onClick={handleDelete}>
+            <Button
+              className="mt-6"
+              onClick={handleDelete}
+              disabled={!avatarUrl || photoBusy}
+            >
               Clear Image
             </Button>
           </div>
