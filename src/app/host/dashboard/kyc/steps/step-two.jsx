@@ -23,6 +23,12 @@ import { Icons } from "@/components/ui/icons";
 import { toast } from "sonner";
 import axios from "axios";
 import { authHeaders } from "@/lib/session";
+import {
+  prepareKycDocument,
+  readAsDataUrl,
+  KycDocumentError,
+} from "@/lib/kyc-document";
+import { useRetryCountdown, formatRetry } from "@/hooks/useRetryCountdown";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const updateHostFormDocVerificationStatus = async (doc) => {
@@ -73,6 +79,14 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
   const [isUploading, setIsUploading] = useState(false);
   const [image, setImage] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
+  // Photos are resized/converted in the browser before upload (see
+  // lib/kyc-document.js); the error stays on screen, not only in a toast.
+  const [isPreparing, setIsPreparing] = useState(false);
+  const [previewKind, setPreviewKind] = useState(null);
+  const [uploadError, setUploadError] = useState("");
+  const selectionRef = useRef(0);
+  // Disables the button until the server allows the next attempt.
+  const { secondsLeft, start: startRetryCountdown } = useRetryCountdown();
 
   useEffect(() => {
     if (documentInfo.isVerified) {
@@ -93,6 +107,8 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
   // };
   const clearUploadedFile = () => {
     setImage(null);
+    setPreviewKind(null);
+    setUploadError("");
     setDocumentInfo((prev) => ({
       ...prev,
       documentFile: null,
@@ -101,6 +117,8 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
   };
   const handleDocumentTypeChange = (value) => {
     if (isLocked) return;
+    selectionRef.current += 1; // drop a file still being prepared for the old type
+    setIsPreparing(false);
     setDocumentInfo({
       documentType: value,
       documentNumber: null,
@@ -113,86 +131,52 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
     if (!file) {
       return;
     }
-
-    const MAX_SIZE = 4 * 1024 * 1024;
-
-    const allowedTypes = [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "application/pdf",
-      "image/heic",
-      "image/heif",
-      "application/octet-stream",
-    ];
-
-    // Check file type
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Only JPG, JPEG, PNG, or PDF files are allowed");
+    // A newer pick wins over a slower earlier one still being prepared.
+    const selection = ++selectionRef.current;
+    setUploadError("");
+    setIsPreparing(true);
+    try {
+      const { file: ready, kind } = await prepareKycDocument(file);
+      const dataUrl = await readAsDataUrl(ready);
+      if (selection !== selectionRef.current) return;
+      const ext = ready.name.split(".").pop();
+      const newName = `${documentInfo.documentType}_${Date.now()}.${ext}`;
+      const renamedFile = new File([ready], newName, { type: ready.type });
+      setDocumentInfo((prev) => ({ ...prev, documentFile: renamedFile }));
+      setImage(dataUrl);
+      setPreviewKind(kind);
+    } catch (error) {
+      if (selection !== selectionRef.current) return;
+      const message =
+        error instanceof KycDocumentError
+          ? error.message
+          : "We couldn't read this file. Please choose it again.";
+      toast.error(message);
       clearUploadedFile();
-      return;
+      setUploadError(message);
+    } finally {
+      if (selection === selectionRef.current) setIsPreparing(false);
     }
-
-    // Check file size
-    if (file.size > 4 * 1024 * 1024) {
-      toast.error("File size must be less than 4MB");
-      clearUploadedFile();
-      return;
-    }
-    const timestamp = Date.now();
-    const ext = file.name.split(".").pop();
-    const newName = `${documentInfo.documentType}_${timestamp}.${ext}`;
-
-    const renamedFile = new File([file], newName, { type: file.type });
-    setDocumentInfo((prev) => ({ ...prev, documentFile: renamedFile }));
-
-    const reader = new FileReader();
-
-    reader.onloadend = () => {
-      setImage(reader.result);
-    };
-
-    reader.readAsDataURL(file);
   };
 
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("url", image);
   }
   const handleUpload = async (email, image) => {
+    if (!image) {
+      toast.error("Please upload an image");
+      return;
+    }
+    setIsUploading(true);
+    setUploadError("");
+    let verified = false;
     try {
-      if (process.env.NEXT_PUBLIC_ENV === "dev") {
-        console.log("your", email, image);
-      }
-      if (!email || !image) {
-        toast.error("Please upload an image");
-        return;
-      }
-      setIsUploading(true);
-      // Convert image to Base64 string
-      const base64Image = image.split(",")[1];
-      const getLocalData = await localStorage.getItem("userId");
-      const data = JSON.parse(getLocalData);
-      if (process.env.NEXT_PUBLIC_ENV === "dev") {
-        console.log("ud", formData);
-      }
-      const doc = formData?.documentInfo?.documentType;
+      const userId = JSON.parse(localStorage.getItem("userId"));
+      const doc = documentInfo.documentType;
+      let response;
       try {
-        //verify pan, voter and passport on same route
-        // const response = await axios.post(
-        //   `${API_BASE_URL}/pan-kyc/verify`,
-        //   {
-        //     // Single API call that handles both OCR and Status Check
-        //     email: email,
-        //     imageUrl: base64Image,
-        //     userId: data,
-        //     doc: doc,
-        //   },
-        //   {
-        //     withCredentials: true,
-        //     headers: { "Content-Type": "application/json" },
-        //   }
-        // );
-        const response = await fetch(`${API_BASE_URL}/pan-kyc/verify`, {
+        // verify pan, voter and passport on same route
+        response = await fetch(`${API_BASE_URL}/pan-kyc/verify`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -200,49 +184,61 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
           },
           body: JSON.stringify({
             email: email,
-            imageUrl: base64Image,
-            userId: data,
+            imageUrl: image.split(",")[1],
+            userId: userId,
             doc: doc,
           }),
         });
-        if (response.status === 413) {
-          toast.error("Upload file size is more than 4MB");
-          clearUploadedFile();
-          return;
-        }
-        const resData = await response.json();
-        if (!response.ok) {
-          const msg =
-            response.status === 429 && resData?.retryAfterSeconds
-              ? `Too many verification attempts. Please try again in ${resData.retryAfterSeconds} seconds.`
-              : resData?.message ||
-                resData?.error ||
-                "Server error. Please try again.";
-
-          toast.error(msg);
-          throw new Error(msg);
-        }
-
-        // The backend decides the verdict: "verified", or "needs_review"
-        // when our team has to look at the document manually.
-        setNeedsReview(resData?.verdict === "needs_review");
-        updateHostFormDocVerificationStatus(doc);
-        setTimeout(() => {
-          setDocumentInfo((prev) => ({ ...prev, isVerified: true }));
-          setIsLocked(true);
-          setIsUploading(false);
-          setShowDialog(true);
-        }, 2000);
-      } catch (error) {
-        console.error("Upload failed:", error);
-        // toast.error("Network error. Please try again.");
+      } catch {
+        throw new KycDocumentError(
+          "We couldn't reach the server. Please check your connection and try again."
+        );
       }
+      // A gateway error page is not JSON; never let that hide the failure.
+      const resData = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        // Every failure after a real attempt says when the next one is
+        // allowed; the button counts down instead of inviting a 429.
+        startRetryCountdown(resData?.retryAfterSeconds);
+        if (response.status === 413) {
+          clearUploadedFile();
+          throw new KycDocumentError(
+            "This file is too large to upload. Please choose a smaller file or a photo."
+          );
+        }
+        const left = resData?.attemptsLeft;
+        const hint =
+          typeof left === "number" && left > 0 && left <= 2
+            ? ` (${left} attempt${left === 1 ? "" : "s"} left today)`
+            : "";
+        throw new KycDocumentError(
+          (resData?.message ||
+            resData?.error ||
+            "Server error. Please try again.") + hint
+        );
+      }
+
+      // The backend decides the verdict: "verified", or "needs_review"
+      // when our team has to look at the document manually.
+      verified = true;
+      setNeedsReview(resData?.verdict === "needs_review");
+      setIsLocked(true); // nothing to re-submit while the dialog is coming
+      updateHostFormDocVerificationStatus(doc);
+      setTimeout(() => {
+        setDocumentInfo((prev) => ({ ...prev, isVerified: true }));
+        setIsUploading(false);
+        setShowDialog(true);
+      }, 2000);
     } catch (error) {
-      // alert("Error", error);
       console.error("Upload failed:", error);
-      // toast.error("Server error during document verification");
+      const message =
+        error instanceof KycDocumentError
+          ? error.message
+          : "Something went wrong. Please try again.";
+      toast.error(message);
+      setUploadError(message);
     } finally {
-      setIsUploading(false); // Always called
+      if (!verified) setIsUploading(false);
     }
   };
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
@@ -347,7 +343,29 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
               onFileSelect={handleFileChange}
               className="w-full h-32 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors relative"
             >
-              {!image && (
+              {isPreparing && !image && (
+                <div className="flex h-full w-full items-center justify-center gap-2 text-sm text-gray-600 pointer-events-none">
+                  <Icons.Loader className="h-4 w-4 animate-spin" />
+                  Preparing file...
+                </div>
+              )}
+              {image && previewKind === "image" && (
+                <div className="flex h-full w-full items-center justify-center p-2 pointer-events-none">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- local data URL preview */}
+                  <img
+                    src={image}
+                    alt="Selected document"
+                    className="max-h-full max-w-full rounded-md object-contain animate-in fade-in-0 zoom-in-[0.98] duration-200 motion-reduce:animate-none"
+                  />
+                </div>
+              )}
+              {image && previewKind === "pdf" && (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-sm text-gray-700 pointer-events-none animate-in fade-in-0 duration-200 motion-reduce:animate-none">
+                  <Icons.FileText className="h-8 w-8 text-gray-500" />
+                  PDF selected
+                </div>
+              )}
+              {!image && !isPreparing && (
                 <div className="text-center pointer-events-none">
                   <Icons.Upload className=" mx-auto h-20 md:h-16 w-8 text-gray-400" />
                   <span className="md:hidden text-sm font-medium text-gray-700">
@@ -365,6 +383,20 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
                 📄 Selected: {documentInfo.documentFile.name}
               </div>
             )}
+            {!isLocked && (
+              <p className="text-xs text-gray-500">
+                JPG, PNG or PDF. Photos are resized automatically; PDFs up to
+                3 MB. Make sure the whole front side is visible and in focus.
+              </p>
+            )}
+            {uploadError && (
+              <p
+                role="alert"
+                className="text-sm text-red-600 animate-in fade-in-0 duration-200 motion-reduce:animate-none"
+              >
+                {uploadError}
+              </p>
+            )}
           </div>
         </div>
       </CardContent>
@@ -375,6 +407,9 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
             !documentInfo.documentType ||
             !documentInfo.documentFile ||
             isUploading ||
+            isPreparing ||
+            isLocked ||
+            secondsLeft > 0 ||
             documentInfo.isVerified
           }
           className="w-full"
@@ -384,6 +419,13 @@ export function DocumentUpload({ updateFormData, formData, goNext }) {
               <Icons.Loader className="mr-2 h-4 w-4 animate-spin" />
               Uploading...
             </>
+          ) : isPreparing ? (
+            <>
+              <Icons.Loader className="mr-2 h-4 w-4 animate-spin" />
+              Preparing file...
+            </>
+          ) : secondsLeft > 0 ? (
+            `Try again in ${formatRetry(secondsLeft)}`
           ) : (
             "Upload and Verify"
           )}
