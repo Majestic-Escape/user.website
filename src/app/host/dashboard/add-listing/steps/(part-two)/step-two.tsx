@@ -9,6 +9,7 @@ import { TextReveal } from "@/components/text-reveal";
 import axios from "axios";
 import { MediaImg } from "@/components/ui/media-image";
 import { authHeaders } from "@/lib/session";
+import { fitImage, ImagePrepError } from "@/lib/image-upload";
 import { toast } from "sonner";
 
 import {
@@ -23,6 +24,10 @@ import WarningDialog from "@/components/warning-modal";
 import { useAuth } from "@/contexts/AuthContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Vercel refuses a request body over 4.5 MB at the edge (without CORS
+// headers: the page only sees "Network Error"), so every upload request stays
+// under this, and a single photo above it is re-encoded in the browser.
+const REQUEST_MAX_BYTES = 4_000_000;
 
 interface Photo {
   id: string;
@@ -68,7 +73,10 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
       return false;
     }
 
-    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+    // Larger photos are re-encoded in the browser before upload (full
+    // resolution up to 3840 px, the largest display size), so only absurd
+    // files are refused here.
+    const MAX_SIZE = 40 * 1024 * 1024; // 40 MB
     const ALLOWED_TYPES = [
       "image/jpg",
       "image/jpeg",
@@ -110,6 +118,12 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
   const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    if (uploading) {
+      // a second upload would append to a stale photo list and drop photos
+      toast.error("Please wait for the current upload to finish.");
+      resetFileInput();
+      return;
+    }
 
     const filesArray = Array.from(files);
 
@@ -119,6 +133,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
 
   const handleConfirmUpload = () => {
     setWarningDialogOpen(false);
+    if (uploading) return;
     // Small delay to ensure dialog is closed before opening file picker
     setTimeout(() => {
       fileInputRef.current?.click();
@@ -205,12 +220,54 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
 
   const handlePhotoUpload = async (files: File[]) => {
     setUploading(true);
-    const batches: File[][] = [];
-    for (let i = 0; i < files.length; i += UPLOAD_BATCH_SIZE) {
-      batches.push(files.slice(i, i + UPLOAD_BATCH_SIZE));
-    }
-    const results: (string[] | null)[] = new Array(batches.length).fill(null);
     const failures: string[] = [];
+    // One photo at a time (memory on phones): a photo within the request
+    // budget goes byte-for-byte (unchanged quality); one over it, or a HEIC
+    // the server cannot read, becomes a JPEG that fits.
+    const prepared: File[] = [];
+    for (const file of files) {
+      try {
+        const heic =
+          /hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
+        if (!heic && file.size <= REQUEST_MAX_BYTES) {
+          prepared.push(file);
+          continue;
+        }
+        const { file: fitted } = await fitImage(file, {
+          maxBytes: REQUEST_MAX_BYTES,
+          maxEdge: 3840,
+          passThroughTypes: [],
+        });
+        prepared.push(fitted);
+      } catch (error) {
+        failures.push(
+          `${file.name}: ${
+            error instanceof ImagePrepError && error.code === "UNDECODABLE"
+              ? "this photo format isn't supported here, please upload a JPG or PNG"
+              : "too large to upload"
+          }`,
+        );
+      }
+    }
+    // Batches of up to UPLOAD_BATCH_SIZE photos AND under the request budget.
+    const batches: File[][] = [];
+    let current: File[] = [];
+    let currentBytes = 0;
+    for (const file of prepared) {
+      if (
+        current.length &&
+        (current.length >= UPLOAD_BATCH_SIZE ||
+          currentBytes + file.size > REQUEST_MAX_BYTES)
+      ) {
+        batches.push(current);
+        current = [];
+        currentBytes = 0;
+      }
+      current.push(file);
+      currentBytes += file.size;
+    }
+    if (current.length) batches.push(current);
+    const results: (string[] | null)[] = new Array(batches.length).fill(null);
     let uploaded = 0;
     let appended = photos;
     let flushed = 0; // batches appended so far, in selection order
@@ -444,6 +501,7 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
     updateFormData({ photos: photos.map((photo) => photo.url) });
   }, [photos, updateFormData]);
   const handleButtonClick = () => {
+    if (uploading) return; // the spinner shows; one upload at a time
     if (propertyIsActive) {
       setWarningDialogOpen(true);
     } else {
