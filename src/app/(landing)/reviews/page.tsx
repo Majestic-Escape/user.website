@@ -108,7 +108,10 @@ export default function Component() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    // Top padding clears the fixed site header (~60px on phones, 77px from md),
+    // matching the offset other landing pages use; p-6 alone hid the title
+    // and the "Write a review" button underneath it.
+    <div className="px-6 pb-6 pt-20 md:pt-28 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">My Reviews</h1>
@@ -119,8 +122,8 @@ export default function Component() {
         </Button>
       </div>
 
-      <div className="flex gap-4 mb-6 mt-16">
-        <div className="relative flex-1 bg-[#EBEBEB] rounded-full p-2">
+      <div className="flex flex-wrap gap-4 mb-6 mt-16">
+        <div className="relative flex-1 min-w-[12rem] bg-[#EBEBEB] rounded-full p-2">
           <Input
             placeholder="Search Reviews"
             value={searchQuery}
@@ -202,7 +205,10 @@ export default function Component() {
       </div>
 
       <Tabs value={currentTab} onValueChange={setCurrentTab}>
-        <TabsList className="mb-6 gap-12 rounded-full bg-white">
+        {/* Scrolls inside its pill on phones (tabs never shrink); 48px gaps only
+            from md. The fixed gap-12 row was wider than a phone and Pending /
+            Followup were cut off with no way to reach them. */}
+        <TabsList className="mb-6 flex w-fit max-w-full justify-start overflow-x-auto gap-4 md:gap-12 rounded-full bg-white [&>*]:shrink-0">
           <TabsTrigger value="all">
             All Reviews <span className="ml-2 text-muted-foreground">({counts.all})</span>
           </TabsTrigger>
@@ -223,8 +229,8 @@ export default function Component() {
               {filteredAndSortedReviews.map((review) => (
                 <Card key={review.id}>
                   <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1 min-w-0">
                         <div className="mb-1">
                           <span className="inline-block px-2 py-1 text-xs rounded-full bg-muted mb-2">
                             {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
@@ -248,7 +254,7 @@ export default function Component() {
                           ))}
                         </div>
                         <p className="text-sm">{review.review}</p>
-                        <div className="flex gap-6 mt-4">
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4">
                           <Button variant="ghost" size="sm">
                             👍 Helpful ({review.helpful})
                           </Button>
@@ -262,7 +268,7 @@ export default function Component() {
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex shrink-0 gap-2">
                         <Button variant="ghost" size="icon">
                           <Edit2 className="h-4 w-4" />
                         </Button>

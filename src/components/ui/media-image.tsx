@@ -34,12 +34,22 @@ import {
 // fires when the master fails too.
 export type MediaImageProps = ImageProps;
 
+// Shown when a photo cannot be loaded at all (variant and master both failed,
+// or a non-CDN URL 404s): a neutral grey "photo unavailable" tile instead of
+// the browser's broken-image glyph + alt text. Callers that pass their own
+// onError keep full control.
+export const PHOTO_PLACEHOLDER = "/images/photo-placeholder.svg";
+
 export const MediaImage = forwardRef<HTMLImageElement, MediaImageProps>(
   function MediaImage({ src, onError, unoptimized, ...props }, ref) {
     const [failedSrc, setFailedSrc] = useState<string | null>(null);
+    const [deadSrc, setDeadSrc] = useState<string | null>(null);
     const url = typeof src === "string" ? src : null;
     const fallback = url !== null && failedSrc === url;
     const cdn = VARIANTS_ENABLED && !fallback && url !== null && isSpacesUrl(url);
+    if (url !== null && deadSrc === url) {
+      return <Image ref={ref} {...props} alt={props.alt} src={PHOTO_PLACEHOLDER} unoptimized />;
+    }
     return (
       <Image
         ref={ref}
@@ -53,6 +63,7 @@ export const MediaImage = forwardRef<HTMLImageElement, MediaImageProps>(
             return;
           }
           if (onError) onError(e);
+          else if (url !== null) setDeadSrc(url);
         }}
       />
     );
@@ -75,7 +86,12 @@ export function MediaImg({
   ...props
 }: MediaImgProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const [deadSrc, setDeadSrc] = useState<string | null>(null);
   const cdn = VARIANTS_ENABLED && !!src && failedSrc !== src && isSpacesUrl(src);
+  if (src && deadSrc === src) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img {...props} alt={props.alt ?? ""} src={PHOTO_PLACEHOLDER} srcSet={undefined} />;
+  }
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -88,6 +104,7 @@ export function MediaImg({
           return;
         }
         if (onError) onError(e);
+        else if (src) setDeadSrc(src);
       }}
     />
   );

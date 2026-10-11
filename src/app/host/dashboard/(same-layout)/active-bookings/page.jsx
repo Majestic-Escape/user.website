@@ -338,7 +338,7 @@ export default function ReservationsPage() {
           </Label>
           <Input
             id="search"
-            className="bg-white"
+            className="bg-white text-ellipsis"
             placeholder="Search by guest name or property..."
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}

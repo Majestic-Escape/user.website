@@ -195,7 +195,7 @@ export default function PartnerPage() {
                     "Unique or prime locations",
                   ].map((item, index) => (
                     <li key={index} className="flex items-center gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
                       <span>{item}</span>
                     </li>
                   ))}
@@ -216,7 +216,7 @@ export default function PartnerPage() {
                     "Commitment to guest satisfaction",
                   ].map((item, index) => (
                     <li key={index} className="flex items-center gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
                       <span>{item}</span>
                     </li>
                   ))}
@@ -260,7 +260,7 @@ export default function PartnerPage() {
                       // },
                     ].map((item, index) => (
                       <div key={index} className="flex items-start gap-4">
-                        <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                        <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600 mt-0.5" />
                         <div>
                           <h4 className="font-semibold mb-1">{item.title}</h4>
                           <p className="text-gray-600">{item.description}</p>
@@ -293,7 +293,7 @@ export default function PartnerPage() {
                       },
                     ].map((item, index) => (
                       <div key={index} className="flex items-start gap-4">
-                        <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                        <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600 mt-0.5" />
                         <div>
                           <h4 className="font-semibold mb-1">{item.title}</h4>
                           <p className="text-gray-600">{item.description}</p>

@@ -89,14 +89,16 @@ export default function InvoicesPage() {
           <CardTitle>Automated Booking Invoices</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Filters wrap and go full-width on phones; three fixed-width controls
+              (300 + 200 + 300px) used to push the date range off-screen. */}
           <div className="flex justify-between items-center mb-4">
-            <div className="flex space-x-2">
+            <div className="flex w-full flex-wrap gap-2">
               <Input
                 placeholder="Search invoices..."
-                className="w-[300px]"
+                className="w-full sm:w-[300px]"
               />
               <Select value={selectedProperty} onValueChange={setSelectedProperty}>
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue placeholder="Filter by property" />
                 </SelectTrigger>
                 <SelectContent>
@@ -112,7 +114,7 @@ export default function InvoicesPage() {
                     id="date"
                     variant={"outline"}
                     className={cn(
-                      "w-[300px] justify-start text-left font-normal",
+                      "w-full sm:w-[300px] justify-start text-left font-normal",
                       !date && "text-muted-foreground"
                     )}
                   >

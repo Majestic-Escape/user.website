@@ -133,6 +133,7 @@ export default function MaharashtraRules() {
                       etc.). You may be required to comply and obtain certain
                       registrations under the: <br />
                       <br />
+                      <ul className="list-disc pl-5">
                       <li>
                         {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
                         {/* <a
@@ -172,6 +173,7 @@ export default function MaharashtraRules() {
                         Beach Shack Policy
                         {/* </a> */} – Beach shacks, deck-beds, giant umbrellas.
                       </li>{" "}
+                      </ul>
                       <br />
                       <span className="flex">
                         <p>

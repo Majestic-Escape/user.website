@@ -76,6 +76,7 @@ export default function PropertyDescription({ description, property }) {
         </button>
       </div>
 
+      {matchedAmenities.length > 0 && (
       <div className="border-b pb-6 mb-6">
         <h2 className="text-xl font-medium mb-6">Who else might be there</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -105,7 +106,9 @@ export default function PropertyDescription({ description, property }) {
           </svg>
         </button>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      )}
+      {/* <390px the two columns were ~123px wide, one or two words per line */}
+      <div className="grid grid-cols-1 gap-x-4 [@media(min-width:390px)]:grid-cols-2">
         <div className="border-b pb-6 mb-6">
           <h2 className="text-xl font-medium mb-6">Cancellation Policy</h2>
           <div className="text-gray-800 mb-4">

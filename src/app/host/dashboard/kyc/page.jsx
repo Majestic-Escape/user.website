@@ -315,7 +315,8 @@ export default function KYC() {
   return (
     <div className="flex flex-col relative min-h-screen">
       <header className="bg-white w-screen z-50 top-0 fixed right-0 left-0 border-b border-b-gray-200 p-4">
-        <div className="container max-w-7xl mx-auto px-4 flex justify-between items-center">
+        {/* No inner px below 360: header p-4 + px-4 made "Back to Dashboard" wrap into "Save & Exit". */}
+        <div className="container max-w-7xl mx-auto [@media(min-width:360px)]:px-4 flex justify-between items-center">
           <Link
             className="px-6 py-2 border rounded-3xl border-black font-medium text-sm bg-gray-100 hover:bg-gray-200 transition-colors text-absoluteDark"
             href={"/host/dashboard"}
@@ -345,7 +346,8 @@ export default function KYC() {
       </main>
 
       <footer className="bg-white w-screen z-10 bottom-0 fixed right-0 left-0 border-t-4 border-t-gray-200 p-4">
-        <div className="container max-w-7xl mx-auto px-4 flex justify-between items-center">
+        {/* No inner px below 360: footer p-4 + px-4 left "Back" 1px from the w-48 "Next". */}
+        <div className="container max-w-7xl mx-auto [@media(min-width:360px)]:px-4 flex justify-between items-center">
           <Button
             className="py-5 px-6 bg-gray-100 border-absoluteDark border text-absoluteDark font-normal rounded-3xl"
             onClick={handlePrevious}

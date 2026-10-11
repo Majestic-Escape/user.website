@@ -181,7 +181,7 @@ export function BankAccountForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 ">
       {/* Account Number */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <div className="pb-6 lg:pb-0">
             <Label htmlFor="accountNumber">Account Number</Label>
@@ -233,7 +233,7 @@ export function BankAccountForm() {
       </div>
 
       {/* Holder and Bank Name */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="accountHolderName">Account Holder Name</Label>
           <Input

@@ -18,14 +18,16 @@ export default function DashboardLayout({ children }) {
         <div className="hidden md:contents">
           <AppSidebar />
         </div>
-        <SidebarInset>
+        {/* min-w-0: the inset is a flex child of the sidebar row; without it the
+            column grew to its widest content (toolbars, tables) and the page
+            ran past the viewport at 768–1100. */}
+        <SidebarInset className="min-w-0">
           <HostTopBar />
 
           {/* phones: the fixed host tab bar (4.5rem + home indicator) must not
               cover the end of the page, so the bottom padding clears it */}
           <main
-            className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min p-8 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-8"
-            style={{ maxWidth: "100vw" }}
+            className="min-h-[100vh] min-w-0 max-w-full flex-1 rounded-xl bg-muted/50 md:min-h-min p-8 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-8"
           >
             {children}
           </main>

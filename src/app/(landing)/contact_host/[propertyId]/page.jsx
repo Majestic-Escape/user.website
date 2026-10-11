@@ -662,7 +662,7 @@ export default function ContactHostPage() {
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5">
           {/* Host Info Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between gap-3 mb-6">
             <div className="flex-1">
               <h1 className="text-xl font-semibold font-bricolage mb-1">Contact {hostName}</h1>
               <p className="text-gray-500 text-sm flex items-center gap-1.5">
@@ -761,7 +761,10 @@ export default function ContactHostPage() {
 
   // Desktop Layout
   return (
-    <div className="min-h-[calc(100vh-76px)] bg-gray-50 font-poppins">
+    // Desktop layout (>=1024): pt-[77px] places it below the fixed 77px site
+    // header; it started at the top of the page, hiding the back button and the
+    // top of both cards under the header.
+    <div className="min-h-[calc(100vh-76px)] bg-gray-50 font-poppins pt-[77px]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         {/* Back button */}
         <button 

@@ -113,7 +113,9 @@ export default function Component() {
   }, [activeTab]);
 
   return (
-    <div className="min-h-screen bg-background">
+    // pt-16 / md:pt-20 clear the fixed site header; the page header and the
+    // first content row used to start underneath it at every width.
+    <div className="min-h-screen bg-background pt-16 md:pt-20">
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b">
         <nav className="text-sm text-muted-foreground">
@@ -143,8 +145,9 @@ export default function Component() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex">
+      {/* Main Content: sidebar stacks above the content on phones (a w-full
+          sidebar beside flex-1 content overflowed the page at 320–430). */}
+      <div className="flex flex-col sm:flex-row">
         {/* Sidebar */}
         <aside className={`w-full sm:w-64 p-6 sm:block`}>
           <nav className="space-y-4 font-[18px]">
