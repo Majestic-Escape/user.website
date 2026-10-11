@@ -17,10 +17,14 @@ export default function Component() {
             into effortless success
           </p>
         </div>
-        <div className="grid gap-6 md:gap-8 md:grid-cols-3">
+        {/* 2 columns at md, 3 from lg: at 768–1023 a third of the row (~230px)
+            was narrower than the card illustrations (up to 256px). */}
+        <div className="grid gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-xl border bg-white border-[#bdbdbd]  p-6 shadow-sm relative">
             <div className="space-y-2 mb-6">
-              <h3 className="font-bricolage text-center text-xl font-bold">
+              {/* relative z-10: painted above the decorative corner circle, which
+                  covered the end of the heading on narrow cards. */}
+              <h3 className="relative z-10 font-bricolage text-center text-xl font-bold">
                 <span className=" text-green-500">Zero</span> Commission,
                 <br />
                 for 90 days.

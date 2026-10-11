@@ -160,7 +160,11 @@ export default function Component() {
         </div>
 
         <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
-          <TabsList className="flex gap-3 bg-transparent p-0 h-auto overflow-x-auto">
+          {/* justify-start + auto margins on the end chips: centred while the
+              row fits, start-aligned (fully scrollable) once it overflows.
+              justify-center alone pushed "All Offers" past the left edge on
+              phones, where a scroll container can never reach it. */}
+          <TabsList className="flex justify-start gap-3 bg-transparent p-0 h-auto overflow-x-auto [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto">
             {['all', 'credit', 'wallet', 'seasonal'].map((tab) => (
               <TabsTrigger
                 key={tab}

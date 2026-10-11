@@ -256,10 +256,23 @@ body {
   }
 }
 
-/* Ensure input doesn't zoom on iOS */
+/* Phones: the fixed bottom tab bar (4.5rem + home indicator) must never hide
+   the element that has keyboard focus (WCAG 2.4.11); scroll-padding makes the
+   browser scroll focused/anchored elements clear of it. Same idea as the admin
+   site's scroll-padding-bottom below 768px. */
 @media (max-width: 767px) {
-  input[type="text"],
-  input[type="search"],
+  html {
+    scroll-padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Ensure input doesn't zoom on iOS: Safari zooms into any focused field whose
+   text is under 16px. Covers every typed field (email, tel, date, number,
+   password, untyped inputs…) plus select/textarea; the viewport no longer
+   locks zoom, so this rule is what keeps focus from zooming. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]),
+  select,
   textarea {
     font-size: 16px !important;
   }
@@ -440,4 +453,20 @@ html[data-me-overlay] majestic-chat-widget {
   .me-range:active::-webkit-slider-thumb {
     transform: none;
   }
+}
+
+/* Horizontal scroll cue for tables wider than their card (shadcn Table wrapper).
+   Pure-CSS scroll shadows: the "local" gradients travel with the content and
+   cover the "scroll" shadows at each end, so a soft edge shadow shows only on
+   the side that has more columns. Touch browsers hide scrollbars, so without
+   this nothing told users the Status / Actions columns were off to the right. */
+.table-scroll-cue {
+  background:
+    linear-gradient(to right, hsl(var(--card)) 30%, hsl(var(--card) / 0)) left center,
+    linear-gradient(to left, hsl(var(--card)) 30%, hsl(var(--card) / 0)) right center,
+    radial-gradient(farthest-side at 0 50%, rgb(0 0 0 / 0.18), rgb(0 0 0 / 0)) left center,
+    radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 0.18), rgb(0 0 0 / 0)) right center;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
 }

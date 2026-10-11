@@ -57,6 +57,7 @@ export default function LocalRules() {
                         category are broadly defined below:
                         <br />
                         <br />
+                        <ul className="list-disc pl-5">
                         <li>
                           <span className="font-semibold">
                             Other accommodation
@@ -89,6 +90,7 @@ export default function LocalRules() {
                           establishment should have a minimum of one lettable
                           room and a maximum of six lettable rooms (12 beds).
                         </li>{" "}
+                        </ul>
                         <br />
                         For the Hosts operating listings that fall under
                         Category “D” under the Goa Rules as set out above, the
@@ -99,6 +101,7 @@ export default function LocalRules() {
                         Registration
                       </span>
                       <br />
+                      <ul className="list-disc pl-5">
                       <li>
                         {/* <span className="font-semibold">Bed and breakfast</span>{" "} */}
                         If you operate listings that fall under Category “D” and
@@ -132,6 +135,7 @@ export default function LocalRules() {
                         should meet the requirements put in place by the Goa
                         Department of Tourism under the Goa Rules.
                       </li>{" "}
+                      </ul>
                       <br />
                       <span className="flex">
                         <p>
@@ -157,6 +161,7 @@ export default function LocalRules() {
                         Displaying your registration certificate number
                       </span>
                       <br />
+                      <ul className="list-disc pl-5">
                       <li>
                         You are required to display the registration certificate
                         number in your listing. To make it easier for Hosts to
@@ -172,6 +177,7 @@ export default function LocalRules() {
                         your non-compliance with the aforesaid registration
                         rules.
                       </li>{" "}
+                      </ul>
                       <br />
                       <p>
                         Here are more specific instructions on registering with
@@ -179,6 +185,7 @@ export default function LocalRules() {
                         registration certificate number on Majestic Escape.
                       </p>
                       <br />
+                      <ul className="list-disc pl-5">
                       <li>
                         {" "}
                         Use your email address and mobile number to register for
@@ -224,6 +231,7 @@ export default function LocalRules() {
                         Once you obtain the acknowledgment number, please update
                         your registration status by visiting your listing’s
                       </li>
+                      </ul>
                       <br />
                       <br />
                       <p>
@@ -244,6 +252,7 @@ export default function LocalRules() {
                         Mandatory reporting of tourist data
                       </span>
                       <br />
+                      <ul className="list-disc pl-5">
                       <li>
                         {" "}
                         As per the Goa Rules, it is mandatory for every person
@@ -303,6 +312,7 @@ export default function LocalRules() {
                         unless the aforesaid statistics are submitted and fines
                         for any defaulting periods are paid.
                       </li>
+                      </ul>
                       <br />
                     </dd>
                   </div>

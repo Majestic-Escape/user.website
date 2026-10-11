@@ -89,7 +89,9 @@ export default function CompanyDetails() {
               <h2 className="text-2xl font-semibold mb-4">Our Services</h2>
 
               <Tabs defaultValue="accommodations" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6 [&>button]:whitespace-normal [&>button]:leading-tight">
+                {/* Below 390 the three equal columns were narrower than 'Accommodations'
+                    (119px label in a 94px tab), so the tabs scroll inside the pill there. */}
+                <TabsList className="grid w-full grid-cols-3 mb-6 [&>button]:whitespace-normal [&>button]:leading-tight [@media(max-width:389px)]:flex [@media(max-width:389px)]:justify-start [@media(max-width:389px)]:overflow-x-auto [@media(max-width:389px)]:[&>button]:shrink-0 [@media(max-width:389px)]:[&>button]:whitespace-nowrap">
                   <TabsTrigger value="accommodations">
                     Accommodations
                   </TabsTrigger>

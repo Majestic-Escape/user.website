@@ -81,7 +81,7 @@ export default function CategoryNav({ variant, compact = false }: { variant: "de
 
   return (
     <nav aria-label="Categories" className="w-screen bg-white md:w-full">
-      <ul className="grid w-full grid-cols-3 items-center justify-center rounded-lg bg-muted p-1 font-bricolage text-muted-foreground md:w-[560px] desktop:w-full">
+      <ul className="grid w-full grid-cols-3 items-center justify-center rounded-lg bg-muted p-1 font-bricolage text-muted-foreground md:w-full md:max-w-[560px]">
         {CATEGORIES.map((c) => {
           const on = isOn(pathname, c.href);
           return (

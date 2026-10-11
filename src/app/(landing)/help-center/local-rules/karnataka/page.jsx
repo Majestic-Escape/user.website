@@ -72,8 +72,8 @@ export default function KarnatakaRules() {
                           <strong>Maintain Books and Registers</strong>. While
                           operating your homestay in Karnataka, you should
                           maintain the following books and registers:
-                          <br />
-                        </li>
+                          {/* sub-items belong in a nested list, not as siblings of their parent item */}
+                          <ul className="list-disc pl-5">
                         <li>A complaint/suggestion book;</li>
                         <li>
                           A registration book to record complete details of
@@ -84,6 +84,8 @@ export default function KarnatakaRules() {
                         </li>
                         <li>
                           A serially numbered payment/advance receipt book.
+                        </li>
+                          </ul>
                         </li>
                       </ul>
                     </dd>

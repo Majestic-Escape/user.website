@@ -16,7 +16,9 @@ export default function Experience() {
 
   return (
 
-    <div className="max-w-7xl mx-auto pt-4 ">
+    // pt-16 / md:pt-24 clear the fixed site header (~46px phones, 77px md+);
+    // pt-4 left the top of the gallery underneath it at every width.
+    <div className="max-w-7xl mx-auto pt-16 md:pt-24">
       <div className="p-4 space-y-4">
         {/* Image Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -104,7 +106,10 @@ export default function Experience() {
               <div className="md:col-span-1 space-y-6">
                 <Price data={priceData} />
                 <div className="relative">
-                <div className="absolute right-0 sm:w-[155%] sm:pt-[230px] pt-[950px]">
+                {/* Original block, except that it is 100% wide until md: below md the
+                    grid is a single column, so 155% of it ran past the page at
+                    640–767. md+ (155% of the narrow right column) is unchanged. */}
+                <div className="absolute right-0 sm:w-full md:w-[155%] sm:pt-[230px] pt-[950px]">
                   <Review />
                 </div>
                 </div>

@@ -300,7 +300,7 @@ export default function Ratings() {
                 </div>
                 <div className="py-4 sm:py-5 sm:grid sm:gap-4 sm:px-6">
                   <textarea
-                    className={`px-4 py-4 border h-40 ${contactRefusal ? "border-red-500" : "border-gray"}`}
+                    className={`w-full px-4 py-4 border h-40 ${contactRefusal ? "border-red-500" : "border-gray"}`}
                     type="text"
                     placeholder="Write your review ....."
                     aria-invalid={contactRefusal ? true : undefined}

@@ -9,7 +9,7 @@ export default function NotificationsPage() {
     <div className="min-h-screen bg-background p-4 sm:p-6 py-20 md:py-24">
       <Card className="w-full max-w-5xl mx-auto border-none shadow-none">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle className="text-2xl font-bricolage text-absoluteDark font-semibold">Notifications</CardTitle>
             <Button variant="outline" size="sm">
               Mark all as read
