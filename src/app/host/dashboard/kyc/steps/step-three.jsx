@@ -22,6 +22,7 @@ import { Icons } from "@/components/ui/icons";
 import axios from "axios";
 import { toast } from "sonner";
 import { authHeaders } from "@/lib/session";
+import { useRetryCountdown, formatRetry } from "@/hooks/useRetryCountdown";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const updateHostFormDocVerificationStatus = async (gstInfo) => {
@@ -57,6 +58,8 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
   );
   const [showDialog, setShowDialog] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  // Disables the button until the server allows the next attempt.
+  const { secondsLeft, start: startRetryCountdown } = useRetryCountdown();
 
   useEffect(() => {
     const hasChanges =
@@ -73,6 +76,7 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
   };
 
   const handleVerify = async () => {
+    let verified = false;
     try {
       setIsVerifying(true);
       if (gstInfo.panNumber == gstInfo.rePanNumber) {
@@ -113,6 +117,7 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
             console.log("gst reached2");
           }
           if (response.status == 200) {
+            verified = true; // stays "Verifying..." until the dialog opens
             setTimeout(() => {
               setGstInfo((prev) => ({
                 ...prev,
@@ -137,14 +142,17 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
       }
     } catch (error) {
       const data = error?.response?.data;
-      const backendMsg =
-        error?.response?.status === 429 && data?.retryAfterSeconds
-          ? `Too many verification attempts. Please try again in ${data.retryAfterSeconds} seconds.`
-          : data?.message;
-
-      toast.error(backendMsg || "Server error. Please try again.");
+      // The server's message names the real reason (in progress / cooldown /
+      // daily limit); retryAfterSeconds drives the button's countdown.
+      startRetryCountdown(data?.retryAfterSeconds);
+      toast.error(
+        data?.message ||
+          (error?.response
+            ? "Server error. Please try again."
+            : "We couldn't reach the server. Please check your connection and try again.")
+      );
     } finally {
-      setIsVerifying(false);
+      if (!verified) setIsVerifying(false);
     }
   };
   const handleCopyPaste = (e) => {
@@ -226,6 +234,7 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
               !gstInfo.rePanNumber ||
               !gstInfo.gstNumber ||
               isVerifying ||
+              secondsLeft > 0 ||
               gstInfo.isVerified
             }
             className="w-full"
@@ -235,6 +244,8 @@ export function GSTVerification({ updateFormData, formData, goNext }) {
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                 Verifying...
               </>
+            ) : secondsLeft > 0 ? (
+              `Try again in ${formatRetry(secondsLeft)}`
             ) : (
               "Verify your GST"
             )}
