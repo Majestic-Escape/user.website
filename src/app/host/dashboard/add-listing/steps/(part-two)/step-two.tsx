@@ -442,10 +442,27 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
   //   updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
   // };
   const removePhoto = async (id: string, url: string) => {
-    await axios.delete(`${API_URL}/uploads/delete`, {
-      data: { url },
-      headers: authHeaders(),
-    });
+    try {
+      await axios.delete(`${API_URL}/uploads/delete`, {
+        data: { url },
+        headers: authHeaders(),
+      });
+    } catch (error) {
+      // 400/403/404/409: the file is not one this host can delete (not our
+      // bucket, not theirs, already gone, or still used by another listing or
+      // profile) — it stays in storage, but the photo can still leave THIS
+      // listing (it used to be impossible to remove). Anything else (network,
+      // server error, expired session): keep it and say so.
+      const status = (error as { response?: { status?: number } })?.response
+        ?.status;
+      if (![400, 403, 404, 409].includes(status as number)) {
+        console.error("Photo delete failed:", error);
+        toast.error(
+          "Couldn't remove the photo. Please check your connection and try again.",
+        );
+        return;
+      }
+    }
 
     const updatedPhotos = photos.filter((photo) => photo.id !== id);
     setPhotos(updatedPhotos);
