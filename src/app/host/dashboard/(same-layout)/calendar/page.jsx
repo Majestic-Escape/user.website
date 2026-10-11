@@ -13,8 +13,7 @@ import {
 } from "date-fns";
 
 import axios from "axios";
-import { readStoredToken } from "@/lib/session";
-import { ChevronLeft, ChevronRight, Upload, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,18 +33,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams } from "next/navigation";
 import ConfirmCancelDialog from "@/components/dialog-modal";
 import moment from "moment-timezone";
+import CalendarSyncPanel from "./components/calendar-sync/CalendarSyncPanel";
+import ExplainDialog from "./components/calendar-sync/ExplainDialog";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const FullCalendarPage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -57,8 +51,7 @@ const FullCalendarPage = () => {
   });
 
   const [blockReason, setBlockReason] = useState("");
-  const [syncPlatform, setSyncPlatform] = useState("");
-  const [iCalUrl, setICalUrl] = useState("");
+  const [explainDate, setExplainDate] = useState(null);
   const [offers, setOffers] = useState([]);
   const [hostBlock, setHostBlock] = useState([]);
   const [pricing, setPricing] = useState({});
@@ -66,7 +59,6 @@ const FullCalendarPage = () => {
   const [blockedDates, setBlockedDates] = useState([]);
   const [unavailableDates, setUnavailableDates] = useState([]);
   const [allowBlock, setAllowBlock] = useState(true);
-  const [exportUrl, setExportUrl] = useState("");
   const [tab, setTab] = useState("block");
   const arr = [];
   const handlePrevMonth = () => {
@@ -85,9 +77,6 @@ const FullCalendarPage = () => {
   const toIST = (date) => {
     return moment(date).tz("Asia/Kolkata").startOf("day");
   };
-  useEffect(() => {
-    setSyncPlatform("ical");
-  }, []);
   const todayIST = () => {
     return moment().tz("Asia/Kolkata").startOf("day");
   };
@@ -115,38 +104,9 @@ const FullCalendarPage = () => {
   useEffect(() => {
     fetchDates();
   }, [propertyId]);
-  const createSecret = async () => {
-    try {
-      const kind = "export";
-      const res = await axios.post(
-        `${API_URL}/calendarSync/saveCalendar`,
-        { propertyId, kind },
-        { headers: { Authorization: `Bearer ${readStoredToken()}` } },
-      );
-
-      // ✅ Axios automatically throws on error, so no need for res.ok
-      const final = res.data;
-      if (process.env.NEXT_PUBLIC_ENV === "dev") {
-        console.log("sss", final);
-      }
-
-      if (final.success) {
-        setExportUrl(final.url);
-      } else {
-        console.error("API error:", final.message);
-      }
-    } catch (error) {
-      console.error("Request failed:", error.response?.data || error.message);
-    }
-  };
-
-  useEffect(() => {
-    let didRun = false;
-    if (propertyId && !didRun) {
-      didRun = true;
-      createSecret();
-    }
-  }, [propertyId]);
+  // Calendar sync lives in <CalendarSyncPanel/> (SyncGuard). The page no
+  // longer creates an export link on every visit (that minted duplicate
+  // feed secrets — defect D7).
   const saveBlockedDates = async (
     propertyId,
 
@@ -244,7 +204,8 @@ const FullCalendarPage = () => {
     const clickedDateString = clickedIST.format("YYYY-MM-DD");
 
     if (unavailableDates.includes(clickedDateString)) {
-      toast.error("Date already reserved.");
+      // Explain what blocks it (Majestic booking, Airbnb, a hold, …).
+      setExplainDate(clickedDateString);
       return;
     }
 
@@ -293,55 +254,6 @@ const FullCalendarPage = () => {
       setReservedDates([...reservedDates, dateRange.from]);
     }
     setIsDialogOpen(false);
-  };
-
-  const syncWithUrl = async (kind) => {
-    const url = iCalUrl;
-
-    try {
-      const res = await axios.post(
-        `${API_URL}/calendarSync/saveCalendar`,
-        { propertyId, url, kind },
-        { headers: { Authorization: `Bearer ${readStoredToken()}` } },
-      );
-      if (!res.data.success) {
-        toast.error(
-          res.data.message ||
-            "Calendar sync has started. Please wait a few minutes and refresh the page."
-        );
-        return;
-      }
-
-      toast.success(
-        res.data.message ||
-          "Calendar sync has started. Please wait a few minutes and refresh the page."
-      );
-    } catch (error) {
-      console.error(error);
-      if (error.code === "ECONNABORTED" || error.message === "Network Error") {
-        toast.error("Calendar sync failed due to network issue.");
-        return;
-      }
-
-      // OTHER FAILURES
-      toast.error("Failed to sync calendar, try again.");
-    }
-  };
-
-  const handleSyncCalendar = (kind) => {
-    // if (syncPlatform === "google") {
-    // process.env.ENV === 'dev' && if (process.env.NEXT_PUBLIC_ENV === "dev") {
-
-    // // Implement Google Calendar sync logic here
-    // } else
-    if (syncPlatform === "ical") {
-      syncWithUrl(kind);
-
-      if (process.env.NEXT_PUBLIC_ENV === "dev") {
-        console.log("Syncing with iCal URL:", iCalUrl);
-      }
-      // Implement iCal sync logic here
-    }
   };
 
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
@@ -561,77 +473,8 @@ const FullCalendarPage = () => {
         </CardFooter>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Calendar Sync</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="import">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="import">Import Calendar</TabsTrigger>
-              <TabsTrigger value="export">Export Calendar</TabsTrigger>
-            </TabsList>
-            <TabsContent value="import">
-              <div className="space-y-4">
-                <Select value={syncPlatform} onValueChange={setSyncPlatform}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select platform to sync from" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {/* <SelectItem value="google">Google Calendar</SelectItem> */}
-                    <SelectItem value="ical">iCal URL</SelectItem>
-                  </SelectContent>
-                </Select>
-                {syncPlatform === "ical" && (
-                  <Input
-                    placeholder="Enter iCal URL"
-                    value={iCalUrl}
-                    onChange={(e) => setICalUrl(e.target.value)}
-                  />
-                )}
-                <Button
-                  className="bg-primaryGreen hover:bg-brightGreen"
-                  onClick={() => handleSyncCalendar("import")}
-                  disabled={
-                    !syncPlatform || (syncPlatform === "ical" && !iCalUrl)
-                  }
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Import Calendar
-                </Button>
-              </div>
-            </TabsContent>
-            <TabsContent value="export">
-              <div className="space-y-4">
-                <p>Export your calendar to use on other platforms:</p>
-                <Button
-                  onClick={() => {
-                    if (!exportUrl) {
-                      toast.error("No export link available");
-                      return;
-                    }
-                    window.open(exportUrl, "_blank"); // open in new tab / downloads
-                  }}
-                  className="bg-primaryGreen hover:bg-brightGreen"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download iCal
-                </Button>
-                {exportUrl && (
-                  <div className="text-sm mt-2">
-                    <p className="font-medium">
-                      Copy this link into Airbnb/Google Calendar:
-                    </p>
-                    <code className="block p-2 bg-gray-100 rounded break-all">
-                      {exportUrl}
-                    </code>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+      <CalendarSyncPanel propertyId={propertyId} onAvailabilityChanged={fetchDates} />
+      <ExplainDialog propertyId={propertyId} date={explainDate} onOpenChange={(o) => !o && setExplainDate(null)} />
 
       <Card className="mt-6">
         <CardHeader>
