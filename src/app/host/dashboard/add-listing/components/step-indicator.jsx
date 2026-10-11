@@ -1,6 +1,6 @@
 // The indicator takes the free space between the header buttons and its
 // segments shrink (32px max, 4px min), so long wizards no longer push
-// "Help" / "Save & Exit" past the right edge at tablet widths.
+// "Save & Exit" past the right edge at tablet widths.
 export function StepIndicator({ currentStep, totalSteps }) {
   return (
     <div className="hidden md:flex flex-1 min-w-0 mx-4 items-center justify-center gap-1">

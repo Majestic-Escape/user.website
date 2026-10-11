@@ -20,7 +20,6 @@ const LABELS = {
   "booking-details": "Booking details",
   "active-bookings": "Active bookings",
   "review-guest": "Review guest",
-  "sync-calendar": "Sync calendar",
   "current-stays": "Current stays",
   kyc: "KYC",
 };

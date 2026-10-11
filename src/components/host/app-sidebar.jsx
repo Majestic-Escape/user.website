@@ -115,6 +115,8 @@ const data = {
     {
       title: "Bookings",
       url: "/host/dashboard/bookings",
+      // Same sub-pages as the phone tab bar, so they light "Bookings" too.
+      also: ["/host/dashboard/active-bookings", "/host/dashboard/booking-details"],
       icon: CheckCheck,
       items: [],
     },

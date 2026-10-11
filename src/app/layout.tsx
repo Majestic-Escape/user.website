@@ -3,6 +3,7 @@ import { bricolage, poppins } from "./fonts";
 import Analytics from "@/components/analytics/google-analytics";
 import { ReactNode } from "react";
 import { Providers } from "@/components/providers";
+import { ChromeAutoHide } from "@/components/chrome-auto-hide";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UnreadCountProvider } from "@/contexts/UnreadCountContext";
 import { Toaster } from "sonner";
@@ -128,6 +129,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             </UnreadCountProvider>
           </AuthProvider>
         </Providers>
+        <ChromeAutoHide />
         <Toaster position="top-center" closeButton richColors />
         {EXPLICIT_WIDGET_URL ? (
           <Script src={EXPLICIT_WIDGET_URL} strategy="lazyOnload" />

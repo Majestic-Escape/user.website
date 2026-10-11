@@ -6,13 +6,6 @@ import confetti from "canvas-confetti";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
 import { MembershipPopup } from "../../add-listing/membership-popup";
 // import {
 //   Dialog,
@@ -320,7 +313,7 @@ export default function EditListing({ params }) {
   console.log("prop stat", propertyIsActive);
   return (
     <div className="flex flex-col relative h-full">
-      <header className="bg-white w-screen z-50 top-0 fixed right-0 left-0 border-b border-b-gray-200 p-4">
+      <header data-chrome-bar="top" className="bg-white w-screen z-50 top-0 fixed right-0 left-0 border-b border-b-gray-200 p-4">
         <div className="container max-w-7xl mx-auto px-4 flex justify-between items-center">
           <img className="h-7 w-auto" src="/images/logo.png" alt="Logo" />
           <EditStepIndicator
@@ -329,33 +322,6 @@ export default function EditListing({ params }) {
             onStepClick={handleStepClick}
           />
           <div className="gap-x-4 flex">
-            <Drawer direction="right">
-              <DrawerTrigger className="bg-gray-100 hover:bg-gray-200 text-sm text-absoluteDark border-absoluteDark border py-2 px-4 rounded-3xl">
-                Help
-              </DrawerTrigger>
-              <DrawerContent className="h-full w-screen md:w-[400px] right-0 left-auto rounded-none">
-                <DrawerClose className="absolute top-4 left-4 transition-colors rounded-full">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="size-6 m-auto text-absoluteDark"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18 18 6M6 6l12 12"
-                    />
-                  </svg>
-                </DrawerClose>
-                <DrawerTitle className="text-center text-absoluteDark font-medium">
-                  Get Help
-                </DrawerTitle>
-                {/* ... (rest of the drawer content) */}
-              </DrawerContent>
-            </Drawer>
             <Button
               onClick={handleSaveAndExit}
               className="bg-gray-100 hover:bg-gray-200 text-sm text-absoluteDark border-absoluteDark border py-2 px-4 rounded-3xl"
@@ -373,7 +339,7 @@ export default function EditListing({ params }) {
           />
         </div>
       </main>
-      <footer className="bg-white w-screen z-10 bottom-0 fixed right-0 left-0 border-t-4 border-t-gray-200 p-4">
+      <footer data-chrome-bar="bottom" className="bg-white w-screen z-10 bottom-0 fixed right-0 left-0 border-t-4 border-t-gray-200 p-4">
         <div className="container max-w-7xl mx-auto px-4 flex justify-between items-center">
           <Button
             className="py-5 px-6 bg-gray-100 border-absoluteDark border text-absoluteDark font-normal rounded-3xl"

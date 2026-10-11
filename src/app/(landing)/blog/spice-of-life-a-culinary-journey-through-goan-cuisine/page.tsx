@@ -116,7 +116,7 @@ export default function BlogPost() {
                 <Image
                   width={600}
                   height={336}
-                  className="w-full object-cover rounded-xl"
+                  className="mx-auto h-auto w-full max-w-[600px] object-cover rounded-xl"
                   src="/images/blog/4/food-3.jpg"
                   alt="Spices and Ingredients"
                 />

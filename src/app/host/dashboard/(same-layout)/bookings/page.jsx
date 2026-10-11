@@ -609,7 +609,7 @@ export default function ReservationsPage() {
         </div>
         <div className="mt-6 md:mt-0">
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-full md:w-[180px]">
+            <SelectTrigger className="w-full md:w-[max(180px,12rem)] md:max-w-[calc(100vw-2rem)]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>

@@ -14,6 +14,7 @@ export function BottomTabBar({ label, columns, children, className, listClassNam
   return (
     <nav
       aria-label={label}
+      data-chrome-bar="bottom"
       className={cn("fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] font-poppins md:hidden", className)}
     >
       <ul className={cn("mx-auto grid h-16 max-w-lg", listClassName)} style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
