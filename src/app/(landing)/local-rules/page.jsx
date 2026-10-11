@@ -412,42 +412,6 @@ export default function LocalRules() {
                         your local rent board to ask questions about this topic.
                       </span>
                       <br />
-                      <span className="flex text-lg font-semibold">
-                        Contracts
-                      </span>
-                      <br />
-                      {/* <span className="text-md font-semibold">
-                        
-                      </span> */}
-                      <span className="flex">
-                        {" "}
-                        Check your HOA or Co-Op Board regulations to make sure
-                        there is no prohibition against subletting, or any other
-                        restriction against hosting. Read your lease agreement
-                        and check with your landlord if applicable. You may
-                        consider adding a rider to your contract that addresses
-                        the concerns of these parties and outlines the
-                        responsibilities and liabilities of all parties.
-                      </span>
-                      <br />
-                      <span className="flex text-lg font-semibold">
-                        Contracts
-                      </span>
-                      <br />
-                      {/* <span className="text-md font-semibold">
-                        
-                      </span> */}
-                      <span className="flex">
-                        {" "}
-                        Check your HOA or Co-Op Board regulations to make sure
-                        there is no prohibition against subletting, or any other
-                        restriction against hosting. Read your lease agreement
-                        and check with your landlord if applicable. You may
-                        consider adding a rider to your contract that addresses
-                        the concerns of these parties and outlines the
-                        responsibilities and liabilities of all parties.
-                      </span>
-                      <br />
                     </dd>
                   </div>
                   <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">

@@ -4,9 +4,12 @@ import { authHeaders } from "@/lib/session";
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { LoadError } from "@/components/ui/load-error";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { goToLogin } from "@/lib/auth-return";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -118,14 +121,25 @@ export default function AccountInfo() {
   // page paints instantly; the editable form state below is seeded from it.
   const queryClient = useQueryClient();
   const email = auth?.user?.email;
-  const { data: fetchedProfile } = useQuery({
+  const router = useRouter();
+  const {
+    data: fetchedProfile,
+    error: profileError,
+    isError: profileFailed,
+    isFetching: profileFetching,
+    refetch: refetchProfile,
+  } = useQuery({
     queryKey: queryKeys.account(email),
     queryFn: async () => {
       const res = await fetch(`${API_URL}/accounts?email=${encodeURIComponent(email)}`, {
         headers: authHeaders(),
       });
       if (!res.ok) {
-        throw new Error(`Failed to fetch profile (status: ${res.status})`);
+        // `status` lets the query preset skip the retry for a 4xx (a definite
+        // answer) and lets the screen tell "session expired" from "server down".
+        throw Object.assign(new Error(`Failed to fetch profile (status: ${res.status})`), {
+          status: res.status,
+        });
       }
       return res.json();
     },
@@ -402,6 +416,35 @@ export default function AccountInfo() {
   //   profileData?.email,
   //   profileData?.languages
   // );
+  // The profile request failed and nothing is cached: say so (the skeleton
+  // below would pulse forever). 401/403 = the session is gone, so the way out
+  // is logging in again; anything else may be transient, so offer a retry.
+  if (!profileData && profileFailed) {
+    const signedOut = profileError?.status === 401 || profileError?.status === 403;
+    return (
+      <div className="max-w-4xl mx-auto p-4">
+        <Card>
+          <CardContent className="p-6">
+            {signedOut ? (
+              <LoadError
+                title="Your session has expired"
+                message="Log in again to see your profile."
+                retryLabel="Log in"
+                onRetry={() => goToLogin(router)}
+              />
+            ) : (
+              <LoadError
+                title="Couldn't load your profile"
+                message="Check your connection and try again."
+                onRetry={() => refetchProfile()}
+                retrying={profileFetching}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   // Render a skeleton view until profileData is loaded
   if (!profileData) {
     return (

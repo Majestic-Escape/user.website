@@ -27,6 +27,7 @@ import MobileChatContainer from "@/components/mobile-chat-container";
 import MobileChatInput from "@/components/mobile-chat-input";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadError } from "@/components/ui/load-error";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
 import {
@@ -88,6 +89,14 @@ export default function HostInboxPage() {
   const [propertyDetails, setPropertyDetails] = useState(() => getInitialPropertyDetails());
   // Property ids with a request currently in the air — see fetchConversationDetails.
   const inFlightPropertiesRef = useRef(new Set());
+  // Properties whose request FAILED: their rows settle on the row's own
+  // fallbacks instead of a skeleton that never ends, and are retried only when
+  // the host asks (Try again / opening the thread) — never on a timer.
+  const [failedProperties, setFailedProperties] = useState({});
+  // The conversation LIST failed and nothing is cached: say so instead of the
+  // false "No guest inquiries yet".
+  const [listError, setListError] = useState(false);
+  const loadConversationsRef = useRef(null);
   const [showPropertyInfo, setShowPropertyInfo] = useState(true);
   const [isMobileView, setIsMobileView] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -598,9 +607,15 @@ export default function HostInboxPage() {
           headers: { Authorization: `Bearer ${tokenRef.current}` },
         });
         if (response.status === 401) return sessionRejected();
-        if (!response.ok) return;
+        if (!response.ok) {
+          if (conversationsRef.current.length === 0) setListError(true);
+          return;
+        }
         const data = await response.json();
-        if (!data.success) return;
+        if (!data.success) {
+          if (conversationsRef.current.length === 0) setListError(true);
+          return;
+        }
         const list = (data.data || [])
           .filter((conv) => conv.lastMessage)
           .sort((a, b) => {
@@ -608,11 +623,13 @@ export default function HostInboxPage() {
             const timeB = b.lastMessage?.sentAt ? new Date(b.lastMessage.sentAt) : new Date(0);
             return timeB - timeA;
           });
+        setListError(false);
         if (list.length === 0 && conversationsRef.current.length > 0) return;
         setConversations(list);
         fetchConversationDetails(list);
       } catch (error) {
         console.error("[HostInbox] Conversation refresh failed:", error);
+        if (conversationsRef.current.length === 0) setListError(true);
       }
     };
 
@@ -620,7 +637,13 @@ export default function HostInboxPage() {
       // Revalidate silently when a cached list is already on screen — flipping
       // isLoading here would tear it down and reintroduce the flash this cache
       // exists to remove.
-      if (conversationsRef.current.length === 0) setIsLoading(true);
+      if (conversationsRef.current.length === 0) {
+        setIsLoading(true);
+        setListError(false);
+      }
+      // True once the list request answered: a later failure must not turn a
+      // genuinely empty inbox into an error screen.
+      let answered = false;
       try {
         // Server-side role filtering — only fetches host conversations (no wasted bandwidth)
         const response = await fetch(`${CHAT_URL}/api/chat/conversations?role=host`, {
@@ -635,6 +658,8 @@ export default function HostInboxPage() {
         const data = await response.json();
         console.log("[HostInbox] Raw conversations response:", data);
         if (data.success) {
+          answered = true;
+          setListError(false);
           // Server already filters by role=host — only need to filter empty convos
           const hostConversations = (data.data || []).filter((conv) => conv.lastMessage);
 
@@ -647,14 +672,19 @@ export default function HostInboxPage() {
           console.log("[HostInbox] Filtered host conversations:", sortedConversations);
           setConversations(sortedConversations);
           fetchConversationDetails(sortedConversations);
+        } else if (conversationsRef.current.length === 0) {
+          setListError(true);
         }
       } catch (error) {
         console.error("Error loading conversations:", error);
+        if (!answered && conversationsRef.current.length === 0) setListError(true);
       } finally {
         setIsLoading(false);
       }
     }
 
+    // The error screen's Try again re-runs this exact loader.
+    loadConversationsRef.current = loadConversations;
     loadConversations();
     
     // Cleanup: clear the mobile protection flag on unmount
@@ -687,10 +717,12 @@ export default function HostInboxPage() {
         try {
           const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/properties/${propertyId}`;
           const res = await fetch(url);
+          let ok = false;
           if (res.ok) {
             const data = await res.json();
             const property = data.data || data.property || data;
             if (property && (property.title || property.name || property._id)) {
+              ok = true;
               setPropertyDetails((prev) => ({
                 ...prev,
                 [propertyId]: property,
@@ -698,8 +730,19 @@ export default function HostInboxPage() {
               setCachedProperty(propertyId, property);
             }
           }
+          setFailedProperties((prev) => {
+            if (ok) {
+              if (!prev[propertyId]) return prev;
+              const { [propertyId]: _ok, ...rest } = prev;
+              return rest;
+            }
+            // A listing that no longer exists (404) is settled, not a failure worth a
+            // banner: retrying cannot bring it back.
+            return prev[propertyId] ? prev : { ...prev, [propertyId]: res.status === 404 ? "gone" : true };
+          });
         } catch (e) {
           console.error("[HostInbox] Error fetching property:", propertyId, e);
+          setFailedProperties((prev) => (prev[propertyId] ? prev : { ...prev, [propertyId]: true }));
         } finally {
           // Always release, so a transient failure can be retried on a later
           // pass instead of wedging that property as permanently "loading".
@@ -1013,7 +1056,22 @@ export default function HostInboxPage() {
     return null;
   };
 
-  const isPropertyLoaded = (conversation) => Boolean(conversation && propertyDetails[conversation.propertyId]);
+  // "Settled" = the details are here OR their request failed: either way the row
+  // renders real data / its own fallbacks instead of a skeleton.
+  const isPropertyLoaded = (conversation) =>
+    Boolean(conversation && (propertyDetails[conversation.propertyId] || failedProperties[conversation.propertyId]));
+
+  // Some rows are showing fallbacks because their property request failed.
+  const hasFailedProperties = conversations.some(
+    (conv) => conv.propertyId && failedProperties[conv.propertyId] === true && !propertyDetails[conv.propertyId],
+  );
+  // Only when the host presses the button; fetchConversationDetails already
+  // skips what we hold and dedupes what is in flight.
+  const retryFailedProperties = () => {
+    setFailedProperties({});
+    fetchConversationDetails(conversations);
+  };
+  const retryConversations = () => loadConversationsRef.current?.();
 
   const getPropertyName = (conversation) => {
     const property = propertyDetails[conversation.propertyId];
@@ -1198,6 +1256,12 @@ export default function HostInboxPage() {
           // /messages uses — the two inboxes now have one loading appearance.
           // Only reached on a cold start; a cached list skips this entirely.
           <ConversationRowsSkeleton rows={5} />
+        ) : listError && conversations.length === 0 ? (
+          <LoadError
+            title="Couldn't load your inbox"
+            message="We couldn't reach your conversations. Check your connection and try again."
+            onRetry={retryConversations}
+          />
         ) : filteredConversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 px-4">
             <MessageCircle className="w-12 h-12 text-gray-300 mb-4" />
@@ -1209,6 +1273,14 @@ export default function HostInboxPage() {
           </div>
         ) : (
           <div className="p-2 space-y-2">
+            {hasFailedProperties && (
+              <LoadError
+                variant="banner"
+                message="Some conversation details couldn't load."
+                onRetry={retryFailedProperties}
+                className="rounded-lg border"
+              />
+            )}
             {filteredConversations.map((conv) => {
               const unreadCount = conv.unreadCount[currentUserId] || 0;
               const propertyImage = getPropertyImage(conv);

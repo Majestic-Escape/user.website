@@ -229,10 +229,9 @@ export default function GoaRules() {
                       <li>
                         {" "}
                         Once you obtain the acknowledgment number, please update
-                        your registration status by visiting your listing’s
+                        your registration status on your listing page.
                       </li>
                       </ul>
-                      <br />
                       <br />
                       <p>
                         If you fail to register and update your registration

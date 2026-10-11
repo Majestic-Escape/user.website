@@ -43,7 +43,7 @@ export default function ThingsToKnow({ thingsToKnow, isLoading }: ThingsToKnowPr
     <section className="mt-12 border-t pt-12">
       <h2 className="text-2xl font-semibold mb-6">Things to know</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div>
+        <div id="house-rules" className="scroll-mt-28">
           <h3 className="font-semibold mb-4 flex items-center">
             <Clock className="h-6 w-6 mr-2" />
             House rules

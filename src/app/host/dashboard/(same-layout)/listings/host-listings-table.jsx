@@ -668,7 +668,7 @@ export function HostListingsTable({ userEmail }) {
               table.getColumn("status")?.setFilterValue(value)
             }
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[max(180px,12rem)] max-w-[calc(100vw-2rem)]">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>

@@ -470,3 +470,64 @@ html[data-me-overlay] majestic-chat-widget {
   background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
   background-attachment: local, local, scroll, scroll;
 }
+
+/* "mm/dd/yyyy" hint over an EMPTY date field (register form). iOS WebKit paints
+   nothing for an empty <input type="date">, so the hint is needed there; Chrome
+   and Firefox paint their own, and the hint used to sit on top of it (doubled
+   text). `-webkit-touch-callout` exists only in iOS WebKit, so this feature
+   test selects exactly those browsers without sniffing the user agent. Phones
+   only, as before (md and up never showed it). */
+.dob-ios-hint { display: none; }
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 767px) {
+    .dob-ios-hint { display: block; }
+  }
+}
+
+/* Fixed bars on landscape phones (components/chrome-auto-hide.tsx sets
+   html[data-chrome="hidden|shown"] while the reader scrolls). Bars opt in with
+   data-chrome-bar="top" | "bottom" | "bottom-sm" (bottom-sm: only below md,
+   where the stay page's Reserve bar is fixed; from md it is sticky).
+   Only transform-class motion: the independent `translate` property, which
+   neither clobbers a bar's own transform nor its transitions. Leaving is
+   quicker than arriving. The animation ends on `translate: none` so a shown
+   bar is not a containing block for its fixed descendants. Reduced motion:
+   the same end states, instantly. Keyboard focus inside a hidden bar brings
+   it back (WCAG 2.4.11 focus not obscured). */
+@keyframes chrome-hide {
+  from { translate: none; }
+  to { translate: 0 calc(var(--chrome-dir) * 100%); }
+}
+@keyframes chrome-show {
+  from { translate: 0 calc(var(--chrome-dir) * 100%); }
+  to { translate: none; }
+}
+@media (max-height: 500px) and (pointer: coarse) {
+  [data-chrome-bar="top"] { --chrome-dir: -1; }
+  [data-chrome-bar="bottom"] { --chrome-dir: 1; }
+  html[data-chrome="hidden"] [data-chrome-bar="top"],
+  html[data-chrome="hidden"] [data-chrome-bar="bottom"] {
+    animation: chrome-hide 160ms ease-in both;
+  }
+  html[data-chrome="shown"] [data-chrome-bar="top"],
+  html[data-chrome="shown"] [data-chrome-bar="bottom"] {
+    animation: chrome-show 220ms ease-out both;
+  }
+  html[data-chrome="hidden"] [data-chrome-bar]:focus-within {
+    animation: none;
+  }
+}
+@media (max-height: 500px) and (pointer: coarse) and (max-width: 767px) {
+  [data-chrome-bar="bottom-sm"] { --chrome-dir: 1; }
+  html[data-chrome="hidden"] [data-chrome-bar="bottom-sm"] {
+    animation: chrome-hide 160ms ease-in both;
+  }
+  html[data-chrome="shown"] [data-chrome-bar="bottom-sm"] {
+    animation: chrome-show 220ms ease-out both;
+  }
+}
+@media (max-height: 500px) and (pointer: coarse) and (prefers-reduced-motion: reduce) {
+  html[data-chrome] [data-chrome-bar] {
+    animation-duration: 1ms;
+  }
+}

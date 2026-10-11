@@ -65,6 +65,7 @@ const BecomePartner = () => {
                 </div>
               </article>
               <aside className="flex flex-col w-full lg:w-[40%]">
+                {/* From lg the column is 40% wide, so the two cards size to it (75% of the column, 25% offset, 380px max) instead of a fixed 380px that ran past it and was clipped by the overflow-hidden <main>. */}
                 <div className="relative w-full pb-[120%] sm:pb-[100%] md:pb-[90%] lg:pb-[80%]">
                 
       <Image
@@ -73,7 +74,7 @@ const BecomePartner = () => {
       width={320}
       height={304}
       objectFit="contain"
-      className="absolute left-0 top-0 w-[250px] sm:w-[300px] md:w-[380px]  h-auto z-0"
+      className="absolute left-0 top-0 w-[250px] sm:w-[300px] md:w-[380px] lg:w-[75%] lg:max-w-[380px] h-auto z-0"
       />
 
 <Image
@@ -82,7 +83,7 @@ const BecomePartner = () => {
       width={382}
       height={304}
       objectFit="contain"
-      className="absolute top-[40%] sm:top-[35%] md:top-[30%] lg:top-[25%] left-[15%] sm:left-[20%] md:left-[25%] lg:left-[30%] w-[250px] sm:w-[300px] md:w-[380px]  h-auto z-10"
+      className="absolute top-[40%] sm:top-[35%] md:top-[30%] lg:top-[25%] left-[15%] sm:left-[20%] md:left-[25%] lg:left-[25%] w-[250px] sm:w-[300px] md:w-[380px] lg:w-[75%] lg:max-w-[380px] h-auto z-10"
       />
 
                 </div>
