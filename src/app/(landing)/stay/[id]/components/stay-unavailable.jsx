@@ -2,24 +2,18 @@
 
 import Link from "next/link";
 import MediaImage from "@/components/ui/media-image";
-import { CalendarClock, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 // A stay that is not publicly listed (delisted, in review, a draft, or under
 // a moderation ban). The API sends a narrow view of it (docs on the API:
 // docs/listing-visibility.md) and this page shows what that view supports:
 //   variant "public"      anyone: it isn't available — and where to look next
 //   variant "bookedGuest" a guest with a confirmed, paid booking of it: the
-//                         operational facts they booked under, never the
-//                         host's current listing text
+//                         check-in hours, house rules and cancellation terms
+//                         of each booking live with that booking (a guest may
+//                         hold several), so this page points there
 const capitalize = (s) =>
   typeof s === "string" && s.length ? s[0].toUpperCase() + s.slice(1) : "";
-
-function hourLabel(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n) || n < 0 || n > 23) return null;
-  const h = n % 12 === 0 ? 12 : n % 12;
-  return `${h}:00 ${n < 12 ? "AM" : "PM"}`;
-}
 
 function placeOf(address) {
   const a = address || {};
@@ -32,18 +26,17 @@ function placeOf(address) {
   return { city: city ? String(city).trim() : "", label: [city, a.state].filter(Boolean).map(capitalize).join(", ") };
 }
 
+const primaryCta =
+  "inline-flex min-h-[44px] items-center justify-center rounded-full bg-primaryGreen px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brightGreen focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-2 active:scale-95 motion-reduce:active:scale-100";
+const secondaryCta =
+  "inline-flex min-h-[44px] items-center justify-center rounded-full border border-lightGray px-6 py-2.5 text-sm font-medium text-graphite transition hover:border-graphite focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-2";
+
 export default function StayUnavailable({ property, variant = "public" }) {
   const photo = Array.isArray(property?.photos) ? property.photos[0] : null;
   const title = property?.title || "This stay";
   const { city, label } = placeOf(property?.address);
   const browseHref = city ? `/filter?location=${encodeURIComponent(city)}` : "/stays";
   const booked = variant === "bookedGuest";
-  const checkin = booked ? hourLabel(property?.checkinTime) : null;
-  const checkout = booked ? hourLabel(property?.checkoutTime) : null;
-  const rules = booked
-    ? [...(Array.isArray(property?.selectedRules) ? property.selectedRules : []), ...(Array.isArray(property?.customRules) ? property.customRules : [])]
-        .filter((r) => typeof r === "string" && r.trim())
-    : [];
 
   return (
     <main data-stay-unbookable className="min-h-screen bg-white pt-[96px] pb-16 md:pt-52 desktop:pt-56 me-fade-in">
@@ -79,55 +72,21 @@ export default function StayUnavailable({ property, variant = "public" }) {
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-stone">
               {booked
-                ? "You booked this stay, so here is what you booked under. Your booking details stay in your bookings."
+                ? "You have a booking here. Your check-in times, house rules and cancellation terms are kept with your booking."
                 : "Its host may have paused it, or it's being reviewed. Plenty of other stays are open for booking."}
             </p>
 
-            {booked && (checkin || checkout || rules.length) ? (
-              <div className="mt-6 space-y-4 rounded-xl bg-gray-50 p-4">
-                {checkin || checkout ? (
-                  <p className="flex items-start gap-2 text-sm text-graphite">
-                    <CalendarClock aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-stone" />
-                    <span>
-                      {checkin ? <>Check-in from {checkin}</> : null}
-                      {checkin && checkout ? " · " : null}
-                      {checkout ? <>Check-out by {checkout}</> : null}
-                    </span>
-                  </p>
-                ) : null}
-                {rules.length ? (
-                  <div>
-                    <h2 className="text-sm font-semibold text-graphite">House rules you booked under</h2>
-                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-stone">
-                      {rules.map((r, i) => (
-                        <li key={i} className="break-words">{r}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               {booked ? (
-                <Link
-                  href="/manage-bookings"
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-primaryGreen px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brightGreen focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-2 active:scale-95 motion-reduce:active:scale-100"
-                >
+                <Link href="/manage-bookings" className={primaryCta}>
                   Go to my bookings
                 </Link>
               ) : (
-                <Link
-                  href={browseHref}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-primaryGreen px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brightGreen focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-2 active:scale-95 motion-reduce:active:scale-100"
-                >
+                <Link href={browseHref} className={primaryCta}>
                   {city ? `Browse stays in ${capitalize(city)}` : "Browse stays"}
                 </Link>
               )}
-              <Link
-                href="/stays"
-                className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-lightGray px-6 py-2.5 text-sm font-medium text-graphite transition hover:border-graphite focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-2"
-              >
+              <Link href="/stays" className={secondaryCta}>
                 All stays
               </Link>
             </div>
