@@ -50,9 +50,11 @@ export default function Navbar() {
       {/* md+: 3-column grid (1fr | pill | 1fr). The pill gets its natural width
           first and shrinks only when the side columns need the room, so it stays
           page-centred but can no longer slide under Login / Switch to Hosting
-          (it used to be absolutely centred at a fixed 560px). */}
+          (it used to be absolutely centred at a fixed 560px). The logo link must
+          not stretch (justify-self-start): as a grid item it filled the whole
+          1fr column and became a huge click target. */}
       <div className=" container max-w-[1400px] flex  h-12 md:h-[76px] w-full items-center mx-auto md:grid md:grid-cols-[1fr_minmax(0,max-content)_1fr] md:gap-4">
-        <Link className="md:col-start-1 flex min-h-[44px] items-center gap-2 rounded-lg text-[#3B5D2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen" href="/" aria-label="Majestic Escape home">
+        <Link className="md:col-start-1 md:justify-self-start flex min-h-[44px] items-center gap-2 rounded-lg text-[#3B5D2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen" href="/" aria-label="Majestic Escape home">
           {/* <Image
             className="h-6 md:h-6 w-auto"
             width={200}

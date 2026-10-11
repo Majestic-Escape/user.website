@@ -55,9 +55,12 @@ export default function Navbar() {
       <header className="px-4  md:px-6 z-[2000] md:pb-4 desktop:pb-4">
         {/* md+: same 3-column grid as the main navbar (pill centred, shrinks
             before it can overlap Become a Host / Login); explicit columns keep
-            the actions in column 3 while the pill is hidden on scroll. */}
+            the actions in column 3 while the pill is hidden on scroll. The logo
+            link must not stretch (justify-self-start): as a grid item it filled
+            the whole 1fr column, a 595px click target under the compact search
+            bar at 1280. */}
         <div className="container max-w-[1400px] flex h-12 md:h-16 w-full items-center mx-auto md:grid md:grid-cols-[1fr_minmax(0,max-content)_1fr] md:gap-4">
-          <Link className="md:col-start-1 flex min-h-[44px] items-center gap-2 rounded-lg text-[#3B5D2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen" href="/" aria-label="Majestic Escape home">
+          <Link className="md:col-start-1 md:justify-self-start flex min-h-[44px] items-center gap-2 rounded-lg text-[#3B5D2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen" href="/" aria-label="Majestic Escape home">
             {/* <Image
               className="hidden md:inline-block h-4 md:h-7 w-auto"
               width={200}
