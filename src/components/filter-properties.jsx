@@ -12,6 +12,7 @@ import { SheetProvider } from "@/components/providers/sheet-provider";
 import SearchSummary, { SearchSuggestions, formatDistance } from "@/components/search/search-summary";
 import { usePlacesIndex } from "@/lib/places/use-places-index";
 import { popularPlaces } from "@/lib/places/match";
+import { emptyResultCopy } from "@/lib/search/search-title";
 
 export default function FilterProperties({
   properties: propertiesProp,
@@ -30,6 +31,8 @@ export default function FilterProperties({
   property,
 }) {
   const [loading, setLoading] = useState(false);
+  // a place with nothing in or near it: one message, with what to try next
+  const emptyCopy = emptyResultCopy(search, hasDates);
 
   const [includeTaxes, setIncludeTaxes] = useState(true);
   const [showMore, setShowMore] = useState(false);
@@ -134,16 +137,20 @@ export default function FilterProperties({
               ) : properties.length === 0 ? (
                 <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50 rounded-lg px-4 text-center">
                   <div className="text-gray-600 text-lg mb-2">
-                    {search?.query
-                      ? search.reason && search.mode === "text"
-                        ? `Nothing available for “${search.query}”`
-                        : `No stays found for “${search.query}”`
-                      : "No properties to show"}
+                    {emptyCopy
+                      ? emptyCopy.title
+                      : search?.query
+                        ? search.reason && search.mode === "text"
+                          ? `Nothing available for “${search.query}”`
+                          : `No stays found for “${search.query}”`
+                        : "No properties to show"}
                   </div>
                   <p className="text-gray-500 text-sm">
-                    {search?.mode === "text" && search.reason === "dates"
-                      ? "Try other dates, or a nearby town."
-                      : "Try a property name, a nearby town, a district, or fewer filters."}
+                    {emptyCopy
+                      ? emptyCopy.hint
+                      : search?.mode === "text" && search.reason === "dates"
+                        ? "Try other dates, or a nearby town."
+                        : "Try a property name, a nearby town, a district, or fewer filters."}
                   </p>
                   <SearchSuggestions
                     meta={search}
