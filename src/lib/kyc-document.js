@@ -2,12 +2,15 @@
 // a 12 MP camera shot, a screenshot, a PDF) into something the verify API
 // accepts. The document travels as base64 JSON (≈ 4/3 of the file) through a
 // Vercel function capped at 4.5 MB per request (see lib/image-upload.js), so
-// photos are fitted well under it — documents stay legible: OCR needs ~1000 px
-// on the long edge, we keep up to 2400 — small JPEG/PNG files go untouched,
-// and a PDF, which cannot be shrunk here, must fit as is.
+// photos too large to send are fitted under it — documents stay legible: OCR
+// needs ~1000 px on the long edge, we keep up to 2400 — JPEG/PNG up to 3 MB go
+// untouched, and a PDF, which cannot be shrunk here, must fit as is.
 import { fitImage, ImagePrepError } from "./image-upload";
 
 export const KYC_PDF_MAX_BYTES = 3_000_000; // ≈ 4.0 MB once base64-encoded
+// JPEG/PNG up to this size go byte-for-byte (everything that could upload
+// before is sent exactly as before); only larger or other files are re-encoded.
+const KYC_PASS_THROUGH_MAX_BYTES = 3_000_000;
 
 export class KycDocumentError extends Error {}
 
@@ -26,7 +29,7 @@ export async function prepareKycDocument(file) {
     return { file, kind: "pdf" };
   }
   try {
-    const { file: fitted } = await fitImage(file, { maxBytes: 2_000_000, maxEdge: 2400, passThroughMaxBytes: 1_500_000, qualities: [0.9, 0.8, 0.7], minEdge: 1600 });
+    const { file: fitted } = await fitImage(file, { maxBytes: 2_000_000, maxEdge: 2400, passThroughMaxBytes: KYC_PASS_THROUGH_MAX_BYTES, qualities: [0.9, 0.8, 0.7], minEdge: 1600 });
     return { file: fitted, kind: "image" };
   } catch (error) {
     if (error instanceof ImagePrepError && error.code === "UNDECODABLE") {

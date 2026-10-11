@@ -3,7 +3,8 @@
 // is refused at the edge WITHOUT CORS headers, so the page only sees a bare
 // "Network Error". Files already within budget (and of a type the server
 // takes) are sent byte-for-byte; anything else the browser can decode (a big
-// camera photo, HEIC on Safari, WebP, an untyped file) is re-encoded as an
+// camera photo, HEIC — natively on Safari/iOS, via a lazily loaded decoder
+// elsewhere — WebP, an untyped file) is re-encoded as an
 // upright JPEG (<img> decoding applies EXIF orientation), longest edge capped
 // at `maxEdge`, stepping quality — then size — down until it fits.
 
@@ -27,6 +28,23 @@ function loadImage(file) {
   });
 }
 
+function isHeic(file) {
+  return /hei[cf]/i.test(file.type || "") || /\.hei[cf]$/i.test(file.name || "");
+}
+
+// Safari (and every iOS browser) decodes HEIC natively; elsewhere the HEIC
+// is converted with heic2any, loaded only now (~1.3 MB, never downloaded by
+// anyone who does not pick a HEIC).
+async function loadHeic(file) {
+  try {
+    const { default: heic2any } = await import("heic2any");
+    const out = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
+    return await loadImage(Array.isArray(out) ? out[0] : out);
+  } catch {
+    throw new ImagePrepError("UNDECODABLE", "This image format can't be opened here.");
+  }
+}
+
 function toJpeg(canvas, quality) {
   return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
 }
@@ -40,7 +58,10 @@ function toJpeg(canvas, quality) {
 export async function fitImage(file, { maxBytes, maxEdge, passThroughMaxBytes = maxBytes, passThroughTypes = ["image/jpeg", "image/png"], qualities = [0.92, 0.85, 0.78, 0.7], minEdge = 1200 }) {
   if (passThroughTypes.includes(file.type) && file.size <= passThroughMaxBytes) return { file, converted: false };
 
-  const { img, url } = await loadImage(file);
+  const { img, url } = await loadImage(file).catch((error) => {
+    if (isHeic(file)) return loadHeic(file);
+    throw error;
+  });
   const canvas = document.createElement("canvas");
   try {
     let edge = Math.min(maxEdge, Math.max(img.naturalWidth, img.naturalHeight));
