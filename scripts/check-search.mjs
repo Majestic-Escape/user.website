@@ -171,6 +171,18 @@ check("type-aware headings", () => {
   assert.equal(T.staysNoun("unknowntype"), "Stays");
   assert.equal(T.searchTitle(null), "Discover Our Finest Stays");
 });
+check("empty place / near-me results: one message with a next step", () => {
+  const e = (m, d) => T.emptyResultCopy({ query: null, place: null, propertyType: null, reason: null, ...m }, d);
+  assert.deepEqual(e({ mode: "nearby", place: { name: "Mumbai" }, reason: "no_inventory" }), { title: "No stays in or near Mumbai yet", hint: "We're adding new stays regularly. Meanwhile, try one of these destinations." });
+  assert.equal(e({ mode: "nearby", place: { name: "Goa" }, propertyType: "cottage", reason: "filters" }).title, "No cottages in or near Goa match your filters");
+  assert.equal(e({ mode: "nearby", place: { name: "Colva" }, reason: "dates" }, true).title, "No stays in or near Colva are free on your dates");
+  assert.equal(e({ mode: "near", propertyType: "villa" }).title, "No villas near you yet");
+  assert.equal(e({ mode: "near", reason: "filters" }).title, "No stays near you match your filters");
+  assert.equal(e({ mode: "near", reason: "dates" }, false).title, "No stays near you are free on those dates");
+  assert.equal(e({ mode: "text", query: "asdf" }), null, "a name nobody matched keeps its own message");
+  assert.equal(e({ mode: "place", place: { name: "Panaji" } }), null);
+  assert.equal(T.emptyResultCopy(null), null);
+});
 
 console.log("search URLs and dates");
 check("one builder: encoded, no empties, ISO days, ~1 km near-me", () => {

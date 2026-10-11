@@ -83,18 +83,19 @@ function stays(n: number) {
 export default function SearchSummary({ meta, totalCount, hasDates }: { meta: SearchMeta | null; totalCount: number; hasDates: boolean }) {
   const href = usePlaceHref();
   const placeName = meta?.place?.name ?? "";
-  let subtitle = "Explore through featured properties available on Majestic Escape";
+  let subtitle: string | null = "Explore through featured properties available on Majestic Escape";
   if (meta?.mode === "place" && meta.place) subtitle = [stays(totalCount), meta.place.label].filter(Boolean).join(" · ");
-  else if ((meta?.mode === "nearby" || meta?.mode === "near") && totalCount) subtitle = `${stays(totalCount)} within 250 km, nearest first`;
+  else if (meta?.mode === "nearby" || meta?.mode === "near") subtitle = totalCount ? `${stays(totalCount)} within 250 km, nearest first` : null; // empty: the result box says why
   else if (meta?.mode === "text" || (meta?.mode === "all" && meta.propertyType)) subtitle = stays(totalCount);
 
   let banner: string | null = null;
   const noun = staysNoun(meta?.propertyType).toLowerCase();
-  if (meta?.mode === "nearby" && placeName) {
+  // nothing nearby either: the result box says so once (emptyResultCopy)
+  if (meta?.mode === "nearby" && placeName && totalCount) {
     if (meta.reason === "no_inventory") banner = `No ${noun} in ${placeName} yet`;
     else if (meta.reason === "dates") banner = `No ${noun} in ${placeName} are free on ${hasDates ? "your dates" : "those dates"}`;
     else banner = `No ${noun} in ${placeName} match your filters`;
-    banner += totalCount ? ` — here are the nearest ones${meta.nearestKm !== null ? ` (closest ${formatDistance(meta.nearestKm)} away)` : ""}.` : ", and none nearby either.";
+    banner += ` — here are the nearest ones${meta.nearestKm !== null ? ` (closest ${formatDistance(meta.nearestKm)} away)` : ""}.`;
   } else if (meta?.mode === "text" && meta.query && !totalCount && meta.reason) {
     // the name / words matched stays, but none fit the dates or filters
     banner = meta.reason === "dates" ? `Stays matching “${meta.query}” aren't free on your dates.` : `Stays matching “${meta.query}” don't fit your filters.`;
@@ -105,7 +106,7 @@ export default function SearchSummary({ meta, totalCount, hasDates }: { meta: Se
       <div className="flex items-start justify-between gap-4 lg:mt-40 sm:pt-10 md:pt-0">
         <div className="min-w-0">
           <h1 className="text-3xl sm:text-2xl lg:text-4xl font-bricolage font-semibold mb-2 text-absoluteDark">{searchTitle(meta)}</h1>
-          <p className="text-lg sm:text-base text-stone">{subtitle}</p>
+          {subtitle ? <p className="text-lg sm:text-base text-stone">{subtitle}</p> : null}
         </div>
         <FiltersButton className="mt-1 hidden shrink-0 md:inline-flex" />
       </div>
