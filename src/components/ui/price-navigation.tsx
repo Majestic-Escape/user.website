@@ -98,7 +98,7 @@ export function PriceNavigation() {
     "w-full flex justify-center items-center text-center py-8 px-2 bg-primaryGreen text-2xl font-bricolage hover:bg-brightGreen text-white h-10 rounded-[42px] font-medium";
   const hasDates = nights > 0;
   return (
-    <div className="md:hidden font-poppins fixed bottom-0 inset-x-0 z-50 bg-white border-t border-gray-200 pb-[env(safe-area-inset-bottom)]">
+    <div data-price-nav className="md:hidden font-poppins fixed bottom-0 inset-x-0 z-50 bg-white border-t border-gray-200 pb-[env(safe-area-inset-bottom)]">
       <div className="grid h-24 max-w-lg grid-cols-2 mx-auto px-4 py-2 items-center">
         {/* Opens the price / dates sheet */}
         <button

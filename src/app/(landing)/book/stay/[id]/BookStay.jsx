@@ -210,7 +210,10 @@ function PriceBreakdownModal({ onClose, totals, date, money }) {
 function BookPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { logout } = useAuth();
+  const { logout, user, authReady } = useAuth();
+  // The listing is cached per viewer (queryKeys.property): the same viewer
+  // decides the cache key and whether the session token is sent.
+  const viewer = user?._id ?? "anon";
   const params = useParams();
   const propertyId = params.id;
   const [isAuth, setIsAuth] = useState(false);
@@ -350,9 +353,9 @@ function BookPageContent() {
     // Shares the stay page's cache entry: arriving from the listing costs
     // zero extra /properties/:id calls. The pre-payment re-check below is a
     // separate, unconditional network fetch.
-    queryKey: queryKeys.property(propertyId),
-    queryFn: () => fetchProperty(propertyId),
-    enabled: isListingId(propertyId),
+    queryKey: queryKeys.property(propertyId, viewer),
+    queryFn: ({ signal }) => fetchProperty(propertyId, { viewer, signal }),
+    enabled: isListingId(propertyId) && authReady,
     ...PUBLIC,
   });
   const listingMissing =
@@ -604,18 +607,18 @@ function BookPageContent() {
         return;
       }
       if (typeof fresh?.status === "string" && fresh.status !== "active") {
-        queryClient.setQueryData(["property", propertyId], fresh);
+        queryClient.setQueryData(queryKeys.property(propertyId, viewer), fresh);
         toast.error("This stay is no longer available for booking.");
         return;
       }
       const freshTotals = priceStay(fresh, nightsCount);
       if (freshTotals.pricingUnavailable) {
-        queryClient.setQueryData(["property", propertyId], fresh);
+        queryClient.setQueryData(queryKeys.property(propertyId, viewer), fresh);
         toast.error("Pricing for this stay is unavailable right now.");
         return;
       }
       if (freshTotals.total !== totals.total) {
-        queryClient.setQueryData(["property", propertyId], fresh);
+        queryClient.setQueryData(queryKeys.property(propertyId, viewer), fresh);
         toast.error(
           `The price for this stay has changed to ${formatINR(freshTotals.total)} — please review and confirm again.`,
         );
@@ -986,13 +989,13 @@ function BookPageContent() {
       if (!booking || !booking.data?._id) {
         toast.error(serverErrorMessage(booking, "Booking could not be created. Please try again."));
         if (booking?.code === "PRICE_CHANGED" || booking?.code === "PRICING_UNAVAILABLE") {
-          queryClient.invalidateQueries({ queryKey: queryKeys.property(propertyId) });
+          queryClient.invalidateQueries({ queryKey: queryKeys.propertyAll(propertyId) });
         }
         return; // stop here
       }
       if (booking.repriced) {
         // The server moved our pending hold to the price we just confirmed.
-        queryClient.invalidateQueries({ queryKey: queryKeys.property(propertyId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.propertyAll(propertyId) });
       }
       const order_id = await createPaymentOrder(
         booking?.data?._id,
@@ -1003,7 +1006,7 @@ function BookPageContent() {
         toast.error(serverErrorMessage(order_id, "Unable to initiate payment. Please try again."));
         if (order_id?.code === "PRICE_CHANGED" || order_id?.code === "AMOUNT_MISMATCH") {
           // Re-quote from the live listing; the next Confirm carries the new total.
-          queryClient.invalidateQueries({ queryKey: queryKeys.property(propertyId) });
+          queryClient.invalidateQueries({ queryKey: queryKeys.propertyAll(propertyId) });
         }
         return;
       }
@@ -1214,7 +1217,8 @@ function BookPageContent() {
       </div>
     );
   }
-  if (isLoading) {
+  // (until the session is known the listing query waits — one render)
+  if (isLoading || (!authReady && !property)) {
     return <BookingPageSkeleton />;
   }
   if (summaryRoute) {

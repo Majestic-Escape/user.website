@@ -16,11 +16,14 @@ import PropertyAmenities from "./property-amenities";
 import PropertySleepingArrangements from "./property-sleeping-arrangements";
 import { toast } from "sonner";
 
+// bookable=false (a host / admin previewing a listing that is not public):
+// the listing renders without the booking widget.
 export default function PropertyListing({
   propertyDetails,
   isLoading,
   unavailableDates,
   loading,
+  bookable = true,
 }) {
   if (process.env.NEXT_PUBLIC_ENV === "dev") {
     console.log("propertyDetails data", propertyDetails);
@@ -156,6 +159,7 @@ export default function PropertyListing({
           /> */}
         </div>
 
+        {bookable ? (
         <div data-chrome-bar="bottom-sm" className="fixed bottom-0 z-[10] w-[92vw] right-4 md:right-0 md:w-auto  md:sticky md:top-48 md:self-start">
           <BookingWidget
             propertyId={propertyDetails?._id}
@@ -179,6 +183,7 @@ export default function PropertyListing({
             setDate={setDate}
           />
         </div>
+        ) : null}
       </div>
     </div>
   );
