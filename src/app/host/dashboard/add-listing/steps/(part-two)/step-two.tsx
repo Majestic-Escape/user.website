@@ -53,6 +53,9 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
   const [uploading, setUploading] = useState(false); // Optional: Show loading state
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Photos uploaded while this step is open (not in the saved listing yet —
+  // the listing is saved only when the host leaves the step).
+  const sessionUploads = useRef<Set<string>>(new Set());
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   const resetFileInput = () => {
@@ -278,7 +281,10 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
         if (urls.length) {
           appended = [
             ...appended,
-            ...urls.map((url) => ({ id: crypto.randomUUID(), url })),
+            ...urls.map((url) => {
+              sessionUploads.current.add(url);
+              return { id: crypto.randomUUID(), url };
+            }),
           ];
           setPhotos(appended);
           updateFormData({ photos: appended.map((photo) => photo.url) });
@@ -441,32 +447,23 @@ export function AddPhotos({ updateFormData, formData }: MakeItStandOutProps) {
   //   setPhotos(updatedPhotos);
   //   updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
   // };
-  const removePhoto = async (id: string, url: string) => {
-    try {
-      await axios.delete(`${API_URL}/uploads/delete`, {
-        data: { url },
-        headers: authHeaders(),
-      });
-    } catch (error) {
-      // 400/403/404/409: the file is not one this host can delete (not our
-      // bucket, not theirs, already gone, or still used by another listing or
-      // profile) — it stays in storage, but the photo can still leave THIS
-      // listing (it used to be impossible to remove). Anything else (network,
-      // server error, expired session): keep it and say so.
-      const status = (error as { response?: { status?: number } })?.response
-        ?.status;
-      if (![400, 403, 404, 409].includes(status as number)) {
-        console.error("Photo delete failed:", error);
-        toast.error(
-          "Couldn't remove the photo. Please check your connection and try again.",
-        );
-        return;
-      }
-    }
-
+  // A photo of the saved listing only leaves the form: the server deletes its
+  // file when the listing is saved without it (and nothing else uses it), so
+  // an abandoned edit never leaves a broken photo on the live listing. A photo
+  // uploaded during this visit is in no saved listing yet: its file is
+  // deleted at once (best effort — nothing else can be using it).
+  const removePhoto = (id: string, url: string) => {
     const updatedPhotos = photos.filter((photo) => photo.id !== id);
     setPhotos(updatedPhotos);
     updateFormData({ photos: updatedPhotos.map((photo) => photo.url) });
+    if (sessionUploads.current.delete(url)) {
+      axios
+        .delete(`${API_URL}/uploads/delete`, {
+          data: { url },
+          headers: authHeaders(),
+        })
+        .catch((error) => console.error("Unsaved photo not deleted:", error));
+    }
   };
   const handleDragStart = (
     e: React.DragEvent<HTMLDivElement>,
