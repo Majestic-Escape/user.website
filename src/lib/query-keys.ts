@@ -48,4 +48,6 @@ export const queryKeys = {
   hostBookingsAll: ["hostBookings"] as const,
   activeBookings: (hostId: Id) => ["activeBookings", hostId] as const,
   activeBookingsAll: ["activeBookings"] as const,
+  // SyncGuard: a listing's calendar connections (host only)
+  calendarSync: (propertyId: Id) => ["calendarSync", propertyId] as const,
 };
