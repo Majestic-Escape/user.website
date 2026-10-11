@@ -23,6 +23,7 @@ interface ShareDialogProps {
   onClose: () => void;
   property: {
     id: number;
+    _id?: string;
     title: string;
     name?: string;
     photos: string[];
@@ -45,7 +46,9 @@ export default function ShareDialog({
   }, []);
 
   const getShareUrl = () => {
-    return `https://majesticescape.in/property/${property.id}`;
+    // The listing cards pass the API document, which carries `_id` (their own
+    // links use it); `id` is the older shape.
+    return `https://majesticescape.in/stay/${property._id ?? property.id}`;
   };
 
   const handleShare = async (method: string) => {

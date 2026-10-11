@@ -98,7 +98,7 @@ export default function InvoicesPage() {
                 className="w-full sm:w-[300px]"
               />
               <Select value={selectedProperty} onValueChange={setSelectedProperty}>
-                <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectTrigger className="w-full sm:w-[max(200px,13.3333rem)] sm:max-w-[calc(100vw-2rem)]">
                   <SelectValue placeholder="Filter by property" />
                 </SelectTrigger>
                 <SelectContent>

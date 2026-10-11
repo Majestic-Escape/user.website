@@ -139,12 +139,6 @@ export default function BlogPost() {
                 </p>
               </div>
               <p className="text-lg text-gray-800">
-                <b>Select the Right Location</b>: Staying slightly away from
-                hotspots reduces costs while maintaining access and comfort.
-                Search for budget-friendly homes, private rooms, or villas near
-                major attractions instead of inside them.
-              </p>
-              <p className="text-lg text-gray-800">
                 <b>Use Price Tracking Tools</b>: Set alerts for flights and
                 stays. Flexible travel dates often unlock lower prices without
                 affecting comfort.

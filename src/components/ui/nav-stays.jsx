@@ -48,6 +48,7 @@ export default function Navbar() {
 
   return (
     <div
+      data-chrome-bar="top"
       className={`fixed inset-x-0 top-0 bg-white z-50 font-poppins border-b transition-[padding,height] hidden md:block duration-300 ${
         isScrolled ? "pt-2  h-20" : "pt-3"
       }`}

@@ -88,6 +88,13 @@ export default function Page() {
       </div>
     );
   }
+  // The booking's property arrives populated (an object) or as a bare id;
+  // only an id-shaped value becomes a link, otherwise nothing is rendered.
+  const rawStayId = fetchedData?.propertyId?._id ?? fetchedData?.propertyId;
+  const stayId =
+    typeof rawStayId === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(rawStayId)
+      ? rawStayId
+      : null;
   // Stay dates are UTC-midnight instants; invalid/missing → null → "—".
   const checkInDate = parseDate(fetchedData?.checkIn);
   const checkOutDate = parseDate(fetchedData?.checkOut);
@@ -232,9 +239,17 @@ export default function Page() {
                   <p className="text-gray-500">
                     Make sure to review the house rules and amenities.
                   </p>
-                  <button className="text-red-400 text-xs mt-1">
-                    View House Rules
-                  </button>
+                  {stayId ? (
+                    <Link
+                      href={`/stay/${stayId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-flex min-h-[24px] items-center rounded-sm py-1 text-sm font-medium text-primaryGreen underline underline-offset-2 hover:text-absoluteDark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryGreen"
+                    >
+                      View listing details
+                      <span className="sr-only"> (opens in a new tab)</span>
+                    </Link>
+                  ) : null}
                 </div>
 
                 <div>

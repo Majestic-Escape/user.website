@@ -30,7 +30,7 @@ export default function Navbar() {
   const current = activeHref(pathname, LINKS.filter((l) => !l.href.includes("#")));
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-gray-200 bg-white py-1 pt-[max(0.25rem,env(safe-area-inset-top))] font-bricolage">
+    <header data-chrome-bar="top" className="fixed inset-x-0 top-0 z-50 border-b border-gray-200 bg-white py-1 pt-[max(0.25rem,env(safe-area-inset-top))] font-bricolage">
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
         <Link
           href="/"

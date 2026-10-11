@@ -28,6 +28,10 @@ const capitalize = (value) =>
     : "";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+// Stay ids are Mongo ids; accept only id-shaped values before building a link.
+const safeStayId = (value) =>
+  typeof value === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(value) ? value : null;
+
 export default function BookingSummaryPage() {
   const searchParams = useSearchParams();
   const [queryData, setQueryData] = useState(null);
@@ -40,6 +44,7 @@ export default function BookingSummaryPage() {
       ? queryData.propertyImage
       : `https://majestic-escape-host-properties.blr1.digitaloceanspaces.com/${queryData.propertyImage}`
     : null;
+  const stayId = safeStayId(queryData?.propertyId);
   const [isAuth, setIsAuth] = useState(false);
   const auth = async () => {
     const getLocalData = await localStorage.getItem("token");
@@ -359,9 +364,17 @@ export default function BookingSummaryPage() {
                   <p className="text-gray-500">
                     Make sure to review the house rules and amenities.
                   </p>
-                  <button className="text-red-400 text-xs mt-1">
-                    View House Rules
-                  </button>
+                  {stayId ? (
+                    <Link
+                      href={`/stay/${stayId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-flex min-h-[24px] items-center rounded-sm py-1 text-sm font-medium text-primaryGreen underline underline-offset-2 hover:text-absoluteDark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryGreen"
+                    >
+                      View listing details
+                      <span className="sr-only"> (opens in a new tab)</span>
+                    </Link>
+                  ) : null}
                 </div>
 
                 <div>

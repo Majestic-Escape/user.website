@@ -94,6 +94,51 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
 
+      // Legacy host dashboard pages (old copies, stubs and a mock receipt)
+      // were removed; old bookmarks land on the page that replaced them.
+      {
+        source: "/host/dashboard/listings-old",
+        destination: "/host/dashboard/listings",
+        permanent: false,
+      },
+      {
+        source: "/host/dashboard/listings-alt",
+        destination: "/host/dashboard/listings",
+        permanent: false,
+      },
+      {
+        source: "/host/dashboard/add-listing-prev",
+        destination: "/host/dashboard/add-listing",
+        permanent: false,
+      },
+      {
+        source: "/host/dashboard/sync-calendar",
+        destination: "/host/dashboard/calendar",
+        permanent: false,
+      },
+      {
+        source: "/host/dashboard/reciept",
+        destination: "/host/dashboard/bookings",
+        permanent: false,
+      },
+
+      // The old /property/[id] page (static placeholders, no link-preview
+      // metadata) was removed. Share dialogs used to hand out /property/<id>
+      // links, so those shared links land on the canonical /stay/<id> page.
+      {
+        source: "/property/:id",
+        destination: "/stay/:id",
+        permanent: false,
+      },
+
+      // The client-only ID-capture prototype was removed; KYC lives in the
+      // host dashboard.
+      {
+        source: "/verification",
+        destination: "/host/dashboard/kyc",
+        permanent: false,
+      },
+
       // 1. Redirect www to non-www (HTTPS version)
       {
         source: "/:path*",

@@ -32,6 +32,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadError } from "@/components/ui/load-error";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { getInitialPropertyDetails, setCachedProperty } from "@/lib/propertyDetailsCache";
 import { toast } from "sonner";
@@ -110,6 +111,21 @@ export default function MessagesPage() {
   const [propertyDetails, setPropertyDetails] = useState(() => getInitialPropertyDetails());
   // Property ids with a request currently in the air — see fetchPropertyDetails.
   const inFlightPropertiesRef = useRef(new Set());
+  // Properties whose details request FAILED. A failed row used to stay a
+  // skeleton forever; it now settles on the same fallbacks the row already has
+  // ("Host", "Property") and is retried only when the user asks (Try again, or
+  // opening the conversation) — never on a timer.
+  const [failedProperties, setFailedProperties] = useState({});
+  // The conversation LIST failed to load (and there is nothing cached to show).
+  // Without this the page said "No messages yet" — which reads as "my messages
+  // are gone".
+  const [listError, setListError] = useState(false);
+  const [listRetrying, setListRetrying] = useState(false);
+  // Bumped by "Try again" when init() failed before the socket was set up, to run it again in full.
+  const [initNonce, setInitNonce] = useState(0);
+  // True while that re-run is in flight: the error screen stays mounted (button and focus kept)
+  // instead of swapping to the full-page loading view.
+  const quietInitRef = useRef(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [typingUsers, setTypingUsers] = useState(new Map()); // Map<conversationId, Set<userId>>
 
@@ -286,16 +302,26 @@ export default function MessagesPage() {
     inFlightPropertiesRef.current.add(propertyId);
     try {
       const res = await fetch(`${API_BASE_URL}/properties/${propertyId}`);
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
       if (json.success && json.data) {
         setPropertyDetails(prev => ({
           ...prev,
           [propertyId]: json.data
         }));
         setCachedProperty(propertyId, json.data);
+        setFailedProperties((prev) => {
+          if (!prev[propertyId]) return prev;
+          const { [propertyId]: _ok, ...rest } = prev;
+          return rest;
+        });
+      } else {
+        // A listing that no longer exists (404) is settled, not a failure worth a
+        // banner: retrying cannot bring it back. Anything else may be transient.
+        setFailedProperties((prev) => (prev[propertyId] ? prev : { ...prev, [propertyId]: res.status === 404 ? "gone" : true }));
       }
     } catch (err) {
       console.error("Error fetching property:", err);
+      setFailedProperties((prev) => (prev[propertyId] ? prev : { ...prev, [propertyId]: true }));
     } finally {
       // Always release, so a transient failure can be retried on the next
       // render pass instead of wedging that property as permanently "loading".
@@ -663,7 +689,11 @@ export default function MessagesPage() {
           return;
         }
         const fresh = await res.json();
-        if (!fresh.success) return;
+        if (!fresh.success) {
+          // Only worth telling the user when there is nothing on screen.
+          if (conversationsRef.current.length === 0) setListError(true);
+          return;
+        }
         const list = (fresh.data || [])
           .filter((conv) => conv.lastMessage)
           .sort((a, b) => {
@@ -671,6 +701,7 @@ export default function MessagesPage() {
             const timeB = b.lastMessage?.sentAt ? new Date(b.lastMessage.sentAt) : new Date(0);
             return timeB - timeA;
           });
+        setListError(false);
         if (list.length === 0 && conversationsRef.current.length > 0) return;
         setConversations(list);
         list.forEach((conv) => {
@@ -679,15 +710,19 @@ export default function MessagesPage() {
         });
       } catch (err) {
         console.error("[Messages] Conversation refresh failed:", err);
+        if (conversationsRef.current.length === 0) setListError(true);
       }
     };
 
     async function init() {
+      // True once the list request answered: a later failure (socket setup)
+      // must not turn a genuinely empty inbox into an error screen.
+      let listAnswered = false;
       try {
         // Revalidate silently when we already painted a cached list — flipping
         // `loading` here would tear it down and reintroduce the very flash this
         // cache exists to remove.
-        if (conversationsRef.current.length === 0) setLoading(true);
+        if (conversationsRef.current.length === 0 && !quietInitRef.current) setLoading(true);
 
         // Connection state first: the shared socket is usually up already, and
         // Send must not wait for the list round trip to become usable.
@@ -714,9 +749,14 @@ export default function MessagesPage() {
           goToLogin(router);
           return;
         }
-        const data = await res.json();
-        
-        if (data.success) {
+        // A non-JSON reply (gateway error page) is a failure like any other.
+        const data = await res.json().catch(() => null);
+
+        if (!data?.success) {
+          if (conversationsRef.current.length === 0) setListError(true);
+        } else {
+          listAnswered = true;
+          setListError(false);
           const allConvs = data.data || [];
           
           // Server already filters by role=guest — only need to filter empty convos
@@ -921,8 +961,11 @@ export default function MessagesPage() {
       } catch (err) {
         console.error("Init error:", err);
         setConnectionStatus("error");
+        if (!listAnswered && conversationsRef.current.length === 0) setListError(true);
       } finally {
+        quietInitRef.current = false;
         setLoading(false);
+        setListRetrying(false);
       }
     }
 
@@ -958,7 +1001,7 @@ export default function MessagesPage() {
         socketManager.releaseSocket();
       }
     };
-  }, [token, userId, chatUrl]);
+  }, [token, userId, chatUrl, initNonce]);
 
   // Load messages when conversation is selected
   useEffect(() => {
@@ -1229,7 +1272,45 @@ export default function MessagesPage() {
     }
   };
 
-  const isPropertyLoaded = (conv) => Boolean(conv && propertyDetails[conv.propertyId]);
+  // "Settled" = the details are here OR their request failed: either way the row
+  // renders with real data / the row's own fallbacks instead of a skeleton.
+  const isPropertyLoaded = (conv) =>
+    Boolean(conv && (propertyDetails[conv.propertyId] || failedProperties[conv.propertyId]));
+
+  // Some rows are showing fallbacks because their property request failed.
+  const hasFailedProperties = conversations.some(
+    (conv) => conv.propertyId && failedProperties[conv.propertyId] === true && !propertyDetails[conv.propertyId],
+  );
+  // One request per DISTINCT failed property (fetchPropertyDetails dedupes),
+  // and only when the user presses the button.
+  const retryFailedProperties = () => {
+    const ids = [...new Set(conversations.map((c) => c.propertyId).filter((id) => id && failedProperties[id] === true && !propertyDetails[id]))];
+    setFailedProperties((prev) => {
+      const next = { ...prev };
+      ids.forEach((id) => delete next[id]); // settled "gone" listings stay settled
+      return next;
+    });
+    ids.forEach((id) => fetchPropertyDetails(id));
+  };
+  const retryConversations = async () => {
+    if (listRetrying) return;
+    setListRetrying(true);
+    // init() never reached the socket setup (the first request threw): refetching
+    // the list alone would leave Send disabled and no live updates until a reload,
+    // so run init() again in full.
+    if (!handlersRef.current) {
+      initCalledRef.current = false;
+      quietInitRef.current = true;
+      sessionStorage.removeItem('messages_last_init');
+      setInitNonce((n) => n + 1);
+      return; // init()'s finally clears listRetrying
+    }
+    try {
+      await refreshConversationsRef.current?.();
+    } finally {
+      setListRetrying(false);
+    }
+  };
 
   // Only the first name, for privacy (see hostFirstName).
   const getHostName = (conv) => hostFirstName(conv, propertyDetails);
@@ -1969,7 +2050,14 @@ export default function MessagesPage() {
 
         {/* Conversation List */}
         <div className="flex-1 overflow-y-auto">
-          {filteredConversations.length === 0 ? (
+          {listError && conversations.length === 0 ? (
+            <LoadError
+              title="Couldn't load your messages"
+              message="We couldn't reach your conversations. Check your connection and try again."
+              onRetry={retryConversations}
+              retrying={listRetrying}
+            />
+          ) : filteredConversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 px-4">
               <MessageCircle className="w-12 h-12 text-gray-300 mb-4" />
               <p className="text-gray-500 text-center">
@@ -1982,6 +2070,14 @@ export default function MessagesPage() {
             </div>
           ) : (
             <div className="p-2 space-y-2">
+              {hasFailedProperties && (
+                <LoadError
+                  variant="banner"
+                  message="Some conversation details couldn't load."
+                  onRetry={retryFailedProperties}
+                  className="rounded-lg border"
+                />
+              )}
               {filteredConversations.map((conv) => {
                 const unreadCount = conv.unreadCount?.[userId] || 0;
                 const propInfo = getPropertyInfo(conv);

@@ -116,7 +116,7 @@ export default function TaxesPage() {
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-4">
             <Select value={selectedProperty} onValueChange={setSelectedProperty}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[max(200px,13.3333rem)] max-w-[calc(100vw-2rem)]">
                 <SelectValue placeholder="Select property" />
               </SelectTrigger>
               <SelectContent>
