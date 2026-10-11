@@ -32,6 +32,26 @@ export function staysNoun(propertyType: string | null | undefined): string {
   return (propertyType && PLURAL[propertyType]) || "Stays";
 }
 
+/**
+ * The empty-result message when a place (or "near me") has nothing in or
+ * around it — said once, in the result box, with what to try next. Null for
+ * every other empty result (a name nobody matched keeps its own message).
+ */
+export function emptyResultCopy(meta: (SearchTitleMeta & { reason?: string | null }) | null, hasDates = false): { title: string; hint: string } | null {
+  if (!meta) return null;
+  const noun = staysNoun(meta.propertyType).toLowerCase();
+  if (meta.mode === "near") {
+    if (meta.reason === "filters") return { title: `No ${noun} near you match your filters`, hint: "Try removing a filter, or a town or district." };
+    if (meta.reason === "dates") return { title: `No ${noun} near you are free on ${hasDates ? "your dates" : "those dates"}`, hint: "Try other dates, or a town or district." };
+    return { title: `No ${noun} near you yet`, hint: "Try a town or district, or one of these destinations." };
+  }
+  if (meta.mode !== "nearby" || !meta.place) return null;
+  const where = `in or near ${meta.place.name}`;
+  if (meta.reason === "filters") return { title: `No ${noun} ${where} match your filters`, hint: "Try removing a filter, or another destination." };
+  if (meta.reason === "dates") return { title: `No ${noun} ${where} are free on ${hasDates ? "your dates" : "those dates"}`, hint: "Try other dates, or another destination." };
+  return { title: `No ${noun} ${where} yet`, hint: "We're adding new stays regularly. Meanwhile, try one of these destinations." };
+}
+
 export function searchTitle(meta: SearchTitleMeta | null): string {
   if (!meta) return "Discover Our Finest Stays";
   const noun = staysNoun(meta.propertyType);
