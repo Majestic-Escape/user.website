@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 type Item = {
   title: string;
   url: string;
+  also?: string[];
   icon?: LucideIcon;
   isActive?: boolean;
   badge?: number;
@@ -35,7 +36,7 @@ export function NavMain({ items, pathname }: { items: Item[]; pathname: string }
   const handleLinkClick = () => setOpenMobile(false);
   const current = activeHref(
     pathname,
-    items.map((i) => ({ href: i.url, exact: i.url === "/host/dashboard" })),
+    items.map((i) => ({ href: i.url, exact: i.url === "/host/dashboard", also: i.also })),
   );
 
   return (

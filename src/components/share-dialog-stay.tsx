@@ -44,7 +44,7 @@ export default function ShareDialog({
   }, []);
 
   const getShareUrl = () => {
-    return `https://majesticescape.in/property/${property.id}`;
+    return `https://majesticescape.in/stay/${property.id}`;
   };
 
   const handleShare = async (method: string) => {

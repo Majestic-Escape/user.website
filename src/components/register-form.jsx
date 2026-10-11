@@ -367,8 +367,15 @@ export default function RegisterPage() {
                     max={minDob}
                     min="1900-01-01"
                   />
+                  {/* Drawn only where the browser draws nothing for an empty
+                      date field (iOS WebKit; see .dob-ios-hint in globals.css).
+                      Chrome and Firefox print their own "mm/dd/yyyy", which this
+                      used to double. The input already has its aria-label. */}
                   {!formData.dob && (
-                    <div className="md:hidden absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-sm">
+                    <div
+                      aria-hidden="true"
+                      className="dob-ios-hint absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-sm"
+                    >
                       mm/dd/yyyy
                     </div>
                   )}

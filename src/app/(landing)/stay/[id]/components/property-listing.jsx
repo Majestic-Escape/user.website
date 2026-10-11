@@ -156,7 +156,7 @@ export default function PropertyListing({
           /> */}
         </div>
 
-        <div className="fixed bottom-0 z-[10] w-[92vw] right-4 md:right-0 md:w-auto  md:sticky md:top-48 md:self-start">
+        <div data-chrome-bar="bottom-sm" className="fixed bottom-0 z-[10] w-[92vw] right-4 md:right-0 md:w-auto  md:sticky md:top-48 md:self-start">
           <BookingWidget
             propertyId={propertyDetails?._id}
             manual={manual}

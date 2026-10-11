@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  ArrowLeft,
+  Info,
   Search,
   BookOpen,
   TrendingUp,
@@ -125,6 +127,40 @@ export default function HostResources() {
             enhance your hosting skills and grow your business.
           </p>
         </header>
+        {/* The sections below are hidden on purpose; until they return, say so
+            instead of leaving a bare title. */}
+        <div
+          role="note"
+          className="flex max-w-2xl items-start gap-3 rounded-2xl border border-primaryGreen/20 bg-primaryGreen/5 p-5 animate-in fade-in-0 duration-300 motion-reduce:animate-none"
+        >
+          <Info
+            aria-hidden="true"
+            className="mt-0.5 h-5 w-5 shrink-0 text-primaryGreen"
+          />
+          <div>
+            <p className="text-base text-absoluteDark">
+              We&apos;re still putting this together. In the meantime, our team
+              is happy to help at{" "}
+              <a
+                href="mailto:info@majesticescape.in"
+                className="font-medium text-primaryGreen underline underline-offset-2 hover:text-brightGreen"
+              >
+                info@majesticescape.in
+              </a>
+              .
+            </p>
+            <Button
+              asChild
+              size="lg"
+              className="mt-4 rounded-3xl bg-primaryGreen px-6 text-white hover:bg-brightGreen"
+            >
+              <Link href="/hosting">
+                <ArrowLeft aria-hidden="true" />
+                Back to hosting
+              </Link>
+            </Button>
+          </div>
+        </div>
         {/* <div className="mb-12">
           <div className="relative max-w-2xl">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />

@@ -41,6 +41,7 @@ export default function Navbar() {
   //hidden md:block
   return (
     <header
+      data-chrome-bar={isSearchVisible ? undefined : "top"}
       className={
         isSearchVisible
           ? "hidden md:block w-full bg-white z-[1002] font-poppins border-b px-4 md:px-6"

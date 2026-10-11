@@ -281,7 +281,7 @@ export default function ReservationsPage() {
 
         {/* <div className="flex items-center space-x-4">
           <Select className="bg-white" onValueChange={handleDateRangeChange}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[max(180px,12rem)] max-w-[calc(100vw-2rem)]">
               <SelectValue placeholder="Select date range" />
             </SelectTrigger>
             <SelectContent>
@@ -345,7 +345,7 @@ export default function ReservationsPage() {
           />
         </div>
         {/* <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[max(180px,12rem)] max-w-[calc(100vw-2rem)]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
