@@ -341,7 +341,7 @@ export function HostListingsTable({ userEmail }) {
               alt="Property thumbnail"
               width={50}
               height={50}
-              className="rounded-md cursor-pointer"
+              className="h-[50px] w-[50px] object-cover rounded-md cursor-pointer"
               onClick={() => handleImageClick(photos, row.getValue("title"))}
             />
           ) : (
@@ -651,14 +651,16 @@ export function HostListingsTable({ userEmail }) {
           images={selectedImages}
           propertyName={selectedPropertyName}
         />
-        <div className="flex items-center py-4">
+        {/* Wraps on phones: the filter takes a full row instead of collapsing to
+            ~77px next to the fixed-width status select and Columns button. */}
+        <div className="flex flex-wrap items-center gap-2 py-4">
           <Input
             placeholder="Filter listings..."
             value={table.getColumn("title")?.getFilterValue() ?? ""}
             onChange={(event) =>
               table.getColumn("title")?.setFilterValue(event.target.value)
             }
-            className="max-w-sm"
+            className="w-full sm:max-w-sm"
           />
           <Select
             value={table.getColumn("status")?.getFilterValue() ?? ""}
@@ -666,7 +668,7 @@ export function HostListingsTable({ userEmail }) {
               table.getColumn("status")?.setFilterValue(value)
             }
           >
-            <SelectTrigger className="w-[180px] ml-2">
+            <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>

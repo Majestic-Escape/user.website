@@ -35,19 +35,19 @@ export default function SafetyTips() {
                 </div>
                 <ul className="space-y-3 text-gray-700">
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Research your destination thoroughly, including local customs and laws</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Share your itinerary with family or friends</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Make copies of important documents (passport, visa, insurance)</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Check travel advisories for your destination</span>
                   </li>
                 </ul>
@@ -60,19 +60,19 @@ export default function SafetyTips() {
                 </div>
                 <ul className="space-y-3 text-gray-700">
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Stay aware of your surroundings at all times</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Use reputable transportation services</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Know the location of the nearest embassy or consulate</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Learn a few basic phrases in the local language</span>
                   </li>
                 </ul>
@@ -85,19 +85,19 @@ export default function SafetyTips() {
                 </div>
                 <ul className="space-y-3 text-gray-700">
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Use a money belt or hidden pouch for important documents and cash</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Avoid displaying expensive items or large amounts of cash</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Use hotel safes for valuables when available</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Have multiple payment methods (cash, cards) in case of emergency</span>
                   </li>
                 </ul>
@@ -110,19 +110,19 @@ export default function SafetyTips() {
                 </div>
                 <ul className="space-y-3 text-gray-700">
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Pack a basic first aid kit with essential medications</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Research health risks at your destination and get necessary vaccinations</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Drink bottled or purified water in areas with questionable water quality</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                    <span className="bg-[#e8f5e4] text-[#3c6e2f] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                     <span>Know how to contact emergency services in your destination</span>
                   </li>
                 </ul>
@@ -167,15 +167,15 @@ export default function SafetyTips() {
               </div>
               <ul className="space-y-3 text-gray-700">
                 <li className="flex items-start">
-                  <span className="bg-[#ffe8e8] text-[#e74c3c] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                  <span className="bg-[#ffe8e8] text-[#e74c3c] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                   <span>Know the local emergency numbers</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="bg-[#ffe8e8] text-[#e74c3c] rounded-full w-5 h-5 flex justify-center items-center p-1 mr-2 mt-0.5">•</span>
+                  <span className="bg-[#ffe8e8] text-[#e74c3c] rounded-full w-5 h-5 shrink-0 flex justify-center items-center p-1 mr-2 mt-0.5">•</span>
                   <span>Contact your country's embassy or consulate for serious situations</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="bg-[#ffe8e8] text-[#e74c3c] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 flex justify-center items-center">•</span>
+                  <span className="bg-[#ffe8e8] text-[#e74c3c] rounded-full p-1 mr-2 mt-0.5 w-5 h-5 shrink-0 flex justify-center items-center">•</span>
                   <span>Have your travel insurance information readily available</span>
                 </li>
               </ul>

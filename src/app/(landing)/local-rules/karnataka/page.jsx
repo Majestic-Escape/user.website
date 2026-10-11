@@ -43,6 +43,7 @@ export default function KarnatakaRules() {
                       <br />
                       <p>For hosts operating a Homestay:</p>
                       <br />
+                      <ul className="list-disc pl-5">
                       <li>
                         <strong>Registration of Homestays.</strong> Homestays
                         operating in Karnataka are required to be registered
@@ -71,7 +72,7 @@ export default function KarnatakaRules() {
                         operating your homestay in Karnataka, you should
                         maintain the following books and registers:
                         {/* a list inside the item (an <li> cannot sit directly in an <li>) */}
-                        <ul>
+                        <ul className="list-disc pl-5">
                           <li>A complaint/suggestion book;</li>
                           <li>
                             A registration book to record complete details of
@@ -85,6 +86,7 @@ export default function KarnatakaRules() {
                           </li>
                         </ul>
                       </li>
+                      </ul>
                     </dd>
                   </div>
                 </dl>

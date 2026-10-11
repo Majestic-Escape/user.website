@@ -125,7 +125,7 @@ export default function Page() {
   return (
     <div className="min-h-screen font-poppins">
       <header className="flow-root bg-offWhite shadow-sm">
-        <div className=" max-w-7xl mx-auto py-4 ml-10 sm:px-6 lg:px-8">
+        <div className=" max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl font-semibold font-bricolage text-absoluteDark mt-4">
               {`${fetchedData?.hostId?.firstName ?? ""} ${fetchedData?.hostId?.lastName ?? ""}`.trim() ||

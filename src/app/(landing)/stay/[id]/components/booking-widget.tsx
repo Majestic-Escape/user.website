@@ -739,7 +739,7 @@ export default function BookingWidget({
                 </div>
 
                 <PopoverContent
-                  className="w-auto h-auto p-0 z-[10001]"
+                  className="w-auto h-auto max-h-[var(--radix-popover-content-available-height)] overflow-y-auto p-0 z-[10001]"
                   align="start"
                   container={modalRef.current}
                   side={isMobile ? "top" : "bottom"}
@@ -1219,8 +1219,12 @@ export default function BookingWidget({
                   </div>
                 </div>
 
+                {/* max-h = the space Radix reports as available, scrolling inside:
+                    on short screens (e.g. 844x390) the 438px two-month calendar
+                    was taller than the viewport and its month arrows ended up
+                    above the top edge. */}
                 <PopoverContent
-                  className="w-auto h-auto p-0 z-[1000001]"
+                  className="w-auto h-auto max-h-[var(--radix-popover-content-available-height)] overflow-y-auto p-0 z-[1000001]"
                   align="start"
                   side={isMobile ? "top" : "bottom"}
                   sideOffset={isMobile ? -120 : -70}

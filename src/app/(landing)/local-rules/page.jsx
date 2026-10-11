@@ -19,7 +19,7 @@ import {
 // import { useRouter } from "next/navigation";
 export default function LocalRules() {
   return (
-    <div className="min-h-screen font-poppins pt-24">
+    <div className="min-h-screen font-poppins pt-10 md:pt-24">
       {/* <header className="bg-offWhite shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-semibold font-bricolage text-absoluteDark">
@@ -78,7 +78,7 @@ export default function LocalRules() {
                       <Link
                         href="mailto:info@majesticescape.in"
                         target="_blank"
-                        className="w-full bg-primaryGreen py-2 px-3 rounded-3xl hover:bg-brightGreen transition-colors text-sm text-white"
+                        className="w-full bg-primaryGreen py-2 px-3 rounded-3xl hover:bg-brightGreen transition-colors text-sm md:text-xs lg:text-sm text-white"
                       >
                         info@majesticescape.in
                       </Link>

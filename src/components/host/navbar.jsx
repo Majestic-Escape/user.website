@@ -20,8 +20,9 @@ const LINKS = [
   { label: "Help", href: "/host/help-center", icon: LifeBuoy },
 ];
 
+// md:px-3: at 768 the row is full and "Become a Host" wrapped to two lines.
 const link =
-  "inline-flex h-[44px] items-center rounded-full px-4 text-gray-600 transition-colors duration-200 [@media(hover:hover)]:hover:bg-gray-100 [@media(hover:hover)]:hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen";
+  "inline-flex h-[44px] items-center rounded-full px-4 md:px-3 lg:px-4 text-gray-600 transition-colors duration-200 [@media(hover:hover)]:hover:bg-gray-100 [@media(hover:hover)]:hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -52,7 +53,7 @@ export default function Navbar() {
           </Link>
           <Link
             href="/host/register"
-            className="hidden h-[44px] items-center rounded-full bg-primaryGreen px-6 text-white transition-[background-color,transform] duration-200 [@media(hover:hover)]:hover:bg-brightGreen active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-absoluteDark focus-visible:ring-offset-2 md:inline-flex"
+            className="hidden h-[44px] items-center whitespace-nowrap rounded-full bg-primaryGreen px-6 text-white transition-[background-color,transform] duration-200 [@media(hover:hover)]:hover:bg-brightGreen active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-absoluteDark focus-visible:ring-offset-2 md:inline-flex"
           >
             Become a Host
           </Link>

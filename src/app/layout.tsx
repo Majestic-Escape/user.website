@@ -104,8 +104,9 @@ export const viewport = {
   themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // No maximumScale / userScalable lock: users must be able to pinch-zoom
+  // (WCAG 1.4.4; Android Chrome honours user-scalable=no). iOS focus-zoom is
+  // prevented instead by keeping every phone text field at ≥16px (globals.css).
   viewportFit: "cover",
 };
 

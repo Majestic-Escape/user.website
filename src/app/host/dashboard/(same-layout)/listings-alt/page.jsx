@@ -187,7 +187,7 @@ export default function ManagePropertiesPage() {
         </Link>
       </div>
 
-      <div className="flex space-x-4 mb-4">
+      <div className="flex flex-wrap gap-4 mb-4">
         <div className="flex-1">
           <Label htmlFor="search" className="sr-only">
             Search properties

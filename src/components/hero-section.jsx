@@ -38,7 +38,7 @@ export default function HeroSection({ config }) {
   const hero = config ? withoutPreview(resolveHero(config, { source })) : fallback;
   if (!hero.isStatic && hero.cdnOrigin) preconnect(hero.cdnOrigin); // direct-CDN delivery only
   return (
-    <div className="pt-32 md:pt-46 w-screen -mx-[calc((100vw-100%)/2)] overflow-hidden">
+    <div className="pt-32 md:pt-46 w-full overflow-hidden">
       {/* padding on the wrapper: aspect-ratio on a border-box img would eat it */}
       <div className="w-full pt-6 md:pt-8 lg:pt-[58px]">
         <HeroPicture key={`${hero.isStatic ? "static" : "custom"}-${hero.version}`} hero={hero} fallback={fallback} />

@@ -39,7 +39,10 @@ export default function AccountLayout({ children }: LayoutProps) {
         <AccountHeader />
         <div className="flex">
           {/* <AccountSidebar /> */}
-          <main className="flex-1 p-8">{children}</main>
+          {/* <390px: this inset plus the form's own p-4 + p-6 squeezed the State select under 110px.
+              min-w-0: as a flex item main grew to the widest unbreakable value (a long
+              e-mail) and the profile card was cut off on phones. */}
+          <main className="flex-1 min-w-0 p-8 [@media(max-width:389px)]:px-0">{children}</main>
         </div>
       </div>
     </div>

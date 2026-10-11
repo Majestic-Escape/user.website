@@ -70,12 +70,15 @@ export default function Price({ data }: BookingCardProps) {
 
         {/* Date and Guest Selection */}
         <div className="border rounded-lg overflow-hidden">
-          <div className="grid grid-cols-2">
+          {/* The card sits in a ~175-220px column from md to lg, too narrow for two
+              date fields side by side (CHECK-OUT and the date were cut off), so the
+              fields stack there. Phones and desktop keep the two-column row. */}
+          <div className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="justify-start text-left font-normal h-14 rounded-none border-r"
+                  className="justify-start text-left font-normal h-14 rounded-none border-r md:border-r-0 md:border-b lg:border-b-0 lg:border-r"
                 >
                   <div>
                     <div className={cn("text-xs mb-1")}>
