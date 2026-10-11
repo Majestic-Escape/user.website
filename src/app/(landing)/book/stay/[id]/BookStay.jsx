@@ -92,6 +92,8 @@ const SERVER_MESSAGES = {
   BOOKING_NOT_PAYABLE: "This booking can no longer be paid. Please start again.",
   ORDER_IN_PROGRESS: "Payment is already being set up — please try again in a moment.",
   MAINTENANCE: "Bookings are briefly paused for maintenance — please try again in a few minutes.",
+  // SyncGuard: a connected OTA calendar could not be re-checked just now.
+  AVAILABILITY_UNVERIFIED: "We couldn't confirm these dates with the host's other booking sites just now. To protect you from a double booking, please try again in a few minutes.",
   UNDER_REVIEW: "Payment received. Our team is reviewing this booking and will confirm it by e-mail shortly.",
 };
 const serverErrorMessage = (body, fallback) =>
