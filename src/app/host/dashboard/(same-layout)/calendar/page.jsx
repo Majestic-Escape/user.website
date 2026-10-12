@@ -13,6 +13,7 @@ import {
 } from "date-fns";
 
 import axios from "axios";
+import { authHeaders } from "@/lib/session";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -82,8 +83,11 @@ const FullCalendarPage = () => {
   };
   async function fetchDates() {
     try {
+      // The host session is sent: a listing that is not public (in review,
+      // delisted) has no public calendar — only its host / an admin read it.
       const response = await axios.get(
-        `${API_URL}/booking/blocked-dates/${propertyId}`
+        `${API_URL}/booking/blocked-dates/${propertyId}`,
+        { headers: authHeaders() }
       );
 
       if (response.status != 200) {

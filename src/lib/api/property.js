@@ -27,15 +27,22 @@ function authHeaders() {
 }
 
 // Listing document, or throws (ApiError with `status` for HTTP failures,
-// plain Error for network failures). The public and Bearer responses are
-// byte-identical (checked), so one React Query entry — queryKeys.property(id)
-// — serves the stay page, checkout and any other reader.
-export async function fetchProperty(id, { fresh = false } = {}) {
+// plain Error for network failures). A public listing reads the same for
+// everyone; one that is not public answers its host / an admin / a booked
+// guest more than anyone else, so readers cache it per viewer
+// (queryKeys.property(id, viewer)) and pass that same viewer here: the
+// session token is sent only for a signed-in viewer ("anon" sends none).
+// Called without a viewer (checkout's pre-payment re-check) it sends the
+// stored session as before. The API's `access` marker (present only for a
+// listing that is not public) is kept on the returned object.
+export async function fetchProperty(id, { fresh = false, viewer, signal } = {}) {
   if (!id) throw new Error("Property ID is missing");
+  const withAuth = viewer === undefined || viewer !== "anon";
   const response = await fetch(`${API_URL}/properties/${id}`, {
     method: "GET",
     ...(fresh ? { cache: "no-store" } : {}),
-    headers: { "Content-Type": "application/json", ...authHeaders() },
+    ...(signal ? { signal } : {}),
+    headers: { "Content-Type": "application/json", ...(withAuth ? authHeaders() : {}) },
   });
   if (!response.ok) {
     throw new ApiError(
@@ -45,7 +52,7 @@ export async function fetchProperty(id, { fresh = false } = {}) {
   }
   const result = await response.json();
   if (!result?.data) throw new Error("Property data missing in response");
-  return result.data;
+  return result.access ? { ...result.data, access: result.access } : result.data;
 }
 
 // Unconditional network hit for the pre-payment re-check.
@@ -60,8 +67,14 @@ export async function fetchLatestAvailability(id) {
   const response = await fetch(`${API_URL}/booking/check-dates/${id}`, {
     method: "GET",
     cache: "no-store",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
   });
+  // A listing that is no longer public has no public calendar; the listing
+  // re-check that runs alongside reports it as unavailable.
+  if (response.status === 404) {
+    const body = await response.json().catch(() => null);
+    if (body?.code === "LISTING_NOT_PUBLIC") return [];
+  }
   if (!response.ok) {
     throw new ApiError(
       `Failed to fetch availability (status: ${response.status})`,
