@@ -14,6 +14,8 @@ import Location from "./components/location";
 import ThingsToKnow from "./components/things-to-know";
 import HostProfile from "./components/host-profile"; // Assuming this is the refactored component
 import ReviewSection from "./components/review-section";
+import StayUnavailable from "./components/stay-unavailable";
+import { useAuth } from "@/contexts/AuthContext";
 // Import the skeleton for HostProfile if you want a more granular loading state,
 // but the refactored HostProfile handles its own skeleton.
 // import { HostProfileSkeleton } from "./components/host-profile";
@@ -110,11 +112,58 @@ export default function PropertyPageClient({ initialProperty }) {
       refetchReview();
     }
   };
+  // The listing is cached per viewer (queryKeys.property): a listing that
+  // is not public reads differently for its host / an admin / a booked
+  // guest. The server-rendered copy is the ANONYMOUS view, so it seeds only
+  // the anonymous entry; a signed-in viewer sees it as a placeholder while
+  // their own copy loads (never stored under their key). The query waits for
+  // the session to be known (one render) so key and token always match.
+  const { user, authReady } = useAuth();
+  const viewer = user?._id ?? "anon";
+  const anonymous = viewer === "anon";
+  const {
+    data: propertyData,
+    isLoading: isPropertyLoading, // Renamed for clarity
+    error: propertyError, // Renamed for clarity
+    isFetching: isPropertyFetching,
+    isError: isPropertyError,
+    isPlaceholderData: isPropertyPlaceholder,
+  } = useQuery({
+    queryKey: queryKeys.property(propertyId, viewer),
+    queryFn: ({ signal }) => fetchProperty(propertyId, { viewer, signal }),
+    enabled: !!propertyId && authReady, // Only run if propertyId exists
+    // The server-rendered listing seeds the cache (no skeleton), but it is
+    // marked stale so one background revalidation still runs on a cold
+    // visit — the ISR page can be up to an hour old. Revisits within
+    // staleTime paint from the cache with no request.
+    initialData: anonymous ? initialProperty ?? undefined : undefined,
+    initialDataUpdatedAt: 0,
+    placeholderData: anonymous ? undefined : initialProperty ?? undefined,
+    ...PUBLIC,
+  });
+
+  // Who this listing is shown to: the API's access marker, present only for
+  // a listing that is not public (with an older API that sends no marker,
+  // any non-active status reads as "not available"). null = public listing.
+  const listingAccess =
+    propertyData?.access ??
+    (typeof propertyData?.status === "string" && propertyData.status !== "active" ? "public" : null);
+  const isLive = !listingAccess;
+  const isPreview = listingAccess === "owner" || listingAccess === "admin";
+  // The phone price / Reserve bar (rendered by the layout) only for a stay
+  // that can be booked; restored when this page goes away.
+  const { setStayBookable } = useAuth();
+  useEffect(() => {
+    setStayBookable(isLive);
+  }, [isLive, setStayBookable]);
+  useEffect(() => () => setStayBookable(true), [setStayBookable]);
+
   // Availability is LIVE: a cached list paints the calendar instantly on a
   // revisit, but it is never treated as fresh — it always revalidates (and
   // again on tab focus). Payment re-checks it over the network regardless.
   // `loading` drives the calendar spinner: true only until the first list
-  // arrives (a cached revisit paints the calendar immediately).
+  // arrives (a cached revisit paints the calendar immediately). A listing
+  // that is not public has no public calendar to show.
   const { data: unavailableDates = [], isPending: loading } = useQuery({
     queryKey: queryKeys.checkDates(propertyId),
     queryFn: async () => {
@@ -127,27 +176,8 @@ export default function PropertyPageClient({ initialProperty }) {
       const result = await response.json();
       return Array.isArray(result?.data) ? result.data : [];
     },
-    enabled: !!propertyId,
+    enabled: !!propertyId && isLive,
     ...LIVE,
-  });
-
-  const {
-    data: propertyData,
-    isLoading: isPropertyLoading, // Renamed for clarity
-    error: propertyError, // Renamed for clarity
-    isFetching: isPropertyFetching,
-    isError: isPropertyError,
-  } = useQuery({
-    queryKey: queryKeys.property(propertyId),
-    queryFn: () => fetchProperty(propertyId),
-    enabled: !!propertyId, // Only run if propertyId exists
-    // The server-rendered listing seeds the cache (no skeleton), but it is
-    // marked stale so one background revalidation still runs on a cold
-    // visit — the ISR page can be up to an hour old. Revisits within
-    // staleTime paint from the cache with no request.
-    initialData: initialProperty ?? undefined,
-    initialDataUpdatedAt: 0,
-    ...PUBLIC,
   });
 
   // --- Derive Host ID and Normalize ---
@@ -191,7 +221,7 @@ export default function PropertyPageClient({ initialProperty }) {
   } = useQuery({
     queryKey: queryKeys.reviews(propertyId, limit, skip),
     queryFn: () => fetchReview(propertyId, limit, skip),
-    enabled: !!propertyId, // Only run if propertyId exists
+    enabled: !!propertyId && (isLive || isPreview), // Only run if propertyId exists
     ...PUBLIC,
     // Paging keeps the previous reviews on screen instead of a skeleton.
     placeholderData: keepPreviousData,
@@ -220,7 +250,10 @@ export default function PropertyPageClient({ initialProperty }) {
 
   // --- Handle Main Property Loading/Error State ---
   // Show loading indicator if the main property data is loading
-  if (isPropertyLoading) {
+  // A signed-in viewer whose own copy of a not-public listing is still
+  // loading: wait for it rather than flash the anonymous "unavailable"
+  // panel at the listing's own host.
+  if (isPropertyLoading || (!anonymous && isPropertyPlaceholder && propertyData?.access === "public")) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
@@ -257,6 +290,26 @@ export default function PropertyPageClient({ initialProperty }) {
       </div>
     );
   }
+
+  // A listing that is not public: anyone but its host / an admin gets the
+  // "not available" page; a guest with a confirmed, paid booking gets what
+  // they booked under (the API never sends them the host's current text).
+  if (listingAccess === "public" || listingAccess === "bookedGuest") {
+    return (
+      <StayUnavailable
+        property={propertyData}
+        variant={listingAccess === "bookedGuest" ? "bookedGuest" : "public"}
+      />
+    );
+  }
+  const previewLabel =
+    propertyData?.status === "processing"
+      ? "Pending review"
+      : propertyData?.status === "incomplete"
+        ? "Draft"
+        : propertyData?.status === "inactive"
+          ? "Delisted"
+          : "Not public";
 
   // If property data exists, derive necessary values
   // Note: Put this *after* the loading/error checks for propertyData
@@ -339,6 +392,17 @@ export default function PropertyPageClient({ initialProperty }) {
       </Head>
       <main className="min-h-screen pt-[80px] md:pt-52 desktop:pt-56 bg-white booking-widget me-fade-in">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {isPreview ? (
+            <p
+              role="status"
+              data-stay-unbookable
+              className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            >
+              <span className="font-semibold">Preview · {previewLabel}.</span>{" "}
+              This stay isn&apos;t publicly listed or bookable. Guests can&apos;t
+              find or book it until it&apos;s live.
+            </p>
+          ) : null}
           {/* Property Title */}
           <h1 className="text-xl lg:mt-4 md:text-2xl font-bricolage font-semibold mb-4 md:mb-6">
             {propertyData?.title || "Property Title"}
@@ -366,6 +430,7 @@ export default function PropertyPageClient({ initialProperty }) {
                 isLoading={isPropertyLoading}
                 unavailableDates={unavailableDates}
                 loading={loading}
+                bookable={!isPreview}
               />
               {/* Review Section */}
               {/* Pass relevant review data and potentially property ID */}

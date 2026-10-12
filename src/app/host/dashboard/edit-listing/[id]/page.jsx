@@ -29,7 +29,7 @@ export default function EditListing({ params }) {
   // After a confirmed save: the stay page, the host's listings table and the
   // listing-stage card all read this listing.
   const invalidateListing = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.property(id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.propertyAll(id) });
     queryClient.invalidateQueries({ queryKey: queryKeys.hostListingsAll });
     queryClient.invalidateQueries({ queryKey: queryKeys.listingStatusAll });
   };

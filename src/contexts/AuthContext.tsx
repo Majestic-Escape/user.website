@@ -89,6 +89,11 @@ type AuthContextType = {
   setShowAllAmenities: React.Dispatch<React.SetStateAction<boolean>>;
   propertyIsActive: boolean;
   setPropertyIsActive: React.Dispatch<React.SetStateAction<boolean>>;
+  // false while a stay page shows a listing that is not publicly bookable
+  // (unavailable panel, a host's preview): the phone price / Reserve bar is
+  // not rendered then (it would carry the previous listing's price).
+  stayBookable: boolean;
+  setStayBookable: React.Dispatch<React.SetStateAction<boolean>>;
   openPriceModal: boolean;
   setOpenPriceModal: React.Dispatch<React.SetStateAction<boolean>>;
   resetClicked: boolean;
@@ -129,6 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [modalFilter, setModalFilter] = useState<boolean>(false);
   const [resetClicked, setResetClicked] = useState<boolean>(false);
   const [propertyIsActive, setPropertyIsActive] = useState<boolean>(false);
+  const [stayBookable, setStayBookable] = useState<boolean>(true);
   // Add all filter states from modal
   const [priceRange, setPriceRange] = useState([501, 83000]);
   const [rooms, setRooms] = useState({ bedrooms: 0, beds: 0, bathrooms: 0 });
@@ -424,6 +430,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setReturnUrl,
     propertyIsActive,
     setPropertyIsActive,
+    stayBookable,
+    setStayBookable,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

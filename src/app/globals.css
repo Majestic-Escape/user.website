@@ -531,3 +531,10 @@ html[data-me-overlay] majestic-chat-widget {
     animation-duration: 1ms;
   }
 }
+
+/* A stay page showing a listing that is not publicly bookable marks itself
+   (data-stay-unbookable): the phone price / Reserve bar stays hidden from the
+   first paint, before hydration removes it (AuthContext stayBookable). */
+body:has([data-stay-unbookable]) [data-price-nav] {
+  display: none;
+}

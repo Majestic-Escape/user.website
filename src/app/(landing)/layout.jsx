@@ -13,7 +13,7 @@ import { usePathname } from "next/navigation";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 export default function Layout({ children }) {
-  const { modalFilter, setModalFilter, openModal, closeModal, toggleModal } =
+  const { modalFilter, setModalFilter, openModal, closeModal, toggleModal, stayBookable } =
     useAuth();
   const pathname = usePathname();
 
@@ -53,7 +53,8 @@ export default function Layout({ children }) {
           </main>
           <FilterModal isOpen={modalFilter} onClose={closeModal} />
           <FooterWrapper />
-          {!isStayDetailPage ? <BottomNavigation /> : <PriceNavigation />}
+          {/* no price / Reserve bar on a stay that is not publicly bookable */}
+          {!isStayDetailPage ? <BottomNavigation /> : stayBookable ? <PriceNavigation /> : null}
         </div>
       </div>
     </>
