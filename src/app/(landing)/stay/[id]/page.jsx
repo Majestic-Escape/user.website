@@ -59,8 +59,15 @@ async function fetchProperty(id) {
   }
 
   const result = await response.json();
-  return result.data;
+  // `access` is present only for a listing that is not public (this fetch is
+  // anonymous, so it is always "public": the API's narrow view).
+  return result.access ? { ...result.data, access: result.access } : result.data;
 }
+
+// A listing that is not publicly listed (delisted, in review, a draft, under
+// a moderation ban) — older API without the marker: any non-active status.
+const isHiddenListing = (p) =>
+  !!p && (!!p.access || (typeof p.status === "string" && p.status !== "active"));
 
 // DYNAMIC METADATA FOR PROPERTY PAGE
 export async function generateMetadata({ params }) {
@@ -69,6 +76,17 @@ export async function generateMetadata({ params }) {
   try {
     const property = await fetchProperty(id);
     const siteUrl = process.env.NEXTAUTH_URL;
+
+    // Not bookable: no booking / price metadata, and kept out of search
+    // results until it is live again (the page is re-rendered when the
+    // listing changes — Batch P revalidation by tag).
+    if (isHiddenListing(property)) {
+      return {
+        title: `${property.title || "Stay"} | Majestic Escape`,
+        description: "This stay isn't available right now. Browse other stays on Majestic Escape.",
+        robots: { index: false, follow: true },
+      };
+    }
 
     return {
       title: `${property.title} | Majestic Escape`,

@@ -220,7 +220,7 @@ export function HostListingsTable({ userEmail }) {
       // Only after the 2xx: this table and the listing itself.
       fetchListings();
       queryClient.invalidateQueries({
-        queryKey: queryKeys.property(listingToDelete._id),
+        queryKey: queryKeys.propertyAll(listingToDelete._id),
       });
       toast.success(
         listingToDelete.status === "processing"
@@ -255,7 +255,10 @@ export function HostListingsTable({ userEmail }) {
         );
 
         if (!response.ok) {
-          throw new Error("Failed to delist the listing");
+          // e.g. 409: only a live listing can be delisted — say why
+          const body = await response.json().catch(() => null);
+          toast.error(body?.message || "Failed to delist listing");
+          return;
         }
 
         // setData((prevData) =>
@@ -267,7 +270,7 @@ export function HostListingsTable({ userEmail }) {
         // feed/search results that no longer include it.
         fetchListings();
         queryClient.invalidateQueries({
-          queryKey: queryKeys.property(listingToDelist._id),
+          queryKey: queryKeys.propertyAll(listingToDelist._id),
         });
         queryClient.invalidateQueries({ queryKey: queryKeys.frontStaysAll });
         queryClient.invalidateQueries({ queryKey: queryKeys.searchAll });
@@ -298,29 +301,36 @@ export function HostListingsTable({ userEmail }) {
         );
 
         if (!response.ok) {
-          throw new Error("Failed to delist the listing");
+          // 409: a listing that needs review / is under a moderation ban
+          // cannot be relisted by its host — the API says why.
+          const body = await response.json().catch(() => null);
+          toast.error(body?.message || "Failed to relist listing");
+          return;
         }
 
         // setData((prevData) =>
         //   prevData.filter((item) => item._id !== listingToDelete._id)
         // );
         const result = await response.json();
-        if (result.data == "adminDelist") {
-          toast.error("Admin has delisted your property");
+        // The API answers an admin-delisted listing with
+        // { listing: "adminDelist" } (this used to read result.data and
+        // reported success).
+        if (result.listing === "adminDelist" || result.data === "adminDelist") {
+          toast.error("This listing was delisted by Majestic Escape. Contact support to relist it.");
           return;
         }
         setRelistDialogOpen(false);
         setListingToRelist(null);
         fetchListings();
         queryClient.invalidateQueries({
-          queryKey: queryKeys.property(listingToRelist._id),
+          queryKey: queryKeys.propertyAll(listingToRelist._id),
         });
         queryClient.invalidateQueries({ queryKey: queryKeys.frontStaysAll });
         queryClient.invalidateQueries({ queryKey: queryKeys.searchAll });
         toast.success("Listing relisted successfully");
       } catch (error) {
-        console.error("Failed to delist listing:", error);
-        toast.error("Failed to delist listing");
+        console.error("Failed to relist listing:", error);
+        toast.error("Failed to relist listing");
         // You might want to show an error message to the user here
       }
     }

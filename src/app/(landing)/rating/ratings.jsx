@@ -183,7 +183,7 @@ export default function Ratings() {
           queryKey: queryKeys.reviewsAll(bookingData?.propertyId?._id),
         });
         queryClient.invalidateQueries({
-          queryKey: queryKeys.property(bookingData?.propertyId?._id),
+          queryKey: queryKeys.propertyAll(bookingData?.propertyId?._id),
         });
         queryClient.invalidateQueries({
           queryKey: queryKeys.bookingById(bookingId),

@@ -23,7 +23,15 @@ export const queryKeys = {
   searchAll: ["search"] as const,
   placesIndex: ["placesIndex"] as const,
   staySuggest: (q: string) => ["staySuggest", q] as const,
-  property: (id: Id) => ["property", id] as const,
+  // A listing as ONE viewer reads it: a listing that is not public answers
+  // its host / an admin / a booked guest more than an anonymous visitor
+  // (docs/listing-visibility.md on the API), so the entry is per viewer —
+  // the signed-in user's id, or "anon" — and a privileged answer can never
+  // sit where an anonymous reader (or the next account) would get it.
+  property: (id: Id, viewer: Id = "anon") =>
+    ["property", id, viewer ?? "anon"] as const,
+  // Prefix: every viewer's entry of a listing (invalidation only).
+  propertyAll: (id: Id) => ["property", id] as const,
   reviews: (propertyId: Id, limit: Id, skip: Id) =>
     ["review", propertyId, limit, skip] as const,
   reviewsAll: (propertyId: Id) => ["review", propertyId] as const,
