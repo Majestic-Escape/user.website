@@ -114,7 +114,7 @@ export default function StayRow({ title, subtitle, items, renderItem, testId }) 
         {items.map((item, i) => (
           <li
             key={item._id}
-            className="me-reveal-item w-[78%] max-w-[300px] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[calc((100%-3*1.25rem)/4)] lg:max-w-none"
+            className="me-reveal-item flex w-[78%] max-w-[300px] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[calc((100%-3*1.25rem)/4)] lg:max-w-none"
             style={i < 4 ? { transitionDelay: `${i * 40}ms` } : undefined}
           >
             {renderItem(item, i)}

@@ -97,7 +97,7 @@ function Rows({ data, host }) {
           title={NEARBY_ROW_TITLE}
           subtitle={nearbySubtitle(data.nearbyScope)}
           items={data.nearby}
-          renderItem={(stay) => <RelatedStayCard stay={stay} />}
+          renderItem={(stay) => <RelatedStayCard stay={stay} reserveDistance />}
         />
       ) : null}
     </div>

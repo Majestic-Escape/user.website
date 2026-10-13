@@ -156,6 +156,15 @@ check("component contract", () => {
   const clientSrc = read("src/app/(landing)/stay/[id]/PropertyPageClient.jsx");
   assert.match(cardSrc, /prefetch=\{false\}/, "cards never prefetch");
   assert.match(cardSrc, /aria-labelledby=/, "link named by the title");
+  // identical baselines whatever the content: fixed line slots, bottom-anchored footer, tabular numbers
+  assert.match(cardSrc, /h-\[2\.75em\]/, "the title always reserves two lines");
+  assert.match(cardSrc, /const line = "block h-5 truncate/, "each detail line is one fixed-height slot");
+  assert.match(cardSrc, /reserveDistance \|\| distance/, "the distance slot is reserved for the whole nearby row");
+  assert.match(cardSrc, /data-line="footer" className="mt-auto /, "the price row is anchored to the card bottom");
+  assert.match(cardSrc, /tabular-nums/, "prices and counts use tabular figures");
+  assert.ok(!/items-baseline/.test(cardSrc), "baseline alignment shifted the price next to the rating icon");
+  assert.match(sectionSrc, /reserveDistance/, "the nearby row passes reserveDistance");
+  assert.match(rowSrc, /me-reveal-item flex /, "row items stretch so every card is as tall as the tallest");
   assert.match(rowSrc, /aria-labelledby=\{headingId\}/);
   assert.match(rowSrc, /role="list"/);
   assert.match(rowSrc, /prefers-reduced-motion/);
