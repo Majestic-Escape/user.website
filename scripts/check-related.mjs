@@ -167,6 +167,9 @@ check("component contract", () => {
   assert.match(rowSrc, /me-reveal-item flex /, "row items stretch so every card is as tall as the tallest");
   assert.match(rowSrc, /aria-labelledby=\{headingId\}/);
   assert.match(rowSrc, /role="list"/);
+  assert.match(rowSrc, /aria-disabled=\{edges\.end\}/, "ends are aria-disabled (keeps keyboard focus)");
+  assert.ok(!/disabled=\{/.test(rowSrc), "no native disabled on the row controls (it drops focus to <body>)");
+  assert.match(rowSrc, /lg:-mx-1\.5 lg:scroll-px-1\.5 lg:gap-5 lg:px-1\.5/, "inline padding keeps focus rings unclipped at lg");
   assert.match(rowSrc, /prefers-reduced-motion/);
   assert.match(sectionSrc, /\.\.\.PUBLIC/);
   assert.match(sectionSrc, /RELATED_CLIENT_TIMEOUT_MS/, "every browser attempt has a deadline");

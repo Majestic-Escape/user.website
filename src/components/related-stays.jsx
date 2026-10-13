@@ -137,7 +137,7 @@ function RowSkeleton() {
   return (
     <div aria-hidden="true" className="space-y-4" data-testid="related-skeleton">
       <div className="h-7 w-56 max-w-full rounded bg-gray-100 motion-safe:animate-pulse" />
-      <div className="-mx-4 flex gap-4 overflow-hidden px-4 py-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:gap-5 lg:px-0">
+      <div className="-mx-4 flex gap-4 overflow-hidden px-4 py-2 sm:-mx-6 sm:px-6 lg:-mx-1.5 lg:gap-5 lg:px-1.5">
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className="w-[78%] max-w-[300px] shrink-0 sm:w-[42%] md:w-[30%] lg:w-[calc((100%-3*1.25rem)/4)] lg:max-w-none">
             <div className="aspect-[4/3] w-full rounded-xl bg-gray-100 motion-safe:animate-pulse" />

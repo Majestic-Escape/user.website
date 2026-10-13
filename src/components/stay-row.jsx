@@ -83,7 +83,7 @@ export default function StayRow({ title, subtitle, items, renderItem, testId }) 
 
   if (!items.length) return null;
   const btn =
-    "inline-flex h-[44px] w-[44px] items-center justify-center rounded-full border border-gray-300 bg-white text-absoluteDark shadow-sm transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white";
+    "inline-flex h-[44px] w-[44px] items-center justify-center rounded-full border border-gray-300 bg-white text-absoluteDark shadow-sm transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen focus-visible:ring-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-white";
 
   return (
     <section ref={sectionRef} aria-labelledby={headingId} data-testid={testId} data-reveal={reveal} className="font-poppins">
@@ -96,22 +96,26 @@ export default function StayRow({ title, subtitle, items, renderItem, testId }) 
         </div>
         {edges.overflow ? (
           <div className="hidden shrink-0 gap-2 md:flex">
-            <button type="button" className={btn} onClick={() => page(-1)} disabled={edges.start} aria-label={`Previous stays: ${title}`}>
+            {/* aria-disabled, not disabled: a focused button that becomes disabled at the end of the row would
+                drop keyboard focus to <body>; this keeps focus where it is and still announces "dimmed" */}
+            <button type="button" className={btn} onClick={() => !edges.start && page(-1)} aria-disabled={edges.start} aria-label={`Previous stays: ${title}`}>
               <ChevronLeft className="h-5 w-5" aria-hidden="true" />
             </button>
-            <button type="button" className={btn} onClick={() => page(1)} disabled={edges.end} aria-label={`Next stays: ${title}`}>
+            <button type="button" className={btn} onClick={() => !edges.end && page(1)} aria-disabled={edges.end} aria-label={`Next stays: ${title}`}>
               <ChevronRight className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
         ) : null}
       </div>
       {/* Bleeds to the screen edge on phones / tablets (the page gutter moves
-          inside the scroller); py keeps focus rings from being clipped. */}
+          inside the scroller); py — and at lg a 1.5 inline padding offset by the
+          same negative margin — keep the first / last card's focus ring (2 px +
+          2 px offset) from being clipped by the scroll container. */}
       {/* role="list": Safari drops list semantics from a ul without bullets */}
       <ul
         ref={scrollerRef}
         role="list"
-        className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-px-4 px-4 py-2 sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:mx-0 lg:scroll-px-0 lg:gap-5 lg:px-0"
+        className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-px-4 px-4 py-2 sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:-mx-1.5 lg:scroll-px-1.5 lg:gap-5 lg:px-1.5"
       >
         {items.map((item, i) => (
           <li
