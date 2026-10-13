@@ -10,6 +10,7 @@ import { counterpartName } from "@/lib/displayName";
 import {
   HOST_ROW_TITLE,
   NEARBY_ROW_TITLE,
+  RELATED_CLIENT_TIMEOUT_MS,
   RELATED_PATH,
   nearbySubtitle,
   readRelatedStays,
@@ -26,22 +27,50 @@ import {
 // malformed payload: `initialRelated === null`) does the browser fetch them,
 // once the section is near the viewport (on mount without
 // IntersectionObserver). Failures of that fetch render nothing: the rows
-// are optional, the stay page around them is unaffected.
+// are optional, the stay page around them is unaffected. Every attempt has
+// its own deadline (a request that never completes must not leave the
+// skeleton up), one retry follows a failure, and an `unavailable` answer
+// (the API could not answer) is a failure — never cached as "nothing
+// related": the next visit asks again.
 //
 // Render with key={propertyId} so moving between stays starts clean.
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-async function fetchRelatedStays(id, signal) {
-  const res = await fetch(`${API_URL}${RELATED_PATH(id)}`, { signal, headers: { Accept: "application/json" } });
-  if (!res.ok) {
-    const err = new Error(`related stays → ${res.status}`);
-    err.status = res.status;
-    throw err;
+// The caller's signal (React Query cancels on unmount) plus a deadline.
+// AbortSignal.any / timeout are newer than the browsers the site supports
+// (Safari < 17.4, Firefox < 124): a controller and a timer do the same.
+function withDeadline(signal, ms) {
+  const ctl = new AbortController();
+  const abort = () => ctl.abort();
+  const timer = setTimeout(abort, ms);
+  if (signal) {
+    if (signal.aborted) abort();
+    else signal.addEventListener("abort", abort, { once: true });
   }
-  const rows = readRelatedStays(await res.json(), id);
-  if (!rows) throw new Error("related stays: unexpected payload");
-  return rows;
+  return { signal: ctl.signal, done: () => { clearTimeout(timer); if (signal) signal.removeEventListener("abort", abort); } };
+}
+
+async function fetchRelatedStays(id, signal) {
+  const attempt = withDeadline(signal, RELATED_CLIENT_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${API_URL}${RELATED_PATH(id)}`, { signal: attempt.signal, headers: { Accept: "application/json" } });
+    if (!res.ok) {
+      const err = new Error(`related stays → ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
+    const rows = readRelatedStays(await res.json(), id);
+    if (!rows) throw new Error("related stays: unexpected payload");
+    if (rows.unavailable) {
+      const err = new Error("related stays: unavailable");
+      err.status = 503; // transient: retried once, never stored as data
+      throw err;
+    }
+    return rows;
+  } finally {
+    attempt.done();
+  }
 }
 
 function Rows({ data, host }) {

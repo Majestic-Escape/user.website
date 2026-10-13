@@ -160,6 +160,9 @@ check("component contract", () => {
   assert.match(rowSrc, /role="list"/);
   assert.match(rowSrc, /prefers-reduced-motion/);
   assert.match(sectionSrc, /\.\.\.PUBLIC/);
+  assert.match(sectionSrc, /RELATED_CLIENT_TIMEOUT_MS/, "every browser attempt has a deadline");
+  assert.match(sectionSrc, /if \(rows\.unavailable\) \{[\s\S]*?throw err/, "unavailable is a failure, never data");
+  assert.ok(R.RELATED_CLIENT_TIMEOUT_MS <= 6000);
   assert.match(sectionSrc, /queryKeys\.relatedStays\(/);
   assert.match(pageSrc, /AbortSignal\.timeout\(RELATED_TIMEOUT_MS\)/);
   assert.match(pageSrc, /readRelatedStays\(/);

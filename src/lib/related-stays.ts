@@ -10,7 +10,8 @@
 export const RELATED_PATH = (id: string) => `/properties/${encodeURIComponent(id)}/related`;
 export const HOST_ROW_MAX = 12;
 export const NEARBY_ROW_MAX = 8;
-export const RELATED_TIMEOUT_MS = 2500;
+export const RELATED_TIMEOUT_MS = 2500; // server render
+export const RELATED_CLIENT_TIMEOUT_MS = 5000; // each browser attempt
 
 export type RelatedCard = {
   _id: string;
