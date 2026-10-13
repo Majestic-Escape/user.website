@@ -39,35 +39,64 @@ const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // The caller's signal (React Query cancels on unmount) plus a deadline.
 // AbortSignal.any / timeout are newer than the browsers the site supports
-// (Safari < 17.4, Firefox < 124): a controller and a timer do the same.
+// (Safari < 17.4, Firefox < 124): a controller and a timer do the same. The
+// deadline also REJECTS the attempt itself, so a fetch or body read that never
+// settles even after its abort (seen under a test harness) cannot hold the
+// skeleton up: the attempt ends at the deadline whatever the platform does.
 function withDeadline(signal, ms) {
   const ctl = new AbortController();
-  const abort = () => ctl.abort();
-  const timer = setTimeout(abort, ms);
+  let fail;
+  const expired = new Promise((_, reject) => { fail = reject; });
+  expired.catch(() => {}); // only observed through the race below
+  const abort = (reason) => {
+    ctl.abort();
+    fail(reason);
+  };
+  const timer = setTimeout(() => {
+    const err = new Error("related stays: deadline");
+    err.name = "TimeoutError";
+    abort(err);
+  }, ms);
+  const onCallerAbort = () => {
+    const err = new Error("related stays: cancelled");
+    err.name = "AbortError";
+    abort(err);
+  };
   if (signal) {
-    if (signal.aborted) abort();
-    else signal.addEventListener("abort", abort, { once: true });
+    if (signal.aborted) onCallerAbort();
+    else signal.addEventListener("abort", onCallerAbort, { once: true });
   }
-  return { signal: ctl.signal, done: () => { clearTimeout(timer); if (signal) signal.removeEventListener("abort", abort); } };
+  return {
+    signal: ctl.signal,
+    race: (work) => Promise.race([work, expired]),
+    done: () => {
+      clearTimeout(timer);
+      if (signal) signal.removeEventListener("abort", onCallerAbort);
+    },
+  };
 }
 
 async function fetchRelatedStays(id, signal) {
   const attempt = withDeadline(signal, RELATED_CLIENT_TIMEOUT_MS);
   try {
-    const res = await fetch(`${API_URL}${RELATED_PATH(id)}`, { signal: attempt.signal, headers: { Accept: "application/json" } });
-    if (!res.ok) {
-      const err = new Error(`related stays → ${res.status}`);
-      err.status = res.status;
-      throw err;
-    }
-    const rows = readRelatedStays(await res.json(), id);
-    if (!rows) throw new Error("related stays: unexpected payload");
-    if (rows.unavailable) {
-      const err = new Error("related stays: unavailable");
-      err.status = 503; // transient: retried once, never stored as data
-      throw err;
-    }
-    return rows;
+    return await attempt.race(
+      (async () => {
+        const res = await fetch(`${API_URL}${RELATED_PATH(id)}`, { signal: attempt.signal, headers: { Accept: "application/json" } });
+        if (!res.ok) {
+          const err = new Error(`related stays → ${res.status}`);
+          err.status = res.status;
+          throw err;
+        }
+        const rows = readRelatedStays(await res.json(), id);
+        if (!rows) throw new Error("related stays: unexpected payload");
+        if (rows.unavailable) {
+          const err = new Error("related stays: unavailable");
+          err.status = 503; // transient: retried once, never stored as data
+          throw err;
+        }
+        return rows;
+      })(),
+    );
   } finally {
     attempt.done();
   }
