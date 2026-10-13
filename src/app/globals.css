@@ -376,6 +376,22 @@ body {
   }
 }
 
+/* Stay page related rows (components/stay-row.jsx): a row that enters the
+   viewport after hydration fades / rises 8 px once. "armed" is only ever set
+   by script for a row below the fold, so the server HTML and no-JS / reduced
+   motion readers always see the cards. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal="armed"] .me-reveal-item {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  [data-reveal="shown"] .me-reveal-item {
+    transition:
+      opacity 320ms ease-out,
+      transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
 /* The floating chat widget (a <majestic-chat-widget> custom element appended
    to <body>) must stay usable while a modal dialog is open: Radix locks the
    page with `body { pointer-events: none }`, which the widget would inherit
