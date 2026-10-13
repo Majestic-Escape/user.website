@@ -171,6 +171,7 @@ check("component contract", () => {
   assert.ok(!/disabled=\{/.test(rowSrc), "no native disabled on the row controls (it drops focus to <body>)");
   assert.match(rowSrc, /lg:-mx-1\.5 lg:scroll-px-1\.5 lg:gap-5 lg:px-1\.5/, "inline padding keeps focus rings unclipped at lg");
   assert.match(rowSrc, /prefers-reduced-motion/);
+  assert.match(read("src/app/globals.css"), /@media screen and \(prefers-reduced-motion: no-preference\) \{\s*\[data-reveal="armed"\]/, "the reveal's hidden state is screen-only (printing keeps the cards)");
   assert.match(sectionSrc, /\.\.\.PUBLIC/);
   assert.match(sectionSrc, /RELATED_CLIENT_TIMEOUT_MS/, "every browser attempt has a deadline");
   assert.match(sectionSrc, /Promise\.race\(\[work, expired\]\)/, "the deadline rejects the attempt itself, not only its fetch signal");

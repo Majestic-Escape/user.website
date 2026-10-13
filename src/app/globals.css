@@ -379,8 +379,9 @@ body {
 /* Stay page related rows (components/stay-row.jsx): a row that enters the
    viewport after hydration fades / rises 8 px once. "armed" is only ever set
    by script for a row below the fold, so the server HTML and no-JS / reduced
-   motion readers always see the cards. */
-@media (prefers-reduced-motion: no-preference) {
+   motion readers always see the cards. Screen only: a page printed before the
+   rows were scrolled into view must still print them. */
+@media screen and (prefers-reduced-motion: no-preference) {
   [data-reveal="armed"] .me-reveal-item {
     opacity: 0;
     transform: translateY(8px);
