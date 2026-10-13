@@ -67,7 +67,9 @@ export default function StayRow({ title, subtitle, items, renderItem, testId }) 
           io.disconnect();
         }
       },
-      { threshold: 0.15 },
+      // any visible pixel reveals: a ratio threshold could never be met by a section much taller than a
+      // very short viewport (extreme zoom), which would leave the cards invisible
+      { threshold: 0 },
     );
     io.observe(el);
     return () => io.disconnect();
