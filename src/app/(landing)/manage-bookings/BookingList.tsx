@@ -442,10 +442,19 @@ const ManageBookings: React.FC = () => {
           }),
         });
         if (!response.ok) {
-          toast.error("Failed Refund Payment");
+          const body = await response.json().catch(() => null);
+          // REFUND_FAILED: the gateway refused the refund (e.g. not enough
+          // balance on the merchant account). The server leaves the booking
+          // untouched and alerts the team, so say exactly that.
+          toast.error(
+            body?.code === "REFUND_FAILED"
+              ? "We couldn't cancel this booking because the refund didn't go through. Your booking is still active and nothing has changed. Our team has been alerted. Please try again later or email info@majesticescape.in."
+              : body?.message || "We couldn't cancel this booking. Please try again.",
+            { duration: 10000 },
+          );
           return;
         }
-        toast.success("Successfully send the cancellation email");
+        toast.success("Your booking has been cancelled. We've emailed you the details.");
         // Only after the 2xx: the list, this booking, and the listing's
         // availability calendar are all stale now.
         fetchData();
@@ -460,6 +469,7 @@ const ManageBookings: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
+      toast.error("We couldn't reach the server. Please check your connection and try again.");
     }
   };
 
