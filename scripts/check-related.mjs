@@ -19,9 +19,9 @@ const ts = projectRequire("typescript");
 function loadTs(file) {
   const src = readFileSync(file, "utf8");
   const out = ts.transpileModule(src, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
-  const module = { exports: {} };
-  new Function("module", "exports", "require", out)(module, module.exports, projectRequire);
-  return module.exports;
+  const mod = { exports: {} };
+  new Function("module", "exports", "require", out)(mod, mod.exports, projectRequire);
+  return mod.exports;
 }
 
 let failures = 0;
