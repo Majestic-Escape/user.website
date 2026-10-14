@@ -329,13 +329,22 @@ export default function MessagesPage() {
     }
   };
 
-  // Prevent body scroll and hide footer on mount
+  // Prevent page scroll and hide footer on mount. The lists and the thread are
+  // the only scrollers here. Locking <body> alone does not do it: globals.css
+  // gives <html> overflow-x: hidden, which makes <html> (not <body>) the page's
+  // scroller, so on phones the page itself scrolled under the conversation
+  // list — a fling past its end moved the screen instead, and the way back up
+  // took an extra fling.
   useEffect(() => {
+    const html = document.documentElement;
+    const prevHtmlOverflow = html.style.overflow;
+    html.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
     const footer = document.querySelector('footer');
     if (footer) footer.style.display = 'none';
     
     return () => {
+      html.style.overflow = prevHtmlOverflow;
       document.body.style.overflow = '';
       if (footer) footer.style.display = '';
     };
@@ -1968,9 +1977,11 @@ export default function MessagesPage() {
   }
 
 
-  // Desktop View
+  // Desktop View (and the phone conversation list). Exactly the visible
+  // screen, less the fixed header and (phones) the bottom tab bar, so the
+  // list's first and last rows can always be scrolled fully into view.
   return (
-    <div className="h-screen pt-12 md:pt-[76px] pb-16 md:pb-0 w-full bg-white font-poppins flex overflow-hidden">
+    <div className="h-[var(--visible-vh)] pt-12 md:pt-[76px] pb-[var(--guest-tab-bar-h)] md:pb-0 w-full bg-white font-poppins flex overflow-hidden">
       {/* Conversation List */}
       <div
         className={`${
@@ -2048,8 +2059,9 @@ export default function MessagesPage() {
           </div>
         </div>
 
-        {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Conversation List — overscroll stays in the list: no page
+            pull-to-refresh or rubber-banding of the screen at either end. */}
+        <div className="flex-1 overflow-y-auto overscroll-y-contain">
           {listError && conversations.length === 0 ? (
             <LoadError
               title="Couldn't load your messages"
@@ -2086,10 +2098,10 @@ export default function MessagesPage() {
                 return (
                   <Card
                     key={conv.id}
-                    className={`p-3 cursor-pointer border-none shadow-none rounded-xl transition-colors ${
+                    className={`p-3 cursor-pointer border-none shadow-none rounded-xl transition-colors duration-150 select-none ${
                       selectedConversation?.id === conv.id
                         ? "bg-lightGreen/40"
-                        : "bg-gray-50 hover:bg-lightGreen/20"
+                        : "bg-gray-50 [@media(hover:hover)]:hover:bg-lightGreen/20 active:bg-lightGreen/30"
                     }`}
                     onClick={() => handleSelectConversation(conv)}
                   >
@@ -2339,7 +2351,7 @@ export default function MessagesPage() {
           <div className="relative flex-1 flex flex-col min-h-0">
           <div
             ref={messagesContainerRef}
-            className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 bg-gray-50"
+            className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain p-4 space-y-4 bg-gray-50"
             onScroll={handleThreadScroll}
           >
             {loadingMessages ? (

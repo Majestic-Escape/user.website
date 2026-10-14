@@ -210,6 +210,12 @@ body {
 @supports (height: 100dvh) {
   :root {
     --mobile-vh: 100dvh;
+    /* The height actually on screen: follows the phone's URL bar as it shows
+       and hides. 100vh is the height with the bar hidden, so a 100vh app shell
+       is taller than the screen while the bar shows and the page itself starts
+       scrolling under its inner lists. Never written by script (the host chat
+       thread overwrites --mobile-vh with a keyboard-adjusted px value). */
+    --visible-vh: 100dvh;
   }
 }
 
@@ -217,7 +223,17 @@ body {
 @supports not (height: 100dvh) {
   :root {
     --mobile-vh: 100vh;
+    --visible-vh: 100vh;
   }
+}
+
+/* Height of the fixed phone tab bars (components/nav/bottom-tab-bar.tsx): the
+   row (h-16 guest, h-[4.5rem] host) + its 1px top border + the home-indicator
+   inset it pads below itself. Full-height screens reserve exactly this so
+   their last row is never under the bar. Keep in step with that component. */
+:root {
+  --guest-tab-bar-h: calc(4rem + 1px + env(safe-area-inset-bottom, 0px));
+  --host-tab-bar-h: calc(4.5rem + 1px + env(safe-area-inset-bottom, 0px));
 }
 
 /* Mobile chat container styles */

@@ -19,7 +19,7 @@ import { ConversationRowSkeleton } from "@/components/conversation-row-skeleton"
 export default function MessagesSkeleton({ rows = 5 }) {
   return (
     <div
-      className="h-screen pt-12 md:pt-[76px] pb-16 md:pb-0 w-full bg-white font-poppins flex overflow-hidden"
+      className="h-[var(--visible-vh)] pt-12 md:pt-[76px] pb-[var(--guest-tab-bar-h)] md:pb-0 w-full bg-white font-poppins flex overflow-hidden"
       aria-busy="true"
       aria-live="polite"
     >
