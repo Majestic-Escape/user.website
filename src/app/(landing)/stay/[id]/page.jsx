@@ -8,6 +8,8 @@
 // availability-critical depends on this cache.
 import { notFound } from "next/navigation";
 import PropertyPageClient from "./PropertyPageClient";
+import { backendBase } from "@/lib/server/catalogue";
+import { RELATED_PATH, RELATED_TIMEOUT_MS, readRelatedStays } from "@/lib/related-stays";
 
 // ISR: cache each listing's HTML + RSC payload for 1 hour (matches the Data
 // Cache window on fetchProperty below).
@@ -62,6 +64,34 @@ async function fetchProperty(id) {
   // `access` is present only for a listing that is not public (this fetch is
   // anonymous, so it is always "public": the API's narrow view).
   return result.access ? { ...result.data, access: result.access } : result.data;
+}
+
+// "More stays hosted by …" / "Similar stays nearby" (server.me
+// docs/related-stays.md), rendered with the page so most guests never call
+// the API for them. Cached with the page's data (1 h, purged with the
+// `listings` / `listing:<id>` tags on any listing change); with the site's
+// catalogue secret it bypasses the API's edge copy, so a regeneration after
+// a purge never refills from a stale response (lib/server/catalogue.ts).
+// Never throws: any failure, a timeout (bounded so the page is not held up)
+// or a malformed payload gives null, and the browser fetches the rows itself.
+async function fetchRelatedStays(id) {
+  try {
+    const base = backendBase();
+    if (!base) return null;
+    const secret = process.env.CATALOGUE_FRESH_SECRET;
+    const response = await fetch(`${base}${RELATED_PATH(id)}${secret ? "?fresh=1" : ""}`, {
+      headers: secret ? { "x-catalogue-fresh": secret } : {},
+      next: { revalidate: 3600, tags: ["listings", `listing:${id}`] },
+      signal: AbortSignal.timeout(RELATED_TIMEOUT_MS),
+    });
+    if (!response.ok) throw new Error(`status ${response.status}`);
+    const rows = readRelatedStays(await response.json(), id);
+    // "could not answer" is not "nothing related": leave it to the browser
+    return rows && !rows.unavailable ? rows : null;
+  } catch (error) {
+    console.error("[related] server fetch failed:", error && error.message);
+    return null;
+  }
 }
 
 // A listing that is not publicly listed (delisted, in review, a draft, under
@@ -146,6 +176,8 @@ export async function generateMetadata({ params }) {
 export default async function PropertyPage({ params }) {
   const { id } = await params;
   if (!isListingId(id)) notFound();
+  // In parallel with the listing; never rejects (see fetchRelatedStays).
+  const relatedPromise = fetchRelatedStays(id);
   let property;
   try {
     property = await fetchProperty(id);
@@ -156,5 +188,7 @@ export default async function PropertyPage({ params }) {
     // cached and served for an hour.
     throw error;
   }
-  return <PropertyPageClient initialProperty={property} params={{ id }} />;
+  // A stay that is not live shows no related rows.
+  const initialRelated = isHiddenListing(property) ? null : await relatedPromise;
+  return <PropertyPageClient initialProperty={property} initialRelated={initialRelated} params={{ id }} />;
 }
