@@ -1249,8 +1249,9 @@ export default function HostInboxPage() {
         </div>
       </div>
 
-      {/* Conversation List */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Conversation List — overscroll stays in the list (no page
+          pull-to-refresh at the top) */}
+      <div className="flex-1 overflow-y-auto overscroll-y-contain">
         {isLoading ? (
           // Skeleton rows rather than a bare spinner, and the same component
           // /messages uses — the two inboxes now have one loading appearance.
@@ -1290,10 +1291,10 @@ export default function HostInboxPage() {
               return (
                 <Card
                   key={conv.id}
-                  className={`p-3 cursor-pointer border-none shadow-none rounded-xl transition-colors ${
+                  className={`p-3 cursor-pointer border-none shadow-none rounded-xl transition-colors duration-150 select-none ${
                     selectedConversation?.id === conv.id
                       ? "bg-lightGreen/40"
-                      : "bg-gray-50 hover:bg-lightGreen/20"
+                      : "bg-gray-50 [@media(hover:hover)]:hover:bg-lightGreen/20 active:bg-lightGreen/30"
                   }`}
                   onClick={() => handleSelectConversation(conv)}
                 >
@@ -1531,15 +1532,28 @@ export default function HostInboxPage() {
                     <div key={message.id} className={`flex flex-col mb-2 ${isOwn ? "items-end" : "items-start"}`}>
                       {isOwn && <span className="text-[11px] text-gray-400 mb-1 mr-1">{formatMessageTime(message.createdAt)}</span>}
                       {showSenderInfo && (
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 ml-10">
                           <span className="text-[11px] text-gray-500">{guestFirstName} · Guest {formatMessageTime(message.createdAt)}</span>
                         </div>
                       )}
+                      {/* The guest's circle beside their messages — the same
+                          one /messages shows beside the host's (initial unless
+                          a photo is known; the chat server shares none). */}
                       <SwipeToReply
                         messageId={message.id}
                         own={isOwn}
                         authorName={isOwn ? "you" : guestFirstName}
                         onReply={() => startReply(message)}
+                        avatar={!isOwn && (
+                          <Avatar className="w-8 h-8 mr-2 flex-shrink-0 self-end">
+                            {getGuestAvatar(selectedConversation) ? (
+                              <AvatarImage src={getGuestAvatar(selectedConversation)} />
+                            ) : null}
+                            <AvatarFallback className="bg-primaryGreen text-white text-xs">
+                              {guestFirstName.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
                       >
                         <div
                           className={`inline-block max-w-full ${isOwn ? "bg-primaryGreen text-white" : "bg-white shadow-sm border border-gray-100"} rounded-2xl px-4 py-2`}
@@ -1653,9 +1667,11 @@ export default function HostInboxPage() {
     );
   }
 
-  // Desktop layout or mobile conversation list
+  // Desktop layout or mobile conversation list (a phone thread returned
+  // above). Phones: the visible screen less the top bar and the bottom
+  // navigation (see layout.jsx), so the last conversation clears the bar.
   return (
-    <div className={`${isMobileView && selectedConversation ? 'h-[calc(100vh-64px)]' : 'h-[calc(100vh-64px-64px)]'} md:h-full bg-white font-poppins flex overflow-hidden w-full`}>
+    <div className="h-[calc(var(--visible-vh)_-_4rem_-_var(--host-tab-bar-h))] md:h-full bg-white font-poppins flex overflow-hidden w-full">
       {renderConversationList()}
       
       {selectedConversation ? (

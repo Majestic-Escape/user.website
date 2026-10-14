@@ -11,7 +11,10 @@ export const FolderContentsDialog = ({ isOpen, onClose, folderName, items }) => 
 
   return createPortal(
     <div className="fixed inset-0 font-poppins bg-white z-[60]">
-      <div className="h-screen flex flex-col">
+      {/* h-full of the fixed overlay = the visible screen. h-screen (100vh) is
+          taller than a phone screen while its URL bar shows, which put the
+          grid's last row below the bottom edge, out of reach. */}
+      <div className="h-full flex flex-col">
         <header className="px-6 h-20 flex items-center border-b border-gray-200">
           <button
             onClick={onClose}
@@ -22,7 +25,7 @@ export const FolderContentsDialog = ({ isOpen, onClose, folderName, items }) => 
           <h1 className=" font-bricolage ml-6 text-xl font-semibold">{folderName}</h1>
         </header>
 
-        <div className="flex-1 overflow-auto px-6 py-4">
+        <div className="flex-1 overflow-auto overscroll-contain px-6 py-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
             {items.map((item, index) => (
               <div key={index} className="relative aspect-[1/1.1] flex flex-col">

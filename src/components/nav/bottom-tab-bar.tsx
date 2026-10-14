@@ -9,7 +9,9 @@ import CountBadge, { countLabel } from "@/components/nav/count-badge";
 import { cn } from "@/lib/utils";
 
 // listClassName: the row's height where a bar keeps its own (the host bar is
-// production's 4.5rem, the guest bar 4rem).
+// production's 4.5rem, the guest bar 4rem). Full-height screens reserve the
+// bar's height through --guest-tab-bar-h / --host-tab-bar-h (globals.css):
+// change a row height or the border here and update those too.
 export function BottomTabBar({ label, columns, children, className, listClassName }: { label: string; columns: number; children: React.ReactNode; className?: string; listClassName?: string }) {
   return (
     <nav

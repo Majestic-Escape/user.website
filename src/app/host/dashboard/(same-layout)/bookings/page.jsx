@@ -460,9 +460,12 @@ export default function ReservationsPage() {
           Bookings
         </h1>
         {showInvoice && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          // z-[60]: above the phone tab bar (z-50, later in the page), which
+          // otherwise covered the footer's Download PDF. Capped to the visible
+          // screen (90vh is taller than a phone screen with its URL bar up).
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
             {/* Outer container — center modal */}
-            <div className="bg-white w-full rounded-2xl max-w-2xl max-h-[90vh] flex flex-col relative">
+            <div className="bg-white w-full rounded-2xl max-w-2xl max-h-[min(90vh,calc(var(--visible-vh)_-_2rem))] flex flex-col relative">
               {/* Header (fixed top) */}
               <div className="sticky rounded-t-2xl top-0 bg-white  border-b flex justify-between items-center px-4 py-3 z-10">
                 <h2 className="text-lg font-semibold text-gray-800">Invoice</h2>
@@ -490,7 +493,7 @@ export default function ReservationsPage() {
               </div>
 
               {/* Scrollable Content */}
-              <div ref={printRef} className="flex-1 overflow-y-auto px-6 py-4">
+              <div ref={printRef} className="flex-1 overflow-y-auto overscroll-contain px-6 py-4">
                 <Invoice payment={payment} invoiceData={invoiceData} />
               </div>
 
