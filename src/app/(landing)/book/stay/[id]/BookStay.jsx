@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { Star, ChevronLeft, Check } from "lucide-react";
+import { Star, ChevronLeft, Check, AlertTriangle, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 import { toast } from "sonner";
@@ -43,6 +43,7 @@ import {
 } from "@/lib/api/property";
 import { createPortal } from "react-dom";
 import LoginLink from "@/components/login-link";
+import { verifyWithRetry } from "@/lib/payment-verify";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Function to fetch property data
@@ -245,6 +246,22 @@ function BookPageContent() {
     : 0;
   const [guestInfo, setGuestInfo] = useState([]);
   const [summaryRoute, setSummaryRoute] = useState(false);
+  // Razorpay took the money and the server is being asked to confirm it.
+  const [confirmingPayment, setConfirmingPayment] = useState(false);
+  // The money was taken but the booking could not be confirmed from here:
+  // { paymentId, kind } (lib/payment-verify). Keeps Pay locked — paying
+  // again would charge the guest twice.
+  const [paymentIssue, setPaymentIssue] = useState(null);
+  const paymentIssueRef = useRef(null);
+  // When it appears: bring it into view and move focus there, so keyboard
+  // and screen-reader users land on it (role=alert also announces it).
+  useEffect(() => {
+    const el = paymentIssueRef.current;
+    if (!paymentIssue || !el) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
+    el.focus({ preventScroll: true });
+  }, [paymentIssue]);
   const [unavailableDates, setUnavailableDates] = useState([]);
   const auth = async () => {
     const getLocalData = await localStorage.getItem("token");
@@ -783,32 +800,26 @@ function BookPageContent() {
       console.error(err);
     }
   };
-  const verifyPayment = async (orderId, paymentId, signature, method) => {
-    try {
-      const userId = JSON.parse(localStorage.getItem("userId"));
-      const getLocalData = await localStorage.getItem("token");
-      const data = JSON.parse(getLocalData);
-      const response = await fetch(`${API_URL}/payment/verify-payment`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${data}`,
-        },
-        body: JSON.stringify({
-          razorpay_order_id: orderId,
-          razorpay_payment_id: paymentId,
-          razorpay_signature: signature,
-          paymentMethod: method,
-        }),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to save the data");
-      }
-      const result = await response.json();
-      return result;
-    } catch (err) {
-      console.error(err);
-    }
+  // One verify attempt: { ok, status, body }; throws only when the request
+  // never got an answer. verifyWithRetry (lib/payment-verify) decides what a
+  // failure means — the money is already taken at this point.
+  const verifyPaymentOnce = async (orderId, paymentId, signature, method) => {
+    const data = JSON.parse(localStorage.getItem("token"));
+    const response = await fetch(`${API_URL}/payment/verify-payment`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${data}`,
+      },
+      body: JSON.stringify({
+        razorpay_order_id: orderId,
+        razorpay_payment_id: paymentId,
+        razorpay_signature: signature,
+        paymentMethod: method,
+      }),
+    });
+    const body = await response.json().catch(() => null);
+    return { ok: response.ok, status: response.status, body };
   };
   const updateBookingStatus = async (
     bookingId,
@@ -1065,12 +1076,25 @@ function BookPageContent() {
             }),
           );
 
-          const verify = await verifyPayment(
-            order_id?.data?.id, //orderid from server
-            response.razorpay_payment_id,
-            response.razorpay_signature,
-            response.method,
+          setConfirmingPayment(true);
+          const outcome = await verifyWithRetry(() =>
+            verifyPaymentOnce(
+              order_id?.data?.id, //orderid from server
+              response.razorpay_payment_id,
+              response.razorpay_signature,
+              response.method,
+            ),
           );
+          if (!outcome.ok) {
+            // Paid, but not confirmed from here. The server can still settle
+            // it (Razorpay webhook), so the guest is told exactly that, given
+            // the payment ID, and kept from paying a second time.
+            console.error("[checkout] payment not verified", outcome);
+            setConfirmingPayment(false);
+            setPaymentIssue({ paymentId: response.razorpay_payment_id || "", kind: outcome.kind });
+            return;
+          }
+          const verify = outcome.result;
 
           const hostEmail = await property.hostEmail;
           if (verify) {
@@ -1670,16 +1694,72 @@ function BookPageContent() {
               </div>
             )} */}
             <div className="mb-8">
+              {paymentIssue && (
+                <div
+                  ref={paymentIssueRef}
+                  role="alert"
+                  tabIndex={-1}
+                  aria-labelledby="payment-issue-title"
+                  className="mb-4 scroll-mt-24 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 me-fade-in outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                >
+                  <div className="flex gap-3">
+                    <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" aria-hidden="true" />
+                    <div className="min-w-0 space-y-2">
+                      <p id="payment-issue-title" className="font-semibold">
+                        {paymentIssue.kind === "rejected"
+                          ? "We couldn't confirm this payment"
+                          : "Payment received — your booking isn't confirmed yet"}
+                      </p>
+                      <p>
+                        {paymentIssue.kind === "rejected"
+                          ? "Please don't pay again. If money left your account, contact us with the payment ID below and we'll resolve it."
+                          : "Your payment went through, but we couldn't confirm the booking just now. Please don't pay again — we're still confirming it and will email you. It will then show in My bookings."}
+                        {paymentIssue.kind === "session" && " Your sign-in has expired, so sign in again to see it."}
+                      </p>
+                      {paymentIssue.paymentId && (
+                        <p>
+                          Payment ID:{" "}
+                          <span className="select-all break-all font-mono text-xs">{paymentIssue.paymentId}</span>
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-x-5 font-medium md:gap-y-1 md:pt-1">
+                        <Link href="/manage-bookings" className="inline-flex min-h-[44px] items-center rounded text-primaryGreen underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen md:min-h-[24px]">
+                          My bookings
+                        </Link>
+                        <a
+                          href={`mailto:info@majesticescape.in?subject=${encodeURIComponent(`Payment ${paymentIssue.paymentId} — booking not confirmed`)}`}
+                          className="inline-flex min-h-[44px] items-center rounded text-primaryGreen underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen md:min-h-[24px]"
+                        >
+                          Email info@majesticescape.in
+                        </a>
+                        <Link href="/help-center" className="inline-flex min-h-[44px] items-center rounded text-primaryGreen underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryGreen md:min-h-[24px]">
+                          Help centre
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               <Button
                 onClick={async () => {
                   await fetchForm();
                 }}
-                disabled={summaryRoute || ban || checkoutBlocked !== null}
+                disabled={summaryRoute || ban || checkoutBlocked !== null || confirmingPayment || paymentIssue !== null}
+                aria-busy={confirmingPayment || undefined}
                 className="w-full h-12 text-base bg-primaryGreen hover:bg-brightGreen"
               >
-                {ban
-                  ? "You are banned from platform. Check your email"
-                  : (checkoutBlocked ?? `Pay ${formatINR(totals.total)}`)}
+                {ban ? (
+                  "You are banned from platform. Check your email"
+                ) : confirmingPayment ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 motion-safe:animate-spin" aria-hidden="true" />
+                    Confirming your payment…
+                  </>
+                ) : paymentIssue ? (
+                  "Payment received"
+                ) : (
+                  (checkoutBlocked ?? `Pay ${formatINR(totals.total)}`)
+                )}
               </Button>
               <div className="flex items-center justify-center px-4 mt-2 lg:mt-0">
                 {property.bookingType.manual ? (
