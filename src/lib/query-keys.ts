@@ -36,6 +36,9 @@ export const queryKeys = {
     ["review", propertyId, limit, skip] as const,
   reviewsAll: (propertyId: Id) => ["review", propertyId] as const,
   checkDates: (propertyId: Id) => ["checkDates", propertyId] as const,
+  // "More stays hosted by …" / "Similar stays nearby" (public data only,
+  // the same for every viewer)
+  relatedStays: (propertyId: Id) => ["relatedStays", propertyId] as const,
 
   // Traveler
   userBookings: (userId: Id) => ["userBookings", userId] as const,
