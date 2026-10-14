@@ -966,7 +966,7 @@ function BookPageContent() {
   // };
   const handlePayment = async () => {
     if (typeof window.Razorpay === "undefined") {
-      alert("Razorpay SDK is not loaded yet. Please try again in a moment.");
+      toast.error("The payment window is still loading. Please try again in a moment.");
       return;
     }
 
@@ -1209,12 +1209,14 @@ function BookPageContent() {
 
       rzp.on("payment.failed", (response) => {
         console.error("Payment failed:", response.error);
-        alert(`Payment failed: ${response.error.description}`);
+        // Razorpay keeps its own window open with the reason and a retry; a
+        // blocking browser alert on top of it only got in the way.
+        toast.error("Payment didn't go through. You can try again in the payment window.", { duration: 6000 });
       });
       rzp.open();
     } catch (error) {
       console.error("Razorpay error:", error);
-      alert("Payment initialization failed. Please try again.");
+      toast.error("Couldn't open the payment window. Please try again.");
     }
   };
   if (!hasValidDates) {

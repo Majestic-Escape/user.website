@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { LIVE, PUBLIC } from "@/lib/query-presets";
 import { queryKeys } from "@/lib/query-keys";
-import { fetchProperty } from "@/lib/api/property";
+import { fetchLatestAvailability, fetchProperty } from "@/lib/api/property";
 import { useMemo, useEffect, useState } from "react"; // Added useMemo and useEffect
 import Head from "next/head";
 // Import your components
@@ -166,16 +166,9 @@ export default function PropertyPageClient({ initialProperty }) {
   // that is not public has no public calendar to show.
   const { data: unavailableDates = [], isPending: loading } = useQuery({
     queryKey: queryKeys.checkDates(propertyId),
-    queryFn: async () => {
-      const response = await fetch(
-        `${API_URL}/booking/check-dates/${propertyId}`,
-      );
-      if (!response.ok) {
-        throw new Error(`Failed to fetch availability (status: ${response.status})`);
-      }
-      const result = await response.json();
-      return Array.isArray(result?.data) ? result.data : [];
-    },
+    // Signed in: the server leaves this guest's own unpaid checkout hold out
+    // (they can come back and pay for those dates); everyone else sees it held.
+    queryFn: () => fetchLatestAvailability(propertyId),
     enabled: !!propertyId && isLive,
     ...LIVE,
   });
