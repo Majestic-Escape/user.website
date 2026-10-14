@@ -22,10 +22,17 @@ export default function InboxLayout({ children }) {
         <SidebarInset className="overflow-hidden min-w-0 flex-1">
           <HostTopBar />
 
-          {/* Mobile: header + bottom navigation leave 100vh - 64 - 64 for the
-              page; desktop: the header leaves 100vh - 64 and the page scrolls
-              inside (the list and the thread are their own scrollers). */}
-          <main className="min-h-[calc(100vh-64px-64px)] flex-1 bg-muted/50 md:min-h-0 md:h-[calc(100vh-64px)] md:bg-white md:overflow-hidden">
+          {/* Phones: the top bar (h-16) and the bottom navigation leave the
+              visible screen minus both for the page; md+: the header (h-16)
+              leaves the visible screen minus 4rem and the page scrolls inside
+              (the list and the thread are their own scrollers). Visible
+              screen, not 100vh: with the URL bar showing, 100vh is taller
+              than the screen and the list's last rows ended up under the
+              bottom navigation. md:flex-none: as a flex-1 item of the
+              column SidebarInset its flex-basis overrode that height, so a
+              long list or thread stretched the whole page (5000px+) and the
+              page scrolled instead of the panes. */}
+          <main className="min-h-[calc(var(--visible-vh)_-_4rem_-_var(--host-tab-bar-h))] flex-1 bg-muted/50 md:min-h-0 md:flex-none md:h-[calc(var(--visible-vh)_-_4rem)] md:bg-white md:overflow-hidden">
             {children}
           </main>
           <div className="md:hidden">

@@ -53,6 +53,11 @@ export default function MobileChatInput({
     if (!container) return;
 
     const preventScroll = (e) => {
+      // A long draft scrolls inside the message box (ChatComposerField caps it
+      // at 5 rows): a drag that starts in the box must reach it, or the hidden
+      // lines can't be reached by touch. Only while it really overflows.
+      const field = inputRef.current;
+      if (field && field.contains(e.target) && field.scrollHeight > field.clientHeight) return;
       // Prevent touch move from scrolling the page/container
       e.preventDefault();
     };
