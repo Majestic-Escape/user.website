@@ -354,7 +354,9 @@ export default function BookingSummaryPage() {
                   Check-in
                 </p>
                 <p className="mt-1 font-semibold text-absoluteDark">{fmtDate(checkInDate)}</p>
-                <p className="text-stone">From {formatTime12h(queryData?.checkinTime)}</p>
+                {formatTime12h(queryData?.checkinTime, "") ? (
+                  <p className="text-stone">From {formatTime12h(queryData?.checkinTime)}</p>
+                ) : null}
               </div>
               <div className="rounded-xl bg-gray-50 p-3">
                 <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-stone">
@@ -362,7 +364,9 @@ export default function BookingSummaryPage() {
                   Check-out
                 </p>
                 <p className="mt-1 font-semibold text-absoluteDark">{fmtDate(checkOutDate)}</p>
-                <p className="text-stone">By {formatTime12h(queryData?.checkoutTime)}</p>
+                {formatTime12h(queryData?.checkoutTime, "") ? (
+                  <p className="text-stone">By {formatTime12h(queryData?.checkoutTime)}</p>
+                ) : null}
               </div>
             </div>
 
