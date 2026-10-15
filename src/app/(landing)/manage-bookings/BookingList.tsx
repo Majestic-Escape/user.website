@@ -950,7 +950,7 @@ const ManageBookings: React.FC = () => {
               ) : null}
             </div>
           ) : null}
-          {filteredBookings.map((booking, index) => {
+          {filteredBookings.map((booking) => {
             const summaryParams = new URLSearchParams({
               hostFirstName: booking?.hostId?.firstName ?? "",
               bookingId: booking?._id ?? "",
@@ -977,11 +977,7 @@ const ManageBookings: React.FC = () => {
             });
 
             return (
-              <Card
-                key={booking?._id}
-                className="p-4 animate-in fade-in-0 slide-in-from-bottom-1 duration-300 fill-mode-both motion-reduce:animate-none"
-                style={{ animationDelay: `${Math.min(index, 6) * 40}ms` }}
-              >
+              <Card key={booking?._id} className="p-4">
                 <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr),minmax(0,1fr),minmax(0,1fr),minmax(0,1fr),minmax(0,1.4fr)] gap-4">
                   <div className="flex min-w-0 flex-col lg:flex-row gap-4">
                     <MediaImage
