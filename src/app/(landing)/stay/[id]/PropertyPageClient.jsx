@@ -15,6 +15,7 @@ import ThingsToKnow from "./components/things-to-know";
 import HostProfile from "./components/host-profile"; // Assuming this is the refactored component
 import ReviewSection from "./components/review-section";
 import StayUnavailable from "./components/stay-unavailable";
+import RelatedStays from "@/components/related-stays";
 import { useAuth } from "@/contexts/AuthContext";
 // Import the skeleton for HostProfile if you want a more granular loading state,
 // but the refactored HostProfile handles its own skeleton.
@@ -79,7 +80,9 @@ const fetchReview = async (propertyId, limit, skip) => {
 // query as placeholder data so the page renders immediately on navigation
 // instead of showing a full-screen spinner while the client re-fetches; the
 // background refetch still runs, so data freshness is unchanged.
-export default function PropertyPageClient({ initialProperty }) {
+// `initialRelated`: the related-stays rows rendered with the page (validated,
+// or null when the server could not get them — see components/related-stays).
+export default function PropertyPageClient({ initialProperty, initialRelated = null }) {
   const params = useParams();
   const propertyId = params.id;
   const [limit, setLimit] = useState(20);
@@ -456,6 +459,16 @@ export default function PropertyPageClient({ initialProperty }) {
               // isLoading={isPropertyLoading}
               // error={propertyError}
             />
+            {/* More from this host / similar stays nearby: live stays only
+                (never under a preview or a booked-guest view). */}
+            {isLive ? (
+              <RelatedStays
+                key={propertyId}
+                propertyId={propertyId}
+                initialRelated={initialRelated}
+                host={propertyData?.host}
+              />
+            ) : null}
             {/* Things To Know */}
             {/* Pass isPropertyLoading if ThingsToKnow depends on it */}
             {/* <ThingsToKnow thingsToKnow={propertyData?.thingsToKnow || {}} isLoading={isPropertyLoading} /> */}
