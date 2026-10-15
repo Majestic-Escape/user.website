@@ -76,6 +76,33 @@ const cleanParams = (obj) =>
       .map(([k, v]) => [k, String(v)]),
   );
 
+// "14 Nov – 15 Nov 2026" for the payment window (toLocaleDateString gave
+// "11/14/2026" or "14/11/2026" depending on the phone's settings).
+const stayDateFmt = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" });
+const stayRange = (from, to) => {
+  try {
+    return stayDateFmt.formatRange(from, to);
+  } catch {
+    return `${stayDateFmt.format(from)} – ${stayDateFmt.format(to)}`;
+  }
+};
+
+// Razorpay prefill from the guest's own profile. Only well-formed values are
+// passed (a wrong prefill is worse than an empty field); Indian mobile
+// numbers get the +91 Razorpay expects.
+const razorpayPrefill = (guest) => {
+  const out = {};
+  const name = [guest?.firstName, guest?.lastName].filter((v) => typeof v === "string" && v.trim()).join(" ").trim();
+  if (name) out.name = name;
+  if (typeof guest?.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.email.trim())) {
+    out.email = guest.email.trim();
+  }
+  const digits = typeof guest?.phoneNumber === "string" ? guest.phoneNumber.replace(/\D/g, "") : "";
+  if (/^[6-9]\d{9}$/.test(digits)) out.contact = `+91${digits}`;
+  else if (/^91[6-9]\d{9}$/.test(digits)) out.contact = `+${digits}`;
+  return out;
+};
+
 // Listing ids are Mongo ObjectIds; anything else is "no such listing" and
 // never worth a backend call (the API currently 500s on such ids).
 const isListingId = (id) => typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
@@ -442,19 +469,29 @@ function BookPageContent() {
       // Clean up data attribute
       delete document.body.dataset.scrollY;
 
-      // Remove any modal-related classes
-      document.body.classList.remove("razorpay-lock");
+      // Remove any modal-related classes. Not razorpay-lock: this cleanup
+      // also runs when the guest modal closes right after Razorpay opened
+      // (handleConfirmGuestInfo), and used to drop the lock mid-checkout;
+      // the Razorpay lock has its own unmount cleanup.
       document.body.classList.remove("modal-lock");
     };
   }, [showGuestModal, showPriceBreakdown]);
 
+  // The page scrolls on <html> (globals.css sets overflow-x on html and
+  // body, so body's overflow no longer reaches the viewport): a lock on
+  // body alone let the page slide around behind Razorpay's sheet. Both
+  // elements are locked; every way out of the checkout (paid, dismissed,
+  // leaving the page) unlocks.
   const lockForRazorpay = () => {
+    document.documentElement.classList.add("razorpay-lock");
     document.body.classList.add("razorpay-lock");
   };
 
   const unlockForRazorpay = () => {
+    document.documentElement.classList.remove("razorpay-lock");
     document.body.classList.remove("razorpay-lock");
   };
+  useEffect(() => unlockForRazorpay, []);
 
   const calculateTotal = () => {
     if (!property || !hasValidDates) return EMPTY_TOTALS;
@@ -1033,9 +1070,14 @@ function BookPageContent() {
         name: "Majestic Escape",
         description: `Booking for ${
           property?.title || "Property"
-        } (${date.from.toLocaleDateString()} - ${date.to.toLocaleDateString()})`,
+        } (${stayRange(date.from, date.to)})`,
         image: "/logo.png",
+        // The guest's own account details, so Razorpay doesn't ask for them
+        // again; anything missing or malformed is left for Razorpay to ask.
+        prefill: razorpayPrefill(guestInfo),
         handler: async (response) => {
+          // Razorpay has closed its window: the page is the user's again.
+          unlockForRazorpay();
           if (process.env.NEXT_PUBLIC_ENV === "dev") {
             console.log("Payment successful:", response);
           }
@@ -1215,6 +1257,7 @@ function BookPageContent() {
       });
       rzp.open();
     } catch (error) {
+      unlockForRazorpay();
       console.error("Razorpay error:", error);
       toast.error("Couldn't open the payment window. Please try again.");
     }

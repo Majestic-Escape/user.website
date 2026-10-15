@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Filter, Star, X } from "lucide-react";
-import MediaImage from "@/components/ui/media-image";
+import { Calendar, CalendarX2, ChevronRight, Filter, Star, X } from "lucide-react";
+import MediaImage, { PHOTO_PLACEHOLDER } from "@/components/ui/media-image";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +71,8 @@ interface Booking {
   children?: number; // ✅ added
   infants?: number; // ✅ added
   nights?: number; // ✅ added
+  paymentStatus?: "paid" | "unpaid" | "refunded";
+  refundAmount?: number; // rupees, set once a refund went through
 }
 
 interface InvoiceData {
@@ -218,6 +220,8 @@ const ManageBookings: React.FC = () => {
   );
   const [cancelDialogOpen, setCancelDialogOpen] = useState<boolean>(false);
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
+  // One cancel request at a time: a second tap must not send a second one.
+  const [cancelling, setCancelling] = useState<boolean>(false);
   const [tempFilters, setTempFilters] = useState<FilterState>({
     location: "",
     minPrice: "",
@@ -326,11 +330,14 @@ const ManageBookings: React.FC = () => {
 
       // const isPast =
       //   checkIn.toLocaleDateString() <= new Date().toLocaleDateString();
-      const isUpcoming = checkIn.getTime() > new Date().getTime();
-      const isPast = checkIn.getTime() <= new Date().getTime();
       const isConfirmed = booking?.status === "confirmed";
       const isCancelled = booking?.status === "cancelled";
       const isRejected = booking?.status === "rejected";
+      // Upcoming / Past are stays that are still on; cancelled and declined
+      // ones live under their own tabs (and All).
+      const isLive = !isCancelled && !isRejected;
+      const isUpcoming = isLive && checkIn.getTime() > new Date().getTime();
+      const isPast = isLive && checkIn.getTime() <= new Date().getTime();
 
       const matchesTab =
         activeTab === "all" ||
@@ -410,10 +417,24 @@ const ManageBookings: React.FC = () => {
   };
 
   if (isLoading) {
+    // The page's own shape while bookings load (no layout jump when they land).
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="h-20 w-20 animate-spin rounded-full border-b-2 border-current"></div>
-      </div>
+      <main className="py-16 md:py-24" aria-busy="true">
+        <div className="container max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          <h1 className="text-2xl font-bricolage text-absoluteDark font-bold">
+            My Booking
+          </h1>
+          <span className="sr-only" role="status">Loading your bookings…</span>
+          <div className="h-10 w-full max-w-lg rounded-md bg-gray-100 animate-pulse motion-reduce:animate-none" />
+          {[0, 1].map((i) => (
+            <div key={i} className="rounded-xl border p-4 space-y-3" aria-hidden="true">
+              <div className="h-48 lg:h-24 lg:w-24 w-full rounded-lg bg-gray-100 animate-pulse motion-reduce:animate-none" />
+              <div className="h-4 w-2/3 rounded bg-gray-100 animate-pulse motion-reduce:animate-none" />
+              <div className="h-4 w-1/3 rounded bg-gray-100 animate-pulse motion-reduce:animate-none" />
+            </div>
+          ))}
+        </div>
+      </main>
     );
   }
   // const today = new Date().toLocaleDateString();
@@ -421,13 +442,11 @@ const ManageBookings: React.FC = () => {
 
   // The backend derives the parties and their emails from the booking
   // itself; the request carries only the booking id.
-  const cancelBooking = async (
-    bookingId: string,
-    propertyId?: string,
-  ): Promise<void> => {
+  const cancelBooking = async (booking: Booking): Promise<void> => {
+    const bookingId = booking._id;
+    const propertyId = booking.propertyId?._id;
     try {
       if (typeof window === "undefined") return;
-      const getLocalData = await localStorage.getItem("token");
       const data = JSON.parse(localStorage.getItem("token") || "null");
 
       if (data) {
@@ -452,9 +471,22 @@ const ManageBookings: React.FC = () => {
               : body?.message || "We couldn't cancel this booking. Please try again.",
             { duration: 10000 },
           );
+          // Closed or refunding elsewhere (another tab, the host, our team):
+          // the card is out of date, show what the server has now.
+          if (body?.code === "ALREADY_CLOSED" || body?.code === "REFUND_IN_PROGRESS") fetchData();
           return;
         }
-        toast.success("Your booking has been cancelled. We've emailed you the details.");
+        const result = await response.json().catch(() => null);
+        // Say what actually happened to the money: the server decides the
+        // refund (policy window), not this page.
+        toast.success(
+          result?.refunded
+            ? `Your booking has been cancelled and a refund of ${formatINR(result?.data?.refundAmount ?? booking.price)} is on its way to your original payment method. Most banks show it within minutes; some take 5–7 working days. We've emailed you the details.`
+            : booking.paymentStatus === "paid"
+              ? "Your booking has been cancelled. Under this stay's cancellation policy no refund was due. We've emailed you the details."
+              : "Your booking has been cancelled. We've emailed you the details.",
+          { duration: 8000 },
+        );
         // Only after the 2xx: the list, this booking, and the listing's
         // availability calendar are all stale now.
         fetchData();
@@ -744,6 +776,18 @@ const ManageBookings: React.FC = () => {
     return false; // default → no cancellation
   }
 
+  // The published terms (cancellation-policy page, invoice), in the guest's
+  // words. The server decides the refund; the result toast reports it.
+  function cancellationTerms(booking: Booking): string | null {
+    if (booking?.paymentStatus !== "paid") return null;
+    const policy = booking?.cancellationPolicy?.toLowerCase();
+    if (policy === "flexible")
+      return "This stay has a flexible policy: cancelling at least 24 hours before check-in gets you a full refund of " + formatINR(booking.price) + " to your original payment method.";
+    if (policy === "moderate")
+      return "This stay has a moderate policy: cancelling at least 7 days before check-in gets you a full refund of " + formatINR(booking.price) + " to your original payment method.";
+    return null;
+  }
+
   const StatusPill: React.FC<{ status: string }> = ({ status }) => {
     const getStatusColor = (status: string): string => {
       switch (status) {
@@ -874,7 +918,7 @@ const ManageBookings: React.FC = () => {
         )}
 
         <div className="space-y-4">
-          <div className="hidden lg:grid grid-cols-[2fr,1fr,1fr,1fr,1fr] gap-4 px-4 py-2 bg-muted text-sm font-medium">
+          <div className="hidden lg:grid grid-cols-[minmax(0,2fr),minmax(0,1fr),minmax(0,1fr),minmax(0,1fr),minmax(0,1.4fr)] gap-4 px-4 py-2 bg-muted text-sm font-medium">
             <div>Property</div>
             <div>Date</div>
             <div>Status</div>
@@ -882,6 +926,30 @@ const ManageBookings: React.FC = () => {
             <div></div>
           </div>
 
+          {filteredBookings.length === 0 ? (
+            <div
+              role="status"
+              className="flex flex-col items-center rounded-xl border border-dashed border-gray-300 px-6 py-12 text-center animate-in fade-in-0 duration-300 motion-reduce:animate-none"
+            >
+              <CalendarX2 className="h-10 w-10 text-gray-400" aria-hidden="true" />
+              <h2 className="mt-3 font-bricolage text-lg font-semibold text-absoluteDark">
+                {bookings.length === 0 ? "No bookings yet" : "No bookings match"}
+              </h2>
+              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                {bookings.length === 0
+                  ? "When you book a stay, it shows up here with its invoice and details."
+                  : "Try another tab or clear the filters."}
+              </p>
+              {bookings.length === 0 ? (
+                <Link
+                  href="/stays"
+                  className="mt-5 inline-flex min-h-[44px] items-center rounded-full bg-primaryGreen px-6 text-sm font-medium text-white transition hover:bg-brightGreen active:scale-95 motion-reduce:active:scale-100"
+                >
+                  Explore stays
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
           {filteredBookings.map((booking) => {
             const summaryParams = new URLSearchParams({
               hostFirstName: booking?.hostId?.firstName ?? "",
@@ -910,119 +978,67 @@ const ManageBookings: React.FC = () => {
 
             return (
               <Card key={booking?._id} className="p-4">
-                <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr,1fr,1fr,1fr] gap-4">
-                  <div className="flex flex-col lg:flex-row gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr),minmax(0,1fr),minmax(0,1fr),minmax(0,1fr),minmax(0,1.4fr)] gap-4">
+                  <div className="flex min-w-0 flex-col lg:flex-row gap-4">
                     <MediaImage
-                      alt="Property"
-                      className="rounded-lg object-cover w-full lg:w-24 h-48 lg:h-24"
+                      alt={booking?.propertyId?.title || "Stay photo"}
+                      className="rounded-lg object-cover w-full h-48 lg:w-24 lg:h-24 shrink-0 bg-gray-100"
                       height={96}
-                      src={
-                        booking?.propertyId?.photos?.[0] ?? "/placeholder.svg"
-                      }
+                      src={booking?.propertyId?.photos?.[0] || PHOTO_PLACEHOLDER}
+                      unoptimized={!booking?.propertyId?.photos?.[0]}
                       width={96}
                       sizes="(max-width: 1023px) 100vw, 96px"
                     />
-                    {}
-                    <div className="space-y-2">
-                      <h3 className="font-medium">
-                        <span title={booking?.propertyId?.title}>
-                          {booking?.propertyId?.title?.length > 32
-                            ? `${booking?.propertyId?.title.slice(0, 32)} ...`
-                            : booking?.propertyId?.title}
-                        </span>
+                    <div className="min-w-0 space-y-1">
+                      <h3 className="font-medium text-absoluteDark line-clamp-2 break-words" title={booking?.propertyId?.title}>
+                        {booking?.propertyId?.title || "Stay"}
                       </h3>
-                      <div className="text-sm text-muted-foreground">
-                        Located at {booking?.propertyId?.address?.city},{" "}
-                        {booking?.propertyId?.address?.state}
-                        <Link
-                          href={`/booking-summary?${summaryParams.toString()}`}
-                        >
-                          <div className="text-red-500 pointer">
-                            View Details
-                          </div>
-                        </Link>
-                      </div>
-                      {/* <div className="flex items-center gap-2">
-                      <Avatar className="w-6 h-6">
-                        <AvatarImage alt="Host" src="/placeholder.svg" />
-                        <AvatarFallback>H</AvatarFallback>
-                      </Avatar>
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">Hosted by</span>{" "}
-                        {booking.host}
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 fill-primaryGreen text-primaryGreen" />
-                          <span className="font-medium">{booking.rating}</span>
-                          <span className="text-muted-foreground">
-                            ({booking.reviews} reviews)
-                          </span>
-                        </div>
-                      </div>
-                    </div> */}
+                      <p className="text-sm text-muted-foreground">
+                        {[booking?.propertyId?.address?.city, booking?.propertyId?.address?.state]
+                          .filter(Boolean)
+                          .join(", ") || "—"}
+                      </p>
+                      <Link
+                        href={`/booking-summary?${summaryParams.toString()}`}
+                        className="inline-flex min-h-[44px] lg:min-h-[24px] items-center gap-1 rounded-sm text-sm font-medium text-primaryGreen underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryGreen"
+                      >
+                        View details
+                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                      </Link>
                     </div>
                   </div>
 
-                  <div className="space-y-4 lg:space-y-2">
-                    <div className="flex items-center gap-2">
-                      {/* <Calendar className="w-4 h-4 text-muted-foreground" /> */}
-                      <div className="text-sm">
-                        <div className="text-muted-foreground">Check in</div>
-                        <div>
-                          {stayDate(booking?.checkIn)}
-                        </div>
-                      </div>
+                  <dl className="grid grid-cols-2 gap-4 text-sm lg:grid-cols-1 lg:gap-2">
+                    <div>
+                      <dt className="text-muted-foreground">Check in</dt>
+                      <dd>{stayDate(booking?.checkIn)}</dd>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {/* <Calendar className="w-4 h-4 text-muted-foreground" /> */}
-                      <div className="text-sm">
-                        <div className="text-muted-foreground">Check out</div>
-                        <div>
-                          {stayDate(booking?.checkOut)}
-                        </div>
-                      </div>
+                    <div>
+                      <dt className="text-muted-foreground">Check out</dt>
+                      <dd>{stayDate(booking?.checkOut)}</dd>
                     </div>
-                  </div>
+                  </dl>
 
-                  <div className="space-y-4 lg:space-y-2 ">
-                    {/* agent        <Badge
-                      variant="secondary"
-                      className={`
-                      ${
-                        booking?.status === "Confirmed"
-                          ? "bg-green-100 text-green-700"
-                          : ""
-                      }
-                      ${
-                        booking?.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : ""
-                      }
-                      ${
-                        booking?.status === "Cancelled"
-                          ? "bg-red-100 text-red-700"
-                          : ""
-                      }
-                      hover:bg-opacity-80
-                    `}
-                    >
-                      {booking?.status}
-                    </Badge> */}
+                  <div>
                     <StatusPill status={booking?.status} />
                   </div>
 
                   <div>
-                    <div className="font-medium">
+                    <div className="font-medium tabular-nums">
                       {formatINR(booking?.price)}
                     </div>
-                    {/* <div className="text-sm text-muted-foreground">
-                    Total {booking.nights} nights
-                  </div> */}
+                    {booking?.paymentStatus === "refunded" ? (
+                      <div className="mt-0.5 text-sm text-green-700 tabular-nums">
+                        Refunded{" "}
+                        {booking?.refundAmount != null ? formatINR(booking.refundAmount) : ""}
+                      </div>
+                    ) : null}
                   </div>
-                  <div className="flex">
+
+                  <div className="flex flex-wrap items-start gap-2 lg:justify-end">
                     <Button
-                      variant="outline"
                       size="sm"
-                      className="bg-primaryGreen text-white py-3 rounded-md w-half mr-2"
+                      className="min-h-[44px] px-4 bg-primaryGreen text-white hover:bg-brightGreen lg:min-h-[32px]"
                       onClick={() => {
                         setShowInvoice(true);
                         getPayment(booking?._id);
@@ -1032,58 +1048,89 @@ const ManageBookings: React.FC = () => {
                       Invoice
                     </Button>
                     {booking?.status == "confirmed" &&
-                    booking?.reviewed == false ? (
-                      canShowReview(booking) ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-primaryGreen text-white py-3 rounded-md w-half mr-2"
-                            onClick={() => {
-                              router.push(
-                                `/rating?booking=${
-                                  booking._id
-                                }&${summaryParams.toString()}&active=${true}`,
-                              );
-                              setShowDialog(true);
-                            }}
-                          >
-                            Review Now
-                          </Button>
-                        </>
-                      ) : null
+                    booking?.reviewed == false &&
+                    canShowReview(booking) ? (
+                      <Button
+                        size="sm"
+                        className="min-h-[44px] px-4 bg-primaryGreen text-white hover:bg-brightGreen lg:min-h-[32px]"
+                        onClick={() => {
+                          router.push(
+                            `/rating?booking=${
+                              booking._id
+                            }&${summaryParams.toString()}&active=${true}`,
+                          );
+                          setShowDialog(true);
+                        }}
+                      >
+                        Review Now
+                      </Button>
                     ) : null}
                     {canShowCancelButton(booking) && (
                       <>
+                        {/* Destructive: red outline, never the same green as
+                            the safe actions next to it. */}
                         <Button
                           variant="outline"
                           size="sm"
-                          className="bg-primaryGreen text-white py-3 rounded-md w-half"
+                          className="min-h-[44px] px-4 border-red-600 text-red-700 hover:bg-red-50 hover:text-red-800 focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 lg:min-h-[32px]"
                           onClick={() => {
                             setBookingToCancel(booking); // store selected booking
                             setCancelDialogOpen(true); // open the dialog
                           }}
                         >
-                          Cancel
+                          Cancel booking
                         </Button>
                         {/* One dialog for the selected card only: rendering it
                             inside every card stacked N identical open dialogs. */}
                         {bookingToCancel && bookingToCancel._id === booking._id && (
                           <ConfirmCancelDialog
                             choice={"Cancel"}
+                            tone="danger"
+                            title="Cancel this booking?"
+                            description={
+                              <div className="space-y-2">
+                                <p>
+                                  <span className="font-medium text-absoluteDark">
+                                    {booking?.propertyId?.title || "This stay"}
+                                  </span>
+                                  {" · "}
+                                  {stayDate(booking?.checkIn)} – {stayDate(booking?.checkOut)}
+                                </p>
+                                {cancellationTerms(booking) ? <p>{cancellationTerms(booking)}</p> : null}
+                                <p>
+                                  This can&apos;t be undone.{" "}
+                                  <Link
+                                    href="/cancellation-policy"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-medium text-primaryGreen underline underline-offset-2"
+                                  >
+                                    Cancellation policy
+                                    <span className="sr-only"> (opens in a new tab)</span>
+                                  </Link>
+                                </p>
+                              </div>
+                            }
+                            confirmLabel="Yes, cancel booking"
+                            cancelLabel="Keep booking"
+                            pending={cancelling}
+                            pendingLabel="Cancelling…"
                             open={cancelDialogOpen}
                             onClose={() => {
+                              if (cancelling) return;
                               setCancelDialogOpen(false);
                               setBookingToCancel(null);
                             }}
                             onConfirm={async () => {
-                              if (!bookingToCancel) return null;
-                              await cancelBooking(
-                                bookingToCancel._id,
-                                bookingToCancel.propertyId?._id,
-                              );
-                              setCancelDialogOpen(false);
-                              setBookingToCancel(null);
+                              if (!bookingToCancel || cancelling) return;
+                              setCancelling(true);
+                              try {
+                                await cancelBooking(bookingToCancel);
+                              } finally {
+                                setCancelling(false);
+                                setCancelDialogOpen(false);
+                                setBookingToCancel(null);
+                              }
                             }}
                           />
                         )}

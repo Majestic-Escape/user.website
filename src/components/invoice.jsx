@@ -248,6 +248,33 @@ If you cancel at anytime before 24 hours before check-in, you receive a full ref
               <span>Amount paid (INR)</span>
               <span>{money(price)}</span>
             </div>
+            {invoiceData?.paymentStatus === "refunded" ? (
+              <>
+                <div className="flex justify-between text-green-700">
+                  <span>Refunded (INR)</span>
+                  <span>
+                    {parseFiniteNumber(invoiceData?.refundAmount) === null
+                      ? "Refunded"
+                      : `−${money(invoiceData.refundAmount)}`}
+                  </span>
+                </div>
+                {parseFiniteNumber(invoiceData?.refundAmount) !== null &&
+                parseFiniteNumber(price) !== null ? (
+                  <div className="flex justify-between font-semibold">
+                    <span>Net paid (INR)</span>
+                    <span>
+                      {money(
+                        Math.max(
+                          0,
+                          parseFiniteNumber(price) -
+                            parseFiniteNumber(invoiceData.refundAmount),
+                        ),
+                      )}
+                    </span>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
           </div>
         </div>
 
