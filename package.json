@@ -11,6 +11,7 @@
     "check:search": "node scripts/check-search.mjs",
     "check:ux": "node scripts/check-ux.mjs",
     "check:hero": "node scripts/check-hero.mjs",
+    "check:related": "node scripts/check-related.mjs",
     "check:payment": "node scripts/check-payment.mjs"
   },
   "dependencies": {
