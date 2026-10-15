@@ -122,8 +122,14 @@
     padding-left: 52;
   }
 }
+/* Razorpay checkout open (BookStay): html is the page's scroller, so it is
+   locked too. No position:fixed, so the page keeps its scroll position. */
+html.razorpay-lock,
 body.razorpay-lock {
   overflow: hidden !important;
+  overscroll-behavior: none;
+}
+body.razorpay-lock {
   touch-action: none;
 }
 @layer base {
