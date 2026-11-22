@@ -5,6 +5,11 @@ import { usePathname } from "next/navigation";
 import { socketManager } from "@/lib/socket";
 import { useAuth } from "@/contexts/AuthContext";
 import { readStoredToken } from "@/lib/session";
+import {
+  isMessagingDisabledResponse,
+  markMessagingDisabled,
+  useMessagingStatus,
+} from "@/lib/use-messaging-enabled";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
@@ -44,6 +49,13 @@ export function UnreadCountProvider({ children }) {
   const [guestUnread, setGuestUnread] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  // Nothing below talks to the chat service until the admin Messaging switch is
+  // known to be on: while it is off every request would be refused, and each
+  // page load would still open a socket just to be turned away.
+  const messagingStatus = useMessagingStatus();
+  // 'unreadable' (the switch lookup itself failed) counts as on: the chat service
+  // enforces the switch, and a failed lookup must not take the inbox badge away.
+  const messagingOn = messagingStatus === "on" || messagingStatus === "unreadable";
   const pathname = usePathname();
   const prevHostRef = useRef(0);
   const prevGuestRef = useRef(0);
@@ -78,7 +90,10 @@ export function UnreadCountProvider({ children }) {
       // Single API call returns both host and guest counts
       const res = await fetch(`${CHAT_URL}/api/chat/unread-count?role=all`, { headers });
 
-      if (res.ok) {
+      if (res.status === 503) {
+        const body = await res.json().catch(() => null);
+        if (isMessagingDisabledResponse(body)) markMessagingDisabled();
+      } else if (res.ok) {
         const data = await res.json();
         if (data.success && data.data) {
           const hostCount = data.data.host || 0;
@@ -98,10 +113,13 @@ export function UnreadCountProvider({ children }) {
 
   // Fetch on mount and when user changes
   useEffect(() => {
-    if (!user) {
+    if (!user || !messagingOn) {
       setHostUnread(0);
       setGuestUnread(0);
-      setIsLoading(false);
+      prevHostRef.current = 0;
+      prevGuestRef.current = 0;
+      // Still waiting on the switch for a signed-in user: not loaded yet.
+      setIsLoading(!!user && messagingStatus === "pending");
       fetchedRef.current = false;
       return;
     }
@@ -110,11 +128,17 @@ export function UnreadCountProvider({ children }) {
       fetchedRef.current = true;
       fetchUnreadCount(true); // force on initial load
     }
-  }, [user, fetchUnreadCount]);
+  }, [user, messagingOn, messagingStatus, fetchUnreadCount]);
+
+  // Switched off while the app is open: close the connection now rather than
+  // wait for the server to do it.
+  useEffect(() => {
+    if (messagingStatus === "off") socketManager.disconnect();
+  }, [messagingStatus]);
 
   // Subscribe to real-time unread count updates via socket
   useEffect(() => {
-    if (!user) return;
+    if (!user || !messagingOn) return;
 
     const parsed = readStoredToken();
     if (!parsed) return;
@@ -171,19 +195,19 @@ export function UnreadCountProvider({ children }) {
       socketListenerRef.current = false;
       socketManager.releaseSocket();
     };
-  }, [user, fetchUnreadCount]);
+  }, [user, messagingOn, fetchUnreadCount]);
 
   // Refresh on page visibility change (with debounce)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (!document.hidden && user) {
+      if (!document.hidden && user && messagingOn) {
         fetchUnreadCount(); // debounce is built into fetchUnreadCount
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [user, fetchUnreadCount]);
+  }, [user, messagingOn, fetchUnreadCount]);
 
   const value = {
     unreadCount,    // current portal's count
