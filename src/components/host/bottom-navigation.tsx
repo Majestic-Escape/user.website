@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadCount } from "@/contexts/UnreadCountContext";
+import { useMessagingEnabled } from "@/lib/use-messaging-enabled";
 import { activeHref } from "@/lib/nav/active";
 import { leaveLayersThen } from "@/lib/ui/layers";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ const menuItems = [
 export default function HostBottomNavigation() {
   const { logout } = useAuth();
   const { unreadCount } = useUnreadCount();
+  const messagingOn = useMessagingEnabled();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -64,13 +66,15 @@ export default function HostBottomNavigation() {
       router.push("/login");
     });
 
-  const tabActive = activeHref(pathname, navItems);
+  // Messaging switched off by an admin: no Inbox tab, and the bar re-divides.
+  const tabs = navItems.filter((t) => messagingOn || t.href !== "/host/inbox");
+  const tabActive = activeHref(pathname, tabs);
   const menuActive = activeHref(pathname, menuItems.filter((m) => m.href !== "/"));
 
   return (
     // production's host bar: 4.5rem tall, medium-weight labels
-    <BottomTabBar label="Host" columns={5} listClassName="h-[4.5rem]">
-      {navItems.map((item) => (
+    <BottomTabBar label="Host" columns={tabs.length + 1} listClassName="h-[4.5rem]">
+      {tabs.map((item) => (
         <BottomTabItem
           key={item.name}
           href={item.href}

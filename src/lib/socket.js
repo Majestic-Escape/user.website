@@ -1,6 +1,11 @@
 "use client";
 
 import { io } from "socket.io-client";
+import {
+  ensureMessagingConfig,
+  isMessagingDisabledResponse,
+  markMessagingDisabled,
+} from "@/lib/use-messaging-enabled";
 
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:3001";
 
@@ -30,6 +35,7 @@ class SocketManager {
     this._onConnect = this._onConnect.bind(this);
     this._onDisconnect = this._onDisconnect.bind(this);
     this._onError = this._onError.bind(this);
+    this._onMessagingDisabled = this._onMessagingDisabled.bind(this);
   }
 
   /**
@@ -47,6 +53,22 @@ class SocketManager {
     if (!has("connect", this._onConnect)) this.socket.on("connect", this._onConnect);
     if (!has("disconnect", this._onDisconnect)) this.socket.on("disconnect", this._onDisconnect);
     if (!has("error", this._onError)) this.socket.on("error", this._onError);
+    if (!has("messaging:disabled", this._onMessagingDisabled)) {
+      this.socket.on("messaging:disabled", this._onMessagingDisabled);
+    }
+  }
+
+  /**
+   * An admin switched messaging off (the server sent `messaging:disabled`, or
+   * refused the handshake). Final until it is switched back on: tell the app,
+   * and tear the socket down the way a logout does so neither the manual
+   * "server dropped us" reconnect nor the tab-visible / back-online recovery
+   * keeps knocking on a door that is closed. The next getSocket() (once the
+   * switch is on again) builds a fresh one.
+   */
+  _onMessagingDisabled() {
+    markMessagingDisabled();
+    this.disconnect();
   }
 
   _onConnect() {
@@ -235,6 +257,10 @@ class SocketManager {
     this._ensureListeners();
 
     this.socket.on("connect_error", (error) => {
+      if (isMessagingDisabledResponse(error)) {
+        this._onMessagingDisabled();
+        return;
+      }
       console.warn(`[SocketManager] Connection error: ${error.message}`);
       // A rejection by the server's auth middleware (expired / invalidated /
       // malformed token) is final: Socket.IO drops its subscriptions
@@ -250,6 +276,16 @@ class SocketManager {
       // Transport-level failures keep reconnecting with backoff.
       if (this.connectionState !== "connecting") {
         this._setConnectionState("connecting");
+      }
+      // A transport failure may mean the chat service itself is gone (paused,
+      // being deployed). Re-check availability right away (shared and
+      // de-duplicated, at most one probe every 10 s) so messaging is hidden
+      // within seconds instead of being retried against a dead service for as
+      // long as the tab is open.
+      const now = Date.now();
+      if (now - (this._lastAvailabilityCheck || 0) > 10_000) {
+        this._lastAvailabilityCheck = now;
+        void ensureMessagingConfig({ force: true });
       }
     });
 

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { NavMain } from "@/components/host/nav-main";
+import { useMessagingEnabled } from "@/lib/use-messaging-enabled";
 import { TeamSwitcher } from "@/components/host/team-switcher";
 import {
   Sidebar,
@@ -146,9 +147,10 @@ const data = {
 export function AppSidebar({ ...props }) {
   const pathname = usePathname();
   const { unreadCount } = useUnreadCount();
+  const messagingOn = useMessagingEnabled();
 
-  // Inject badge into Inbox item
-  const navItems = data.navMain.map((item) => {
+  // Inject badge into Inbox item; no Inbox at all while an admin has messaging off
+  const navItems = data.navMain.filter((item) => messagingOn || item.title !== "Inbox").map((item) => {
     if (item.title === "Inbox") {
       return { ...item, badge: unreadCount };
     }

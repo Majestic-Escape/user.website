@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadCount } from "@/contexts/UnreadCountContext";
+import { useMessagingEnabled } from "@/lib/use-messaging-enabled";
 import { loginHref } from "@/lib/auth-return";
 import { activeHref } from "@/lib/nav/active";
 import { leaveLayersThen } from "@/lib/ui/layers";
@@ -80,6 +81,7 @@ export function BottomNavigation() {
   const [open, setOpen] = useState(false);
   const { user, logout, authReady } = useAuth();
   const { unreadCount } = useUnreadCount();
+  const messagingOn = useMessagingEnabled();
   const router = useRouter();
 
   // The open menu owns a history entry (Back closes it). Leave it first:
@@ -94,13 +96,14 @@ export function BottomNavigation() {
       router.push("/login");
     });
 
-  const tabs = user ? navItemsLoggedIn : navItems;
+  // Messaging switched off by an admin: no Messages tab, and the bar re-divides.
+  const tabs = (user ? navItemsLoggedIn : navItems).filter((t) => messagingOn || t.href !== "/messages");
   const tabActive = activeHref(pathname, tabs);
   const menu = user ? menuItemsLoggedIn : menuItems;
   const menuActive = activeHref(pathname, menu);
 
   return (
-    <BottomTabBar label="Main" columns={4}>
+    <BottomTabBar label="Main" columns={authReady && user && !messagingOn ? 3 : 4}>
       {/* Until the stored session has been read, the two session-dependent
           slots are neutral placeholders: the server HTML used to carry the
           signed-out items (Help / Login), which flashed on every reload for
