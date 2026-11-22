@@ -27,6 +27,12 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { goToLogin } from "@/lib/auth-return";
 import { usePendingAction } from "@/hooks/use-pending-action";
+import {
+  ensureMessagingConfig,
+  isMessagingDisabledResponse,
+  markMessagingDisabled,
+  useMessagingEnabled,
+} from "@/lib/use-messaging-enabled";
 
 // Simple Skeleton component (assuming it might be used elsewhere too)
 export function Skeleton({ className, ...props }) {
@@ -124,6 +130,8 @@ export default function HostProfile({ propertyData }) {
   // Client-side navigation instead of window.location: keeps the app shell,
   // auth context and query cache alive (no full reload).
   const router = useRouter();
+  // Admin Messaging switch: "Message host" disappears while it is off.
+  const messagingOn = useMessagingEnabled();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
   const maxLength = 275;
@@ -159,6 +167,10 @@ export default function HostProfile({ propertyData }) {
   // "Message host": opens the existing conversation or the contact page.
   // Signed-out visitors are sent to /login and this replays on return.
   const messageHost = async () => {
+    // Re-read the switch at the moment of the click (cached, at most one request
+    // a minute): a page left open since before it was turned off must not
+    // walk the guest into a compose page that cannot send.
+    if (!(await ensureMessagingConfig())) return;
     const token = localStorage.getItem("token");
     if (!token) {
       // Sign in, then come back here and message the host.
@@ -195,6 +207,10 @@ export default function HostProfile({ propertyData }) {
         },
       );
       const data = await res.json();
+      if (res.status === 503 && isMessagingDisabledResponse(data)) {
+        markMessagingDisabled();
+        return;
+      }
 
       // Only go to messages if conversation exists AND has messages
       if (
@@ -245,7 +261,7 @@ export default function HostProfile({ propertyData }) {
       router.push(`/contact_host/${propertyId}?hostId=${hostId}&hostName=${hostNameParam}&propertyName=${propName}&propertyImage=${propImage}&propertyType=${propType}&responseTime=${respTime}`);
     }
   };
-  usePendingAction("message-host", messageHost, !!propertyData?.host && !isOwnListing);
+  usePendingAction("message-host", messageHost, !!propertyData?.host && !isOwnListing && messagingOn);
 
   if (!propertyData?.host) {
     return (
@@ -397,7 +413,7 @@ export default function HostProfile({ propertyData }) {
                 </div>
 
                 {/* Only show Message host button if not own listing */}
-                {!isOwnListing && (
+                {!isOwnListing && messagingOn && (
                   <Button
                     className="w-full bg-primaryGreen hover:bg-brightGreen font-normal text-white rounded-lg text-sm"
                     onClick={messageHost}
