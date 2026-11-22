@@ -4,9 +4,11 @@
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import AccountMenu from "@/components/nav/account-menu";
+import { useMessagingEnabled } from "@/lib/use-messaging-enabled";
 
 export function UserDropdownMenu() {
   const { logout } = useAuth();
+  const messagingOn = useMessagingEnabled();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -20,7 +22,7 @@ export function UserDropdownMenu() {
     <AccountMenu
       entries={[
         { type: "link", label: "Account", href: "/account/personal-info" },
-        { type: "link", label: "Messages", href: "/messages" },
+        ...(messagingOn ? [{ type: "link", label: "Messages", href: "/messages" }] : []),
         { type: "link", label: "Bookings", href: "/manage-bookings" },
         // the header shows "Switch to Hosting" itself from lg up
         { type: "link", label: "Switch to Hosting", href: "/host/dashboard", className: "lg:hidden" },

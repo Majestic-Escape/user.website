@@ -11,6 +11,7 @@ import { usePathname } from "next/navigation";
 import { MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadCount } from "@/contexts/UnreadCountContext";
+import { useMessagingEnabled } from "@/lib/use-messaging-enabled";
 import { UserDropdownMenu } from "@/components/user-dropdown-menu";
 import { IconLink } from "@/components/nav/icon-button";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ const textLink =
 export default function HeaderActions({ showBecomeHost = false, className }: { showBecomeHost?: boolean; className?: string }) {
   const { user, returnUrl, authReady } = useAuth();
   const { unreadCount } = useUnreadCount();
+  const messagingOn = useMessagingEnabled();
   const pathname = usePathname();
 
   // Neutral until the stored session is known: the server HTML cannot tell
@@ -40,7 +42,7 @@ export default function HeaderActions({ showBecomeHost = false, className }: { s
         <Link href="/host/dashboard" className={cn(textLink, "hidden lg:inline-flex")}>
           Switch to Hosting
         </Link>
-        <IconLink href="/messages" label="Messages" icon={MessageSquare} count={unreadCount} active={pathname.startsWith("/messages")} iconClassName={pathname.startsWith("/messages") ? undefined : "text-muted-foreground"} />
+        {messagingOn ? <IconLink href="/messages" label="Messages" icon={MessageSquare} count={unreadCount} active={pathname.startsWith("/messages")} iconClassName={pathname.startsWith("/messages") ? undefined : "text-muted-foreground"} /> : null}
         <UserDropdownMenu />
       </nav>
     );
