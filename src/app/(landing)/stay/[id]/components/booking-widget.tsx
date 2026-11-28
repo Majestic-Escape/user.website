@@ -1,6 +1,6 @@
 "use client";
 import "../../../../booking.css";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ComponentPropsWithoutRef, type RefObject } from "react";
 import { eachDayOfInterval, format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ChevronDown, ChevronUp, Flag } from "lucide-react";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
@@ -50,6 +51,118 @@ import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import { goToLogin, checkoutPathFor } from "@/lib/auth-return";
+// The card calendar's top sits this far below the date row's BOTTOM (negative:
+// it overlaps the 63 px row, so it starts a few px above the row's top edge).
+const CARD_SIDE_OFFSET = -70;
+// Below this much room under the row (and nothing left to glide) the calendar
+// may rise, by just enough to show whole: a ~146 px strip (844x390) is unusable.
+const MIN_ROOM_BELOW = 320;
+const EDGE = 8;
+
+// How far the page can still lift the row: a sticky card only rises until it sticks.
+function stickyRoom(row: HTMLElement, wanted: number) {
+  for (let el = row.parentElement; el; el = el.parentElement) {
+    const cs = getComputedStyle(el);
+    if (cs.position === "sticky") {
+      return Math.max(0, Math.min(wanted, el.getBoundingClientRect().top - (parseFloat(cs.top) || 0)));
+    }
+  }
+  return wanted;
+}
+
+// Radix flips a popover to whichever side has more room. With the card still
+// low on the page (under the photos) that put the calendar ABOVE the date row,
+// over the price and the header. Here it always opens downward from the row
+// (collisionPadding.top makes everything above off-limits, so it never flips;
+// it still shifts sideways to stay on screen). If it does not fit, the page
+// first glides up as far as the sticky card can still rise; what is still
+// missing scrolls inside the calendar (max-h = Radix's available height),
+// except on a very short window, where it rises just enough (never past the top).
+// Measuring happens at most once per animation frame and only a real move
+// (>= 1 px) updates state, so it can never feed back into a render loop.
+function DownwardCalendarContent({
+  open,
+  rowRef,
+  ...props
+}: ComponentPropsWithoutRef<typeof PopoverContent> & {
+  open: boolean;
+  rowRef: RefObject<HTMLDivElement | null>;
+}) {
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [place, setPlace] = useState<{ top: number; offset: number } | null>(null);
+  // Last placement, kept while the calendar fades out after closing.
+  const last = useRef({ top: 0, offset: CARD_SIDE_OFFSET });
+
+  useEffect(() => {
+    if (!open) return;
+    let frame = 0;
+    let glided = false;
+    let ro: ResizeObserver | null = null;
+    const measure = () => {
+      frame = 0;
+      const row = rowRef.current;
+      const pop = contentRef.current;
+      if (!row) return;
+      if (!pop) {
+        schedule(); // portal not mounted yet: next frame
+        return;
+      }
+      // Height changes (dates finish loading, 5 vs 6 week months) re-measure.
+      if (!ro && typeof ResizeObserver !== "undefined") {
+        ro = new ResizeObserver(schedule);
+        for (const child of Array.from(pop.children)) ro.observe(child);
+      }
+      const height = pop.scrollHeight;
+      const rowBottom = row.getBoundingClientRect().bottom;
+      const vh = window.innerHeight;
+      let top = rowBottom + CARD_SIDE_OFFSET;
+      const below = vh - EDGE - top;
+      if (!glided) {
+        glided = true;
+        const by = height > below ? stickyRoom(row, height - below) : 0;
+        if (by > 0) {
+          const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          window.scrollBy({ top: by, behavior: reduce ? "instant" : "smooth" }); // its scroll events re-measure
+        }
+      }
+      if (height > below && below + stickyRoom(row, height) < MIN_ROOM_BELOW) {
+        top = Math.max(EDGE, vh - EDGE - height);
+      }
+      const offset = top - rowBottom;
+      setPlace((prev) => (prev && Math.abs(prev.top - top) < 1 && Math.abs(prev.offset - offset) < 1 ? prev : { top, offset }));
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
+    schedule();
+    window.addEventListener("scroll", schedule, { passive: true, capture: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      ro?.disconnect();
+      window.removeEventListener("scroll", schedule, { capture: true });
+      window.removeEventListener("resize", schedule);
+      setPlace(null);
+    };
+  }, [open, rowRef]);
+
+  if (open && place) {
+    last.current = place;
+  } else if (open && rowRef.current) {
+    // First frame, before the calendar is measured: right under the row.
+    last.current = { top: rowRef.current.getBoundingClientRect().bottom + CARD_SIDE_OFFSET, offset: CARD_SIDE_OFFSET };
+  }
+  return (
+    <PopoverContent
+      ref={contentRef}
+      side="bottom"
+      sideOffset={last.current.offset}
+      collisionPadding={{ top: Math.max(0, Math.floor(last.current.top) - 1) }}
+      {...props}
+    />
+  );
+}
+
 export default function BookingWidget({
   propertyId,
   manual,
@@ -86,6 +199,7 @@ export default function BookingWidget({
   const [matches, setMatches] = useState(false);
   const scrollPosRef = useRef(0);
   const modalRef = useRef<HTMLDivElement | null>(null);
+  const dateRowRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   useEffect(() => {
@@ -507,30 +621,32 @@ export default function BookingWidget({
 
               <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                 <div className="border border-gray-300 rounded-lg mb-4">
-                  <div className="grid grid-cols-2 divide-x divide-gray-300">
+                  {/* Anchor = the whole date row, so the calendar centres on the card
+                      (two triggers alone anchored it to CHECK-OUT and it spilled right). */}
+                  <PopoverAnchor className="grid grid-cols-2 divide-x divide-gray-300">
                     <PopoverTrigger asChild>
-                      <div className="p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-tl-lg">
-                        <div className="text-xs font-semibold uppercase">
+                      <button type="button" className="w-full text-left p-3 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primaryGreen hover:bg-gray-50 transition-colors rounded-tl-lg">
+                        <span className="block text-xs font-semibold uppercase">
                           CHECK-IN
-                        </div>
-                        <div className="mt-1 text-base">
+                        </span>
+                        <span className="block mt-1 text-base">
                           {/* {findDate()} */}
                           {/*filterformatDate(date?.from) */}
                           {formatDate(date?.from)}
-                        </div>
-                      </div>
+                        </span>
+                      </button>
                     </PopoverTrigger>
                     <PopoverTrigger asChild>
-                      <div className="p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-tr-lg">
-                        <div className="text-xs font-semibold uppercase">
+                      <button type="button" className="w-full text-left p-3 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primaryGreen hover:bg-gray-50 transition-colors rounded-tr-lg">
+                        <span className="block text-xs font-semibold uppercase">
                           CHECK-OUT
-                        </div>
-                        <div className="mt-1 text-base">
+                        </span>
+                        <span className="block mt-1 text-base">
                           {formatDate(date?.to)}
-                        </div>
-                      </div>
+                        </span>
+                      </button>
                     </PopoverTrigger>
-                  </div>
+                  </PopoverAnchor>
 
                   {/* <div
                 className="border-t border-gray-300 p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-b-lg flex justify-between items-center"
@@ -739,12 +855,11 @@ export default function BookingWidget({
                 </div>
 
                 <PopoverContent
-                  className="w-auto h-auto max-h-[var(--radix-popover-content-available-height)] overflow-y-auto p-0 z-[10001]"
-                  align="start"
+                  className="w-auto h-auto max-h-[var(--radix-popover-content-available-height)] overflow-y-auto p-0 z-[10001] origin-[--radix-popover-content-transform-origin] motion-reduce:!animate-none"
+                  align="center"
                   container={modalRef.current}
                   side={isMobile ? "top" : "bottom"}
                   sideOffset={isMobile ? -120 : -70}
-                  alignOffset={isMobile ? -140 : 0}
                 >
                   <div className="p-4 border-b">
                     <h3 className="text-base font-semibold">Select dates</h3>
@@ -982,36 +1097,38 @@ export default function BookingWidget({
 
               <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                 <div className="border border-gray-300 rounded-lg mb-4">
-                  <div className="grid grid-cols-2 divide-x divide-gray-300">
+                  {/* Anchor = the whole date row, so the calendar centres on the card
+                      (two triggers alone anchored it to CHECK-OUT and it spilled right). */}
+                  <PopoverAnchor ref={dateRowRef} className="grid grid-cols-2 divide-x divide-gray-300">
                     <PopoverTrigger asChild>
-                      <div className="p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-tl-lg">
-                        <div className="text-xs font-semibold uppercase">
+                      <button type="button" className="w-full text-left p-3 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primaryGreen hover:bg-gray-50 transition-colors rounded-tl-lg">
+                        <span className="block text-xs font-semibold uppercase">
                           CHECK-IN
-                        </div>
-                        <div className="mt-1 text-base">
+                        </span>
+                        <span className="block mt-1 text-base">
                           {activation
                             ? date?.from
                               ? formatDate(date.from)
                               : "Add date"
                             : "Add Date"}
-                        </div>
-                      </div>
+                        </span>
+                      </button>
                     </PopoverTrigger>
                     <PopoverTrigger asChild>
-                      <div className="p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-tr-lg">
-                        <div className="text-xs font-semibold uppercase">
+                      <button type="button" className="w-full text-left p-3 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primaryGreen hover:bg-gray-50 transition-colors rounded-tr-lg">
+                        <span className="block text-xs font-semibold uppercase">
                           CHECK-OUT
-                        </div>
-                        <div className="mt-1 text-base">
+                        </span>
+                        <span className="block mt-1 text-base">
                           {activation
                             ? date?.to
                               ? formatDate(date.to)
                               : "Add date"
                             : "Add date"}
-                        </div>
-                      </div>
+                        </span>
+                      </button>
                     </PopoverTrigger>
-                  </div>
+                  </PopoverAnchor>
 
                   {/* <div
                 className="border-t border-gray-300 p-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-b-lg flex justify-between items-center"
@@ -1223,14 +1340,15 @@ export default function BookingWidget({
                     on short screens (e.g. 844x390) the 438px two-month calendar
                     was taller than the viewport and its month arrows ended up
                     above the top edge. */}
-                <PopoverContent
-                  className="w-auto h-auto max-h-[var(--radix-popover-content-available-height)] overflow-y-auto p-0 z-[1000001]"
-                  align="start"
-                  side={isMobile ? "top" : "bottom"}
-                  sideOffset={isMobile ? -120 : -70}
-                  alignOffset={isMobile ? -140 : 0}
+                <DownwardCalendarContent
+                  open={calendarOpen}
+                  rowRef={dateRowRef}
+                  className="w-auto h-auto max-h-[var(--radix-popover-content-available-height)] overflow-y-auto p-0 z-[1000001] origin-[--radix-popover-content-transform-origin] motion-reduce:!animate-none"
+                  align="center"
                 >
-                  <div className="p-4 border-b">
+                  {/* Hidden on short windows so the whole calendar fits under the
+                      date row (the CHECK-IN / CHECK-OUT labels already say it). */}
+                  <div className="p-4 border-b [@media(max-height:700px)]:hidden">
                     <h3 className="text-base font-semibold">Select dates</h3>
                     <div className="text-sm text-gray-600 mt-1">
                       Add your travel dates for exact pricing
@@ -1275,7 +1393,7 @@ export default function BookingWidget({
                       />
                     )}
                   </div>
-                  <div className="p-4 flex justify-between border-t">
+                  <div className="p-4 [@media(max-height:700px)]:py-3 flex justify-between border-t">
                     <Button
                       variant="ghost"
                       onClick={() => onDateSelect(undefined)}
@@ -1289,7 +1407,7 @@ export default function BookingWidget({
                       Close
                     </Button>
                   </div>
-                </PopoverContent>
+                </DownwardCalendarContent>
               </Popover>
 
               <div onClick={() => hasPrice && createReserveRecord()}>
