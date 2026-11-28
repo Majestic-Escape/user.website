@@ -26,40 +26,45 @@ export default function HeaderActions({ showBecomeHost = false, className }: { s
   const messagingOn = useMessagingEnabled();
   const pathname = usePathname();
 
-  // Neutral until the stored session is known: the server HTML cannot tell
-  // who is signed in, and the signed-out "Login" used to flash on every
-  // reload for signed-in visitors. Same footprint as the avatar button.
+  // Until the stored session is read (hydration) both variants are in the
+  // HTML and CSS shows the right one (<html data-auth / data-msg>, set before
+  // first paint in app/layout.tsx): no grey placeholder, no "Login" flash.
   if (!authReady) {
     return (
-      <div className={cn("ml-auto hidden items-center gap-2 md:flex", className)} aria-hidden="true">
-        <span className="h-10 w-10 animate-pulse rounded-full bg-gray-200 motion-reduce:animate-none" />
-      </div>
+      <>
+        {signedIn(cn("auth-in-only", className), "msg-only")}
+        {signedOut(cn("auth-out-only", className))}
+      </>
     );
   }
-  if (user) {
+  return user ? signedIn(className) : signedOut(className);
+
+  function signedIn(navClassName?: string, messagesClassName?: string) {
     return (
-      <nav aria-label="Account" className={cn("ml-auto hidden items-center gap-1 md:flex", className)}>
+      <nav aria-label="Account" className={cn("ml-auto hidden items-center gap-1 md:flex", navClassName)}>
         <Link href="/host/dashboard" className={cn(textLink, "hidden lg:inline-flex")}>
           Switch to Hosting
         </Link>
-        {messagingOn ? <IconLink href="/messages" label="Messages" icon={MessageSquare} count={unreadCount} active={pathname.startsWith("/messages")} iconClassName={pathname.startsWith("/messages") ? undefined : "text-muted-foreground"} /> : null}
+        {messagingOn ? <IconLink href="/messages" label="Messages" icon={MessageSquare} count={unreadCount} active={pathname.startsWith("/messages")} iconClassName={pathname.startsWith("/messages") ? undefined : "text-muted-foreground"} className={messagesClassName} /> : null}
         <UserDropdownMenu />
       </nav>
     );
   }
-  return (
-    <nav aria-label="Account" className={cn("ml-auto hidden items-center gap-2 md:flex", className)}>
-      {showBecomeHost ? (
-        <Link href="/login" className={cn(textLink, "hidden text-base text-absoluteDark lg:inline-flex")}>
-          Become a Host
+  function signedOut(navClassName?: string) {
+    return (
+      <nav aria-label="Account" className={cn("ml-auto hidden items-center gap-2 md:flex", navClassName)}>
+        {showBecomeHost ? (
+          <Link href="/login" className={cn(textLink, "hidden text-base text-absoluteDark lg:inline-flex")}>
+            Become a Host
+          </Link>
+        ) : null}
+        <Link
+          href={{ pathname: "/login", query: returnUrl ? { returnUrl: decodeURIComponent(returnUrl) } : undefined }}
+          className="rounded-3xl bg-primaryGreen px-6 py-1.5 text-base font-medium text-white transition-[background-color,transform] duration-200 [@media(hover:hover)]:hover:bg-brightGreen active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-absoluteDark focus-visible:ring-offset-2 motion-reduce:active:scale-100"
+        >
+          Login
         </Link>
-      ) : null}
-      <Link
-        href={{ pathname: "/login", query: returnUrl ? { returnUrl: decodeURIComponent(returnUrl) } : undefined }}
-        className="rounded-3xl bg-primaryGreen px-6 py-1.5 text-base font-medium text-white transition-[background-color,transform] duration-200 [@media(hover:hover)]:hover:bg-brightGreen active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-absoluteDark focus-visible:ring-offset-2 motion-reduce:active:scale-100"
-      >
-        Login
-      </Link>
-    </nav>
-  );
+      </nav>
+    );
+  }
 }
