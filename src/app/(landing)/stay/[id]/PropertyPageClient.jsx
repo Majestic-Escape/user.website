@@ -21,6 +21,11 @@ import { useAuth } from "@/contexts/AuthContext";
 // but the refactored HostProfile handles its own skeleton.
 // import { HostProfileSkeleton } from "./components/host-profile";
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// One shared empty list: a fresh `[]` default on every render (dates still
+// loading, failed or disabled) re-ran the booking widget's [unavailableDates]
+// effect, whose setDate re-rendered again: an endless loop that a click on
+// the dates turned into React #185 ("Error loading property").
+const NO_DATES = [];
 
 // --- API Fetching Functions ---
 
@@ -167,7 +172,7 @@ export default function PropertyPageClient({ initialProperty, initialRelated = n
   // `loading` drives the calendar spinner: true only until the first list
   // arrives (a cached revisit paints the calendar immediately). A listing
   // that is not public has no public calendar to show.
-  const { data: unavailableDates = [], isPending: loading } = useQuery({
+  const { data: unavailableDates = NO_DATES, isPending: loading } = useQuery({
     queryKey: queryKeys.checkDates(propertyId),
     // Signed in: the server leaves this guest's own unpaid checkout hold out
     // (they can come back and pay for those dates); everyone else sees it held.

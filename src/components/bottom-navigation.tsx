@@ -32,7 +32,7 @@ import { loginHref } from "@/lib/auth-return";
 import { activeHref } from "@/lib/nav/active";
 import { leaveLayersThen } from "@/lib/ui/layers";
 import { cn } from "@/lib/utils";
-import { BottomTabBar, BottomTabItem, TabIcon, tabItemCls, BottomTabPlaceholder } from "@/components/nav/bottom-tab-bar";
+import { BottomTabBar, BottomTabItem, TabIcon, tabItemCls } from "@/components/nav/bottom-tab-bar";
 import { NavSheet, NavSheetButton, NavSheetLink, NavSheetSeparator } from "@/components/nav/nav-sheet";
 
 type Item = { name: string; href: string; icon: React.ComponentType<{ className?: string }>; exact?: boolean };
@@ -101,33 +101,37 @@ export function BottomNavigation() {
   const tabActive = activeHref(pathname, tabs);
   const menu = user ? menuItemsLoggedIn : menuItems;
   const menuActive = activeHref(pathname, menu);
+  const tab = (item: Item, active: string | null | undefined, className?: string) => (
+    <BottomTabItem
+      key={item.name}
+      href={item.href}
+      label={item.name}
+      icon={item.icon}
+      active={active === item.href}
+      count={item.name === "Messages" ? unreadCount : 0}
+      // Sign-in via /login-options: remember this page so the login
+      // form brings the visitor back here.
+      onClick={item.href === "/login-options" ? () => loginHref() : undefined}
+      className={className}
+    />
+  );
 
   return (
-    <BottomTabBar label="Main" columns={authReady && user && !messagingOn ? 3 : 4}>
-      {/* Until the stored session has been read, the two session-dependent
-          slots are neutral placeholders: the server HTML used to carry the
-          signed-out items (Help / Login), which flashed on every reload for
-          signed-in visitors before Messages / Bookings took their place. */}
+    <BottomTabBar label="Main">
+      {/* Until the stored session has been read (hydration), both variants are
+          in the HTML and CSS shows the right one: <html data-auth / data-msg>
+          is set before first paint (app/layout.tsx). No grey placeholders, and
+          no signed-out Help / Login flashing for signed-in visitors. */}
       {!authReady ? (
         <>
-          <BottomTabItem href="/" label="Home" icon={HomeIcon} active={pathname === "/"} />
-          <BottomTabPlaceholder />
-          <BottomTabPlaceholder />
+          {tab(navItems[0], activeHref(pathname, navItems))}
+          {navItems.slice(1).map((item) => tab(item, activeHref(pathname, navItems), "auth-out-only"))}
+          {navItemsLoggedIn.slice(1).map((item) =>
+            tab(item, activeHref(pathname, navItemsLoggedIn), cn("auth-in-only", item.href === "/messages" && "msg-only")),
+          )}
         </>
       ) : (
-        tabs.map((item) => (
-          <BottomTabItem
-            key={item.name}
-            href={item.href}
-            label={item.name}
-            icon={item.icon}
-            active={tabActive === item.href}
-            count={item.name === "Messages" ? unreadCount : 0}
-            // Sign-in via /login-options: remember this page so the login
-            // form brings the visitor back here.
-            onClick={item.href === "/login-options" ? () => loginHref() : undefined}
-          />
-        ))
+        tabs.map((item) => tab(item, tabActive))
       )}
       <li className="flex min-w-0 items-stretch py-1">
         <NavSheet

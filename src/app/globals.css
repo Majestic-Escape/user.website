@@ -577,3 +577,11 @@ html[data-me-overlay] majestic-chat-widget {
 body:has([data-stay-unbookable]) [data-price-nav] {
   display: none;
 }
+
+/* Session-dependent chrome before hydration: app/layout.tsx (CHROME_STATE) marks
+   <html>; only the pre-hydration markup of the header / tab bar uses these. */
+html[data-auth="in"] .auth-out-only,
+html:not([data-auth="in"]) .auth-in-only,
+html[data-msg="off"] .msg-only {
+  display: none !important;
+}
