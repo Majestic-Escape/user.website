@@ -56,6 +56,14 @@ const CARD_SIDE_OFFSET = -70;
 const EDGE = 8;
 const TOP_BAR = '[data-chrome-bar="top"]'; // the fixed site header (179 px at the page top, 75 px scrolled)
 const topBarBottom = () => Math.max(0, document.querySelector(TOP_BAR)?.getBoundingClientRect().bottom ?? 0);
+// Where the header ends when shown: on short screens it slides away while scrolling
+// and back in on the way up, so closing is decided against its full height.
+const topBarShownBottom = () => {
+  const bar = document.querySelector<HTMLElement>(TOP_BAR);
+  return bar ? Math.max(bar.getBoundingClientRect().bottom, bar.offsetHeight) : 0;
+};
+// The chat widget hides its launcher while <html> carries this (it sat on the calendar's Close button).
+const HIDE_LAUNCHER = "data-majestic-chat-hide-launcher";
 
 type CardPlace = { side: "top" | "bottom"; offset: number; alignOffset: number; cap: number; top: number; h: number; rowTop: number };
 
@@ -113,6 +121,9 @@ function CardCalendarContent({
   useEffect(() => {
     if (!open) return;
     scrolledAway.current = false;
+    const root = document.documentElement;
+    const hidLauncher = !root.hasAttribute(HIDE_LAUNCHER);
+    if (hidLauncher) root.setAttribute(HIDE_LAUNCHER, "");
     let placed: CardPlace | null = null;
     let frame = 0;
     let ro: ResizeObserver | null = null;
@@ -144,7 +155,7 @@ function CardCalendarContent({
       const row = rowRef.current?.getBoundingClientRect();
       if (!placed || !row) return;
       const top = placed.top + row.top - placed.rowTop;
-      const bar = topBarBottom();
+      const bar = topBarShownBottom();
       if (top < bar - 1 || top + placed.h > window.innerHeight + 1 || row.bottom < bar || row.top > window.innerHeight) {
         scrolledAway.current = true;
         flushSync(() => onOpenChange(false)); // closed in this frame, not the next
@@ -157,6 +168,7 @@ function CardCalendarContent({
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
     return () => {
+      if (hidLauncher) root.removeAttribute(HIDE_LAUNCHER);
       cancelAnimationFrame(frame);
       ro?.disconnect();
       window.removeEventListener("scroll", onScroll);
