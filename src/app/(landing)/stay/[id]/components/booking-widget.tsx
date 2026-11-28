@@ -1,6 +1,6 @@
 "use client";
 import "../../../../booking.css";
-import { useState, useEffect, useRef, type ComponentPropsWithoutRef, type RefObject } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, type ComponentPropsWithoutRef, type RefObject } from "react";
 import { eachDayOfInterval, format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -48,117 +48,136 @@ interface BookingWidgetProps {
   loading: boolean;
 }
 import { X } from "lucide-react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import { goToLogin, checkoutPathFor } from "@/lib/auth-return";
-// The card calendar's top sits this far below the date row's BOTTOM (negative:
-// it overlaps the 63 px row, so it starts a few px above the row's top edge).
+// The card calendar overlaps the 63 px date row by this much (as it always has).
 const CARD_SIDE_OFFSET = -70;
-// Below this much room under the row (and nothing left to glide) the calendar
-// may rise, by just enough to show whole: a ~146 px strip (844x390) is unusable.
-const MIN_ROOM_BELOW = 320;
 const EDGE = 8;
+const TOP_BAR = '[data-chrome-bar="top"]'; // the fixed site header (179 px at the page top, 75 px scrolled)
+const topBarBottom = () => Math.max(0, document.querySelector(TOP_BAR)?.getBoundingClientRect().bottom ?? 0);
 
-// How far the page can still lift the row: a sticky card only rises until it sticks.
-function stickyRoom(row: HTMLElement, wanted: number) {
-  for (let el = row.parentElement; el; el = el.parentElement) {
-    const cs = getComputedStyle(el);
-    if (cs.position === "sticky") {
-      return Math.max(0, Math.min(wanted, el.getBoundingClientRect().top - (parseFloat(cs.top) || 0)));
-    }
-  }
-  return wanted;
+type CardPlace = { side: "top" | "bottom"; offset: number; alignOffset: number; cap: number; top: number; h: number; rowTop: number };
+
+// Under the date row if the calendar fits there, else above it (as it always
+// did), else on the side it overflows less; then nudged into the free space
+// between the fixed site header and the window bottom, centred on the row and
+// kept 8 px inside the window. Only a window shorter than the calendar caps its
+// height (it then scrolls inside).
+function placeCardCalendar(row: DOMRect, w: number, natH: number, keepSide?: CardPlace["side"]): CardPlace {
+  const freeTop = topBarBottom() + EDGE;
+  const freeBottom = window.innerHeight - EDGE;
+  const cap = Math.max(0, freeBottom - freeTop);
+  const h = Math.min(natH, cap);
+  const below = row.bottom + CARD_SIDE_OFFSET; // its top edge when under the row
+  const above = row.top - CARD_SIDE_OFFSET - h; // its top edge when above the row
+  const side =
+    keepSide ?? (below + h <= freeBottom ? "bottom" : above >= freeTop ? "top" : below + h - freeBottom <= freeTop - above ? "bottom" : "top");
+  const top = Math.min(Math.max(side === "bottom" ? below : above, freeTop), freeBottom - h);
+  const left = Math.min(Math.max(row.left + row.width / 2 - w / 2, EDGE), document.documentElement.clientWidth - EDGE - w);
+  return {
+    side,
+    offset: Math.round(side === "bottom" ? top - row.bottom : row.top - (top + h)),
+    alignOffset: Math.round(left - row.left),
+    cap,
+    top,
+    h,
+    rowTop: row.top,
+  };
 }
 
-// Radix flips a popover to whichever side has more room. With the card still
-// low on the page (under the photos) that put the calendar ABOVE the date row,
-// over the price and the header. Here it always opens downward from the row
-// (collisionPadding.top makes everything above off-limits, so it never flips;
-// it still shifts sideways to stay on screen). If it does not fit, the page
-// first glides up as far as the sticky card can still rise; what is still
-// missing scrolls inside the calendar (max-h = Radix's available height),
-// except on a very short window, where it rises just enough (never past the top).
-// Measuring happens at most once per animation frame and only a real move
-// (>= 1 px) updates state, so it can never feed back into a render loop.
-function DownwardCalendarContent({
+// Card calendar: placed once when it opens (placeCardCalendar) and never moves
+// the page; Radix's own flipping and shifting are off, so nothing re-decides
+// afterwards. It rides with the date row; once a scroll would push it under the
+// header or off the bottom, it closes.
+function CardCalendarContent({
   open,
+  onOpenChange,
   rowRef,
   ...props
 }: ComponentPropsWithoutRef<typeof PopoverContent> & {
   open: boolean;
+  onOpenChange: (open: boolean) => void;
   rowRef: RefObject<HTMLDivElement | null>;
 }) {
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const [place, setPlace] = useState<{ top: number; offset: number } | null>(null);
-  // Last placement, kept while the calendar fades out after closing.
-  const last = useRef({ top: 0, offset: CARD_SIDE_OFFSET });
+  const scrolledAway = useRef(false);
+  const [place, setPlace] = useState<CardPlace | null>(null);
+
+  // Every open starts unplaced (invisible for a frame or two until measured);
+  // on close it keeps its place while it fades out.
+  useLayoutEffect(() => {
+    if (open) setPlace(null);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
+    scrolledAway.current = false;
+    let placed: CardPlace | null = null;
     let frame = 0;
-    let glided = false;
     let ro: ResizeObserver | null = null;
-    const measure = () => {
+    const fit = (keepSide?: CardPlace["side"]) => {
       frame = 0;
-      const row = rowRef.current;
       const pop = contentRef.current;
+      const row = rowRef.current;
       if (!row) return;
       if (!pop) {
-        schedule(); // portal not mounted yet: next frame
+        frame = requestAnimationFrame(() => fit(keepSide)); // portal not mounted yet
         return;
       }
-      // Height changes (dates finish loading, 5 vs 6 week months) re-measure.
       if (!ro && typeof ResizeObserver !== "undefined") {
-        ro = new ResizeObserver(schedule);
+        // A month with 5 or 6 weeks changes its height: re-fit on the same side.
+        ro = new ResizeObserver(() => {
+          if (!frame) frame = requestAnimationFrame(() => fit(placed?.side));
+        });
         for (const child of Array.from(pop.children)) ro.observe(child);
       }
-      const height = pop.scrollHeight;
-      const rowBottom = row.getBoundingClientRect().bottom;
-      const vh = window.innerHeight;
-      let top = rowBottom + CARD_SIDE_OFFSET;
-      const below = vh - EDGE - top;
-      if (!glided) {
-        glided = true;
-        const by = height > below ? stickyRoom(row, height - below) : 0;
-        if (by > 0) {
-          const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-          window.scrollBy({ top: by, behavior: reduce ? "instant" : "smooth" }); // its scroll events re-measure
-        }
-      }
-      if (height > below && below + stickyRoom(row, height) < MIN_ROOM_BELOW) {
-        top = Math.max(EDGE, vh - EDGE - height);
-      }
-      const offset = top - rowBottom;
-      setPlace((prev) => (prev && Math.abs(prev.top - top) < 1 && Math.abs(prev.offset - offset) < 1 ? prev : { top, offset }));
+      const next = placeCardCalendar(row.getBoundingClientRect(), pop.offsetWidth, pop.scrollHeight + pop.offsetHeight - pop.clientHeight, keepSide); // + borders
+      placed = next;
+      setPlace((p) =>
+        p && p.side === next.side && p.offset === next.offset && p.alignOffset === next.alignOffset && p.cap === next.cap ? p : next,
+      );
     };
-    const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(measure);
+    // Computed from the date row (the calendar is fixed to it), never from the
+    // popover's own box, which Radix parks off-screen until it is positioned.
+    const onScroll = () => {
+      const row = rowRef.current?.getBoundingClientRect();
+      if (!placed || !row) return;
+      const top = placed.top + row.top - placed.rowTop;
+      const bar = topBarBottom();
+      if (top < bar - 1 || top + placed.h > window.innerHeight + 1 || row.bottom < bar || row.top > window.innerHeight) {
+        scrolledAway.current = true;
+        flushSync(() => onOpenChange(false)); // closed in this frame, not the next
+      }
     };
-    schedule();
-    window.addEventListener("scroll", schedule, { passive: true, capture: true });
-    window.addEventListener("resize", schedule);
+    const onResize = () => {
+      if (!frame) frame = requestAnimationFrame(() => fit());
+    };
+    frame = requestAnimationFrame(() => fit());
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
     return () => {
       cancelAnimationFrame(frame);
       ro?.disconnect();
-      window.removeEventListener("scroll", schedule, { capture: true });
-      window.removeEventListener("resize", schedule);
-      setPlace(null);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
     };
-  }, [open, rowRef]);
+  }, [open, rowRef, onOpenChange]);
 
-  if (open && place) {
-    last.current = place;
-  } else if (open && rowRef.current) {
-    // First frame, before the calendar is measured: right under the row.
-    last.current = { top: rowRef.current.getBoundingClientRect().bottom + CARD_SIDE_OFFSET, offset: CARD_SIDE_OFFSET };
-  }
   return (
     <PopoverContent
-      ref={contentRef}
-      side="bottom"
-      sideOffset={last.current.offset}
-      collisionPadding={{ top: Math.max(0, Math.floor(last.current.top) - 1) }}
       {...props}
+      ref={contentRef}
+      side={place?.side ?? "bottom"}
+      sideOffset={place?.offset ?? CARD_SIDE_OFFSET}
+      align="start"
+      alignOffset={place?.alignOffset ?? 0}
+      avoidCollisions={false}
+      style={place ? { maxHeight: place.cap } : { opacity: 0 }}
+      // Closed by scrolling: do not pull focus (and the page) back to the date row.
+      onCloseAutoFocus={(e) => {
+        if (scrolledAway.current) e.preventDefault();
+      }}
     />
   );
 }
@@ -867,16 +886,16 @@ export default function BookingWidget({
                       Add your travel dates for exact pricing
                     </div>
                   </div>
-                  <div className="p-4">
+                  {/* Calendar always rendered (no size jump); covered while dates load. */}
+                  <div className="p-4 relative" aria-busy={loading || undefined}>
                     {loading ? (
-                      // ---- LOADING SPINNER UI ----
-                      <div className="flex flex-col items-center justify-center h-full w-full">
-                        <div className="h-8 w-8 border-4 border-gray-300 border-t-black rounded-full animate-spin"></div>
+                      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80" role="status">
+                        <div className="h-8 w-8 border-4 border-gray-300 border-t-black rounded-full animate-spin motion-reduce:animate-none"></div>
                         <p className="text-sm mt-2 text-gray-600">
                           Loading dates...
                         </p>
                       </div>
-                    ) : (
+                    ) : null}
                       <Calendar
                         mode="range"
                         defaultMonth={date?.from}
@@ -904,11 +923,11 @@ export default function BookingWidget({
                             "bg-black text-white hover:bg-black hover:text-white",
                         }}
                       />
-                    )}
                   </div>
                   <div className="p-4 flex justify-between border-t">
                     <Button
                       variant="ghost"
+                      disabled={!date?.from}
                       onClick={() => onDateSelect(undefined)}
                     >
                       Clear dates
@@ -1336,34 +1355,32 @@ export default function BookingWidget({
                   </div>
                 </div>
 
-                {/* max-h = the space Radix reports as available, scrolling inside:
-                    on short screens (e.g. 844x390) the 438px two-month calendar
-                    was taller than the viewport and its month arrows ended up
-                    above the top edge. */}
-                <DownwardCalendarContent
+                <CardCalendarContent
                   open={calendarOpen}
+                  onOpenChange={setCalendarOpen}
                   rowRef={dateRowRef}
-                  className="w-auto h-auto max-h-[var(--radix-popover-content-available-height)] overflow-y-auto p-0 z-[1000001] origin-[--radix-popover-content-transform-origin] motion-reduce:!animate-none"
-                  align="center"
+                  className="w-auto h-auto overflow-y-auto p-0 z-[1000001] origin-[--radix-popover-content-transform-origin] motion-reduce:!animate-none"
                 >
-                  {/* Hidden on short windows so the whole calendar fits under the
-                      date row (the CHECK-IN / CHECK-OUT labels already say it). */}
+                  {/* Hidden on short windows so the whole calendar fits on screen
+                      without scrolling (the CHECK-IN / CHECK-OUT labels already say it). */}
                   <div className="p-4 border-b [@media(max-height:700px)]:hidden">
                     <h3 className="text-base font-semibold">Select dates</h3>
                     <div className="text-sm text-gray-600 mt-1">
                       Add your travel dates for exact pricing
                     </div>
                   </div>
-                  <div className="p-4">
+                  {/* The calendar is always rendered, so the popover keeps its size (no
+                      jump) while the booked dates load; until then it is covered and
+                      cannot be clicked. */}
+                  <div className="p-4 relative" aria-busy={loading || undefined}>
                     {loading ? (
-                      // ---- LOADING SPINNER UI ----
-                      <div className="flex flex-col items-center justify-center h-full w-full">
-                        <div className="h-8 w-8 border-4 border-gray-300 border-t-black rounded-full animate-spin"></div>
+                      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80" role="status">
+                        <div className="h-8 w-8 border-4 border-gray-300 border-t-black rounded-full animate-spin motion-reduce:animate-none"></div>
                         <p className="text-sm mt-2 text-gray-600">
                           Loading dates...
                         </p>
                       </div>
-                    ) : (
+                    ) : null}
                       <Calendar
                         mode="range"
                         defaultMonth={date?.from}
@@ -1391,11 +1408,11 @@ export default function BookingWidget({
                             "bg-black text-white hover:bg-black hover:text-white",
                         }}
                       />
-                    )}
                   </div>
                   <div className="p-4 [@media(max-height:700px)]:py-3 flex justify-between border-t">
                     <Button
                       variant="ghost"
+                      disabled={!date?.from}
                       onClick={() => onDateSelect(undefined)}
                     >
                       Clear dates
@@ -1407,7 +1424,7 @@ export default function BookingWidget({
                       Close
                     </Button>
                   </div>
-                </DownwardCalendarContent>
+                </CardCalendarContent>
               </Popover>
 
               <div onClick={() => hasPrice && createReserveRecord()}>
