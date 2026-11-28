@@ -12,14 +12,15 @@ import { cn } from "@/lib/utils";
 // production's 4.5rem, the guest bar 4rem). Full-height screens reserve the
 // bar's height through --guest-tab-bar-h / --host-tab-bar-h (globals.css):
 // change a row height or the border here and update those too.
-export function BottomTabBar({ label, columns, children, className, listClassName }: { label: string; columns: number; children: React.ReactNode; className?: string; listClassName?: string }) {
+// Without `columns` the row makes one equal column per VISIBLE item.
+export function BottomTabBar({ label, columns, children, className, listClassName }: { label: string; columns?: number; children: React.ReactNode; className?: string; listClassName?: string }) {
   return (
     <nav
       aria-label={label}
       data-chrome-bar="bottom"
       className={cn("fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] font-poppins md:hidden", className)}
     >
-      <ul className={cn("mx-auto grid h-16 max-w-lg", listClassName)} style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+      <ul className={cn("mx-auto grid h-16 max-w-lg", !columns && "grid-flow-col auto-cols-fr", listClassName)} style={columns ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` } : undefined}>
         {children}
       </ul>
     </nav>
@@ -35,6 +36,7 @@ type ItemProps = {
   onClick?: (e: React.MouseEvent) => void;
   buttonProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
   labelClassName?: string;
+  className?: string;
 };
 
 // Same layout as the original bar (icon, 4 px, label, centred in 64 px); the
@@ -70,11 +72,11 @@ function Inner({ label, icon, active, count, labelClassName }: ItemProps) {
 }
 
 export const BottomTabItem = React.forwardRef<HTMLButtonElement, ItemProps>(function BottomTabItem(props, ref) {
-  const { href, label, active, count, onClick, buttonProps } = props;
+  const { href, label, active, count, onClick, buttonProps, className } = props;
   const aria = count && count > 0 ? `${label}, ${countLabel(count, 99)} unread` : undefined;
   const cls = cn(tabItemCls, active ? "text-primaryGreen" : "text-gray-700");
   return (
-    <li className="flex min-w-0 items-stretch">
+    <li className={cn("flex min-w-0 items-stretch", className)}>
       {href ? (
         <Link href={href} onClick={onClick} aria-label={aria} aria-current={active ? "page" : undefined} className={cls}>
           <Inner {...props} />
@@ -87,13 +89,3 @@ export const BottomTabItem = React.forwardRef<HTMLButtonElement, ItemProps>(func
     </li>
   );
 });
-
-/** Neutral placeholder for an item whose content depends on the session. */
-export function BottomTabPlaceholder() {
-  return (
-    <li className="flex flex-col items-center justify-center px-2" aria-hidden="true">
-      <span className="mb-1 h-5 w-5 animate-pulse rounded-full bg-gray-200 motion-reduce:animate-none" />
-      <span className="h-3 w-12 animate-pulse rounded-full bg-gray-200 motion-reduce:animate-none" />
-    </li>
-  );
-}

@@ -111,14 +111,23 @@ export const viewport = {
   viewportFit: "cover",
 };
 
+// Runs before first paint: marks <html> with the stored session (data-auth) and
+// a cached "messaging off" (data-msg), so the server HTML paints the right
+// header / tab bar at once instead of grey placeholders until hydration.
+// Cosmetic only: the API still authorises every request. Mirrors AuthContext's
+// "user" check and lib/use-messaging-enabled.js (key + 5 min max age).
+const CHROME_STATE = `(function(){var d=document.documentElement;try{var u=JSON.parse(localStorage.getItem("user")||"null");if(u&&typeof u==="object"&&!Array.isArray(u)&&typeof u.email==="string")d.setAttribute("data-auth","in")}catch(e){}try{var m=JSON.parse(sessionStorage.getItem("me:messaging-enabled")||"null");if(m&&m.v===false&&typeof m.t==="number"&&Date.now()-m.t<3e5)d.setAttribute("data-msg","off")}catch(e){}})()`;
+
 interface RootLayoutProps {
   children: ReactNode;
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" className={`${bricolage.variable} ${poppins.variable}`}>
+    // suppressHydrationWarning: CHROME_STATE adds data-* attributes to <html> before hydration.
+    <html lang="en" className={`${bricolage.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: CHROME_STATE }} />
         <Analytics />
       </head>
       <body className="antialiased">
